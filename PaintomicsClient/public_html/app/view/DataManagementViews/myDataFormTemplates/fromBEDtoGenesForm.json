@@ -1,0 +1,37 @@
+{
+    "url": "/fromBEDtoGenes",
+    "items": [
+        {"type": "label", "value":"<h3>From BED to Genes</h3>"},
+        {"type": "label", "value":"<p>This pipeline allows you to take a set of genome coordinates (BED format), and retrieve a list of Gene IDs for all of the nearby genes, with the corresponding quantification values based on... (<b style='color:red;'>TODO</b></p>"},
+        
+        {"type": "combo", "label": "Omic Name",  "name":"regionsFile_omic_name", "options": [{"label": "ChIP-seq data", "value": "ChIP-seq data"},{"label": "DNase-seq data", "value": "DNase-seq data"},{"label": "Other", "value": "Other"}]},
+
+        {"type": "text", "label": "Map to",  "name":"regionsFile_match_type", "value":"gene", "other":[{"hidden":true}]},
+        
+        {"type": "myFilesSelectorButton", "label": "Regions file <br>(BED + Quantification)",  "name" : "regionsFile", "itemId": "mainFileSelector"},
+        {"type": "label", "value":"<p class='formHelpTip'>Upload the regions file (BED format + Quantification) or choose it from your data folder.</p>"},
+        
+        {"type": "myFilesSelectorButton", "label": "Relevant regions file",  "name" : "regionsFile_relevant", "itemId": "mainFileSelector"},
+        {"type": "label", "value":"<p class='formHelpTip'>Upload the list of relevant regions (TAB format) or choose it from your data folder.</p>"},
+        
+        {"type": "myFilesSelectorButton", "label": "Annotations file (GTF)",  "name" : "annotationsFile", "itemId": "mainFileSelector"},
+        {"type": "text", "label": "", "name":"annotationsFile_omic_name", "value": "gtf", "other":[{"hidden":true}]},
+        {"type": "text", "label": "", "name":"annotationsFile_match_type", "value":"gene", "other":[{"hidden":true}]},
+        {"type": "label", "value":"<p class='formHelpTip'>Upload the Annotations file (GTF format), choose it from your data folder or browse the GFT files included in Paintomics.</p>"},
+        
+        {"type": "combo", "label": "Summarization method",  "name":"summarizationMethod", "options": [{"label": "Mean", "value": "mean"},{"label": "Maximum", "value": "max"}]},
+        {"type": "label", "value":"<p class='formHelpTip'>Choose the strategy used to resolve regions mapping to the same gen region.</p>"},
+        
+        {"type": "combo", "label": "Report",  "name":"geneRegion", "options": [
+                {"label": "Regions mapping at first exon", "value": "1st_EXON"},
+                {"label": "Regions mapping at gene TSS", "value": "TSS_200"},
+                {"label": "Regions mapping at gene promoter", "value": "PROMOTER"},
+                {"label": "Regions mapping at gene introns", "value": "INTRON"},
+                {"label": "Regions mapping at gene body", "value": "GENE_BODY"},
+                {"label": "Regions mapping N kb upstream to gene", "value": "UPSTREAM"},
+                {"label": "Regions mapping N kb downstream to gene", "value": "DOWNSTREAM"},
+                {"label": "All regions", "value": "all"}
+                ]},
+        {"type": "label", "value":"<p class='formHelpTip'>Choose the strategy used to resolve regions mapping to the same gen region.</p>"}
+    ]
+}

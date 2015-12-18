@@ -1,0 +1,16 @@
+dist/plugins/sigma.renderers.linkurious.min.js
+plugins/sigma.plugins.animate/sigma.plugins.animate.js
+plugins/sigma.exporters.svg/sigma.exporters.svg.js
+plugins/sigma.layouts.forceLink/worker.js
+plugins/sigma.layouts.forceLink/supervisor.js
+plugins/sigma.plugins.activeState/sigma.plugins.activeState.js
+plugins/sigma.plugins.dragNodes/sigma.plugins.dragNodes.js
+plugins/sigma.plugins.filter/sigma.plugins.filter.js
+plugins/sigma.plugins.lasso/sigma.plugins.lasso.js
+plugins/sigma.plugins.locate/sigma.plugins.locate.js
+plugins/sigma.plugins.select/sigma.plugins.select.js
+plugins/sigma.renderers.glyphs/sigma.renderers.glyphs.js
+plugins/sigma.renderers.edgeLabels/sigma.canvas.edges.labels.def.js
+plugins/sigma.renderers.edgeLabels/sigma.canvas.edges.labels.curve.js
+plugins/sigma.renderers.edgeLabels/sigma.canvas.edges.labels.curvedArrow.js
+

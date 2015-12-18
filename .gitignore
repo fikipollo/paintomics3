@@ -1,0 +1,7 @@
+PaintomicsServer/src/CLIENT_TMP/*
+PaintomicsServer/src/log/*
+PaintomicsServer/src/examplefiles/GTF/*
+/PaintomicsClient/public_html/js/libs/highcharts-4.1.5/exporting-server/java/highcharts-export/highcharts-export-convert/target/
+/PaintomicsClient/public_html/js/libs/highcharts-4.1.5/exporting-server/java/highcharts-export/highcharts-export-web/target/
+*.pyc
+PaintomicsServer/.idea/workspace.xml
