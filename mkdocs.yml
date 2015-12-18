@@ -1,0 +1,16 @@
+site_name: Paintomics v3.0 Documentation
+pages:
+- ['index.md', 'Home']
+- ['1_kegg.md', 'Getting start', 'The KEGG Pathways database']
+- ['2_1_accepted_input.md', 'Getting start', 'Accepted input data']
+- ['2_2_cloud_drive.md', 'Getting start', 'Cloud Drive']
+- ['4_1_pathway_enrichment.md', 'Getting start', 'Pathway Enrichment Analysis (PAE)']
+- ['4_2_kegg_categories.md', 'Getting start', 'Filtering Pathways']
+- ['4_3_pathways_network.md', 'Getting start', 'The Pathways Network']
+- ['4_4_pathways_table.md', 'Getting start', 'The Pathways Table']
+- ['5_1_browsing_pathways.md', 'Getting start', 'Exploring the pathways']
+- ['5_2_detailed_views.md', 'Getting start', 'Feature families']
+- ['5_3_heatmaps.md', 'Getting start', 'Drawing heatmaps']
+- ['6_1_use_case.md', 'Tutorials', 'Use case']
+- ['7_license.md', 'About', 'License']
+theme: readthedocs
