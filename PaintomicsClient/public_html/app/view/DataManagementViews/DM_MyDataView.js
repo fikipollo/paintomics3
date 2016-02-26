@@ -84,7 +84,12 @@ function DM_MyDataListView() {
 							xtype: 'box',cls: "contentbox omicSummaryBox", minHeight: 230, html:
 							'<div id="about">'+
 							'  <h2>My Data</h2>'+
-							'  <p>In this section you will find all the information regarding your Jobs and all the Files used and generated for them.<br><b>Paintomics</b> offers to registered users, a personal cloud storage of <b id="myDataAvailableSpace">20 MB</b>, use your space carefully and remember that there available tools that allow you to free space by deleting old files. </p>'+
+							'   <table id="myDataUserDetails"><tbody>' +
+							'     <tr><td><b>User name:</b></td><td>Rafa</td></tr>' +
+  						'     <tr><td><b>Email:</b></td><td>paintomics@cipf.es</td></tr>' +
+  						'     <tr><td><b>Password:</b></td><td>************</td></tr>' +
+  						'     <tr><td><b></b></td><td><a href="javascript:void(0)">Click here to change password</a></td></tr>' +
+  						'  </tbody></table>' +
 							'</div>'
 						},
 						this.myDataSummaryPanel.getComponent()
@@ -163,20 +168,16 @@ function DM_MyDataSummaryPanel() {
 			cls: "contentbox omicSummaryBox",
 			height: 200,
 			html: '<h3>Used space</h3>' +
-			'<div class="myDataSummaryChartWrapper" id="usedSpaceSummaryPlot"></div><span id="myDataTotalSpace">' +
-			'<span class="myDataSummaryCount"><i class="fa fa-file-text-o"></i> <span id="myDataTotalFiles" class="odometer odometer-theme-default">0</span>  Files</span>' +
-			'<span class="myDataSummaryCount"><i class="fa fa-code" style=" background: rgb(255, 182, 28);"></i><span id="myDataTotalJobs" class="odometer odometer-theme-default">0</span> Jobs</span>' +
+			'<div style="text-align: center;">'+
+			' <div class="myDataSummaryChartWrapper" id="usedSpaceSummaryPlot"></div>'+
+			' <span class="myDataSummaryCount"><i class="fa fa-file-text-o"></i> <span id="myDataTotalFiles" class="odometer odometer-theme-default">0</span>  Files</span>' +
+			' <span class="myDataSummaryCount"><i class="fa fa-code" style=" background: rgb(255, 182, 28);"></i><span id="myDataTotalJobs" class="odometer odometer-theme-default">0</span> Jobs</span>' +
+   		' <p style="text-align: center;">This is your <b id="myDataAvailableSpace">20 MB</b> personal cloud space, where you can find all your <b>Files</b> and <b>Jobs</b>.<br>Use it carefully and remember that you can always delete old files to free space.</p>'+
 			'</div>',
 			listeners: {
 				boxready: function() {
-					new Odometer({
-						el: $("#myDataTotalFiles")[0],
-						value: 0
-					});
-					new Odometer({
-						el: $("#myDataTotalJobs")[0],
-						value: 0
-					});
+					new Odometer({el: $("#myDataTotalFiles")[0],value: 0});
+					new Odometer({el: $("#myDataTotalJobs")[0],value: 0});
 
 					me.usageChart = new Highcharts.Chart({
 						credits: {

@@ -100,7 +100,7 @@ class Application(object):
         @self.app.route(SERVER_SUBDOMAIN + '/get_cluster_image/<path:filename>')
         def get_cluster_image(filename):
             UserSessionManager().isValidUser(request.cookies.get('userID'), request.cookies.get('sessionToken'))
-            return send_from_directory(ROOT_DIRECTORY + 'CLIENT_TMP/' + request.cookies.get('userID') + "/jobsData/", filename)
+            return send_from_directory(CLIENT_TMP_DIR + request.cookies.get('userID') + "/jobsData/", filename)
         ##*******************************************************************************************
         ##* GET FILE
         ##*******************************************************************************************

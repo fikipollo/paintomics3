@@ -714,6 +714,26 @@ div.availableOmicsBox h4 {
 	width: 100%;
 	height: 100% !important;
 }
+
+.header-45deg .x-column-header-text {
+    -webkit-transform: rotate(-45deg);
+    -moz-transform: rotate(-45deg);
+    -o-transform: rotate(-45deg);
+		font-size: 10px;
+		/*padding: 0px;*/
+		/*width: 40px;*/
+}
+.header-90deg .x-column-header-text {
+    -webkit-transform: rotate(-90deg);
+    -moz-transform: rotate(-90deg);
+    -o-transform: rotate(-90deg);
+		font-size: 10px;
+		/*padding: 0px;*/
+		/*width: 40px;*/
+}
+.x-group-sub-header .x-column-header-inner {
+	padding-top: 25px !important;
+}
 /*.sigma-scene, .sigma-labels, .sigma-mouse {
 	max-width: 1300px;
 	max-height: 600px;
@@ -780,7 +800,7 @@ div#pathwayClassificationContainer {overflow-y: auto; overflow-x: hidden;}
 .step3ClassificationsWrapper{display: block;}
 .step3ClassificationsChildrenContainer{display: none; margin-left: 30px;border-left: 1px dotted #B1B1B1;padding-left: 10px;}
 .step3ClassificationsTitle{cursor: pointer;}
-.step3ClassificationsTitle.disabled {color: #D2D2D2;text-decoration: line-through;}
+.step3ClassificationsTitle.disabled {color: #BBBBBB;text-decoration: line-through;}
 .step3ClassificationsTitle.disabled >  i.classificationNameBox{color: #D2D2D2 !important; border-color: #D2D2D2 !important;}
 .step3ClassificationsOptions{display: none; margin-left: 10px;font-size: 11px;}
 .step3ClassificationsTitle:hover > .step3ClassificationsOptions{display: inline-block;}
@@ -828,6 +848,11 @@ div#pathwayClassificationContainer {overflow-y: auto; overflow-x: hidden;}
 
 #step3-network-toolbar div#reorderOptions{position: absolute; width: 200px; height: 80px; margin-top: 35px; border: 1px solid #dfdfdf; background: rgba(255, 255, 255, 0.88);}
 
+.pathwaySummaryTable tr:nth-child(even) {
+    background: #e2eff8;
+    padding: 0;
+    margin: 0;
+}
 /********************************************************************************
 **STYLES FOR STEP 4
 *********************************************************************************/
@@ -1014,11 +1039,12 @@ i.relevantFeature:before {
 .lateralOptionsPanel {
 	margin: 15px 0px 15px 10px;
 	background: #fff;
+	overflow-y: auto;
 }
 .lateralOptionsPanel-body {
 	padding: 10px;
-	max-height: 98%;
-	overflow-y: auto;
+	/*max-height: 98%;*/
+	/*overflow-y: hidden;*/
 }
 .lateralOptionsPanel-header {
 	padding: 8px;
@@ -1064,9 +1090,8 @@ a.applyOptionsButton {
 	padding-bottom: 5px;
 }
 div.applyWaitMessage {
-	text-align: center;
 	margin-top: 30px;
-	font-size: 30px;
+	font-size: 25px;
 	color: #9E3AB3;
 	display: none;
 	clear: both;
@@ -1379,14 +1404,14 @@ div.omicSelection div.omicPosition + div {
 /***********************************************************/
 
 .myDataSummaryChartWrapper {
-	height: 150px;
+	height: 130px;
 	width: 150px;
 	overflow: hidden;
 	float: left
 }
 .myDataSummaryCount {
 	font-size: 30px;
-	margin: 15px 0px;
+	margin: 0px;
 	line-height: 130px;
 	display: inline-block;
 	padding-right: 25px;
@@ -1399,7 +1424,14 @@ span.myDataSummaryCount i {
 	border-radius: 13px;
 	margin-right: 10px;
 }
-
+table#myDataUserDetails {
+    font-size: 15px;
+    padding: 15px;
+}
+table#myDataUserDetails td:first-child {
+    text-align: right;
+    padding-right: 10px
+}
 /***********************************************************/
 /**COMMON STYLES FOR ALL STEPS *************************/
 /***********************************************************/

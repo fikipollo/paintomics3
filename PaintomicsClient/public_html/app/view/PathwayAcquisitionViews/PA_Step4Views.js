@@ -202,8 +202,9 @@ function PA_Step4JobView() {
         var me = this;
 
         this.component = Ext.widget({
-            xtype: "container",
-            id: "pathwaysPanelsContainer", items: [{ //THE SECONDARY TOOLBAR
+            xtype: "container", id: "pathwaysPanelsContainer", flex:1,
+            layout: {type: 'vbox',pack: 'start',align: 'stretch'},
+            items: [{ //THE SECONDARY TOOLBAR
                 xtype: "container", cls: "toolbar secondTopToolbar",
                 items: [{
                     xtype: "box", html:
@@ -216,9 +217,10 @@ function PA_Step4JobView() {
                     '<div id="pathwayHistoryContainer" class="step4HistoryBox"><h2>History</h2><div></div></div>'
                 }]
             }, { //THE CONTAINER FOR THE PATHWAY VIEWS
-                xtype: "container",
-                style: "margin-top:50px; min-height:800px; padding: 5px 10px;",
+                xtype: "container", flex:1,
+                style: "min-height:800px; padding: 5px 10px;",
                 itemId: "pathwaysPanelsContainer",
+                layout: 'fit',
                 items: []
             }],
             listeners: {
@@ -534,7 +536,8 @@ function PA_Step4PathwayView() {
 
     //TODO: DOCUMENTAR
     this.setHeight = function(height) {
-        this.getComponent().setHeight(height);
+        // this.getComponent().setHeight(height);
+        //TODO: ajustar el contenido de los lateralOptionsPanel
     };
 
     //TODO: DOCUMENTAR
@@ -597,10 +600,8 @@ function PA_Step4PathwayView() {
         var me = this;
 
         this.component = Ext.widget({
-            xtype: "container",
-            defaults: {border: false},
-            minHeight: 800,
-            layout: {type: "hbox",align: "stretch"},
+            xtype: "container", flex:1, defaults: {border: false},
+            layout: {type: 'hbox', pack: 'start', align: 'stretch'},
             // maxHeight: (graphicalOptions.getImageHeight() * adjustFactor) + 200,
             items: [],
             listeners: {
@@ -1273,8 +1274,7 @@ function PA_Step4KeggDiagramFeatureView() {
             var alternativeName = specieName.split("(")[1];
             alternativeName = alternativeName.substring(0,1).toUpperCase() +  alternativeName.substring(1,alternativeName.length-1);
             // specieName = encodeURIComponent(featureName + " " + specieName);
-            //
-            if(featureType === "gene"){
+            if(featureType.toLowerCase() === "gene"){
                 $(target).html(
                     "<div class='externalLinksContainer'>" +
                     "<b>External links</b>" +
@@ -1442,17 +1442,6 @@ function PA_Step4KeggDiagramFeatureView() {
         yAxis = [],
         yAxisItem;
 
-        var scale = function(x, min, max) {
-            //SCALE FROM [min, max] TO [a, b]
-            //f(x) = (((b - a)*(x - min))/(max - min)) + a
-            //SCALE FROM [min, max] TO [-1, 1]
-            //f(x) = (((1 + 1)*(x - min))/(max - min)) - 1
-            //     = ((2 * (x - min))/(max - min)) - 1
-            var a = -1,
-            b = 1;
-            return ((x === 0) ? 0 : ((((b - a) * (x - min)) / (max - min)) + a));
-        };
-
         //1.FILL THE STORE DATA [{name:"timepoint 1", "Gene Expression": -0.8, "Proteomics":-1.2,... },{name:"timepoint2", ...}]
         for (var i in visibleOmics) {
             omicName = visibleOmics[i].split("#")[0];
@@ -1465,7 +1454,7 @@ function PA_Step4KeggDiagramFeatureView() {
                 values = omicValues.getValues();
                 for (var j in values) {
                     //SCALE THE VALUE
-                    tmpValue = scale(values[j], limits.min, limits.max);
+                    tmpValue = scaleValue(values[j], limits.min, limits.max);
                     //UPDATE MIN MAX (TO ADJUST THE AXIS)
                     maxVal = Math.max(tmpValue, maxVal);
                     minVal = Math.min(tmpValue, minVal);
@@ -1977,14 +1966,16 @@ PA_Step4VisualOptionsView.prototype = new View();
 
 function PA_Step4FindFeaturesView() {
     /**
-    * About this view: TODO: DOCUMENTAR
+    * About this view: This view displays a summary for the the current pathway
+    * and a search bar. When users search for a certain text, the view is updated
+    * showing the results for the search.
     */
     /*********************************************************************
     * ATTRIBUTES
     ***********************************************************************/
     this.name = "PA_Step4FindFeaturesView";
-
     this.items = null;
+    this.pathwayDetailsView =null;
 
     /***********************************************************************
     * GETTERS AND SETTERS
@@ -2005,7 +1996,12 @@ function PA_Step4FindFeaturesView() {
         return this;
     };
 
-    //TODO: DOCUMENTAR
+    /**
+    * This function finds all the features whose name matches to a given string
+    * @chainable
+    * @param {String} searchValue, the query text
+    * @return {PA_Step4FindFeaturesView} the view
+    */
     this.searchFeatures = function(searchValue) {
         var availableTags = this.getParent().searchFeatureIndex;
 
@@ -2026,12 +2022,18 @@ function PA_Step4FindFeaturesView() {
         }
 
         this.updateObserver();
+
+        return this;
     };
 
+    /**
+    * TODO
+    */
     this.updateObserver = function(){
         var resultsContainer = this.getComponent().queryById("resultsContainer");
 
-        $("#resultsCounter").text("Found " + this.items.length + " features.").show();
+        $("#resultsCounter").text("Found " + this.items.length + " features.");
+        $("#searchResultsWrapper").show();
 
         resultsContainer.removeAll();
         var components = [];
@@ -2040,9 +2042,58 @@ function PA_Step4FindFeaturesView() {
         }
         resultsContainer.add(components);
 
+        resultsContainer.setVisible(true);
+
         for(i in this.items){
             this.items[i].updateObserver();
         }
+
+    };
+
+    /**
+		* This function shows the detailed view for selected pathway.
+    * First, creates a new view of the type PA_Step3PathwayDetailsViews and
+    * then load the model.
+		* @chainable
+    * @return {PA_Step4FindFeaturesView} the view
+		*/
+		this.showPathwayDetails = function(){
+      //TODO: MOVER ESTO AL LOAD MODEL DE ESTA VISTA
+			if(this.pathwayDetailsView === null){
+				this.pathwayDetailsView = new PA_Step3PathwayDetailsView();
+				this.pathwayDetailsView.getComponent("patwaysDetailsContainer");
+				this.pathwayDetailsView.setParent(this);
+			}
+
+			this.pathwayDetailsView.loadModel(this.getParent().getModel());
+
+			var omicNames = [];
+			var inputOmics = this.getParent().getParent().getModel().getGeneBasedInputOmics();
+			for(var i in inputOmics){
+				omicNames.push(inputOmics[i].omicName);
+			}
+			this.pathwayDetailsView.updateObserver(omicNames, this.getParent().getParent().getModel().getDataDistributionSummaries(), this.getParent().getVisualOptions());
+
+			return this;
+		};
+
+
+    /**
+    * TODO: MOVER A OTRO LADO??
+    * This function returns the corresponding color for a given cluster number
+    * @param  {String} cluster the cluster number
+    * @returns	{String} the hexadecimal color code
+    */
+    this.getClusterColor= function(cluster){
+      var COLORS = ["#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a", "#eded84", "#b15928", "#003b46", "#f5b549", "#B38867"];
+      cluster = Number.parseInt(cluster.replace(/[a-z]*/,""));
+
+      if(!Number.isNaN(cluster) && cluster < COLORS.length){
+        return COLORS[cluster];
+      }
+
+      console.warn("Unable to find a color for cluster " + cluster);
+      return "#333";
     };
 
     /**
@@ -2052,43 +2103,38 @@ function PA_Step4FindFeaturesView() {
     this.initComponent = function() {
         var me = this, selected, omicsAux;
 
-        //STEP 1. GENERATE THE CONTENT OF THE "CHOOSE OMICS TO DRAW" SECTION
-        var htmlCode = "";
-        var significanceValues = this.getModel().getSignificanceValues();
-        for (var i in significanceValues) {
-            var renderedValue = (significanceValues[i][2] > 0.001 || significanceValues[i][2] === 0) ? parseFloat(significanceValues[i][2]).toFixed(6) : parseFloat(significanceValues[i][2]).toExponential(4);
-            htmlCode += '<tr><td>' + i + '</td><td>' + significanceValues[i][0] + ' (' + significanceValues[i][1] + ')</td><td>' + renderedValue + '</td></tr>';
-        }
-
-
         this.component = Ext.widget({
-            xtype: "container", cls: "lateralOptionsPanel", width: 300,
-            layout: {type: 'vbox', align: "stretch"},
+            xtype: "container", cls: "lateralOptionsPanel",  width: 300,
             items:[{
-                xtype: "box", height:400, html:
+                xtype: "box", html:
                 "<div class='lateralOptionsPanel-header' style='background: #4c4c4c;'>" +
                 '  <div class="lateralOptionsPanel-toolbar">' +
                 '    <a href="javascript:void(0)" class="toolbarOption helpTip" id="hideFindFeaturePanelButton" title="Close this panel" style="background: #4c4c4c;"><i class="fa fa-times"></i></a>' +
                 '  </div>' +
-                "  <h2>Find features</h2>" +
+                "  <h2>Pathway information</h2>" +
                 "</div>" +
                 "<div class='lateralOptionsPanel-body findFeaturesContainer'>" +
-                '  <table style="padding: 10px;text-align: center;"><tbody>' +
-                '    <tr><th></th><th>Matched<br>features</th><th>p-value</th></tr>'+
-                htmlCode +
-                '  </tbody></table>'+
-                '  <div id="findFeaturesInput" class="input"><input type="text"></div>'+
-                '  <a href="javascript:void(0)" class="button helpTip" id="findFeatureButton" style="margin: 20px; background: #40AFFF;" title="Find features"><i class="fa fa-search"></i> Search</a>' +
-                '  <div class="applyWaitMessage" style="color:#4c4c4c; margin: 80px;"><i class="fa fa-cog fa-spin"></i> Searching...</div>' +
-                '  <h3 id="resultsCounter" style="margin-top: 90px; display:none;">Found N features.</h3>' +
-                '  <div id="resultsContainer"></div>' +
+                '  <div>'+
+                '    <h4>Search in pathway</h4>' +
+                '    <div id="findFeaturesInput" class="input" style="width:170px; display:inline-block;"><input type="text" style="width:160px;"></div>'+
+                '    <a href="javascript:void(0)" class="button helpTip" id="findFeatureButton" style="margin: 20px 5px; background: #40AFFF; display:inline-block; title="Find features"><i class="fa fa-search"></i> Search</a>' +
+                '    <div class="applyWaitMessage" style="color:#4c4c4c; margin: 10px;"> Searching...<i class="fa fa-cog fa-spin" style=" float: left; margin-right: 10px; "></i></div>' +
+                '  </div>'+
+                '  <div id="patwaysDetailsContainer"></div>'+
+                '  <div id="searchResultsWrapper" style="display:none;">'+
+                '    <a href="javascript:void(0)" id="backToPathwayDetailsButton" style="margin: 5px 0px;"><i class="fa fa-long-arrow-left"></i> Back to Pathway details</a>' +
+                '    <h3 id="resultsCounter">Found N features.</h3>' +
+                '  </div>'+
                 "</div>"
-            },{
-                xtype:"container", itemId:"resultsContainer", width: 280, autoScroll: true, flex:1,  items: []
+            },
+            {
+                xtype:"container", itemId: "resultsContainer", width:280, hidden:true, style:"border: 1px solid #dedede; margin-left: 10px; max-height: 500px;overflow-y: scroll;", items: []
             }
         ],
         listeners: {
             boxready: function() {
+                me.showPathwayDetails();
+
                 var availableTags = Object.keys(me.getParent().searchFeatureIndex).sort();
                 //SOME EVENT HANDLERS
                 $("#hideFindFeaturePanelButton").click(function() {
@@ -2096,6 +2142,7 @@ function PA_Step4FindFeaturesView() {
                 });
                 $("#findFeatureButton").click(function() {
                     $(this).next(".applyWaitMessage").fadeIn(400, function() {
+                        $("#patwaysDetailsContainer").hide();
                         me.searchFeatures($("#findFeaturesInput > input").val());
                         $(this).hide();
                     });
@@ -2103,6 +2150,12 @@ function PA_Step4FindFeaturesView() {
                 $("#findFeaturesInput > input").autocomplete({
                     source: availableTags,
                     minLength: 2
+                });
+
+                $("#backToPathwayDetailsButton").click(function() {
+                  me.getComponent().queryById("resultsContainer").setVisible(false);
+                  $("#patwaysDetailsContainer").show();
+                  $("#searchResultsWrapper").hide();
                 });
 
                 initializeTooltips(".helpTip");

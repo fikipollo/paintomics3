@@ -151,10 +151,9 @@ function MainView() {
 					"</ul>"
 			}, {
 				xtype: 'panel', itemId: 'mainViewCenterPanel', id: 'mainViewCenterPanel',
-				flex: 1,
-				region: 'center',
-				overflowY: "auto",
+				flex: 1, region: 'center', overflowY: "auto",
 				defaults: {border: 0},
+				layout: {type: 'vbox', pack: 'start', align: 'stretch'},
 				items: []
 			}],
 			listeners: {

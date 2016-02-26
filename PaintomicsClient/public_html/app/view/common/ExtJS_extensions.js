@@ -127,6 +127,7 @@ Ext.define('Ext.grid.LiveSearchGridPanel', {
     tagsProtect: '\x0f', // DEL ASCII code
     download: false,
     multidelete: false,
+    stripeRows: true,
     viewConfig: {
         markDirty: false,
         listeners: {
@@ -144,6 +145,8 @@ Ext.define('Ext.grid.LiveSearchGridPanel', {
     },
     initComponent: function () {
         var me = this;
+        me.viewConfig.stripeRows = this.stripeRows;
+
         me.tbar = ['Search', {
                 xtype: 'textfield',
                 name: 'searchField',
@@ -499,7 +502,7 @@ Ext.define('Ext.view.override.Grid', {
         var colTitle = "";
         var totalWidthInPixels = 0, colXml = '', headerXml = '', visibleColumnCountReduction = 0, colCount = cm.length;
         //GENERATE THE COLUMNS INFORMATION
-
+        debugger
         for (var i = 0; i < colCount; i++) {
             //ADJUST TITLE (REMOVE SPECIAL CHARACTERS, HTML,...)
             colTitle = cm[i].text.replace("</br>", "");

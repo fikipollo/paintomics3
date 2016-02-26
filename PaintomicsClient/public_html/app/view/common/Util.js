@@ -33,6 +33,7 @@
 * - showErrorMessage
 * - ajaxErrorHandler
 * - extJSErrorHandler
+* - scaleValue
 *
 */
 function Observer() {
@@ -414,6 +415,20 @@ function sendReportMessage(type, message, fromEmail, fromName){
         error: ajaxErrorHandler
     });
 }
+
+/**
+* This function scales a given value for an intervale min/max
+*/
+function scaleValue(x, min, max) {
+  //SCALE FROM [min, max] TO [a, b]
+  //f(x) = (((b - a)*(x - min))/(max - min)) + a
+  //SCALE FROM [min, max] TO [-1, 1]
+  //f(x) = (((1 + 1)*(x - min))/(max - min)) - 1
+  //     = ((2 * (x - min))/(max - min)) - 1
+  var a = -1,
+  b = 1;
+  return ((x === 0) ? 0 : ((((b - a) * (x - min)) / (max - min)) + a));
+};
 
 
 /*********************************************************************************

@@ -1,5 +1,12 @@
 #!/bin/bash
 
+ADMIN_USER="admin";
+ADMIN_EMAIL="paintomics@cipf.es";
+ADMIN_PASS="40bd001563085fc35165329ea1ff5c5ecbdbbeef";
+ADMIN_AFFILIATION="CIPF"
+
+DATA_DIR="/data/";
+
 sudo apt-get install mongodb
 
 sudo apt-get install python-dev python-mysqldb python-rsvg python-cairo python-cairosvg python-imaging python-pip libatlas-base-dev gfortran libapache2-mod-wsgi
@@ -10,6 +17,8 @@ sudo pip install flask hashlib gevent numpy fisher enum scipy configparser pymon
 #sudo pip install cairosvg
 #sudo pip install rq
 #sudo pip install rq-dashboard
+
+#TODO: INSTALL R PACKAGES (amap)
 #*********************************************************
 #INITIALIZE MONGO DB
 #*********************************************************
@@ -23,7 +32,7 @@ db.createCollection("pathwaysCollection");
 db.createCollection("userCollection");
 db.createCollection("fileCollection");
 db.createCollection("counters")
-db.userCollection.insert({userID:"0",userName:"admin",email:"paintomics@cipf.es",password:"40bd001563085fc35165329ea1ff5c5ecbdbbeef", affiliation:"CIPF", activated:"True"})
+db.userCollection.insert({userID:"0",userName:"${ADMIN_USER}",email:"${ADMIN_EMAIL}",password:"${ADMIN_PASS}", affiliation:"${ADMIN_AFFILIATION}", activated:"True"})
 db.counters.insert({_id:"userID",sequence_value:1})
 
 db.jobInstanceCollection.ensureIndex( { jobID: 1, userID : 1 } )
@@ -36,12 +45,20 @@ EOF
 mongo < /tmp/mongo.js
 rm /tmp/mongo.js
 
-wget http://rhernandez/paintomics-dbs.tar.gz --directory-prefix=/tmp/
+wget http://bioinfo.cipf.es/paintomics/paintomics-dbs.tar.gz --directory-prefix=/tmp/
 tar -zxvf /tmp/paintomics-dbs.tar.gz -C /tmp/
 
-mv /tmp/paintomics-dbs/KEGG_DATA/ /data/
+rm -r $DATA_DIR/KEGG_DATA
+mv /tmp/paintomics-dbs/KEGG_DATA/ $DATA_DIR
 mongorestore /tmp/paintomics-dbs/dump/
 rm -r  /tmp/paintomics-dbs
 rm -r  /tmp/paintomics-dbs.tar.gz
+
+rm -r $DATA_DIR/CLIENT_TMP
+mkdir $DATA_DIR/CLIENT_TMP
+mkdir $DATA_DIR/CLIENT_TMP/0
+mkdir $DATA_DIR/CLIENT_TMP/0/inputData
+mkdir $DATA_DIR/CLIENT_TMP/0/jobsData
+mkdir $DATA_DIR/CLIENT_TMP/0/tmp
 
 sudo service apache2 restart

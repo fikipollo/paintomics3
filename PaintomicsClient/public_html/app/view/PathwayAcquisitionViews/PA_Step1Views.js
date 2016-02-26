@@ -317,7 +317,7 @@ function PA_Step1JobView() {
 							'<div class="availableOmicsBox" title="metabolomics"><h4><a href="javascript:void(0)"><i class="fa fa-plus-circle"></i></a> Metabolomics</h4></div>' +
 							'<div class="availableOmicsBox" title="proteomics"><h4><a href="javascript:void(0)"><i class="fa fa-plus-circle"></i></a> Proteomics</h4></div>' +
 							'<div class="availableOmicsBox" title="bedbasedomic"><h4><a href="javascript:void(0)"><i class="fa fa-plus-circle"></i></a> Region based omic</h4></div>' +
-							'<div class="availableOmicsBox" title="otheromic"><h4><a href="javascript:void(0)"><i class="fa fa-plus-circle"></i></a> Other omic</h4></div>'
+							'<div class="availableOmicsBox" title="otheromic"><h4><a href="javascript:void(0)"><i class="fa fa-plus-circle"></i></a> Other omics</h4></div>'
 						}, {
 							xtype: "container",
 							id: "submittingPanelsContainer",
@@ -548,11 +548,10 @@ function OmicSubmittingPanel(nElem, options) {
 								filterOnLoad:true,
 								filters: [{property: 'type', value : 'list'}]
 							}),
-
 							helpTip: "Specify the type of data for uploaded file (Relevant Genes list, Relevant proteins list,...)."
 						}, {
 							xtype: 'combo',
-							fieldLabel: 'Map to',
+							fieldLabel: 'Can be mapped to',
 							name: this.namePrefix + '_match_type',
 							hidden: this.omicName !== "",
 							itemId: "mapToSelector",
@@ -564,12 +563,14 @@ function OmicSubmittingPanel(nElem, options) {
 							store: Ext.create('Ext.data.ArrayStore', {
 								fields: ['name', 'value'],
 								data: [
-									['Gene', 'gene'],
-									['Compound', 'compound']
+									['Genes', 'gene'],
+									['Metabolites', 'compound']
 								]
-							})
-						}]
-					}, ],
+							}),
+							helpTip: "Defines whether the data can be assigned to Genes or to Metabolites, for example  the values of concentration for proteins that can be mapped to the corresponding codifying gene."
+						}
+					]},
+				],
 					isValid: function() {
 						var valid = true;
 

@@ -456,6 +456,11 @@ function PA_Step3PathwayClassificationView() {
 		var mainClassifications = [], secondClassifications = [], mainClassificationInstance, secClassificationInstance, drilldownAux;
 		var classificationID, secondClassificationID;
 
+		// var totalPathways = 0;
+		// for(var i in pathways){
+		// 	if(pathways[i].visible){totalPathways++;}
+		// }
+
 		for (classificationID in classificationData){
 			mainClassificationInstance = classificationData[classificationID];
 
@@ -690,6 +695,31 @@ function PA_Step3PathwayClassificationView() {
 					pathwaysVisibility.push(this.id);
 				}
 			});
+
+			// TODO: UPDATE CLASSIFICATION DISTRIBUTION AND HIDE SECTOS AT THE PIE CHART
+			//
+			// var classificationData = me.getParent().getClassificationData();
+			// var indexedPathways = me.getParent().getIndexedPathways();
+			// var pathways = me.getModel().getPathways();
+			// var mainClassificationID, secClassificationID;
+			//
+			// //RESET CLASSIFICATION COUNTERS
+			// for(var i in classificationData){
+			// 	classificationData[i].count=0;
+			// 	for(var j in classificationData[i].children){
+			// 		classificationData[i].children[j].count=0
+			// 	}
+			// }
+			//
+			// for(var i in pathways){
+			// 	mainClassificationID = pathways[i].getClassification().split(";")[0].toLowerCase().replace(/ /g,"_")
+			// 	secClassificationID = pathways[i].getClassification().split(";")[1].toLowerCase().replace(/ /g,"_")
+			// 	if(!pathways[i].visible){
+			// 		classificationData[mainClassificationID].count++;
+			// 		classificationData[mainClassificationID].children[secClassificationID].count++;
+			// 	}
+			// }
+
 			me.getParent().setVisualOptions("pathwaysVisibility", pathwaysVisibility);
 
 			/********************************************************/
@@ -2027,7 +2057,11 @@ function PA_Step3PathwayClassificationView() {
 
 	function PA_Step3PathwayDetailsView() {
 		/**
-		* About this view: TODO: DOCUMENTAR
+		* About this view: this view shows the details for a given pathway.
+		* Some examples of details are: a table showing the # of matched features
+		* for each omics type and the computed p-value, the main and secondary
+		* classification and the line charts showing the trend for each omics type.
+		* This view is used both in Step 3 and in Step 4
 		**/
 		/*********************************************************************
 		* ATTRIBUTES
@@ -2043,10 +2077,10 @@ function PA_Step3PathwayClassificationView() {
 		***********************************************************************/
 		/**
 		* This function apply the settings that user can change
-		* for the visual representation of the model (w/o reload everything).
+		* for the visual representation of the model (w/o reloading everything).
 		* - STEP 1. Update the name of the pathway and the classification
 		* - STEP 2. Fill the information about metagenes, 3 ALTERNATIVES
-		*    - STEP 2.A IF WE ARE COLORING BY CLASSIFICAITON JUST IGNORE
+		*    - STEP 2.A IF WE ARE COLORING BY CLASSIFICATION JUST IGNORE
 		*    - STEP 2.B IF WE DO NOT HAVE DATA FOR CURRENT PATHWAY
 		*    - STEP 2.C UPDATE THE HEATMAP AND THE PLOT
 		* - STEP 3. ENABLE SOME EVENT HANDLERS
@@ -2061,26 +2095,46 @@ function PA_Step3PathwayClassificationView() {
 			/* STEP 1. Update the name of the pathway and the classificatio */
 			/****************************************************************/
 			$(componentID + " .pathwayNameLabel h4").text(this.getModel().getName());
-			$(componentID + " .pathwayClassificationLabel").html("<b>Classification:</b><ul style='margin: 0;'>" + "<li>" + this.getModel().getClassification().replace(";","</li><li>") + "</li></ul>");
+			$(componentID + " .pathwayClassificationLabel").html(
+				"<b>Classification:</b>"+
+				"<ul style='margin: 0;'>" +
+				"  <li>" + this.getModel().getClassification().replace(";","</li><li>") + "</li>" +
+				"</ul>");
+
+			/*******************************************************************/
+			/* STEP 2. Fill the information about matched features and p-values*/
+			/*******************************************************************/
+			if(this.getParent().getName() !== "PA_Step3PathwayNetworkTooltipView"){
+				var htmlCode = '<tbody><tr><th></th><th>Matched<br>features</th><th>p-value</th></tr>';
+				var significanceValues = this.getModel().getSignificanceValues();
+				var renderedValue;
+				for (var i in significanceValues) {
+						renderedValue = (significanceValues[i][2] > 0.001 || significanceValues[i][2] === 0) ? parseFloat(significanceValues[i][2]).toFixed(6) : parseFloat(significanceValues[i][2]).toExponential(4);
+						htmlCode += '<tr><td>' + i + '</td><td>' + significanceValues[i][0] + ' (' + significanceValues[i][1] + ')</td><td>' + renderedValue + '</td></tr>';
+				}
+				htmlCode+='</tbody>';
+				$(componentID + " .pathwaySummaryTable").html('<table style="padding: 10px;text-align: center;">'+ htmlCode + '</table>');
+			}
 
 			/****************************************************************/
-			/* STEP 2. Fill the information about metagenes                 */
+			/* STEP 3. Fill the information about metagenes                 */
 			/****************************************************************/
 			var pathwayPlotwrappers = $(componentID + " .pathwayPlotwrappers");
 			pathwayPlotwrappers.empty();
 
+			//For each omics type
 			for(var i in omicDataType){
 				var metagenes = this.getModel().metagenes[omicDataType[i]];
 				if(omicDataType[i] === "classification"){
 					/****************************************************************/
-					/* STEP 2.A IF WE ARE COLORING BY CLASSIFICAITON JUST IGNORE    */
+					/* STEP 3.A IF WE ARE COLORING BY CLASSIFICAITON JUST IGNORE    */
 					/****************************************************************/
 					pathwayPlotwrappers.html('<div class="step3ChartWrapper" style="background-image: url(\'' + location.pathname + "kegg_data/" +  this.getModel().getID() + '_thumb\')"></div>');
 					this.getComponent().setHeight(200);
 					break;
 				}else if (metagenes === undefined){
 					/****************************************************************/
-					/* STEP 2.B IF WE DO NOT HAVE DATA FOR CURRENT PATHWAY          */
+					/* STEP 3.B IF WE DO NOT HAVE DATA FOR CURRENT PATHWAY          */
 					/****************************************************************/
 					pathwayPlotwrappers.append(
 						"<h4 style='color: #D16949;font-size: 13px;margin: 0;'>" + omicDataType[i] + "</h4>"+
@@ -2089,7 +2143,7 @@ function PA_Step3PathwayClassificationView() {
 					this.getComponent().setHeight(120);
 				}else{
 					/****************************************************************/
-					/* STEP 2.C UPDATE THE HEATMAP AND THE PLOT                     */
+					/* STEP 3.C UPDATE THE HEATMAP AND THE PLOT                     */
 					/****************************************************************/
 					var divName = this.getComponent().getId() + "_" + omicDataType[i].replace(/ /g, "_").toLowerCase();
 					pathwayPlotwrappers.append(
@@ -2114,7 +2168,7 @@ function PA_Step3PathwayClassificationView() {
 				}
 			}
 			/****************************************************************/
-			/* STEP 3. ENABLE SOME EVENT HANDLERS                           */
+			/* STEP 4. ENABLE SOME EVENT HANDLERS                           */
 			/****************************************************************/
 			$("#" + me.getComponent().getId() + " a.twoOptionsButton").click( function(){
 				var parent = $(this).parent(".twoOptionsButtonWrapper");
@@ -2225,17 +2279,6 @@ function PA_Step3PathwayClassificationView() {
 			yAxisItem;
 
 
-			var scale = function(x, min, max) {
-				//SCALE FROM [min, max] TO [a, b]
-				//f(x) = (((b - a)*(x - min))/(max - min)) + a
-				//SCALE FROM [min, max] TO [-1, 1]
-				//f(x) = (((1 + 1)*(x - min))/(max - min)) - 1
-				//     = ((2 * (x - min))/(max - min)) - 1
-				var a = -1,
-				b = 1;
-				return ((x === 0) ? 0 : ((((b - a) * (x - min)) / (max - min)) + a));
-			};
-
 			//1.FILL THE STORE DATA [{name:"timepoint 1", "Gene Expression": -0.8, "Proteomics":-1.2,... },{name:"timepoint2", ...}]
 			for (var i in metagenes) {
 				scaledValues = [];
@@ -2244,7 +2287,7 @@ function PA_Step3PathwayClassificationView() {
 				var limits = getMinMax(dataDistributionSummaries[omicName], 'p10p90');
 				for (var j in featureValues) {
 					//SCALE THE VALUE
-					tmpValue = scale(featureValues[j], limits.min, limits.max);
+					tmpValue = scaleValue(featureValues[j], limits.min, limits.max);
 					tmpValue = featureValues[j];
 					//UPDATE MIN MAX (TO ADJUST THE AXIS)
 					maxVal = Math.max(tmpValue, maxVal);
@@ -2258,10 +2301,15 @@ function PA_Step3PathwayClassificationView() {
 					});
 				}
 
+				var parentAux = this.getParent("PA_Step3PathwayNetworkView");
+				if(parentAux === null){
+					parentAux = this.getParent();
+				}
+
 				series.push({
 					name: "Cluster " + metagenes[i].cluster,
 					type: 'spline',
-					color: this.getParent("PA_Step3PathwayNetworkView").getClusterColor(metagenes[i].cluster),
+					color: parentAux.getClusterColor(metagenes[i].cluster),
 					startOnTick: false,
 					endOnTick: false,
 					data: scaledValues,
@@ -2324,6 +2372,7 @@ function PA_Step3PathwayClassificationView() {
 				"<div class='mainInfoPanel' >" +
 				"  <div class='pathwayNameLabel' style='padding:2px 0px'><h4 style='font-size: 13px;margin: 0;'></h4></div>" +
 				"  <div class='pathwayClassificationLabel' style='padding:2px 0px'></div>" +
+				"  <div class='pathwaySummaryTable'></div>" +
 				"  <div class='pathwayPlotwrappers'></div>" +
 				"</div>",
 				listeners: {
@@ -2383,7 +2432,6 @@ function PA_Step3PathwayClassificationView() {
 				if (pathwayModel.getID() === this.getModel().getOrganism() + "01100") {
 					continue;
 				}
-
 				pathwayData = {
 					// selected: pathwayModel.isSelected(),
 					pathwayID: pathwayModel.getID(),
@@ -2392,6 +2440,7 @@ function PA_Step3PathwayClassificationView() {
 					matchedCompounds: pathwayModel.getMatchedCompounds().length,
 					combinedSignificancePvalue: pathwayModel.getCombinedSignificanceValues(),
 					mainCategory: pathwayModel.getClassification().split(";")[0],
+					secCategory: pathwayModel.getClassification().split(";")[1],
 					visible: pathwayModel.isVisible()
 				};
 
@@ -2456,23 +2505,27 @@ function PA_Step3PathwayClassificationView() {
 					dataIndex: 'pathwayID',
 					hidden: true
 				}, {
-					text: 'Title', dataIndex: 'title',
-					filterable: true, flex: 1,
+					text: 'Pathway name', dataIndex: 'title', filterable: true, flex: 1,
+				}, {
+					text: '', dataIndex: 'classification',
+					filterable: true, width:10, resizable: false,
 					renderer: function(value, metadata, record) {
-						return '<i class="fa fa-square" style="color:' + me.getParent().getClassificationColor(record.get("mainCategory").toLowerCase().replace(/ /g, "_"), []) + ';"></i> ' + value;
+						metadata.style = "height: 33px; padding: 0; width: 10px; background-color:"+me.getParent().getClassificationColor(record.get("mainCategory").toLowerCase().replace(/ /g, "_"), [])+";";
+						metadata.tdAttr = 'data-qtip="' + "<b>Classification</b><br>" + record.get("mainCategory") + "<br>" + record.get("secCategory") + '"';
+						return '';
 					}
 				}, {
-					text: 'Matched features',
+					text: 'Features',
 					columns: [{
-						text: 'Genes',
+						text: 'Genes', cls:"header-90deg",
 						sortable: true,
-						align: "center",
+						align: "center", width: 50,
 						filter: {type: 'numeric'},
 						dataIndex: 'matchedGenes'
 					}, {
-						text: 'Compounds',
+						text: 'Metabolites', cls:"header-90deg",
 						sortable: true,
-						align: "center",
+						align: "center", width: 50,
 						filter: {type: 'numeric'},
 						dataIndex: 'matchedCompounds'
 					}]
@@ -2487,6 +2540,7 @@ function PA_Step3PathwayClassificationView() {
 				matchedCompounds: {name: "matchedCompounds", defaultValue: '0'},
 				combinedSignificancePvalue: {name: "combinedSignificancePvalue", defaultValue: ''},
 				mainCategory: {name: "mainCategory",defaultValue: ''},
+				secCategory: {name: "secCategory",defaultValue: ''},
 				visible: {name: "visible", defaultValue: true}
 			};
 
@@ -2500,19 +2554,27 @@ function PA_Step3PathwayClassificationView() {
 			//ADD AN ADDITIONAL COLUMN WITH THE COMBINED pValue IF #OMIC > 1
 			if (secondaryColumns.length > 1) {
 				secondaryColumns.push({
-					text: 'Combined </br>pValue',
+					text: 'Combined </br>pValue', cls:"header-45deg",
 					dataIndex: 'combinedSignificancePvalue',
 					sortable: true,filter: {type: 'numeric'}, align: "center",
-					minWidth: 100, flex:1,
+					minWidth: 100, flex:1, height:75,
 					renderer: function(value, metadata, record) {
 						var myToolTipText = "<b style='display:block; width:200px'>" + metadata.column.text + "</b>";
+						metadata.style = "height: 33px; font-size:10px;"
 						if (value === '') {
 							myToolTipText = myToolTipText + "<i>No data for this pathway</i>";
 							metadata.tdAttr = 'data-qtip="' + myToolTipText + '"';
+							metadata.style += " background-color:#D4D4D4;";
 							return "-";
 						}
+
+						if(value <= 0.065){
+							var color = Math.round(161 * (value/0.065));
+							metadata.style += "background-color:rgb(255, " + color +"," + color + ");";
+						}
+
 						//RENDER THE VALUE -> IF LESS THAN 0.05, USE SCIENTIFIC NOTATION
-						return (value > 0.001 || value === 0) ? parseFloat(value).toFixed(6) : parseFloat(value).toExponential(4);
+						return (value > 0.001 || value === 0) ? parseFloat(value).toFixed(5) : parseFloat(value).toExponential(4);
 					}
 				});
 			}
@@ -2579,14 +2641,22 @@ function PA_Step3PathwayClassificationView() {
 			var renderFunction = function(value, metadata, record) {
 				var myToolTipText = "<b style='display:block; width:200px'>" + metadata.column.text + "</b>";
 				//IF THERE IS NOT DATA FOR THIS PATHWAY, FOR THIS OMIC, PRINT A '-'
+				metadata.style = "height: 33px; font-size:10px;"
+
 				if (value === "-") {
 					myToolTipText = myToolTipText + "<i>No data for this pathway</i>";
 					metadata.tdAttr = 'data-qtip="' + myToolTipText + '"';
+					metadata.style += "background-color:#D4D4D4;";
 					return "-";
 				}
 				//RENDER THE VALUE -> IF LESS THAN 0.05, USE SCIENTIFIC NOTATION
-				var renderedValue = (value > 0.001 || value === 0) ? parseFloat(value).toFixed(6) : parseFloat(value).toExponential(4);
+				var renderedValue = (value > 0.001 || value === 0) ? parseFloat(value).toFixed(5) : parseFloat(value).toExponential(4);
 				var omicName = "-" + metadata.column.text.toLowerCase().replace(/ /g, "-");
+
+				if(value <= 0.065){
+					var color = Math.round(225 * (value/0.065));
+					metadata.style += "background-color:rgb(255, " + color +"," + color + ");";
+				}
 
 				//ELSE, GENERATE SUMMARY TIP
 				myToolTipText = myToolTipText + "Features matched: " + record.get('totalMatched' + omicName) + "</br>";
@@ -2600,8 +2670,8 @@ function PA_Step3PathwayClassificationView() {
 			for (var i in omics) {
 				omicName = "-" + omics[i].omicName.toLowerCase().replace(/ /g, "-");
 				columns.push({
-					text: omics[i].omicName,
-					dataIndex: 'pValue' + omicName,
+					text: omics[i].omicName.replace(" ","</br>"), cls:"header-45deg",
+					dataIndex: 'pValue' + omicName, width:90,
 					flex: 1, hidden : hidden, sortable: true, align: "center",
 					filter: {type: 'numeric'},
 					renderer: renderFunction
@@ -2640,17 +2710,16 @@ function PA_Step3PathwayClassificationView() {
 		*/
 		this.initComponent = function() {
 			var me = this;
-
 			this.component = Ext.widget({
 				xtype: 'container', cls: "contentbox", items: [
 					{xtype: 'box', flex: 1, html: '<h2>Matched Pathways</h2>'},
 					{
 						xtype: "livesearchgrid", itemId: 'pathwaysGridPanel',
 						searchFor: "title",
-						defaults: {border: false}, columnLines: true,
+						defaults: {border: false}, columnLines: true, stripeRows:false,
 						download: {
 							title: 'Paintomics pathways ' + me.getModel().getJobID(),
-							ignoreColums: [1, 9]
+							ignoreColums: [1]
 						},
 						store: Ext.create('Ext.data.Store', {
 							fields: ['name', 'email', 'phone']
