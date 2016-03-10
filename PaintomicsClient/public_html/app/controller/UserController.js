@@ -104,7 +104,12 @@ function UserController() {
                     if (userViewsDialog != null) {
                         userViewsDialog.close();
                     }
-                    showSuccessMessage("Welcome back " + response.userName, {message: "Sign in successfully, you will be redirected automatically.", logMessage: "Signed in as " + response.userName, callback: function () {
+
+                    showSuccessMessage(
+                      "Welcome back " + response.userName, {
+                        message: (response.loginMessage !== null ? response.loginMessage.message_content: ""),
+                        logMessage: "Signed in as " + response.userName,
+                        callback: function () {
                             application.getController("JobController").resetButtonClickHandler(null, true);
                         }
                     });

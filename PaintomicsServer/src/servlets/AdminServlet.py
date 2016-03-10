@@ -23,11 +23,17 @@ import json
 from os import path as os_path
 from shutil import rmtree as shutil_rmtree
 
+#CPU MONITOR
+import psutil
+from time import sleep
+
 from src.common.UserSessionManager import UserSessionManager
 from src.common.ServerErrorManager import handleException
 from src.common.DAO.UserDAO import UserDAO
 from src.common.DAO.JobDAO import JobDAO
 from src.common.DAO.FileDAO import FileDAO
+from src.common.DAO.MessageDAO import MessageDAO
+from src.classes.Message import Message
 
 from src.common.Util import sendEmail
 
@@ -35,6 +41,12 @@ from src.conf.serverconf import MONGODB_HOST, MONGODB_PORT, ROOT_DIRECTORY, KEGG
 from src.servlets.DataManagementServlet import dir_total_size
 
 def adminServletGetInstalledOrganisms(request, response):
+    """
+    This function...
+
+    @param {Request} request, the request object
+    @param {Response} response, the response object
+    """
     try :
         logging.info("STEP0 - CHECK IF VALID USER....")
         #****************************************************************
@@ -285,7 +297,8 @@ def adminServletSendReport(request, response):
 
 def adminServletGetAllUsers(request, response):
     """
-    This function...
+    This function obtains a list of all the users registered in the system including different details
+    such as the used space, the registration date, etc.
 
     @param {Request} request, the request object
     @param {Response} response, the response object
@@ -382,3 +395,178 @@ def adminServletCleanOldData(request, response):
 
     finally:
         return response
+
+def adminServletSaveMessage(request, response):
+    try:
+        #****************************************************************
+        # Step 0.CHECK IF VALID USER SESSION
+        #****************************************************************
+        logging.info("STEP0 - CHECK IF VALID USER....")
+        userID  = request.cookies.get('userID')
+        sessionToken  = request.cookies.get('sessionToken')
+
+        #ONLY ADMIN USER (id=0) CAN ADD MESSAGES
+        if(userID != "0"):
+            userID="-1"
+
+        UserSessionManager().isValidUser(userID, sessionToken)
+        #****************************************************************
+        # Step 1.SAVE THE MESSAGE IN THE DATABASE
+        #****************************************************************
+        messageInstance = Message(request.form.get("message_type"))
+        messageInstance.message_content = request.form.get("message_content")
+
+        #****************************************************************
+        # Step 2. SAVE THE MESSAGE
+        #****************************************************************
+        daoInstance = MessageDAO()
+        daoInstance.removeAll(otherParams={"message_type" : messageInstance.message_type})
+        daoInstance.insert(messageInstance)
+
+        response.setContent({"success": True })
+
+    except Exception as ex:
+        handleException(response, ex, __file__ , "adminServletSaveMessage")
+    finally:
+        return response
+
+def adminServletGetMessage(request, response):
+    try:
+        #****************************************************************
+        # Step 0.CHECK IF VALID USER SESSION
+        #****************************************************************
+        message_type = request.form.get("message_type")
+
+        if(message_type != "starting_message"):
+            logging.info("STEP0 - CHECK IF VALID USER....")
+            userID  = request.cookies.get('userID')
+            sessionToken  = request.cookies.get('sessionToken')
+
+            UserSessionManager().isValidUser(userID, sessionToken)
+
+        #****************************************************************
+        # Step 1.GET THE MESSAGES FROM THE DATABASE
+        #****************************************************************
+        daoInstance = MessageDAO()
+        matchedMessages = daoInstance.findAll(otherParams={"message_type" : message_type})
+
+        response.setContent({"success": True, "messageList" : matchedMessages})
+
+    except Exception as ex:
+        handleException(response, ex, __file__ , "adminServletGetMessage")
+    finally:
+        return response
+
+def adminServletDeleteMessage(request, response):
+    try:
+        #****************************************************************
+        # Step 0.CHECK IF VALID USER SESSION
+        #****************************************************************
+        logging.info("STEP0 - CHECK IF VALID USER....")
+        userID  = request.cookies.get('userID')
+        sessionToken  = request.cookies.get('sessionToken')
+
+        #ONLY ADMIN USER (id=0) CAN REMOVE MESSAGES
+        if(userID != "0"):
+            userID="-1"
+
+        UserSessionManager().isValidUser(userID, sessionToken)
+
+        #****************************************************************
+        # Step 1.GET THE MESSAGES FROM THE DATABASE
+        #****************************************************************
+        message_type = request.form.get("message_type")
+        daoInstance = MessageDAO()
+        daoInstance.removeAll(otherParams={"message_type" : message_type})
+
+        response.setContent({"success": True})
+
+    except Exception as ex:
+        handleException(response, ex, __file__ , "adminServletDeleteMessage")
+    finally:
+        return response
+
+def adminServletMonitorCPU(request, response):
+    """
+    This function...
+
+    @param {Request} request, the request object
+    @param {Response} response, the response object
+    """
+    try:
+        #****************************************************************
+        # Step 0.CHECK IF VALID USER SESSION
+        #****************************************************************
+        logging.info("STEP0 - CHECK IF VALID USER....")
+        userID  = request.cookies.get('userID')
+        sessionToken  = request.cookies.get('sessionToken')
+
+        #ONLY ADMIN USER (id=0) CAN UPLOAD NEW INBUILT GTF FILES
+        if(userID != "0"):
+            userID="-1"
+
+        UserSessionManager().isValidUser(userID, sessionToken)
+
+        cpu_usage = []
+        for x in range(5):
+            cpu_usage.append(psutil.cpu_percent(interval=1, percpu=True))
+        return response.setContent({"success": True, "cpu_usage" : cpu_usage}).getResponse()
+
+    except Exception as ex:
+        handleException(response, ex, __file__ , "monitorCPU")
+    finally:
+        return response
+
+def adminServletMonitorRAM(request, response):
+    """
+    This function...
+
+    @param {Request} request, the request object
+    @param {Response} response, the response object
+    """
+    try:
+        #****************************************************************
+        # Step 0.CHECK IF VALID USER SESSION
+        #****************************************************************
+        logging.info("STEP0 - CHECK IF VALID USER....")
+        userID  = request.cookies.get('userID')
+        sessionToken  = request.cookies.get('sessionToken')
+
+        #ONLY ADMIN USER (id=0) CAN UPLOAD NEW INBUILT GTF FILES
+        if(userID != "0"):
+            userID="-1"
+
+        UserSessionManager().isValidUser(userID, sessionToken)
+
+        ram_usage = []
+        swap_usage = []
+        for x in range(5):
+            ram_usage.append(adapt_values(psutil.virtual_memory()))
+            swap_usage.append(adapt_values(psutil.swap_memory()))
+            sleep(1)
+        return response.setContent({"success": True, "ram_usage" : ram_usage, "swap_usage":swap_usage}).getResponse()
+
+    except Exception as ex:
+        handleException(response, ex, __file__ , "monitorCPU")
+    finally:
+        return response
+
+def bytes2human(n):
+    symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
+    prefix = {}
+    for i, s in enumerate(symbols):
+        prefix[s] = 1 << (i + 1) * 10
+    for s in reversed(symbols):
+        if n >= prefix[s]:
+            value = float(n) / prefix[s]
+            return '%.1f%s' % (value, s)
+    return "%sB" % n
+
+def adapt_values(nt):
+    values=[]
+    for name in nt._fields:
+        value = getattr(nt, name)
+        if name != 'percent':
+            value = bytes2human(value)
+        values.append(value)
+    return values

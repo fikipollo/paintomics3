@@ -33,6 +33,7 @@
 * - showErrorMessage
 * - ajaxErrorHandler
 * - extJSErrorHandler
+* - scaleValue
 *
 */
 function Observer() {
@@ -227,6 +228,8 @@ function showMessage(title, data) {
 
     title = '<i class="fa fa-' + data.icon + '"></i> ' + title;
 
+    message = message.replace(/\[b\]/g, "<b>").replace(/\[\/b\]/g, "</b>").replace(/\[br\]/g, "</br>").replace(/\[ul\]/g, "<ul>").replace(/\[\/ul\]/g, "</ul>").replace(/\[li\]/g, "<li>").replace(/\[\/li\]/g, "</li>");
+
     var buttonClass, color, icon, dialogClass;
     if (messageType === "error") {
         console.error(Date.logFormat() + logMessage);
@@ -280,7 +283,7 @@ function showMessage(title, data) {
             $("#reportErrorButton").css({display:"none"});
         }
 
-        messageDialog.setHeight(height);
+        messageDialog.setHeight($("#messageDialogPanel").outerHeight()+ 30);
         messageDialog.setWidth(width);
         messageDialog.center();
     };
@@ -414,6 +417,20 @@ function sendReportMessage(type, message, fromEmail, fromName){
         error: ajaxErrorHandler
     });
 }
+
+/**
+* This function scales a given value for an intervale min/max
+*/
+function scaleValue(x, min, max) {
+  //SCALE FROM [min, max] TO [a, b]
+  //f(x) = (((b - a)*(x - min))/(max - min)) + a
+  //SCALE FROM [min, max] TO [-1, 1]
+  //f(x) = (((1 + 1)*(x - min))/(max - min)) - 1
+  //     = ((2 * (x - min))/(max - min)) - 1
+  var a = -1,
+  b = 1;
+  return ((x === 0) ? 0 : ((((b - a) * (x - min)) / (max - min)) + a));
+};
 
 
 /*********************************************************************************

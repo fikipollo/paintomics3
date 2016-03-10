@@ -1,0 +1,14 @@
+
+Changelog (v0.4.1) - 2016-03-10
+
+	- Fixed problems when logging in the application (thanks Paul Vu).  
+	- New ranking table visualization: now the table is colored by significance (p-value), a nice tool to identify the enriched functions.  
+	- Improved administration tools. Fixed issues when installing new species. 
+	- Added this nice messaging system. 
+	- Fixed some issues with panel layouts during pathway visualization 
+	- Added new information about trends at pathway visualization 
+	- Clustering for metagenes trends now uses silhouette method to approximate the optimal number of clusters (thanks Sonia and Monica) 
+	- Removed GI download from specie installation (not longer supported by KEGG)
+
+
+

@@ -114,7 +114,7 @@ function MainView() {
 				xtype: "box",
 				cls: "toolbar mainTopToolbar",
 				region: 'north',
-				html: '<div id="header"><img src="resources/images/paintomics_150x150.png" alt="Paintomics logo"><h1> PaintOmics <span style="font-size: 10px;">' + APP_VERSION + '</span></h1></div>' +
+				html: '<div id="header"><img src="resources/images/paintomics_150x150.png" alt="Paintomics logo"><h1> PaintOmics 3<span style="font-size: 8px; margin-left:10px;">' + APP_VERSION + '</span></h1></div>' +
 					'<a href="javascript:void(0)" class="button cancelButton loggedOption" data-name="logout" id="logoutButton"><i class="fa fa-sign-out"></i> Log out</a>'
 			}, {
 				xtype: "box",
@@ -151,10 +151,9 @@ function MainView() {
 					"</ul>"
 			}, {
 				xtype: 'panel', itemId: 'mainViewCenterPanel', id: 'mainViewCenterPanel',
-				flex: 1,
-				region: 'center',
-				overflowY: "auto",
+				flex: 1, region: 'center', overflowY: "auto",
 				defaults: {border: 0},
+				layout: {type: 'vbox', pack: 'start', align: 'stretch'},
 				items: []
 			}],
 			listeners: {
@@ -185,13 +184,27 @@ function MainView() {
 						});
 					});
 
+					//TODO: AQUI
 					if (Ext.util.Cookies.get("silence") != null) {
 						console.log("Message already shown, ignoring.");
 					} else {
-						showInfoMessage("Welcome to Paintomics!", {
-							message: "Please note that this is a <b>beta version</b>, which means that some features are not finished and we'\''re still working on it.<br>It also means that some changes may imply that your data could be removed in spite of we always look to keep them when upgrading.<br>Thank you very much for using Paintomics and we will appreciate your <a href='\''mailto:rhernandez@cipf.es'\'' target='\''_blank'\''>feedback</a>.",
-							showButton: true
-						})
+						$.ajax({
+                type: "POST",
+                url: SERVER_URL_GET_MESSAGE,
+                data: {message_type: "starting_message"},
+                success: function (response) {
+                    if (response.success === false) {
+                        return;
+                    }
+										if(response.messageList.length > 0){
+											showInfoMessage("Welcome to Paintomics!", {
+												message: response.messageList[0].message_content,
+												showButton: true
+											})
+										}
+                },
+                error: ajaxErrorHandler
+            });
 					}
 				},
 				resize: function(){
