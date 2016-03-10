@@ -110,7 +110,7 @@ class PathwayAcquisitionJob(Job):
             nConditions, error = self.validateFile(inputOmic, nConditions, error)
 
         if error != "":
-            raise Exception("Errors detected in input files, please fix the following issues and try again:" + error)
+            raise Exception("[b]Errors detected in input files, please fix the following issues and try again:[/b][br]" + error)
 
         return True
 
@@ -185,10 +185,12 @@ class PathwayAcquisitionJob(Job):
                     try:
                         map(float, line[1:len(line)])
                     except:
-                        erroneousLines[nLine] = erroneousLines.get(nLine,  "   > Line " + str(nLine) + ":") + "Line contains invalid values."
+                        if(" ".join(line[1:len(line)]).count(",") > 0):
+                            erroneousLines[nLine] = erroneousLines.get(nLine,  "[li]Line " + str(nLine) + ":") + "Perhaps you are using commas instead of dots as decimal mark? [/li]"
+                        else:
+                            erroneousLines[nLine] = erroneousLines.get(nLine,  "[li]Line " + str(nLine) + ":") + "Line contains invalid values or symbols.[/li]"
 
                     if len(erroneousLines)  > 9:
-                        error +=  " - Too many errors detected while processing " + inputOmic.get("inputDataFile") + ", skipping remaining lines...\n"
                         break
 
             inputDataFile.close()
@@ -197,9 +199,14 @@ class PathwayAcquisitionJob(Job):
             # STEP 3. CHECK THE ERRORS AND RETURN
             #*************************************************************************
             if len(erroneousLines)  > 0:
-                error += " - Errors detected while processing " + inputOmic.get("inputDataFile") + ":\n"
+                error += "Errors detected while processing " + inputOmic.get("inputDataFile") + ":\n"
+                error += "[ul]"
                 for k in sorted(erroneousLines.keys()):
                     error+= erroneousLines.get(k) + "\n"
+                error += "[/ul]"
+
+                if len(erroneousLines)  > 9:
+                    error +=  "Too many errors detected while processing " + inputOmic.get("inputDataFile") + ", skipping remaining lines...\n"
         else:
             error += " - Error while processing " + omicName + ": File " + inputOmic.get("inputDataFile") + "not found.\n"
 

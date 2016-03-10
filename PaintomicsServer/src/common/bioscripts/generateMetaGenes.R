@@ -180,7 +180,6 @@ if(is.null(args$kclusters)) {
     args$kclusters <- max(valid)
   }
   
-  args$kclusters <- max(6, args$kclusters)
 }
 
 if(args$cluster=="hierarchical"){

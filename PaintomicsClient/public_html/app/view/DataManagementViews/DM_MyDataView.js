@@ -85,8 +85,8 @@ function DM_MyDataListView() {
 							'<div id="about">'+
 							'  <h2>My Data</h2>'+
 							'   <table id="myDataUserDetails"><tbody>' +
-							'     <tr><td><b>User name:</b></td><td>Rafa</td></tr>' +
-  						'     <tr><td><b>Email:</b></td><td>paintomics@cipf.es</td></tr>' +
+							'     <tr><td><b>User name:</b></td><td>' + Ext.util.Cookies.get('userName') + '</td></tr>' +
+  						'     <tr><td><b>Email:</b></td><td>' + Ext.util.Cookies.get('lastEmail') + '</td></tr>' +
   						'     <tr><td><b>Password:</b></td><td>************</td></tr>' +
   						'     <tr><td><b></b></td><td><a href="javascript:void(0)">Click here to change password</a></td></tr>' +
   						'  </tbody></table>' +

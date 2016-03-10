@@ -433,4 +433,3 @@ def dir_total_size(source):
             #TODO:ignore tmp dir
             total_size += dir_total_size(itempath)
     return total_size
-

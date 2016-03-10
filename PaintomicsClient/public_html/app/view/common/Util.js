@@ -228,6 +228,8 @@ function showMessage(title, data) {
 
     title = '<i class="fa fa-' + data.icon + '"></i> ' + title;
 
+    message = message.replace(/\[b\]/g, "<b>").replace(/\[\/b\]/g, "</b>").replace(/\[br\]/g, "</br>").replace(/\[ul\]/g, "<ul>").replace(/\[\/ul\]/g, "</ul>").replace(/\[li\]/g, "<li>").replace(/\[\/li\]/g, "</li>");
+
     var buttonClass, color, icon, dialogClass;
     if (messageType === "error") {
         console.error(Date.logFormat() + logMessage);
@@ -281,7 +283,7 @@ function showMessage(title, data) {
             $("#reportErrorButton").css({display:"none"});
         }
 
-        messageDialog.setHeight(height);
+        messageDialog.setHeight($("#messageDialogPanel").outerHeight()+ 30);
         messageDialog.setWidth(width);
         messageDialog.center();
     };

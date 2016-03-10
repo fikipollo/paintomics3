@@ -37,7 +37,6 @@ from src.servlets.AdminServlet import *
 from src.common.KeggInformationManager import KeggInformationManager
 from src.common.JobInformationManager import JobInformationManager
 
-
 class Application(object):
     #******************************************************************************************************************
     # CONSTRUCTORS
@@ -365,6 +364,30 @@ class Application(object):
         @self.app.route(SERVER_SUBDOMAIN + '/um_clean_old_data', methods=['OPTIONS', 'POST'])
         def cleanOldData():
             return adminServletCleanOldData(request, Response()).getResponse()
+        ##*******************************************************************************************
+        ##* SAVE/RETRIEVE THE INITIAL MESSAGE
+        ##*******************************************************************************************
+        @self.app.route(SERVER_SUBDOMAIN + '/um_save_message', methods=['OPTIONS', 'POST'])
+        def saveMessage():
+            return adminServletSaveMessage(request, Response()).getResponse()
+
+        @self.app.route(SERVER_SUBDOMAIN + '/um_get_message', methods=['OPTIONS', 'POST'])
+        def getMessage():
+            return adminServletGetMessage(request, Response()).getResponse()
+
+        @self.app.route(SERVER_SUBDOMAIN + '/um_delete_message', methods=['OPTIONS', 'POST'])
+        def deleteMessage():
+            return adminServletDeleteMessage(request, Response()).getResponse()
+
+        ##*******************************************************************************************
+        ##* MONITOR THE USAGE OF RAM AND CPU
+        ##*******************************************************************************************
+        @self.app.route(SERVER_SUBDOMAIN + '/um_cpu_monitor', methods=['OPTIONS', 'POST'])
+        def cpuMonitor():
+            return adminServletMonitorCPU(request, Response()).getResponse()
+        @self.app.route(SERVER_SUBDOMAIN + '/um_ram_monitor', methods=['OPTIONS', 'POST'])
+        def ramMonitor():
+            return adminServletMonitorRAM(request, Response()).getResponse()
 
         ##*******************************************************************************************
         ##* ADMIN SERVLETS HANDLERS - END

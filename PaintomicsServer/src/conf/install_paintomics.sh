@@ -31,6 +31,7 @@ db.createCollection("jobInstanceCollection");
 db.createCollection("pathwaysCollection");
 db.createCollection("userCollection");
 db.createCollection("fileCollection");
+db.createCollection("messageCollection");
 db.createCollection("counters")
 db.userCollection.insert({userID:"0",userName:"${ADMIN_USER}",email:"${ADMIN_EMAIL}",password:"${ADMIN_PASS}", affiliation:"${ADMIN_AFFILIATION}", activated:"True"})
 db.counters.insert({_id:"userID",sequence_value:1})

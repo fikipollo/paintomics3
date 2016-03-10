@@ -12,6 +12,13 @@ SERVER_URL_DM_RESTORE_ORGANISM_DATA = SERVER_URL + "dm_restore_organism_db_data"
 SERVER_URL_UM_GET_ALL_USERS = SERVER_URL + "um_get_all_users";
 SERVER_URL_UM_CLEAN_OLD_DATA = SERVER_URL + "um_clean_old_data";
 
+SERVER_URL_CPU_MONITOR = SERVER_URL + "um_cpu_monitor";
+SERVER_URL_RAM_MONITOR = SERVER_URL + "um_ram_monitor";
+
+SERVER_URL_SAVE_MESSAGE = SERVER_URL + "um_save_message";
+SERVER_URL_GET_MESSAGE = SERVER_URL + "um_get_message";
+SERVER_URL_DELETE_MESSAGE= SERVER_URL + "um_delete_message";
+
 OLD_DATABASE_WARNING = (60 * 60 * 24 * 1000) * 60; //60 DAYS
 OLD_DATABASE_ALERT = (60 * 60 * 24 * 1000) * 90; //90 DAYS
 OLD_GUEST_CREATION_ALERT = (60 * 60 * 24 * 1000) * 14; //14 DAYS
@@ -19,15 +26,10 @@ OLD_USER_LOGIN_ALERT = (60 * 60 * 24 * 1000) * 60; //60 DAYS
 
 $(function () {
     /****************************************************************************************
-    *     | |  | |/ ____|  ____|  __ \ / ____|
-    *     | |  | | (___ | |__  | |__) | (___
-    *     | |  | |\___ \|  __| |  _  / \___ \
-    *     | |__| |____) | |____| | \ \ ____) |
-    *      \____/|_____/|______|_|  \_\_____/
-    *
+    *  USERS
     *****************************************************************************************/
     /****************************************************************************************
-    * MODEL DECLARATION
+    * USER MODEL DECLARATION
     *****************************************************************************************/
     var User = Backbone.Model.extend({
         defaults: {
@@ -43,9 +45,7 @@ $(function () {
     });
     // Create a collection of users
     var UsersList = Backbone.Collection.extend({model: User});
-
     var users = new UsersList([]);
-
     /****************************************************************************************
     * VIEW DECLARATION
     *****************************************************************************************/
@@ -103,19 +103,15 @@ $(function () {
             // $("#editDatabaseModal").modal();
         }
     });
-    /****************************************************************************************
-    *      ______ _____ _      ______  _____
-    *     |  ____|_   _| |    |  ____|/ ____|
-    *     | |__    | | | |    | |__  | (___
-    *     |  __|   | | | |    |  __|  \___ \
-    *     | |     _| |_| |____| |____ ____) |
-    *     |_|    |_____|______|______|_____/
-    *
-    *****************************************************************************************/
 
-    /***************************************
-    * DEFINITION FOR FILE MODELS
-    ****************************************/
+
+
+    /****************************************************************************************
+    *  FILES
+    *****************************************************************************************/
+    /****************************************************************************************
+    * FILE MODEL DECLARATION
+    *****************************************************************************************/
     var File = Backbone.Model.extend({
         defaults: {
             fileName: 'My GTF file',
@@ -127,9 +123,7 @@ $(function () {
     });
     // Create a collection of files
     var FilesList = Backbone.Collection.extend({model: File});
-
     var files = new FilesList([]);
-
     /****************************************************************************************
     * VIEW DECLARATION
     *****************************************************************************************/
@@ -240,18 +234,15 @@ $(function () {
         }
     });
 
-    /****************************************************************************************
-    *     _____       _______       ____           _____ ______  _____
-    *    |  __ \   /\|__   __|/\   |  _ \   /\    / ____|  ____|/ ____|
-    *    | |  | | /  \  | |  /  \  | |_) | /  \  | (___ | |__  | (___
-    *    | |  | |/ /\ \ | | / /\ \ |  _ < / /\ \  \___ \|  __|  \___ \
-    *    | |__| / ____ \| |/ ____ \| |_) / ____ \ ____) | |____ ____) |
-    *    |_____/_/    \_\_/_/    \_\____/_/    \_\_____/|______|_____/
 
+
+
+    /****************************************************************************************
+    *  INSTALLED DATABASES
     *****************************************************************************************/
-    /***************************************
-    * DEFINITION FOR FILE MODELS
-    ****************************************/
+    /****************************************************************************************
+    * DATABASE MODEL DECLARATION
+    *****************************************************************************************/
     var Database = Backbone.Model.extend({
         defaults: {
             organism_name: 'My GTF file',
@@ -261,11 +252,9 @@ $(function () {
             mapping_date: ""
         }
     });
-    // Create a collection of files
+    // Create a collection of databases
     var DatabaseList = Backbone.Collection.extend({model: Database});
-
     var databases = new DatabaseList([]);
-
     /****************************************************************************************
     * VIEW DECLARATION
     *****************************************************************************************/
@@ -413,14 +402,123 @@ $(function () {
 
 
 
+
     /****************************************************************************************
-    *                _____  _____
-    *          /\   |  __ \|  __ \
-    *         /  \  | |__) | |__) |
-    *        / /\ \ |  ___/|  ___/
-    *       / ____ \| |    | |
-    *      /_/    \_\_|    |_|
-    *
+    *  MESSAGES
+    *****************************************************************************************/
+    /****************************************************************************************
+    * MESSAGE MODEL DECLARATION
+    *****************************************************************************************/
+    var Message = Backbone.Model.extend({
+        defaults: {
+            message_type: 'login_message',
+            message_content: ''
+        }
+    });
+    // Create a collection of messages
+    var MessageList = Backbone.Collection.extend({model: Message});
+    var messages = new MessageList([]);
+    /****************************************************************************************
+    * VIEW DECLARATION
+    *****************************************************************************************/
+    var MessageViewTable = Backbone.View.extend({
+        tagName: 'tr',
+        events: {
+            'click button.editButton': 'editMessage',
+            'click button.deleteButton': 'removeMessage'
+        },
+        initialize: function () {
+            this.listenTo(this.model, 'change', this.render);
+        },
+        render: function () {
+            this.$el.html(
+                '<td>' + this.model.get('message_type') + '</td>' +
+                '<td>' + this.model.get('message_content').substr(0,30)  + ' [...]</td>' +
+                '<td>'+
+                '   <button type="button" class="btn btn-warning editButton"><i class="fa fa-pencil"></i></button>'+
+               '    <button type="button" class="btn btn-danger deleteButton"><i class="fa fa-trash-o"></i></button>'+
+                '</td>'
+            );
+            return this;
+        },
+        editMessage: function () {
+            var view = new MessageViewDialog({model: this.model});
+            $("#messageEdit").html(view.render().el);
+            $("#editMessageModal").modal();
+        },
+        removeMessage: function () {
+            $.ajax({
+                type: "POST",
+                url: SERVER_URL_DELETE_MESSAGE,
+                dataType: "json",
+                data: {message_type: this.model.get("message_type")},
+                success: function (data) {
+                    showSuccessMessage("Message removed successfully", "#editMessageModal");
+                    $("#editMessageModal").modal('hide');
+                    application.updateMessageList();
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    showErrorMessage("Error while removing message.", "#editMessageModal");
+                }
+            });
+            return false;
+        }
+    });
+
+    var MessageViewDialog = Backbone.View.extend({
+        tagName: 'div',
+        events: {
+            'click button#saveChanges': 'saveChanges',
+        },
+        initialize: function () {
+            this.listenTo(this.model, 'change', this.render);
+        },
+        render: function () {
+            var me = this;
+
+            this.$el.html(
+                '<div>' +
+                '    <div class="form-group">' +
+                '        <label for="message_type">Message type:</label>' +
+                '        <input type="text" class="form-control" id="message_type" name="message_type" value="' + this.model.get('message_type') + '">' +
+                '    </div>' +
+                '    <div class="form-group">' +
+                '        <label for="message_content">Message:</label>' +
+                '        <textarea class="form-control" rows="5" id="message_content" name="message_content">' + this.model.get('message_content') + '</textarea>' +
+                '    </div>' +
+                '    <button class="btn btn-success" id="saveChanges" style=" margin-left: auto; display: block; margin-bottom: 20px; ">Save</button>' +
+                '</div>'
+            );
+            return this;
+        },
+        saveChanges: function () {
+            this.model.set("message_type", $("#message_type").val());
+            this.model.set("message_content", $("#message_content").val());
+
+            $.ajax({
+                type: "POST",
+                url: SERVER_URL_SAVE_MESSAGE,
+                dataType: "json",
+                data: {
+                    message_type: this.model.get("message_type"),
+                    message_content: this.model.get("message_content")
+                },
+                success: function (data) {
+                    showSuccessMessage("Message database updated successfully", "#editMessageModal");
+                    $("#editMessageModal").modal('hide');
+                    application.updateMessageList();
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    showErrorMessage("Error while saving message file.", "#editMessageModal");
+                }
+            });
+            return false;
+        }
+    });
+
+
+    /****************************************************************************************
+    *  APPLICATION
     *****************************************************************************************/
     // The main view of the application
     var App = Backbone.View.extend({
@@ -432,6 +530,11 @@ $(function () {
             $('#addGTFButton').click(function () {
                 var view = new FileViewDialog({model: new File()});
                 $("#gtfFileEdit").html(view.render().el);
+            });
+
+            $('#addMessageButton').click(function () {
+                var view = new MessageViewDialog({model: new Message()});
+                $("#messageEdit").html(view.render().el);
             });
 
             $('#installNewSpecieButton').click(function () {
@@ -471,6 +574,9 @@ $(function () {
             me.fileList = $('#gtffiles');
             this.updateGTFList();
 
+            me.messageList = $('#messagesTable');
+            this.updateMessageList();
+
             me.databasesList = $('#databases');
             this.updateDatabasesList();
 
@@ -501,6 +607,33 @@ $(function () {
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
                     showErrorMessage("Error while retrieving all GFT files.");
+                }
+            });
+        },
+        updateMessageList: function () {
+            var me = this;
+            me.messageList.empty();
+            messages.reset();
+
+            $.ajax({
+                type: "POST",
+                url: SERVER_URL_GET_MESSAGE,
+                dataType: "json",
+                success: function (data) {
+                    for (var i in data.messageList) {
+                        messages.push(new Message(data.messageList[i]));
+                    }
+
+                    me.listenTo(messages, 'change', me.render);
+
+                    messages.each(function (message) {
+                        var view = new MessageViewTable({model: message});
+                        me.messageList.append(view.render().el);
+                    }, me);
+
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    showErrorMessage("Error while retrieving all messages.");
                 }
             });
         },
@@ -544,6 +677,7 @@ $(function () {
                 }
             });
         },
+
         updateCommonDBs: function () {
             waitingDialog.show("Updating Common databases, please wait.<p style='font-size: 15px;margin: 8px 2px;color: #969696;'>This process could take up to 2 hours...</p>");
             $.ajax({
@@ -667,4 +801,214 @@ $(function () {
     });
 
     application = new App();
+
+    Highcharts.setOptions({global: {useUTC: false}});
+    initializeCPUMonitor();
+    initializeMemMonitor();
+
+    $("#enableMonitors").click(function(){
+        monitorTimers = !monitorTimers;
+        if(monitorTimers){
+            initializeCPUMonitor();
+            initializeMemMonitor();
+            $(this).text("Stop");
+        }else{
+            $(this).text("Resume");
+        }
+        return;
+    });
 });
+
+monitorTimers = false;
+
+function initializeCPUMonitor() {
+    $.ajax({
+        type: "POST",
+        url: SERVER_URL_CPU_MONITOR,
+        success: function (data) {
+            var nCPUs = data.cpu_usage[0].length;
+            var series = [];
+
+            for (var i = 0; i < nCPUs; i++) {
+                series.push({
+                    name: 'CPU' + (i + 1),
+                    data: (function () {
+                        var data = [];
+                        for (var k = -10; k < 0; k++) {
+                            data.push({x: k, y: 0});
+                        }
+                        return data;
+                    }())
+                });
+            }
+
+            $("#cpu-usage-container").highcharts({
+                chart: {
+                    type: 'spline',
+                    animation: Highcharts.svg, // don't animate in old IE
+                    marginRight: 10,
+                    events: {
+                        load: function () {
+                            series = this.series;
+                        }
+                    }
+                },
+                title: null,
+                xAxis: {labels: {enabled: false}, lineWidth: 0},
+                yAxis: {
+                    title: {text: '% Usage'},
+                    plotLines: [{value: 0, width: 1, color: '#808080'}],
+                    min: 0, max: 100
+                },
+                tooltip: false,
+                legend: {enabled: true},
+                exporting: {enabled: false},
+                plotOptions: {
+                    series: {
+                        marker: {
+                            enabled: false
+                        }
+                    }
+                },
+                series: series
+            });
+
+            updateCPUMonitor(series, data);
+        }
+    });
+
+}
+
+function updateCPUMonitor(series, data) {
+    if(monitorTimers){
+        $.ajax({
+            type: "POST",
+            url: SERVER_URL_CPU_MONITOR,
+            success: function (data) {
+                updateCPUMonitor(series, data);
+            }
+        });
+        setTimeout(function () {
+            addCPUPoint(series, data.cpu_usage);
+        }, (1000));
+    }
+}
+
+function addCPUPoint(series, values) {
+    for (var i in series) {
+        var y = values[0][i];
+        series[i].addPoint(y, false, true);
+    }
+    series[0].chart.redraw();
+
+    values.shift();
+
+    if (values.length > 0) {
+        setTimeout(function () {
+            addCPUPoint(series, values);
+        }, 1000);
+    }
+}
+
+function initializeMemMonitor() {
+    $.ajax({
+        type: "POST",
+        url: SERVER_URL_RAM_MONITOR,
+        success: function (data) {
+
+            var series = [];
+
+            series.push({
+                name: 'RAM',
+                data: (function () {
+                    var data = [];
+                    for (var k = -10; k < 0; k++) {
+                        data.push({x: k, y: 0});
+                    }
+                    return data;
+                }())
+            });
+
+            series.push({
+                name: 'SWAP',
+                data: (function () {
+                    var data = [];
+                    for (var k = -10; k < 0; k++) {
+                        data.push({x: k, y: 0});
+                    }
+                    return data;
+                }())
+            });
+
+//            $("#ram-usage-container").append('<div class="col-md-8" id="ram-usage-plot"></div>');
+//            $("#ram-usage-container").append('<div class="col-md-4" id="ram-usage-box"></div>');
+
+            $("#ram-usage-container").highcharts({
+                chart: {
+                    type: 'spline',
+                    animation: Highcharts.svg, // don't animate in old IE
+                    marginRight: 10,
+                    events: {
+                        load: function () {
+                            series = this.series;
+                        }
+                    }
+                },
+                title: null,
+                xAxis: {labels: {enabled: false}, lineWidth: 0},
+                yAxis: {
+                    title: {text: '% Usage'},
+                    plotLines: [{value: 0, width: 1, color: '#808080'}],
+                    min: 0, max: 100
+                },
+                tooltip: false,
+                legend: {enabled: true},
+                exporting: {enabled: false},
+                plotOptions: {
+                    series: {
+                        marker: {
+                            enabled: false
+                        }
+                    }
+                },
+                series: series
+            });
+
+            updateMemMonitor(series, data);
+        }
+    });
+}
+
+function updateMemMonitor(series, data) {
+    if(monitorTimers){
+        $.ajax({
+            type: "POST",
+            url: SERVER_URL_RAM_MONITOR,
+            success: function (data) {
+                updateMemMonitor(series, data);
+            }
+        });
+        setTimeout(function () {
+            addMemPoint(series, data.ram_usage, data.swap_usage);
+        }, (1000));
+    }
+}
+
+function addMemPoint(series, ram_usage, swap_usage) {
+    var y = ram_usage[0][2];
+    series[0].addPoint(y, false, true);
+
+    y = swap_usage[0][2];
+    series[1].addPoint(y, false, true);
+
+    series[0].chart.redraw();
+
+    ram_usage.shift();
+    swap_usage.shift();
+
+    if (ram_usage.length > 0) {
+        setTimeout(function () {
+            addMemPoint(series, ram_usage, swap_usage);
+        }, 1000);
+    }
+}

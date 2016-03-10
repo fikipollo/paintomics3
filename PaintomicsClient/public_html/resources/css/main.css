@@ -428,7 +428,7 @@ select {
 }
 #messageDialogBody {
 	text-align: justify;
-	max-height: 125px;
+	/*max-height: 125px;*/
 	overflow-y: auto;
 }
 
@@ -908,8 +908,8 @@ i.relevantFeature:before {
 	position: absolute;
 	padding: 5px;
 	top: 55px;
-	left: -375px;
-	margin-left: 70px;
+	left: -405px;
+	/*margin-left: 70px;*/
 	z-index: 23;
 	background-color: #EEEEEE;
 	box-shadow: 0px 3px 5px #BBBBBB;
@@ -1039,12 +1039,13 @@ i.relevantFeature:before {
 .lateralOptionsPanel {
 	margin: 15px 0px 15px 10px;
 	background: #fff;
-	overflow-y: auto;
+	overflow-y: hidden;
 }
 .lateralOptionsPanel-body {
 	padding: 10px;
+	padding-bottom: 35px;
 	/*max-height: 98%;*/
-	/*overflow-y: hidden;*/
+	overflow-y: auto;
 }
 .lateralOptionsPanel-header {
 	padding: 8px;
