@@ -178,7 +178,9 @@ function JobController() {
                             other.subview.add(Ext.widget({xtype: "box", itemId: "errorMessage", html: '<h3 style="color: #EC696E;  font-size: 20px;"><i class="fa fa-cog fa-spin"></i> Error when processing the BED file.<br><span style="font-size:14px;">' + response.message + '</span></h3>'}));
 
                             if (jobView.pendingRequests === 0) {
-                                showErrorMessage("Ops!... Something went wrong during BED files processing.", {message: "One or more BED files were not succesfully processed.</br>Please check the form for more info."});
+                                showErrorMessage("Ops!... Something went wrong during BED files processing.", {
+                                  message: "One or more BED files were not succesfully processed.</br>Please check the form for more information."
+                                });
                             }
                         };
 
@@ -265,7 +267,7 @@ function JobController() {
                 failure: extJSErrorHandler
             });
         } else {
-            showErrorMessage("Invalid form. Please check form errors.", {height: 150, width: 400});
+            showErrorMessage("Invalid form. Please check form errors.", {height: 150, width: 400, showReportButton:false});
             return false;
         }
     };
@@ -508,7 +510,7 @@ function JobController() {
                 failure: extJSErrorHandler
             });
         } else {
-            showErrorMessage("Invalid form. Please check form errors.", {height: 150, width: 400});
+            showErrorMessage("Invalid form. Please check form errors.", {height: 150, width: 400, showReportButton:false});
             return false;
         }
     };

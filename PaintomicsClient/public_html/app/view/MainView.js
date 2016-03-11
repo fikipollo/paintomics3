@@ -136,8 +136,8 @@ function MainView() {
 					" </ul></li>" +
 					" <li class='menuOption' ><i class='fa fa-info-circle'></i>  Resources" +
 					" <ul class='submenu'>" +
-					"     <li class='menuOption externalOption'><a href='http://www.paintomics.org/'' target='_blank'><i class='fa fa-book'></i>  Paintomics Documentation</a></li>" +
-					"     <li class='menuOption externalOption'><a href='http://www.paintomics.org/'' target='_blank'><i class='fa fa-external-link'></i>  Paintomics v2.0</a></li>" +
+					"     <li class='menuOption externalOption'><a href='http://paintomics.readthedocs.org/en/latest/' target='_blank'><i class='fa fa-book'></i>  Paintomics Documentation</a></li>" +
+					"     <li class='menuOption externalOption'><a href='http://www.paintomics.org/' target='_blank'><i class='fa fa-external-link'></i>  Paintomics v2.0</a></li>" +
 					" </ul></li>" +
 					" <li class='menuOption' ><i class='fa fa-paper-plane-o'></i>  Publications" +
 					" <ul class='submenu'>" +

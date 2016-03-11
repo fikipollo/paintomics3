@@ -271,14 +271,14 @@ function showMessage(title, data) {
 
         if (showButton) {
             $("#messageDialogButton").removeClass("exampleButton acceptButton warningButton cancelButton").addClass(buttonClass);
-            $("#messageDialogButton").css({display:"block"});
+            $("#messageDialogButton").css({display:"inline-block"});
 
         } else {
             $("#messageDialogButton").css({display:"none"});
         }
 
         if (showReportButton) {
-            $("#reportErrorButton").css({display:"block"});
+            $("#reportErrorButton").css({display:"inline-block"});
         } else {
             $("#reportErrorButton").css({display:"none"});
         }
@@ -315,9 +315,7 @@ function showMessage(title, data) {
                         messageDialog.close();
                     });
                     $("#reportErrorButton").click(function () {
-                        var type = "error";
-                        var message = $("#messageDialogBody").text();
-                        sendReportMessage(type, message);
+                        sendReportMessage("error",  $("#messageDialogTitle").text() + "\n" + $("#messageDialogBody").text());
                     });
                 }
             }
@@ -363,7 +361,7 @@ function showErrorMessage(title, data) {
     data = (data == null) ? {} : data;
     data.messageType = "error";
     data.showButton = (data.showButton == null) ? true : data.showButton;
-    data.showReportButton = true;
+    data.showReportButton =  (data.showReportButton == null) ? true : data.showReportButton;
     data.icon = (data.icon || 'exclamation-circle');
     showMessage(title, data);
 }

@@ -445,11 +445,12 @@ select {
 	margin-top: 10px;
 }
 #messageDialog .button{
-	max-width: 200px;
+	max-width: 120px;
+	display: inline-block;
 }
 
 #reportErrorButton{
-	float: left;
+	float: none;
 }
 /** SIGMA TOOLTIP OPTIONS **/
 

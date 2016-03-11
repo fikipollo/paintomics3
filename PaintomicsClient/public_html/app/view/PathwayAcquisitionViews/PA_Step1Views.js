@@ -260,7 +260,7 @@ function PA_Step1JobView() {
 				' </ul>' +
 				' <p>' +
 				'   Currently <b>Paintomics</b> supports integrated visualization of multipel species of different biological kingdoms and offers user the possibility to request any other organism present in the KEGG database.</br>' +
-				'   Please check the user guide for further information. For any question on <b>Paintomics</b>, users can send a mail to <a href="mailto:paintomics@cipf.es">paintomics@cipf.es</a>.' +
+				'   Please check the <b><a href="http://paintomics.readthedocs.org/en/latest/" target="_blank">User guide</a></b> for further information. For any question on <b>Paintomics</b>, users can send a mail to <a href="mailto:paintomics@cipf.es">paintomics@cipf.es</a>.' +
 				' </p>' +
 				'</div>'
 			}, {
