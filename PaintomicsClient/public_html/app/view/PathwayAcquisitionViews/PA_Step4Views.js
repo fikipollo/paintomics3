@@ -733,9 +733,12 @@ function PA_Step4KeggDiagramView() {
         var omicsValues = this.getParent().getOmicsValues();
 
         for (var i in featuresIDs) {
-            featureSetElem = new FeatureSetElem(omicsValues[featuresIDs[i]], graphicalOptions.findFeatureGraphicalData(featuresIDs[i]));
-            pos = featureSetElem.getFeatureGraphicalData().getX() + "#" + featureSetElem.getFeatureGraphicalData().getY();
+          //Get the coordinates etc. for each box for current feature
+          var data = graphicalOptions.findFeatureGraphicalData(featuresIDs[i]);
+          for(var k in data){
+            featureSetElem = new FeatureSetElem(omicsValues[featuresIDs[i]], data[k]);
 
+            //TODO: AQUI ESTA EL PROBLEMA!!
             //ADD THE ENTRY TO THE SEARCH TABLE (KEGG NAME -> featureSetElem)
             searchFeatureIndex[omicsValues[featuresIDs[i]].name] = featureSetElem;
             //ADD THE ENTRY TO THE SEARCH TABLE (INPUT NAME -> featureSetElem)
@@ -743,11 +746,13 @@ function PA_Step4KeggDiagramView() {
                 searchFeatureIndex[omicsValues[featuresIDs[i]].omicsValues[j].inputName] = featureSetElem;
             }
 
+            pos = data[k].getX() + "#" + data[k].getY();
             if (xyTable[pos] === undefined) {
-                xyTable[pos] = new FeatureSet(featureSetElem.getFeatureGraphicalData().getX(), featureSetElem.getFeatureGraphicalData().getY());
+                xyTable[pos] = new FeatureSet(data[k].getX(), data[k].getY());
             }
             xyTable[pos].addFeature(featureSetElem);
             featureSetElem.setParent(xyTable[pos]);
+          }
         }
 
         return searchFeatureIndex;
@@ -940,7 +945,7 @@ function PA_Step4KeggDiagramFeatureSetView() {
         }
         this.model.setMainFeature(features[pos]);
 
-        this.featureView = new PA_Step4KeggDiagramFeatureSetSVGBox().setParent(this).loadModel(this.model.getMainFeature()).setComponentID(pathwayID).setIsUnique((this.model.getFeatures().length === 1));
+        this.featureView = new PA_Step4KeggDiagramFeatureSetSVGBox().setParent(this).loadModel(this.model.getMainFeature()).setComponentID(pathwayID + "_" + this.model.getX() + "_" + this.model.getY()).setIsUnique((this.model.getFeatures().length === 1));
         return this;
     };
 

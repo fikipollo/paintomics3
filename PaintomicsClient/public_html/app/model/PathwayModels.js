@@ -216,12 +216,13 @@ function PathwayGraphicalData() {
         this.featuresGraphicalData.push(featureGraphicalData);
     };
     this.findFeatureGraphicalData = function (featureID) {
-        for (var i in this.featuresGraphicalData) {
-            if (this.featuresGraphicalData[i].getID().toLowerCase() === featureID.toLowerCase()) {
-                return this.featuresGraphicalData[i];
-            }
-        }
-        return null;
+      var data = [];
+      for (var i in this.featuresGraphicalData) {
+          if (this.featuresGraphicalData[i].getID().toLowerCase() === featureID.toLowerCase()) {
+              data.push(this.featuresGraphicalData[i]);
+          }
+      }
+      return data;
     };
     this.setImageWidth = function (imageWidth) {
         this.imageWidth = imageWidth;
