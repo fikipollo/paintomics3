@@ -6,19 +6,18 @@ SERVER_SUBDOMAIN          = ""
 SERVER_MAX_CONTENT_LENGTH = 200 * pow(1024,2) #MAX_CLIENT_SPACE IN MB
 
 #FILES SETTINGS
-ROOT_DIRECTORY       = "/var/www/paintomics/src/"
-CLIENT_TMP_DIR       = "/var/www/paintomics/src/CLIENT_TMP/"
-KEGG_DATA_DIR        = "/home/paintomics/data/KEGG_DATA/"
-EXAMPLE_FILES_DIR    = "/var/www/paintomics/src/examplefiles/"
+ROOT_DIRECTORY       = "/home/rafa/paintomics3/PaintomicsServer/src/"
+EXAMPLE_FILES_DIR    = ROOT_DIRECTORY + "/examplefiles/"
+CLIENT_TMP_DIR       = "/data/CLIENT_TMP/"
+KEGG_DATA_DIR        = "/data/KEGG_DATA/"
 MAX_CLIENT_SPACE     = 20 * pow(1024,2) #MAX_CLIENT_SPACE IN MB
-CLIENT_DATA_DIR        = "/home/paintomics/data/"
 
 #MONGO DB SETTINGS
 MONGODB_HOST      = "localhost"
 MONGODB_PORT      = 27017
 MONGODB_DATABASE  = "PaintomicsDB"
 
-#MULTITHREADING OPTIOS
+#MULTI-THREADING OPTIONS
 MAX_THREADS      = 2
 MAX_WAIT_THREADS = 300 #IN SECONDS
 N_WORKERS        = 2
@@ -43,4 +42,3 @@ smpt_username   = "notifications@mydomain.com"  #THE SENDER EMAIL, DEPENDS ON TH
 smpt_pass       = "09bf93aae4166cd12775c2592a1c613c" #THE SENDER PASS IN MD5 CODIFICATION, DEPENDS ON THE SMTP SETTINGS
 smpt_sender     = "notifications@mydomain.com"       #Sender email (From value at the email)
 smpt_sender_name= "Paintomics 3"             #Sender name (From value at the email)
-

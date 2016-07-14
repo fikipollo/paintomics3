@@ -735,6 +735,12 @@ function PA_Step4KeggDiagramView() {
         for (var i in featuresIDs) {
           //Get the coordinates etc. for each box for current feature
           var data = graphicalOptions.findFeatureGraphicalData(featuresIDs[i]);
+          
+          //TODO: this code should be removed in future versions, now fixes the problems with not updated species
+          if (!(data instanceof Array)){
+            data = [data];
+          }
+
           for(var k in data){
             featureSetElem = new FeatureSetElem(omicsValues[featuresIDs[i]], data[k]);
 

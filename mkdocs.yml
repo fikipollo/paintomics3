@@ -1,6 +1,7 @@
 site_name: Paintomics v3.0 Documentation
 pages:
 - ['index.md', 'Home']
+- ['0_install.md', 'Install', 'Installing PaintOmics 3']
 - ['1_kegg.md', 'Getting start', 'The KEGG Pathways database']
 - ['2_1_accepted_input.md', 'Getting start', 'Accepted input data']
 - ['2_2_cloud_drive.md', 'Getting start', 'Cloud Drive']

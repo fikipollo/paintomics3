@@ -12470,3 +12470,664 @@
 
 2016-03-09 09:52:57,037 - INFO - DBManager.py : log -      
 2016-03-09 09:52:57,037 - INFO - DBManager.py : log -      STEP 6. CLOSING LOG FILES, GENERATING VERSION FILE
+2016-07-12 18:52:41,841 - INFO - DBManager.py : log -      ######################################################################
+2016-07-12 18:52:41,853 - INFO - DBManager.py : log -      ### PAINTOMICS V3.0 - KEGG INSTALLER v0.1                           ###
+2016-07-12 18:52:41,854 - INFO - DBManager.py : log -      ###                                                                ###
+2016-07-12 18:52:41,855 - INFO - DBManager.py : log -      ######################################################################
+2016-07-12 18:52:41,855 - INFO - DBManager.py : log -      
+2016-07-12 18:52:41,856 - INFO - DBManager.py : log -      STEP 1. READ CONFIGURATION AND PARSE INPUT FILES...
+2016-07-12 18:55:27,145 - INFO - DBManager.py : log -      ######################################################################
+2016-07-12 18:55:27,146 - INFO - DBManager.py : log -      ### PAINTOMICS V3.0 - KEGG INSTALLER v0.1                           ###
+2016-07-12 18:55:27,147 - INFO - DBManager.py : log -      ###                                                                ###
+2016-07-12 18:55:27,148 - INFO - DBManager.py : log -      ######################################################################
+2016-07-12 18:55:27,149 - INFO - DBManager.py : log -      
+2016-07-12 18:55:27,150 - INFO - DBManager.py : log -      STEP 1. READ CONFIGURATION AND PARSE INPUT FILES...
+2016-07-12 18:55:27,151 - INFO - DBManager.py : log -      STEP 1. READ CONFIGURATION AND PARSE INPUT FILES...DONE
+2016-07-12 18:55:27,152 - INFO - DBManager.py : log -              1 MARKED FOR INSTALLING.
+2016-07-12 18:55:27,153 - INFO - DBManager.py : log -              1 DOWNLOADED ON PREVIOUS STEPS.
+2016-07-12 18:55:27,154 - INFO - DBManager.py : log -              1 INSTALLED ON PREVIOUS STEPS.
+2016-07-12 18:55:27,154 - INFO - DBManager.py : log -              0 ERRONEOUS ON PREVIOUS STEPS.
+2016-07-12 18:55:27,155 - INFO - DBManager.py : log -      
+2016-07-12 18:55:27,156 - INFO - DBManager.py : log -      STEP 3. INSTALLING SPECIES
+2016-07-12 18:55:27,157 - INFO - DBManager.py : log -              DETECTED 1 SPECIES MARKED FOR INSTALLING
+2016-07-12 18:55:27,157 - INFO - DBManager.py : log -                  INSTALLING  mmu...
+2016-07-12 18:55:27,158 - INFO - DBManager.py : log -                      INSTALLING  mmu /data/KEGG_DATA//last/install.log /data/KEGG_DATA//last/species/mmu/ /home/rhernandez/Desktop/workspace/paintomics3/PaintomicsServer/src/AdminTools/scripts/
+2016-07-12 18:55:27,159 - INFO - DBManager.py : log -                       INSTALLING MAPPING DATA FOR mmu (1/1)...
+2016-07-12 18:55:27,160 - INFO - DBManager.py : log -                     * PROCESSING AND INSTALLING CUSTOM AND KEGG DATA 
+2016-07-12 18:55:47,129 - ERROR - DBManager.py : errorlog -                  [('./DBManager.py', 761, '<module>', 'scriptine.run()'), ('/usr/local/lib/python2.7/dist-packages/scriptine/command.py', 196, 'autocmds', 'add_verbosity_option=add_verbosity_option)'), ('/usr/local/lib/python2.7/dist-packages/scriptine/command.py', 105, 'parse_and_run_function', 'return function(*args[:len(required_args)], **kw)'), ('./DBManager.py', 370, 'install_command', 'installSpecieData(specie, installLog, dirNameAux, str(step)+ "/" + total, ROOT_DIRECTORY + "AdminTools/scripts/")'), ('./DBManager.py', 550, 'installSpecieData', 'errorlog(traceback.extract_stack())')]
+2016-07-12 18:55:47,132 - INFO - DBManager.py : log -              INSTALL  1 mmu...ERROR
+
+2016-07-12 18:55:47,133 - ERROR - DBManager.py : errorlog -              Error while calling /home/rhernandez/Desktop/workspace/paintomics3/PaintomicsServer/src/AdminTools/scripts/mmu_resources/build_database.py: Exit status 1. Output is available at /data/KEGG_DATA//last/install.log
+2016-07-12 18:55:47,135 - INFO - DBManager.py : log -      
+2016-07-12 18:55:47,136 - INFO - DBManager.py : log -      STEP 6. CLOSING LOG FILES, GENERATING VERSION FILE
+2016-07-12 18:58:35,491 - INFO - DBManager.py : log -      ######################################################################
+2016-07-12 18:58:35,492 - INFO - DBManager.py : log -      ### PAINTOMICS V3.0 - KEGG INSTALLER v0.1                           ###
+2016-07-12 18:58:35,492 - INFO - DBManager.py : log -      ###                                                                ###
+2016-07-12 18:58:35,493 - INFO - DBManager.py : log -      ######################################################################
+2016-07-12 18:58:35,494 - INFO - DBManager.py : log -      
+2016-07-12 18:58:35,495 - INFO - DBManager.py : log -      STEP 1. READ CONFIGURATION AND PARSE INPUT FILES...
+2016-07-12 18:58:35,496 - INFO - DBManager.py : log -      STEP 1. READ CONFIGURATION AND PARSE INPUT FILES...DONE
+2016-07-12 18:58:35,497 - INFO - DBManager.py : log -              1 MARKED FOR INSTALLING.
+2016-07-12 18:58:35,498 - INFO - DBManager.py : log -              1 DOWNLOADED ON PREVIOUS STEPS.
+2016-07-12 18:58:35,499 - INFO - DBManager.py : log -              1 INSTALLED ON PREVIOUS STEPS.
+2016-07-12 18:58:35,500 - INFO - DBManager.py : log -              1 ERRONEOUS ON PREVIOUS STEPS.
+2016-07-12 18:58:35,500 - INFO - DBManager.py : log -      
+2016-07-12 18:58:35,501 - INFO - DBManager.py : log -      STEP 3. INSTALLING SPECIES
+2016-07-12 18:58:35,502 - INFO - DBManager.py : log -              DETECTED 1 SPECIES MARKED FOR INSTALLING
+2016-07-12 18:58:35,503 - INFO - DBManager.py : log -                  INSTALLING  mmu...
+2016-07-12 18:58:35,504 - INFO - DBManager.py : log -                      INSTALLING  mmu /data/KEGG_DATA//last/install.log /data/KEGG_DATA//last/species/mmu/ /home/rhernandez/Desktop/workspace/paintomics3/PaintomicsServer/src/AdminTools/scripts/
+2016-07-12 18:58:35,505 - INFO - DBManager.py : log -                       INSTALLING MAPPING DATA FOR mmu (1/1)...
+2016-07-12 18:58:35,506 - INFO - DBManager.py : log -                     * PROCESSING AND INSTALLING CUSTOM AND KEGG DATA 
+2016-07-12 18:58:35,578 - ERROR - DBManager.py : errorlog -                  [('./DBManager.py', 761, '<module>', 'scriptine.run()'), ('/usr/local/lib/python2.7/dist-packages/scriptine/command.py', 196, 'autocmds', 'add_verbosity_option=add_verbosity_option)'), ('/usr/local/lib/python2.7/dist-packages/scriptine/command.py', 105, 'parse_and_run_function', 'return function(*args[:len(required_args)], **kw)'), ('./DBManager.py', 370, 'install_command', 'installSpecieData(specie, installLog, dirNameAux, str(step)+ "/" + total, ROOT_DIRECTORY + "AdminTools/scripts/")'), ('./DBManager.py', 550, 'installSpecieData', 'errorlog(traceback.extract_stack())')]
+2016-07-12 18:58:35,581 - INFO - DBManager.py : log -              INSTALL  1 mmu...ERROR
+
+2016-07-12 18:58:35,582 - ERROR - DBManager.py : errorlog -              Error while calling /home/rhernandez/Desktop/workspace/paintomics3/PaintomicsServer/src/AdminTools/scripts/mmu_resources/build_database.py: Exit status 1. Output is available at /data/KEGG_DATA//last/install.log
+2016-07-12 18:58:35,584 - INFO - DBManager.py : log -      
+2016-07-12 18:58:35,584 - INFO - DBManager.py : log -      STEP 6. CLOSING LOG FILES, GENERATING VERSION FILE
+2016-07-12 19:00:29,421 - INFO - DBManager.py : log -      STEP 1. READ CONFIGURATION AND PARSE INPUT FILES...DONE
+2016-07-12 19:00:29,422 - INFO - DBManager.py : log -              1 MARKED FOR DONWLOADING.
+2016-07-12 19:00:29,423 - INFO - DBManager.py : log -              1 DOWNLADED ON PREVIOUS VERSION.
+2016-07-12 19:00:29,424 - INFO - DBManager.py : log -              1 ERRONEOUS ON PREVIOUS VERSION.
+2016-07-12 19:00:29,425 - INFO - DBManager.py : log -              1 INSTALLED ON PREVIOUS VERSION.
+2016-07-12 19:00:29,426 - INFO - DBManager.py : log -      
+2016-07-12 19:00:29,426 - INFO - DBManager.py : log -      STEP 2. INITIALIZE THE NEW DIRECTORY /data/KEGG_DATA/20160712_1900/
+2016-07-12 19:00:29,474 - INFO - DBManager.py : log -              FETCHING KEGG GLOBAL DATA
+2016-07-12 19:00:29,476 - INFO - DBManager.py : log -                          COPYING PATHWAYS INFORMATION
+2016-07-12 19:00:37,363 - INFO - DBManager.py : log -      
+2016-07-12 19:00:37,364 - INFO - DBManager.py : log -      STEP 3. COPY PREVIOUS SPECIES (NOT CHECKED FOR INSTALLING/UPDATING)
+2016-07-12 19:00:37,365 - INFO - DBManager.py : log -              DETECTED 0 SPECIES NOT MARKED FOR INSTALLING/UPDATING
+2016-07-12 19:00:37,366 - INFO - DBManager.py : log -      
+2016-07-12 19:00:37,367 - INFO - DBManager.py : log -      STEP 3. GET DATA FOR "TO DOWNLOAD" SPECIES
+2016-07-12 19:00:37,368 - INFO - DBManager.py : log -              DETECTED 1 SPECIES MARKED FOR DOWNLOADING
+2016-07-12 19:00:37,369 - INFO - DBManager.py : log -                  DOWLOADING  mmu...
+2016-07-12 19:00:37,369 - INFO - DBManager.py : log -                  COPYING PREVIOUS KEGG DATA...
+2016-07-12 19:00:40,628 - INFO - DBManager.py : log -                  FETCHING MAPPING DATA FOR mmu (1/1)...
+2016-07-12 19:00:40,629 - INFO - DBManager.py : log -                   * RETRIEVING EXTERNAL MAPPING DATA
+2016-07-12 19:19:16,447 - INFO - DBManager.py : log -      STEP 1. READ CONFIGURATION AND PARSE INPUT FILES...DONE
+2016-07-12 19:19:16,458 - INFO - DBManager.py : log -              1 MARKED FOR DONWLOADING.
+2016-07-12 19:19:16,458 - INFO - DBManager.py : log -              1 DOWNLADED ON PREVIOUS VERSION.
+2016-07-12 19:19:16,459 - INFO - DBManager.py : log -              1 ERRONEOUS ON PREVIOUS VERSION.
+2016-07-12 19:19:16,460 - INFO - DBManager.py : log -              1 INSTALLED ON PREVIOUS VERSION.
+2016-07-12 19:19:16,461 - INFO - DBManager.py : log -      
+2016-07-12 19:19:16,462 - INFO - DBManager.py : log -      STEP 2. INITIALIZE THE NEW DIRECTORY /data/KEGG_DATA/20160712_1919/
+2016-07-12 19:19:16,479 - INFO - DBManager.py : log -              FETCHING KEGG GLOBAL DATA
+2016-07-12 19:19:16,480 - INFO - DBManager.py : log -                          COPYING PATHWAYS INFORMATION
+2016-07-12 19:19:23,280 - INFO - DBManager.py : log -      
+2016-07-12 19:19:23,280 - INFO - DBManager.py : log -      STEP 3. COPY PREVIOUS SPECIES (NOT CHECKED FOR INSTALLING/UPDATING)
+2016-07-12 19:19:23,281 - INFO - DBManager.py : log -              DETECTED 0 SPECIES NOT MARKED FOR INSTALLING/UPDATING
+2016-07-12 19:19:23,282 - INFO - DBManager.py : log -      
+2016-07-12 19:19:23,283 - INFO - DBManager.py : log -      STEP 3. GET DATA FOR "TO DOWNLOAD" SPECIES
+2016-07-12 19:19:23,284 - INFO - DBManager.py : log -              DETECTED 1 SPECIES MARKED FOR DOWNLOADING
+2016-07-12 19:19:23,284 - INFO - DBManager.py : log -                  DOWLOADING  mmu...
+2016-07-12 19:19:23,285 - INFO - DBManager.py : log -                  COPYING PREVIOUS KEGG DATA...
+2016-07-12 19:19:26,920 - INFO - DBManager.py : log -                  FETCHING MAPPING DATA FOR mmu (1/1)...
+2016-07-12 19:19:26,922 - INFO - DBManager.py : log -                   * RETRIEVING EXTERNAL MAPPING DATA
+2016-07-12 19:24:31,786 - INFO - DBManager.py : log -                   * KEGG TO NCBI GeneID
+2016-07-12 19:24:40,443 - INFO - DBManager.py : log -                   * KEGG TO Uniprot
+2016-07-12 19:24:45,436 - INFO - DBManager.py : log -                   * KEGG TO Gene Symbol
+2016-07-12 19:25:03,549 - INFO - DBManager.py : log -                      FETCH IN 5 minutes ---
+2016-07-12 19:25:03,550 - INFO - DBManager.py : log -              UPDATE  1 mmu...SUCCESS
+
+2016-07-12 19:25:03,552 - INFO - DBManager.py : log -      
+2016-07-12 19:25:03,553 - INFO - DBManager.py : log -      STEP 6. CLOSING LOG FILES, GENERATING VERSION FILE
+2016-07-12 19:25:23,532 - INFO - DBManager.py : log -      ######################################################################
+2016-07-12 19:25:23,534 - INFO - DBManager.py : log -      ### PAINTOMICS V3.0 - KEGG INSTALLER v0.1                           ###
+2016-07-12 19:25:23,535 - INFO - DBManager.py : log -      ###                                                                ###
+2016-07-12 19:25:23,537 - INFO - DBManager.py : log -      ######################################################################
+2016-07-12 19:25:23,538 - INFO - DBManager.py : log -      
+2016-07-12 19:25:23,540 - INFO - DBManager.py : log -      STEP 1. READ CONFIGURATION AND PARSE INPUT FILES...
+2016-07-12 19:25:23,568 - INFO - DBManager.py : log -      STEP 1. READ CONFIGURATION AND PARSE INPUT FILES...DONE
+2016-07-12 19:25:23,569 - INFO - DBManager.py : log -              1 MARKED FOR INSTALLING.
+2016-07-12 19:25:23,569 - INFO - DBManager.py : log -              1 DOWNLOADED ON PREVIOUS STEPS.
+2016-07-12 19:25:23,570 - INFO - DBManager.py : log -              0 INSTALLED ON PREVIOUS STEPS.
+2016-07-12 19:25:23,571 - INFO - DBManager.py : log -              0 ERRONEOUS ON PREVIOUS STEPS.
+2016-07-12 19:25:23,572 - INFO - DBManager.py : log -      
+2016-07-12 19:25:23,573 - INFO - DBManager.py : log -      STEP 3. INSTALLING SPECIES
+2016-07-12 19:25:23,573 - INFO - DBManager.py : log -              DETECTED 1 SPECIES MARKED FOR INSTALLING
+2016-07-12 19:25:23,574 - INFO - DBManager.py : log -                  INSTALLING  mmu...
+2016-07-12 19:25:23,575 - INFO - DBManager.py : log -                      INSTALLING  mmu /data/KEGG_DATA//last/install.log /data/KEGG_DATA//last/species/mmu/ /home/rhernandez/Desktop/workspace/paintomics3/PaintomicsServer/src/AdminTools/scripts/
+2016-07-12 19:25:23,576 - INFO - DBManager.py : log -                       INSTALLING MAPPING DATA FOR mmu (1/1)...
+2016-07-12 19:25:23,577 - INFO - DBManager.py : log -                     * PROCESSING AND INSTALLING CUSTOM AND KEGG DATA 
+2016-07-12 19:44:36,343 - INFO - DBManager.py : log -                  INSTALLED IN 1152 seconds ---
+2016-07-12 19:44:36,378 - INFO - DBManager.py : log -              INSTALL  1 mmu...SUCCESS
+
+2016-07-12 19:44:36,379 - INFO - DBManager.py : log -      
+2016-07-12 19:44:36,380 - INFO - DBManager.py : log -      STEP 6. CLOSING LOG FILES, GENERATING VERSION FILE
+2016-07-14 19:13:19,302 - INFO - DBManager.py : log -      ######################################################################
+2016-07-14 19:13:19,315 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE KEGG DOWNLOADER 
+2016-07-14 19:13:19,316 - INFO - DBManager.py : log -      ### v.0.11
+2016-07-14 19:13:19,317 - INFO - DBManager.py : log -      ######################################################################
+2016-07-14 19:13:19,318 - INFO - DBManager.py : log -      
+2016-07-14 19:13:19,319 - INFO - DBManager.py : log -      Download log is at: /data/KEGG_DATA/20160714_1913/download.log
+2016-07-14 19:13:19,319 - INFO - DBManager.py : log -      
+2016-07-14 19:13:19,320 - INFO - DBManager.py : log -      STEP 0. READ CONFIGURATION AND PARSE INPUT FILES...
+2016-07-14 19:13:21,366 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2016-07-14 19:13:21,367 - INFO - DBManager.py : log -             - 1 organisms were downloaded on previous executions.
+2016-07-14 19:13:21,369 - INFO - DBManager.py : log -             - 1 organisms were installed on previous executions.
+2016-07-14 19:13:21,370 - INFO - DBManager.py : log -             - 0 organisms failed during the installation on previous executions.
+2016-07-14 19:13:21,372 - INFO - DBManager.py : log -      
+2016-07-14 19:13:21,374 - INFO - DBManager.py : log -      New data will be stored at /data/KEGG_DATA/20160714_1913/
+2016-07-14 19:13:21,390 - INFO - DBManager.py : log -              STEP 1. COPYING THE PREVIOUS COMMON KEGG INFORMATION
+2016-07-14 19:13:22,279 - INFO - DBManager.py : log -      
+2016-07-14 19:13:22,280 - INFO - DBManager.py : log -      STEP 2. COPY THE PREVIOUS INFORMATION FOR ORGANISMS
+2016-07-14 19:13:22,281 - INFO - DBManager.py : log -             - 1 organisms were downloaded on previous executions.
+2016-07-14 19:13:22,282 - INFO - DBManager.py : log -                            * COPYING  mmu (1/1)...
+2016-07-14 19:13:40,678 - INFO - DBManager.py : log -                            * COPYING  mmu (1/1)...SUCCESS
+
+2016-07-14 19:13:40,679 - INFO - DBManager.py : log -      
+2016-07-14 19:13:40,681 - INFO - DBManager.py : log -      STEP 3. DOWNLOADING THE INFORMATION FOR THE SELECTED ORGANISMS
+2016-07-14 19:13:40,682 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2016-07-14 19:13:40,683 - INFO - DBManager.py : log -                  DOWLOADING  aci...
+2016-07-14 19:13:40,684 - INFO - DBManager.py : log -                  FETCHING KEGG DATA FOR aci (1/1)...
+2016-07-14 19:13:40,686 - INFO - DBManager.py : log -                    * GENE to PATHWAY TABLE
+2016-07-14 19:13:45,396 - INFO - DBManager.py : log -                    * PATHWAYS LIST
+2016-07-14 19:13:49,372 - INFO - DBManager.py : log -                          DETECTED 116 PATHWAYS FOR aci [9 min aprox.]
+2016-07-14 19:13:49,375 - INFO - DBManager.py : log -                                         Failed!! The download process will continue...
+2016-07-14 19:13:49,377 - INFO - DBManager.py : log -                                         Failed!! The download process will continue...
+2016-07-14 19:13:49,378 - INFO - DBManager.py : log -                                         Failed!! The download process will continue...
+2016-07-14 19:13:49,380 - INFO - DBManager.py : log -                                         Failed!! The download process will continue...
+2016-07-14 19:13:49,381 - INFO - DBManager.py : log -              UPDATE  3 aci...ERROR
+
+2016-07-14 19:13:49,382 - ERROR - DBManager.py : errorlog -              Too many errors while downloading the KGML files for organism aci:  aci00380 aci00061 aci02060 aci00300 aci00430
+2016-07-14 19:13:49,382 - INFO - DBManager.py : log -      
+2016-07-14 19:13:49,383 - INFO - DBManager.py : log -      STEP 4. CLOSING LOG FILES, GENERATING VERSION FILE
+2016-07-14 19:19:35,546 - INFO - DBManager.py : log -      ######################################################################
+2016-07-14 19:19:35,547 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE KEGG DOWNLOADER 
+2016-07-14 19:19:35,548 - INFO - DBManager.py : log -      ### v.0.11
+2016-07-14 19:19:35,548 - INFO - DBManager.py : log -      ######################################################################
+2016-07-14 19:19:35,549 - INFO - DBManager.py : log -      
+2016-07-14 19:19:35,550 - INFO - DBManager.py : log -      Download log is at: /data/KEGG_DATA/20160714_1919/download.log
+2016-07-14 19:19:35,551 - INFO - DBManager.py : log -      
+2016-07-14 19:19:35,551 - INFO - DBManager.py : log -      STEP 0. READ CONFIGURATION AND PARSE INPUT FILES...
+2016-07-14 19:19:37,594 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2016-07-14 19:19:37,595 - INFO - DBManager.py : log -             - 1 organisms were downloaded on previous executions.
+2016-07-14 19:19:37,597 - INFO - DBManager.py : log -             - 1 organisms were installed on previous executions.
+2016-07-14 19:19:37,598 - INFO - DBManager.py : log -             - 0 organisms failed during the installation on previous executions.
+2016-07-14 19:19:37,600 - INFO - DBManager.py : log -      
+2016-07-14 19:19:37,602 - INFO - DBManager.py : log -      New data will be stored at /data/KEGG_DATA/20160714_1919/
+2016-07-14 19:19:37,629 - INFO - DBManager.py : log -              STEP 1. COPYING THE PREVIOUS COMMON KEGG INFORMATION
+2016-07-14 19:19:38,419 - INFO - DBManager.py : log -      
+2016-07-14 19:19:38,420 - INFO - DBManager.py : log -      STEP 2. COPY THE PREVIOUS INFORMATION FOR ORGANISMS
+2016-07-14 19:19:38,421 - INFO - DBManager.py : log -             - 1 organisms were downloaded on previous executions.
+2016-07-14 19:19:38,422 - INFO - DBManager.py : log -                            * COPYING  mmu (1/1)...
+2016-07-14 19:19:55,484 - INFO - DBManager.py : log -                            * COPYING  mmu (1/1)...SUCCESS
+
+2016-07-14 19:19:55,485 - INFO - DBManager.py : log -      
+2016-07-14 19:19:55,486 - INFO - DBManager.py : log -      STEP 3. DOWNLOADING THE INFORMATION FOR THE SELECTED ORGANISMS
+2016-07-14 19:19:55,486 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2016-07-14 19:19:55,487 - INFO - DBManager.py : log -                  DOWLOADING  aci...
+2016-07-14 19:19:55,488 - INFO - DBManager.py : log -                  FETCHING KEGG DATA FOR aci (1/1)...
+2016-07-14 19:19:55,489 - INFO - DBManager.py : log -                    * GENE to PATHWAY TABLE
+2016-07-14 19:19:59,490 - INFO - DBManager.py : log -                    * PATHWAYS LIST
+2016-07-14 19:20:03,659 - INFO - DBManager.py : log -                          DETECTED 116 PATHWAYS FOR aci [9 min aprox.]
+2016-07-14 19:20:03,661 - INFO - DBManager.py : log -                           - aci00380 [1/116]
+2016-07-14 19:20:06,453 - INFO - DBManager.py : log -                           - aci00061 [2/116]
+2016-07-14 19:20:09,881 - INFO - DBManager.py : log -                           - aci02060 [3/116]
+2016-07-14 19:20:12,988 - INFO - DBManager.py : log -                           - aci00300 [4/116]
+2016-07-14 19:20:16,666 - INFO - DBManager.py : log -                           - aci00430 [5/116]
+2016-07-14 19:20:19,232 - INFO - DBManager.py : log -                           - aci00630 [6/116]
+2016-07-14 19:20:22,044 - INFO - DBManager.py : log -                           - aci00633 [7/116]
+2016-07-14 19:20:24,611 - INFO - DBManager.py : log -                           - aci00540 [8/116]
+2016-07-14 19:20:27,197 - INFO - DBManager.py : log -                           - aci00730 [9/116]
+2016-07-14 19:20:29,764 - INFO - DBManager.py : log -                           - aci00261 [10/116]
+2016-07-14 19:20:32,580 - INFO - DBManager.py : log -                           - aci00260 [11/116]
+2016-07-14 19:20:35,447 - INFO - DBManager.py : log -                           - aci00930 [12/116]
+2016-07-14 19:20:38,025 - INFO - DBManager.py : log -                           - aci00072 [13/116]
+2016-07-14 19:20:40,596 - INFO - DBManager.py : log -                           - aci00071 [14/116]
+2016-07-14 19:20:43,402 - INFO - DBManager.py : log -                           - aci02020 [15/116]
+2016-07-14 19:20:52,173 - INFO - DBManager.py : log -                           - aci00401 [16/116]
+2016-07-14 19:20:54,738 - INFO - DBManager.py : log -                           - aci00400 [17/116]
+2016-07-14 19:20:57,542 - INFO - DBManager.py : log -                           - aci03060 [18/116]
+2016-07-14 19:21:05,115 - INFO - DBManager.py : log -                           - aci00640 [19/116]
+2016-07-14 19:21:07,946 - INFO - DBManager.py : log -                           - aci00643 [20/116]
+2016-07-14 19:21:15,523 - INFO - DBManager.py : log -                           - aci00270 [21/116]
+2016-07-14 19:21:18,560 - INFO - DBManager.py : log -                           - aci00920 [22/116]
+2016-07-14 19:21:21,350 - INFO - DBManager.py : log -                           - aci00480 [23/116]
+2016-07-14 19:21:24,268 - INFO - DBManager.py : log -                           - aci01212 [24/116]
+2016-07-14 19:21:27,738 - INFO - DBManager.py : log -                           - aci00040 [25/116]
+2016-07-14 19:21:30,534 - INFO - DBManager.py : log -                           - aci00281 [26/116]
+2016-07-14 19:21:33,130 - INFO - DBManager.py : log -                           - aci00280 [27/116]
+2016-07-14 19:21:35,938 - INFO - DBManager.py : log -                           - aci00410 [28/116]
+2016-07-14 19:21:38,509 - INFO - DBManager.py : log -                           - aci00561 [29/116]
+2016-07-14 19:21:41,307 - INFO - DBManager.py : log -                           - aci00650 [30/116]
+2016-07-14 19:21:44,107 - INFO - DBManager.py : log -                           - aci00564 [31/116]
+2016-07-14 19:21:46,914 - INFO - DBManager.py : log -                           - aci00565 [32/116]
+2016-07-14 19:21:49,483 - INFO - DBManager.py : log -                           - aci03018 [33/116]
+2016-07-14 19:21:52,067 - INFO - DBManager.py : log -                           - aci00364 [34/116]
+2016-07-14 19:21:59,707 - INFO - DBManager.py : log -                           - aci00362 [35/116]
+2016-07-14 19:22:02,480 - INFO - DBManager.py : log -                           - aci03010 [36/116]
+2016-07-14 19:22:05,323 - INFO - DBManager.py : log -                           - aci00360 [37/116]
+2016-07-14 19:22:08,107 - INFO - DBManager.py : log -                           - aci00361 [38/116]
+2016-07-14 19:22:10,890 - INFO - DBManager.py : log -                           - aci00790 [39/116]
+2016-07-14 19:22:14,369 - INFO - DBManager.py : log -                           - aci00051 [40/116]
+2016-07-14 19:22:17,176 - INFO - DBManager.py : log -                           - aci00052 [41/116]
+2016-07-14 19:22:20,008 - INFO - DBManager.py : log -                           - aci00053 [42/116]
+2016-07-14 19:22:22,795 - INFO - DBManager.py : log -                           - aci00290 [43/116]
+2016-07-14 19:22:25,386 - INFO - DBManager.py : log -                           - aci00591 [44/116]
+2016-07-14 19:22:27,966 - INFO - DBManager.py : log -                           - aci00590 [45/116]
+2016-07-14 19:22:30,778 - INFO - DBManager.py : log -                           - aci00592 [46/116]
+2016-07-14 19:22:33,343 - INFO - DBManager.py : log -                           - aci01501 [47/116]
+2016-07-14 19:22:35,930 - INFO - DBManager.py : log -                           - aci01503 [48/116]
+2016-07-14 19:22:38,719 - INFO - DBManager.py : log -                           - aci01502 [49/116]
+2016-07-14 19:22:41,300 - INFO - DBManager.py : log -                           - aci01210 [50/116]
+2016-07-14 19:22:44,817 - INFO - DBManager.py : log -                           - aci00190 [51/116]
+2016-07-14 19:22:47,602 - INFO - DBManager.py : log -                           - aci00460 [52/116]
+2016-07-14 19:22:50,400 - INFO - DBManager.py : log -                           - aci00350 [53/116]
+2016-07-14 19:22:53,199 - INFO - DBManager.py : log -                           - aci00860 [54/116]
+2016-07-14 19:22:56,037 - INFO - DBManager.py : log -                           - aci00780 [55/116]
+2016-07-14 19:22:58,669 - INFO - DBManager.py : log -                           - aci01100 [56/116]
+2016-07-14 19:23:06,721 - INFO - DBManager.py : log -                           - aci03030 [57/116]
+2016-07-14 19:23:09,297 - INFO - DBManager.py : log -                           - aci03430 [58/116]
+2016-07-14 19:23:11,871 - INFO - DBManager.py : log -                           - aci00660 [59/116]
+2016-07-14 19:23:14,499 - INFO - DBManager.py : log -                           - aci00670 [60/116]
+2016-07-14 19:23:17,075 - INFO - DBManager.py : log -                           - aci00020 [61/116]
+2016-07-14 19:23:19,886 - INFO - DBManager.py : log -                           - aci00770 [62/116]
+2016-07-14 19:23:22,466 - INFO - DBManager.py : log -                           - aci00220 [63/116]
+2016-07-14 19:23:30,315 - INFO - DBManager.py : log -                           - aci00340 [64/116]
+2016-07-14 19:23:33,088 - INFO - DBManager.py : log -                           - aci00473 [65/116]
+2016-07-14 19:23:35,645 - INFO - DBManager.py : log -                           - aci02010 [66/116]
+2016-07-14 19:23:38,908 - INFO - DBManager.py : log -                           - aci00471 [67/116]
+2016-07-14 19:23:41,981 - INFO - DBManager.py : log -                           - aci01054 [68/116]
+2016-07-14 19:23:44,566 - INFO - DBManager.py : log -                           - aci01053 [69/116]
+2016-07-14 19:23:47,153 - INFO - DBManager.py : log -                           - aci00500 [70/116]
+2016-07-14 19:23:50,001 - INFO - DBManager.py : log -                           - aci03410 [71/116]
+2016-07-14 19:23:52,570 - INFO - DBManager.py : log -                           - aci00970 [72/116]
+2016-07-14 19:23:55,348 - INFO - DBManager.py : log -                           - aci01110 [73/116]
+2016-07-14 19:24:00,092 - INFO - DBManager.py : log -                           - aci03420 [74/116]
+2016-07-14 19:24:02,706 - INFO - DBManager.py : log -                           - aci00130 [75/116]
+2016-07-14 19:24:05,504 - INFO - DBManager.py : log -                           - aci00030 [76/116]
+2016-07-14 19:24:08,292 - INFO - DBManager.py : log -                           - aci00230 [77/116]
+2016-07-14 19:24:11,290 - INFO - DBManager.py : log -                           - aci00760 [78/116]
+2016-07-14 19:24:14,722 - INFO - DBManager.py : log -                           - aci00330 [79/116]
+2016-07-14 19:24:17,618 - INFO - DBManager.py : log -                           - aci00332 [80/116]
+2016-07-14 19:24:20,640 - INFO - DBManager.py : log -                           - aci03020 [81/116]
+2016-07-14 19:24:23,227 - INFO - DBManager.py : log -                           - aci01200 [82/116]
+2016-07-14 19:24:26,272 - INFO - DBManager.py : log -                           - aci01040 [83/116]
+2016-07-14 19:24:29,061 - INFO - DBManager.py : log -                           - aci01120 [84/116]
+2016-07-14 19:24:33,966 - INFO - DBManager.py : log -                           - aci00680 [85/116]
+2016-07-14 19:24:36,763 - INFO - DBManager.py : log -                           - aci00121 [86/116]
+2016-07-14 19:24:39,350 - INFO - DBManager.py : log -                           - aci04122 [87/116]
+2016-07-14 19:24:41,939 - INFO - DBManager.py : log -                           - aci00750 [88/116]
+2016-07-14 19:24:44,513 - INFO - DBManager.py : log -                           - aci03070 [89/116]
+2016-07-14 19:24:47,107 - INFO - DBManager.py : log -                           - aci00450 [90/116]
+2016-07-14 19:24:49,718 - INFO - DBManager.py : log -                           - aci00562 [91/116]
+2016-07-14 19:24:52,521 - INFO - DBManager.py : log -                           - aci00525 [92/116]
+2016-07-14 19:24:55,099 - INFO - DBManager.py : log -                           - aci01230 [93/116]
+2016-07-14 19:24:58,189 - INFO - DBManager.py : log -                           - aci00520 [94/116]
+2016-07-14 19:25:01,191 - INFO - DBManager.py : log -                           - aci00521 [95/116]
+2016-07-14 19:25:03,763 - INFO - DBManager.py : log -                           - aci00785 [96/116]
+2016-07-14 19:25:06,338 - INFO - DBManager.py : log -                           - aci00240 [97/116]
+2016-07-14 19:25:09,398 - INFO - DBManager.py : log -                           - aci00910 [98/116]
+2016-07-14 19:25:12,248 - INFO - DBManager.py : log -                           - aci01130 [99/116]
+2016-07-14 19:25:16,395 - INFO - DBManager.py : log -                           - aci00010 [100/116]
+2016-07-14 19:25:19,184 - INFO - DBManager.py : log -                           - aci00740 [101/116]
+2016-07-14 19:25:21,965 - INFO - DBManager.py : log -                           - aci00550 [102/116]
+2016-07-14 19:25:24,777 - INFO - DBManager.py : log -                           - aci03440 [103/116]
+2016-07-14 19:25:27,443 - INFO - DBManager.py : log -                           - aci01220 [104/116]
+2016-07-14 19:25:30,643 - INFO - DBManager.py : log -                           - aci00310 [105/116]
+2016-07-14 19:25:33,452 - INFO - DBManager.py : log -                           - aci00623 [106/116]
+2016-07-14 19:25:36,049 - INFO - DBManager.py : log -                           - aci00622 [107/116]
+2016-07-14 19:25:38,724 - INFO - DBManager.py : log -                           - aci00620 [108/116]
+2016-07-14 19:25:41,544 - INFO - DBManager.py : log -                           - aci00627 [109/116]
+2016-07-14 19:25:44,341 - INFO - DBManager.py : log -                           - aci00626 [110/116]
+2016-07-14 19:25:46,908 - INFO - DBManager.py : log -                           - aci00625 [111/116]
+2016-07-14 19:25:54,536 - INFO - DBManager.py : log -                           - aci00624 [112/116]
+2016-07-14 19:25:57,353 - INFO - DBManager.py : log -                           - aci00523 [113/116]
+2016-07-14 19:26:00,411 - INFO - DBManager.py : log -                           - aci00250 [114/116]
+2016-07-14 19:26:03,907 - INFO - DBManager.py : log -                           - aci00903 [115/116]
+2016-07-14 19:26:06,487 - INFO - DBManager.py : log -                           - aci00900 [116/116]
+2016-07-14 19:26:11,293 - INFO - DBManager.py : log -              DOWNLOADED IN 375.803818941 seconds ---
+2016-07-14 19:26:11,296 - INFO - DBManager.py : log -                  FETCHING MAPPING DATA FOR aci (1/1)...
+2016-07-14 19:26:11,298 - INFO - DBManager.py : log -                   * KEGG TO NCBI GeneID
+2016-07-14 19:26:14,537 - ERROR - DBManager.py : errorlog -              FAIL! Trying again... 2 of 3
+2016-07-14 19:26:17,137 - ERROR - DBManager.py : errorlog -              FAIL! Trying again... 3 of 3
+2016-07-14 19:26:19,818 - ERROR - DBManager.py : errorlog -              FAIL! Trying again... 4 of 3
+2016-07-14 19:26:19,821 - INFO - DBManager.py : log -                                     Failed!! The download process will continue...
+2016-07-14 19:26:19,822 - INFO - DBManager.py : log -                   * KEGG TO Uniprot
+2016-07-14 19:26:22,838 - INFO - DBManager.py : log -                   * KEGG TO Gene Symbol
+2016-07-14 19:26:27,290 - INFO - DBManager.py : log -                      DOWNLOADED IN 0 minutes ---
+2016-07-14 19:26:27,292 - INFO - DBManager.py : log -              UPDATE  3 aci...ERROR
+
+2016-07-14 19:26:27,294 - ERROR - DBManager.py : errorlog -              Errors detected during the download for organism aci
+      - Errors during KEGG data download: 
+      - Errors during MAPPING data download:  ncbi-geneid
+2016-07-14 19:26:27,295 - INFO - DBManager.py : log -      
+2016-07-14 19:26:27,297 - INFO - DBManager.py : log -      STEP 4. CLOSING LOG FILES, GENERATING VERSION FILE
+2016-07-14 19:34:49,924 - INFO - DBManager.py : log -      ######################################################################
+2016-07-14 19:34:49,925 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE KEGG DOWNLOADER 
+2016-07-14 19:34:49,926 - INFO - DBManager.py : log -      ### v.0.11
+2016-07-14 19:34:49,926 - INFO - DBManager.py : log -      ######################################################################
+2016-07-14 19:34:49,927 - INFO - DBManager.py : log -      
+2016-07-14 19:34:49,928 - INFO - DBManager.py : log -      Download log is at: /data/KEGG_DATA/20160714_1934/download.log
+2016-07-14 19:34:49,929 - INFO - DBManager.py : log -      
+2016-07-14 19:34:49,930 - INFO - DBManager.py : log -      STEP 0. READ CONFIGURATION AND PARSE INPUT FILES...
+2016-07-14 19:34:51,966 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2016-07-14 19:34:51,967 - INFO - DBManager.py : log -             - 1 organisms were downloaded on previous executions.
+2016-07-14 19:34:51,969 - INFO - DBManager.py : log -             - 1 organisms were installed on previous executions.
+2016-07-14 19:34:51,970 - INFO - DBManager.py : log -             - 0 organisms failed during the installation on previous executions.
+2016-07-14 19:34:51,972 - INFO - DBManager.py : log -      
+2016-07-14 19:34:51,973 - INFO - DBManager.py : log -      New data will be stored at /data/KEGG_DATA/20160714_1934/
+2016-07-14 19:34:52,000 - INFO - DBManager.py : log -              STEP 1. COPYING THE PREVIOUS COMMON KEGG INFORMATION
+2016-07-14 19:34:52,842 - INFO - DBManager.py : log -      
+2016-07-14 19:34:52,843 - INFO - DBManager.py : log -      STEP 2. COPY THE PREVIOUS INFORMATION FOR ORGANISMS
+2016-07-14 19:34:52,844 - INFO - DBManager.py : log -             - 1 organisms were downloaded on previous executions.
+2016-07-14 19:34:52,845 - INFO - DBManager.py : log -                            * COPYING  mmu (1/1)...
+2016-07-14 19:35:11,816 - INFO - DBManager.py : log -                            * COPYING  mmu (1/1)...SUCCESS
+
+2016-07-14 19:35:11,835 - INFO - DBManager.py : log -      
+2016-07-14 19:35:11,836 - INFO - DBManager.py : log -      STEP 3. DOWNLOADING THE INFORMATION FOR THE SELECTED ORGANISMS
+2016-07-14 19:35:11,837 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2016-07-14 19:35:11,838 - INFO - DBManager.py : log -                  DOWLOADING  aci...
+2016-07-14 19:35:11,839 - INFO - DBManager.py : log -                  FETCHING KEGG DATA FOR aci (1/1)...
+2016-07-14 19:35:11,841 - INFO - DBManager.py : log -                    * GENE to PATHWAY TABLE
+2016-07-14 19:35:15,131 - INFO - DBManager.py : log -                    * PATHWAYS LIST
+2016-07-14 19:35:19,290 - INFO - DBManager.py : log -                          DETECTED 116 PATHWAYS FOR aci [9 min aprox.]
+2016-07-14 19:35:19,292 - INFO - DBManager.py : log -                           - aci00380 [1/116]
+2016-07-14 19:35:22,074 - INFO - DBManager.py : log -                           - aci00061 [2/116]
+2016-07-14 19:35:25,075 - INFO - DBManager.py : log -                           - aci02060 [3/116]
+2016-07-14 19:35:27,894 - INFO - DBManager.py : log -                           - aci00300 [4/116]
+2016-07-14 19:35:30,494 - INFO - DBManager.py : log -                           - aci00430 [5/116]
+2016-07-14 19:35:33,157 - INFO - DBManager.py : log -                           - aci00630 [6/116]
+2016-07-14 19:35:40,960 - INFO - DBManager.py : log -                           - aci00633 [7/116]
+2016-07-14 19:35:43,790 - INFO - DBManager.py : log -                           - aci00540 [8/116]
+2016-07-14 19:35:46,585 - INFO - DBManager.py : log -                           - aci00730 [9/116]
+2016-07-14 19:35:49,159 - INFO - DBManager.py : log -                           - aci00261 [10/116]
+2016-07-14 19:35:51,738 - INFO - DBManager.py : log -                           - aci00260 [11/116]
+2016-07-14 19:35:54,537 - INFO - DBManager.py : log -                           - aci00930 [12/116]
+2016-07-14 19:35:57,092 - INFO - DBManager.py : log -                           - aci00072 [13/116]
+2016-07-14 19:35:59,680 - INFO - DBManager.py : log -                           - aci00071 [14/116]
+2016-07-14 19:36:02,557 - INFO - DBManager.py : log -                           - aci02020 [15/116]
+2016-07-14 19:36:05,828 - INFO - DBManager.py : log -                           - aci00401 [16/116]
+2016-07-14 19:36:08,420 - INFO - DBManager.py : log -                           - aci00400 [17/116]
+2016-07-14 19:36:11,716 - INFO - DBManager.py : log -                           - aci03060 [18/116]
+2016-07-14 19:36:15,768 - INFO - DBManager.py : log -                           - aci00640 [19/116]
+2016-07-14 19:36:18,767 - INFO - DBManager.py : log -                           - aci00643 [20/116]
+2016-07-14 19:36:21,344 - INFO - DBManager.py : log -                           - aci00270 [21/116]
+2016-07-14 19:36:24,175 - INFO - DBManager.py : log -                           - aci00920 [22/116]
+2016-07-14 19:36:26,985 - INFO - DBManager.py : log -                           - aci00480 [23/116]
+2016-07-14 19:36:29,807 - INFO - DBManager.py : log -                           - aci01212 [24/116]
+2016-07-14 19:36:32,637 - INFO - DBManager.py : log -                           - aci00040 [25/116]
+2016-07-14 19:36:35,474 - INFO - DBManager.py : log -                           - aci00281 [26/116]
+2016-07-14 19:36:38,062 - INFO - DBManager.py : log -                           - aci00280 [27/116]
+2016-07-14 19:36:40,878 - INFO - DBManager.py : log -                           - aci00410 [28/116]
+2016-07-14 19:36:43,685 - INFO - DBManager.py : log -                           - aci00561 [29/116]
+2016-07-14 19:36:46,280 - INFO - DBManager.py : log -                           - aci00650 [30/116]
+2016-07-14 19:36:49,198 - INFO - DBManager.py : log -                           - aci00564 [31/116]
+2016-07-14 19:36:52,027 - INFO - DBManager.py : log -                           - aci00565 [32/116]
+2016-07-14 19:36:54,623 - INFO - DBManager.py : log -                           - aci03018 [33/116]
+2016-07-14 19:36:57,427 - INFO - DBManager.py : log -                           - aci00364 [34/116]
+2016-07-14 19:37:00,021 - INFO - DBManager.py : log -                           - aci00362 [35/116]
+2016-07-14 19:37:02,829 - INFO - DBManager.py : log -                           - aci03010 [36/116]
+2016-07-14 19:37:06,155 - INFO - DBManager.py : log -                           - aci00360 [37/116]
+2016-07-14 19:37:08,963 - INFO - DBManager.py : log -                           - aci00361 [38/116]
+2016-07-14 19:37:11,783 - INFO - DBManager.py : log -                           - aci00790 [39/116]
+2016-07-14 19:37:14,574 - INFO - DBManager.py : log -                           - aci00051 [40/116]
+2016-07-14 19:37:17,393 - INFO - DBManager.py : log -                           - aci00052 [41/116]
+2016-07-14 19:37:20,208 - INFO - DBManager.py : log -                           - aci00053 [42/116]
+2016-07-14 19:37:22,999 - INFO - DBManager.py : log -                           - aci00290 [43/116]
+2016-07-14 19:37:25,585 - INFO - DBManager.py : log -                           - aci00591 [44/116]
+2016-07-14 19:37:28,179 - INFO - DBManager.py : log -                           - aci00590 [45/116]
+2016-07-14 19:37:31,021 - INFO - DBManager.py : log -                           - aci00592 [46/116]
+2016-07-14 19:37:33,608 - INFO - DBManager.py : log -                           - aci01501 [47/116]
+2016-07-14 19:37:36,205 - INFO - DBManager.py : log -                           - aci01503 [48/116]
+2016-07-14 19:37:39,038 - INFO - DBManager.py : log -                           - aci01502 [49/116]
+2016-07-14 19:37:41,839 - INFO - DBManager.py : log -                           - aci01210 [50/116]
+2016-07-14 19:37:44,667 - INFO - DBManager.py : log -                           - aci00190 [51/116]
+2016-07-14 19:37:47,453 - INFO - DBManager.py : log -                           - aci00460 [52/116]
+2016-07-14 19:37:52,335 - INFO - DBManager.py : log -                           - aci00350 [53/116]
+2016-07-14 19:37:55,180 - INFO - DBManager.py : log -                           - aci00860 [54/116]
+2016-07-14 19:37:58,213 - INFO - DBManager.py : log -                           - aci00780 [55/116]
+2016-07-14 19:38:00,842 - INFO - DBManager.py : log -                           - aci01100 [56/116]
+2016-07-14 19:38:08,145 - INFO - DBManager.py : log -                           - aci03030 [57/116]
+2016-07-14 19:38:11,002 - INFO - DBManager.py : log -                           - aci03430 [58/116]
+2016-07-14 19:38:13,680 - INFO - DBManager.py : log -                           - aci00660 [59/116]
+2016-07-14 19:38:16,663 - INFO - DBManager.py : log -                           - aci00670 [60/116]
+2016-07-14 19:38:19,234 - INFO - DBManager.py : log -                           - aci00020 [61/116]
+2016-07-14 19:38:22,073 - INFO - DBManager.py : log -                           - aci00770 [62/116]
+2016-07-14 19:38:24,659 - INFO - DBManager.py : log -                           - aci00220 [63/116]
+2016-07-14 19:38:27,251 - INFO - DBManager.py : log -                           - aci00340 [64/116]
+2016-07-14 19:38:29,833 - INFO - DBManager.py : log -                           - aci00473 [65/116]
+2016-07-14 19:38:32,424 - INFO - DBManager.py : log -                           - aci02010 [66/116]
+2016-07-14 19:38:35,892 - INFO - DBManager.py : log -                           - aci00471 [67/116]
+2016-07-14 19:38:38,551 - INFO - DBManager.py : log -                           - aci01054 [68/116]
+2016-07-14 19:38:41,121 - INFO - DBManager.py : log -                           - aci01053 [69/116]
+2016-07-14 19:38:43,712 - INFO - DBManager.py : log -                           - aci00500 [70/116]
+2016-07-14 19:38:46,510 - INFO - DBManager.py : log -                           - aci03410 [71/116]
+2016-07-14 19:38:49,097 - INFO - DBManager.py : log -                           - aci00970 [72/116]
+2016-07-14 19:38:51,930 - INFO - DBManager.py : log -                           - aci01110 [73/116]
+2016-07-14 19:38:56,596 - INFO - DBManager.py : log -                           - aci03420 [74/116]
+2016-07-14 19:39:00,909 - INFO - DBManager.py : log -                           - aci00130 [75/116]
+2016-07-14 19:39:03,713 - INFO - DBManager.py : log -                           - aci00030 [76/116]
+2016-07-14 19:39:06,962 - INFO - DBManager.py : log -                           - aci00230 [77/116]
+2016-07-14 19:39:10,538 - INFO - DBManager.py : log -                           - aci00760 [78/116]
+2016-07-14 19:39:18,340 - INFO - DBManager.py : log -                           - aci00330 [79/116]
+2016-07-14 19:39:21,132 - INFO - DBManager.py : log -                           - aci00332 [80/116]
+2016-07-14 19:39:23,707 - INFO - DBManager.py : log -                           - aci03020 [81/116]
+2016-07-14 19:39:26,294 - INFO - DBManager.py : log -                           - aci01200 [82/116]
+2016-07-14 19:39:29,370 - INFO - DBManager.py : log -                           - aci01040 [83/116]
+2016-07-14 19:39:32,168 - INFO - DBManager.py : log -                           - aci01120 [84/116]
+2016-07-14 19:39:40,649 - INFO - DBManager.py : log -                           - aci00680 [85/116]
+2016-07-14 19:39:43,648 - INFO - DBManager.py : log -                           - aci00121 [86/116]
+2016-07-14 19:39:46,237 - INFO - DBManager.py : log -                           - aci04122 [87/116]
+2016-07-14 19:39:48,831 - INFO - DBManager.py : log -                           - aci00750 [88/116]
+2016-07-14 19:39:51,757 - INFO - DBManager.py : log -                           - aci03070 [89/116]
+2016-07-14 19:39:54,462 - INFO - DBManager.py : log -                           - aci00450 [90/116]
+2016-07-14 19:39:57,028 - INFO - DBManager.py : log -                           - aci00562 [91/116]
+2016-07-14 19:39:59,819 - INFO - DBManager.py : log -                           - aci00525 [92/116]
+2016-07-14 19:40:02,432 - INFO - DBManager.py : log -                           - aci01230 [93/116]
+2016-07-14 19:40:05,444 - INFO - DBManager.py : log -                           - aci00520 [94/116]
+2016-07-14 19:40:08,256 - INFO - DBManager.py : log -                           - aci00521 [95/116]
+2016-07-14 19:40:10,843 - INFO - DBManager.py : log -                           - aci00785 [96/116]
+2016-07-14 19:40:14,016 - INFO - DBManager.py : log -                           - aci00240 [97/116]
+2016-07-14 19:40:17,173 - INFO - DBManager.py : log -                           - aci00910 [98/116]
+2016-07-14 19:40:19,995 - INFO - DBManager.py : log -                           - aci01130 [99/116]
+2016-07-14 19:40:24,334 - INFO - DBManager.py : log -                           - aci00010 [100/116]
+2016-07-14 19:40:27,119 - INFO - DBManager.py : log -                           - aci00740 [101/116]
+2016-07-14 19:40:34,715 - INFO - DBManager.py : log -                           - aci00550 [102/116]
+2016-07-14 19:40:37,515 - INFO - DBManager.py : log -                           - aci03440 [103/116]
+2016-07-14 19:40:40,092 - INFO - DBManager.py : log -                           - aci01220 [104/116]
+2016-07-14 19:40:43,379 - INFO - DBManager.py : log -                           - aci00310 [105/116]
+2016-07-14 19:40:46,466 - INFO - DBManager.py : log -                           - aci00623 [106/116]
+2016-07-14 19:40:49,110 - INFO - DBManager.py : log -                           - aci00622 [107/116]
+2016-07-14 19:40:51,699 - INFO - DBManager.py : log -                           - aci00620 [108/116]
+2016-07-14 19:40:54,511 - INFO - DBManager.py : log -                           - aci00627 [109/116]
+2016-07-14 19:40:57,378 - INFO - DBManager.py : log -                           - aci00626 [110/116]
+2016-07-14 19:40:59,975 - INFO - DBManager.py : log -                           - aci00625 [111/116]
+2016-07-14 19:41:02,570 - INFO - DBManager.py : log -                           - aci00624 [112/116]
+2016-07-14 19:41:05,350 - INFO - DBManager.py : log -                           - aci00523 [113/116]
+2016-07-14 19:41:07,927 - INFO - DBManager.py : log -                           - aci00250 [114/116]
+2016-07-14 19:41:11,013 - INFO - DBManager.py : log -                           - aci00903 [115/116]
+2016-07-14 19:41:13,605 - INFO - DBManager.py : log -                           - aci00900 [116/116]
+2016-07-14 19:41:18,387 - INFO - DBManager.py : log -              DOWNLOADED IN 366.546947956 seconds ---
+2016-07-14 19:41:18,389 - INFO - DBManager.py : log -                  FETCHING MAPPING DATA FOR aci (1/1)...
+2016-07-14 19:41:18,391 - INFO - DBManager.py : log -                   * KEGG TO NCBI GeneID
+2016-07-14 19:41:21,014 - ERROR - DBManager.py : errorlog -              FAIL! Trying again... 2 of 3
+2016-07-14 19:41:23,928 - ERROR - DBManager.py : errorlog -              FAIL! Trying again... 3 of 3
+2016-07-14 19:41:26,525 - ERROR - DBManager.py : errorlog -              FAIL! Trying again... 4 of 3
+2016-07-14 19:41:26,527 - INFO - DBManager.py : log -                                     Failed!! The download process will continue...
+2016-07-14 19:41:26,529 - INFO - DBManager.py : log -                   * KEGG TO Uniprot
+2016-07-14 19:41:29,380 - INFO - DBManager.py : log -                   * KEGG TO Gene Symbol
+2016-07-14 19:41:33,266 - INFO - DBManager.py : log -                      DOWNLOADED IN 0 minutes ---
+2016-07-14 19:41:33,267 - INFO - DBManager.py : log -                  Errors detected during the download for organism aci
+2016-07-14 19:41:33,269 - INFO - DBManager.py : log -                    - Errors during KEGG data download: 
+2016-07-14 19:41:33,270 - INFO - DBManager.py : log -                    - Errors during MAPPING data download:  ncbi-geneid
+2016-07-14 19:41:33,272 - INFO - DBManager.py : log -                  The organism will be moved to the erroneous directory but could be valid for installation.
+2016-07-14 19:41:33,273 - INFO - DBManager.py : log -              UPDATE  3 aci...ERROR
+
+2016-07-14 19:41:33,275 - ERROR - DBManager.py : errorlog -              Errors detected during the download for organism aci. Aborting.
+2016-07-14 19:41:33,276 - INFO - DBManager.py : log -      
+2016-07-14 19:41:33,277 - INFO - DBManager.py : log -      STEP 4. CLOSING LOG FILES, GENERATING VERSION FILE
+2016-07-14 20:02:03,612 - INFO - DBManager.py : log -      ######################################################################
+2016-07-14 20:02:03,626 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE INSTALLER 
+2016-07-14 20:02:03,627 - INFO - DBManager.py : log -      ### v.0.11
+2016-07-14 20:02:03,628 - INFO - DBManager.py : log -      ######################################################################
+2016-07-14 20:02:03,629 - INFO - DBManager.py : log -      
+2016-07-14 20:02:03,630 - INFO - DBManager.py : log -      Installation log is at: /data/KEGG_DATA//last/install.log
+2016-07-14 20:02:03,631 - INFO - DBManager.py : log -      
+2016-07-14 20:02:03,631 - INFO - DBManager.py : log -      STEP 1. READ CONFIGURATION AND PARSE INPUT FILES...
+2016-07-14 20:02:05,681 - INFO - DBManager.py : log -             - 1 new organisms will be installed.
+2016-07-14 20:02:05,682 - INFO - DBManager.py : log -             - 1 organisms were downloaded on previous executions.
+2016-07-14 20:02:05,683 - INFO - DBManager.py : log -             - 0 organisms were installed on previous executions.
+2016-07-14 20:02:05,685 - INFO - DBManager.py : log -             - 1 organisms failed during the installation on previous executions.
+2016-07-14 20:02:05,686 - INFO - DBManager.py : log -      
+2016-07-14 20:02:05,687 - INFO - DBManager.py : log -      
+2016-07-14 20:02:05,688 - INFO - DBManager.py : log -      STEP 2. INSTALLING NEW ORGANISMS
+2016-07-14 20:02:05,689 - INFO - DBManager.py : log -             1 new organisms will be installed.
+2016-07-14 20:02:05,690 - INFO - DBManager.py : log -                  INSTALLING  aci...
+2016-07-14 20:02:05,691 - INFO - DBManager.py : log -                      INSTALLING  aci /data/KEGG_DATA//last/install.log /data/KEGG_DATA//last/species/aci/ /home/rhernandez/Desktop/workspace/paintomics3/PaintomicsServer/src/AdminTools/scripts/
+2016-07-14 20:02:05,692 - INFO - DBManager.py : log -                       INSTALLING MAPPING DATA FOR aci (1/1)...
+2016-07-14 20:02:05,704 - INFO - DBManager.py : log -                     * PROCESSING AND INSTALLING DEFAULT KEGG DATA 
+2016-07-14 20:02:11,093 - ERROR - DBManager.py : errorlog -                  [('./DBManager.py', 837, '<module>', 'scriptine.run()'), ('/usr/local/lib/python2.7/dist-packages/scriptine/command.py', 196, 'autocmds', 'add_verbosity_option=add_verbosity_option)'), ('/usr/local/lib/python2.7/dist-packages/scriptine/command.py', 105, 'parse_and_run_function', 'return function(*args[:len(required_args)], **kw)'), ('./DBManager.py', 407, 'install_command', 'installSpecieData(specie, installLog, dirNameAux, str(step)+ "/" + total, ROOT_DIRECTORY + "AdminTools/scripts/")'), ('./DBManager.py', 633, 'installSpecieData', 'errorlog(traceback.extract_stack())')]
+2016-07-14 20:02:11,095 - INFO - DBManager.py : log -              INSTALL  1 aci...ERROR
+
+2016-07-14 20:02:11,097 - ERROR - DBManager.py : errorlog -              Error while calling /home/rhernandez/Desktop/workspace/paintomics3/PaintomicsServer/src/AdminTools/scripts/default/build_database.py: Exit status 1. Output is available at /data/KEGG_DATA//last/install.log
+2016-07-14 20:02:11,098 - INFO - DBManager.py : log -      
+2016-07-14 20:02:11,100 - INFO - DBManager.py : log -      STEP 3. CLOSING LOG FILES, GENERATING VERSION FILE
+2016-07-14 20:14:29,716 - INFO - DBManager.py : log -      ######################################################################
+2016-07-14 20:14:29,717 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE INSTALLER 
+2016-07-14 20:14:29,717 - INFO - DBManager.py : log -      ### v.0.11
+2016-07-14 20:14:29,718 - INFO - DBManager.py : log -      ######################################################################
+2016-07-14 20:14:29,719 - INFO - DBManager.py : log -      
+2016-07-14 20:14:29,720 - INFO - DBManager.py : log -      Installation log is at: /data/KEGG_DATA//last/install.log
+2016-07-14 20:14:29,720 - INFO - DBManager.py : log -      
+2016-07-14 20:14:29,721 - INFO - DBManager.py : log -      STEP 1. READ CONFIGURATION AND PARSE INPUT FILES...
+2016-07-14 20:14:31,725 - INFO - DBManager.py : log -             - 1 new organisms will be installed.
+2016-07-14 20:14:31,726 - INFO - DBManager.py : log -             - 1 organisms were downloaded on previous executions.
+2016-07-14 20:14:31,728 - INFO - DBManager.py : log -             - 0 organisms were installed on previous executions.
+2016-07-14 20:14:31,729 - INFO - DBManager.py : log -             - 1 organisms failed during the installation on previous executions.
+2016-07-14 20:14:31,731 - INFO - DBManager.py : log -      
+2016-07-14 20:14:31,732 - INFO - DBManager.py : log -      
+2016-07-14 20:14:31,734 - INFO - DBManager.py : log -      STEP 2. INSTALLING NEW ORGANISMS
+2016-07-14 20:14:31,736 - INFO - DBManager.py : log -             1 new organisms will be installed.
+2016-07-14 20:14:31,737 - INFO - DBManager.py : log -                  INSTALLING  aci...
+2016-07-14 20:14:31,739 - INFO - DBManager.py : log -                       INSTALLING MAPPING DATA FOR aci (1/1)...
+2016-07-14 20:14:31,740 - INFO - DBManager.py : log -                     * PROCESSING AND INSTALLING DEFAULT KEGG DATA 
+2016-07-14 20:14:36,460 - ERROR - DBManager.py : errorlog -                  [('./DBManager.py', 836, '<module>', 'scriptine.run()'), ('/usr/local/lib/python2.7/dist-packages/scriptine/command.py', 196, 'autocmds', 'add_verbosity_option=add_verbosity_option)'), ('/usr/local/lib/python2.7/dist-packages/scriptine/command.py', 105, 'parse_and_run_function', 'return function(*args[:len(required_args)], **kw)'), ('./DBManager.py', 406, 'install_command', 'installSpecieData(specie, installLog, dirNameAux, str(step)+ "/" + total, ROOT_DIRECTORY + "AdminTools/scripts/")'), ('./DBManager.py', 632, 'installSpecieData', 'errorlog(traceback.extract_stack())')]
+2016-07-14 20:14:36,462 - INFO - DBManager.py : log -              INSTALL  1 aci...ERROR
+
+2016-07-14 20:14:36,463 - ERROR - DBManager.py : errorlog -              Error while calling /home/rhernandez/Desktop/workspace/paintomics3/PaintomicsServer/src/AdminTools/scripts/default/build_database.py: Exit status 1. Output is available at /data/KEGG_DATA//last/install.log
+2016-07-14 20:14:36,465 - INFO - DBManager.py : log -      
+2016-07-14 20:14:36,466 - INFO - DBManager.py : log -      STEP 3. CLOSING LOG FILES, GENERATING VERSION FILE
+2016-07-14 20:18:24,853 - INFO - DBManager.py : log -      ######################################################################
+2016-07-14 20:18:24,854 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE INSTALLER 
+2016-07-14 20:18:24,855 - INFO - DBManager.py : log -      ### v.0.11
+2016-07-14 20:18:24,856 - INFO - DBManager.py : log -      ######################################################################
+2016-07-14 20:18:24,857 - INFO - DBManager.py : log -      
+2016-07-14 20:18:24,858 - INFO - DBManager.py : log -      Installation log is at: /data/KEGG_DATA//last/install.log
+2016-07-14 20:18:24,858 - INFO - DBManager.py : log -      
+2016-07-14 20:18:24,859 - INFO - DBManager.py : log -      STEP 1. READ CONFIGURATION AND PARSE INPUT FILES...
+2016-07-14 20:18:26,863 - INFO - DBManager.py : log -             - 1 new organisms will be installed.
+2016-07-14 20:18:26,864 - INFO - DBManager.py : log -             - 1 organisms were downloaded on previous executions.
+2016-07-14 20:18:26,865 - INFO - DBManager.py : log -             - 0 organisms were installed on previous executions.
+2016-07-14 20:18:26,867 - INFO - DBManager.py : log -             - 1 organisms failed during the installation on previous executions.
+2016-07-14 20:18:26,868 - INFO - DBManager.py : log -      
+2016-07-14 20:18:26,869 - INFO - DBManager.py : log -      
+2016-07-14 20:18:26,870 - INFO - DBManager.py : log -      STEP 2. INSTALLING NEW ORGANISMS
+2016-07-14 20:18:26,871 - INFO - DBManager.py : log -             1 new organisms will be installed.
+2016-07-14 20:18:26,872 - INFO - DBManager.py : log -                  INSTALLING  aci...
+2016-07-14 20:18:26,873 - INFO - DBManager.py : log -                       INSTALLING MAPPING DATA FOR aci (1/1)...
+2016-07-14 20:18:26,874 - INFO - DBManager.py : log -                     * PROCESSING AND INSTALLING DEFAULT KEGG DATA 
+2016-07-14 20:18:31,660 - ERROR - DBManager.py : errorlog -                  [('./DBManager.py', 836, '<module>', 'scriptine.run()'), ('/usr/local/lib/python2.7/dist-packages/scriptine/command.py', 196, 'autocmds', 'add_verbosity_option=add_verbosity_option)'), ('/usr/local/lib/python2.7/dist-packages/scriptine/command.py', 105, 'parse_and_run_function', 'return function(*args[:len(required_args)], **kw)'), ('./DBManager.py', 406, 'install_command', 'installSpecieData(specie, installLog, dirNameAux, str(step)+ "/" + total, ROOT_DIRECTORY + "AdminTools/scripts/")'), ('./DBManager.py', 632, 'installSpecieData', 'errorlog(traceback.extract_stack())')]
+2016-07-14 20:18:31,662 - INFO - DBManager.py : log -              INSTALL  1 aci...ERROR
+
+2016-07-14 20:18:31,663 - ERROR - DBManager.py : errorlog -              Error while calling /home/rhernandez/Desktop/workspace/paintomics3/PaintomicsServer/src/AdminTools/scripts/default/build_database.py: Exit status 1. Output is available at /data/KEGG_DATA//last/install.log
+2016-07-14 20:18:31,664 - INFO - DBManager.py : log -      
+2016-07-14 20:18:31,666 - INFO - DBManager.py : log -      STEP 3. CLOSING LOG FILES, GENERATING VERSION FILE
+2016-07-14 20:20:08,353 - INFO - DBManager.py : log -      ######################################################################
+2016-07-14 20:20:08,354 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE INSTALLER 
+2016-07-14 20:20:08,355 - INFO - DBManager.py : log -      ### v.0.11
+2016-07-14 20:20:08,356 - INFO - DBManager.py : log -      ######################################################################
+2016-07-14 20:20:08,357 - INFO - DBManager.py : log -      
+2016-07-14 20:20:08,357 - INFO - DBManager.py : log -      Installation log is at: /data/KEGG_DATA//last/install.log
+2016-07-14 20:20:08,358 - INFO - DBManager.py : log -      
+2016-07-14 20:20:08,359 - INFO - DBManager.py : log -      STEP 1. READ CONFIGURATION AND PARSE INPUT FILES...
+2016-07-14 20:20:10,363 - INFO - DBManager.py : log -             - 1 new organisms will be installed.
+2016-07-14 20:20:10,364 - INFO - DBManager.py : log -             - 1 organisms were downloaded on previous executions.
+2016-07-14 20:20:10,365 - INFO - DBManager.py : log -             - 0 organisms were installed on previous executions.
+2016-07-14 20:20:10,366 - INFO - DBManager.py : log -             - 1 organisms failed during the installation on previous executions.
+2016-07-14 20:20:10,367 - INFO - DBManager.py : log -      
+2016-07-14 20:20:10,367 - INFO - DBManager.py : log -      
+2016-07-14 20:20:10,368 - INFO - DBManager.py : log -      STEP 2. INSTALLING NEW ORGANISMS
+2016-07-14 20:20:10,369 - INFO - DBManager.py : log -             1 new organisms will be installed.
+2016-07-14 20:20:10,370 - INFO - DBManager.py : log -                  INSTALLING  aci...
+2016-07-14 20:20:10,371 - INFO - DBManager.py : log -                       INSTALLING MAPPING DATA FOR aci (1/1)...
+2016-07-14 20:20:10,372 - INFO - DBManager.py : log -                     * PROCESSING AND INSTALLING DEFAULT KEGG DATA 
+2016-07-14 20:20:15,086 - ERROR - DBManager.py : errorlog -                  [('./DBManager.py', 836, '<module>', 'scriptine.run()'), ('/usr/local/lib/python2.7/dist-packages/scriptine/command.py', 196, 'autocmds', 'add_verbosity_option=add_verbosity_option)'), ('/usr/local/lib/python2.7/dist-packages/scriptine/command.py', 105, 'parse_and_run_function', 'return function(*args[:len(required_args)], **kw)'), ('./DBManager.py', 406, 'install_command', 'installSpecieData(specie, installLog, dirNameAux, str(step)+ "/" + total, ROOT_DIRECTORY + "AdminTools/scripts/")'), ('./DBManager.py', 632, 'installSpecieData', 'errorlog(traceback.extract_stack())')]
+2016-07-14 20:20:15,089 - INFO - DBManager.py : log -              INSTALL  1 aci...ERROR
+
+2016-07-14 20:20:15,090 - ERROR - DBManager.py : errorlog -              Error while calling /home/rhernandez/Desktop/workspace/paintomics3/PaintomicsServer/src/AdminTools/scripts/default/build_database.py: Exit status 1. Output is available at /data/KEGG_DATA//last/install.log
+2016-07-14 20:20:15,092 - INFO - DBManager.py : log -      
+2016-07-14 20:20:15,093 - INFO - DBManager.py : log -      STEP 3. CLOSING LOG FILES, GENERATING VERSION FILE
+2016-07-14 20:21:08,935 - INFO - DBManager.py : log -      ######################################################################
+2016-07-14 20:21:08,936 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE INSTALLER 
+2016-07-14 20:21:08,937 - INFO - DBManager.py : log -      ### v.0.11
+2016-07-14 20:21:08,938 - INFO - DBManager.py : log -      ######################################################################
+2016-07-14 20:21:08,938 - INFO - DBManager.py : log -      
+2016-07-14 20:21:08,939 - INFO - DBManager.py : log -      Installation log is at: /data/KEGG_DATA//last/install.log
+2016-07-14 20:21:08,940 - INFO - DBManager.py : log -      
+2016-07-14 20:21:08,941 - INFO - DBManager.py : log -      STEP 1. READ CONFIGURATION AND PARSE INPUT FILES...
+2016-07-14 20:21:10,945 - INFO - DBManager.py : log -             - 1 new organisms will be installed.
+2016-07-14 20:21:10,947 - INFO - DBManager.py : log -             - 1 organisms were downloaded on previous executions.
+2016-07-14 20:21:10,948 - INFO - DBManager.py : log -             - 0 organisms were installed on previous executions.
+2016-07-14 20:21:10,949 - INFO - DBManager.py : log -             - 1 organisms failed during the installation on previous executions.
+2016-07-14 20:21:10,950 - INFO - DBManager.py : log -      
+2016-07-14 20:21:10,951 - INFO - DBManager.py : log -      
+2016-07-14 20:21:10,951 - INFO - DBManager.py : log -      STEP 2. INSTALLING NEW ORGANISMS
+2016-07-14 20:21:10,952 - INFO - DBManager.py : log -             1 new organisms will be installed.
+2016-07-14 20:21:10,953 - INFO - DBManager.py : log -                  INSTALLING  aci...
+2016-07-14 20:21:10,955 - INFO - DBManager.py : log -                       INSTALLING MAPPING DATA FOR aci (1/1)...
+2016-07-14 20:21:10,956 - INFO - DBManager.py : log -                     * PROCESSING AND INSTALLING DEFAULT KEGG DATA 
+2016-07-14 20:21:15,577 - ERROR - DBManager.py : errorlog -                  [('./DBManager.py', 836, '<module>', 'scriptine.run()'), ('/usr/local/lib/python2.7/dist-packages/scriptine/command.py', 196, 'autocmds', 'add_verbosity_option=add_verbosity_option)'), ('/usr/local/lib/python2.7/dist-packages/scriptine/command.py', 105, 'parse_and_run_function', 'return function(*args[:len(required_args)], **kw)'), ('./DBManager.py', 406, 'install_command', 'installSpecieData(specie, installLog, dirNameAux, str(step)+ "/" + total, ROOT_DIRECTORY + "AdminTools/scripts/")'), ('./DBManager.py', 632, 'installSpecieData', 'errorlog(traceback.extract_stack())')]
+2016-07-14 20:21:15,579 - INFO - DBManager.py : log -              INSTALL  1 aci...ERROR
+
+2016-07-14 20:21:15,581 - ERROR - DBManager.py : errorlog -              Error while calling /home/rhernandez/Desktop/workspace/paintomics3/PaintomicsServer/src/AdminTools/scripts/default/build_database.py: Exit status 1. Output is available at /data/KEGG_DATA//last/install.log
+2016-07-14 20:21:15,583 - INFO - DBManager.py : log -      
+2016-07-14 20:21:15,584 - INFO - DBManager.py : log -      STEP 3. CLOSING LOG FILES, GENERATING VERSION FILE
+2016-07-14 20:23:00,759 - INFO - DBManager.py : log -      ######################################################################
+2016-07-14 20:23:00,760 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE INSTALLER 
+2016-07-14 20:23:00,761 - INFO - DBManager.py : log -      ### v.0.11
+2016-07-14 20:23:00,762 - INFO - DBManager.py : log -      ######################################################################
+2016-07-14 20:23:00,763 - INFO - DBManager.py : log -      
+2016-07-14 20:23:00,763 - INFO - DBManager.py : log -      Installation log is at: /data/KEGG_DATA//last/install.log
+2016-07-14 20:23:00,764 - INFO - DBManager.py : log -      
+2016-07-14 20:23:00,765 - INFO - DBManager.py : log -      STEP 1. READ CONFIGURATION AND PARSE INPUT FILES...
+2016-07-14 20:23:02,769 - INFO - DBManager.py : log -             - 1 new organisms will be installed.
+2016-07-14 20:23:02,770 - INFO - DBManager.py : log -             - 1 organisms were downloaded on previous executions.
+2016-07-14 20:23:02,771 - INFO - DBManager.py : log -             - 0 organisms were installed on previous executions.
+2016-07-14 20:23:02,773 - INFO - DBManager.py : log -             - 1 organisms failed during the installation on previous executions.
+2016-07-14 20:23:02,774 - INFO - DBManager.py : log -      
+2016-07-14 20:23:02,776 - INFO - DBManager.py : log -      
+2016-07-14 20:23:02,777 - INFO - DBManager.py : log -      STEP 2. INSTALLING NEW ORGANISMS
+2016-07-14 20:23:02,779 - INFO - DBManager.py : log -             1 new organisms will be installed.
+2016-07-14 20:23:02,781 - INFO - DBManager.py : log -                  INSTALLING  aci...
+2016-07-14 20:23:02,783 - INFO - DBManager.py : log -                       INSTALLING MAPPING DATA FOR aci (1/1)...
+2016-07-14 20:23:02,784 - INFO - DBManager.py : log -                     * PROCESSING AND INSTALLING DEFAULT KEGG DATA 
+2016-07-14 20:23:12,924 - INFO - DBManager.py : log -                  INSTALLED IN 10 seconds ---
+2016-07-14 20:23:12,926 - INFO - DBManager.py : log -              INSTALL  1 aci...SUCCESS
+
+2016-07-14 20:23:12,928 - INFO - DBManager.py : log -      
+2016-07-14 20:23:12,930 - INFO - DBManager.py : log -      STEP 3. CLOSING LOG FILES, GENERATING VERSION FILE
+2016-07-14 20:23:41,730 - INFO - DBManager.py : log -      ######################################################################
+2016-07-14 20:23:41,731 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE INSTALLER 
+2016-07-14 20:23:41,732 - INFO - DBManager.py : log -      ### v.0.11
+2016-07-14 20:23:41,733 - INFO - DBManager.py : log -      ######################################################################
+2016-07-14 20:23:41,734 - INFO - DBManager.py : log -      
+2016-07-14 20:23:41,735 - INFO - DBManager.py : log -      Installation log is at: /data/KEGG_DATA//last/install.log
+2016-07-14 20:23:41,735 - INFO - DBManager.py : log -      
+2016-07-14 20:23:41,736 - INFO - DBManager.py : log -      STEP 1. READ CONFIGURATION AND PARSE INPUT FILES...
+2016-07-14 20:23:43,743 - INFO - DBManager.py : log -             - 1 new organisms will be installed.
+2016-07-14 20:23:43,744 - INFO - DBManager.py : log -             - 1 organisms were downloaded on previous executions.
+2016-07-14 20:23:43,745 - INFO - DBManager.py : log -             - 1 organisms were installed on previous executions.
+2016-07-14 20:23:43,746 - INFO - DBManager.py : log -             - 1 organisms failed during the installation on previous executions.
+2016-07-14 20:23:43,747 - INFO - DBManager.py : log -      
+2016-07-14 20:23:43,749 - INFO - DBManager.py : log -      
+2016-07-14 20:23:43,750 - INFO - DBManager.py : log -      STEP 2. INSTALLING NEW ORGANISMS
+2016-07-14 20:23:43,751 - INFO - DBManager.py : log -             1 new organisms will be installed.
+2016-07-14 20:23:43,752 - INFO - DBManager.py : log -                  INSTALLING  aci...
+2016-07-14 20:23:43,753 - INFO - DBManager.py : log -                       INSTALLING MAPPING DATA FOR aci (1/1)...
+2016-07-14 20:23:43,754 - INFO - DBManager.py : log -                     * PROCESSING AND INSTALLING DEFAULT KEGG DATA 
+2016-07-14 20:23:50,590 - INFO - DBManager.py : log -                  INSTALLED IN 6 seconds ---
+2016-07-14 20:23:50,592 - INFO - DBManager.py : log -              INSTALL  1 aci...SUCCESS
+
+2016-07-14 20:23:50,594 - INFO - DBManager.py : log -      
+2016-07-14 20:23:50,596 - INFO - DBManager.py : log -      STEP 3. CLOSING LOG FILES, GENERATING VERSION FILE

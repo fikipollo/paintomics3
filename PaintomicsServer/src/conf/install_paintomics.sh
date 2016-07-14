@@ -1,9 +1,9 @@
 #!/bin/bash
 
 ADMIN_USER="admin";
-ADMIN_EMAIL="paintomics@cipf.es";
-ADMIN_PASS="40bd001563085fc35165329ea1ff5c5ecbdbbeef";
-ADMIN_AFFILIATION="CIPF"
+ADMIN_EMAIL="test@test.es"; #WILL BE USED FOR LOGIN AS ADMIN
+ADMIN_PASS="40bd001563085fc35165329ea1ff5c5ecbdbbeef"; #PASSWORD CODIFIED IN SHA1
+ADMIN_AFFILIATION="ADMIN"
 
 DATA_DIR="/data/";
 
@@ -12,13 +12,27 @@ sudo apt-get install mongodb
 sudo apt-get install python-dev python-mysqldb python-rsvg python-cairo python-cairosvg python-imaging python-pip libatlas-base-dev gfortran libapache2-mod-wsgi
 #sudo apt-get install tk8.5 tcl8.5
 
-sudo pip install flask hashlib gevent numpy fisher enum scipy configparser pymongo scriptine datetime
+sudo pip install flask
+sudo pip install gevent
+sudo pip install numpy
+sudo pip install fisher
+sudo pip install enum
+sudo pip install configparser
+sudo pip install pymongo
+sudo pip install scriptine
+sudo pip install datetime
+sudo pip install scipy
+sudo pip install hashlib
+sudo pip install psutil
+
 #sudo pip install pycairo
 #sudo pip install cairosvg
 #sudo pip install rq
 #sudo pip install rq-dashboard
 
 #TODO: INSTALL R PACKAGES (amap)
+sudo apt-get install r-base r-base-dev
+
 #*********************************************************
 #INITIALIZE MONGO DB
 #*********************************************************
@@ -61,5 +75,7 @@ mkdir $DATA_DIR/CLIENT_TMP/0
 mkdir $DATA_DIR/CLIENT_TMP/0/inputData
 mkdir $DATA_DIR/CLIENT_TMP/0/jobsData
 mkdir $DATA_DIR/CLIENT_TMP/0/tmp
+
+sudo ln -s /home/rhernandez/workspace/paintomics3/PaintomicsClient/public_html/ /var/www/html/paintomics
 
 sudo service apache2 restart
