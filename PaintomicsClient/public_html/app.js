@@ -37,6 +37,7 @@ function Application() {
         "PathwayAcquisitionViews/PA_Step4Views",
         "DataManagementViews/DM_MyDataView",
         "DataManagementViews/DM_Bed2GenesViews",
+        "DataManagementViews/DM_miRNA2GenesViews",
         "UserManagementViews/UserViews"
     ];
     this.controllers = ['JobController', "PathwayController", "UserController", "DataManagementController"];

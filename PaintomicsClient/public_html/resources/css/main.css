@@ -659,6 +659,9 @@ div.omicboxTitle h4 {
 .omicboxTitle.bedbasedFileBox, .availableOmicsBox[title=bedbasedomic] {
 	background: #738B9D;
 }
+.omicboxTitle.mirnabasedFileBox, .availableOmicsBox[title=mirnabasedomic] {
+	background: #333;
+}
 .availableOmicsBox {
 	background: rgb(85, 201, 166);
 	padding: 5px 10px;

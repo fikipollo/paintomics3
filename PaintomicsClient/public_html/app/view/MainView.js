@@ -81,6 +81,10 @@ function MainView() {
 				aView = new DM_Bed2GenesJobView();
 				aView.setController(application.getController("JobController"));
 				this.subviews[aViewName] = aView;
+			} else if (aViewName === "fromMiRNAtoGenes") {
+				aView = new DM_miRNA2GenesJobView();
+				aView.setController(application.getController("JobController"));
+				this.subviews[aViewName] = aView;
 			} else {
 				aView = new DM_MyDataSubmitJobPanel(aViewName, application.getController("DataManagementController"));
 				this.subviews[aViewName] = aView;
@@ -132,7 +136,7 @@ function MainView() {
 					" <ul class='submenu loggedOption'>" +
 					"     <li class='menuOption' data-name='paintPathways'><i class='fa fa-paint-brush'></i>  Paint pathways</li>" +
 					"     <li class='menuOption' data-name='fromBEDtoGenes'><i class='fa fa-code'></i>   From BED to Genes</li>" +
-					// "     <li class='menuOption' data-name='fromMiRNAtoGenes'><i class='fa fa-code'></i>   From miRNA to Genes</li>"+
+					"     <li class='menuOption' data-name='fromMiRNAtoGenes'><i class='fa fa-code'></i>   From miRNA to Genes</li>"+
 					" </ul></li>" +
 					" <li class='menuOption' ><i class='fa fa-info-circle'></i>  Resources" +
 					" <ul class='submenu'>" +
@@ -197,7 +201,7 @@ function MainView() {
                         return;
                     }
 										if(response.messageList.length > 0){
-											showInfoMessage("Welcome to Paintomics!", {
+											showInfoMessage("Welcome to PaintOmics 3!", {
 												message: response.messageList[0].message_content,
 												showButton: true
 											})
