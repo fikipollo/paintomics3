@@ -169,7 +169,7 @@ class PathwayAcquisitionJob(Job):
 
                     if nConditions == -1:
                         if len(line) < 2:
-                            erroneousLines[nLine] =  "   > Line " + str(nLine) + " expected at least 2 columns, but found one."
+                            erroneousLines[nLine] =  "Expected at least 2 columns, but found one."
                             break
                         nConditions = len(line)
 
@@ -177,7 +177,7 @@ class PathwayAcquisitionJob(Job):
                     # STEP 2.2 IF LINE LENGTH DOES NOT MATCH WITH EXPECTED NUMBER OF CONDITIONS, ADD ERROR
                     #**************************************************************************************
                     if(nConditions != len(line) and len(line)>0):
-                        erroneousLines[nLine] = "   > Line " + str(nLine) + ": expected " +  str(nConditions) + " columns but found " + str(len(line)) + "; "
+                        erroneousLines[nLine] = "Expected " +  str(nConditions) + " columns but found " + str(len(line)) + ";"
 
                     #**************************************************************************************
                     # STEP 2.2 IF CONTAINS NOT VALID VALUES, ADD ERROR
@@ -186,9 +186,9 @@ class PathwayAcquisitionJob(Job):
                         map(float, line[1:len(line)])
                     except:
                         if(" ".join(line[1:len(line)]).count(",") > 0):
-                            erroneousLines[nLine] = erroneousLines.get(nLine,  "[li]Line " + str(nLine) + ":") + "Perhaps you are using commas instead of dots as decimal mark? [/li]"
+                            erroneousLines[nLine] = erroneousLines.get(nLine,  "") + "Perhaps you are using commas instead of dots as decimal mark?"
                         else:
-                            erroneousLines[nLine] = erroneousLines.get(nLine,  "[li]Line " + str(nLine) + ":") + "Line contains invalid values or symbols.[/li]"
+                            erroneousLines[nLine] = erroneousLines.get(nLine,  "") + "Line contains invalid values or symbols."
 
                     if len(erroneousLines)  > 9:
                         break
@@ -202,7 +202,7 @@ class PathwayAcquisitionJob(Job):
                 error += "Errors detected while processing " + inputOmic.get("inputDataFile") + ":\n"
                 error += "[ul]"
                 for k in sorted(erroneousLines.keys()):
-                    error+= erroneousLines.get(k) + "\n"
+                    error+=  "[li]Line " + str(k) + ":" + erroneousLines.get(k) + "[/li]"
                 error += "[/ul]"
 
                 if len(erroneousLines)  > 9:
@@ -614,5 +614,3 @@ class PathwayAcquisitionJob(Job):
                     value = genes
                 bson[attr] = value
         return bson
-
-

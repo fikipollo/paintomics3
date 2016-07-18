@@ -46,7 +46,7 @@ class UserSessionManager(object):
             if (user_id == "0"):
                 return True
             if (user_id == 'None' or sessionToken == None or sessionToken != self.logged_users.get(user_id)):
-                raise CredentialException("User not valid")
+                raise CredentialException("[b]User not valid[/b]. It looks like your session is not valid, please log-in again.")
 
         def getLoggedUsersCount(self):
             return len(self.logged_users)
@@ -76,5 +76,3 @@ class UserSessionManager(object):
     def __setattr__(self, attr, value):
         """ Delegate access to implementation """
         return setattr(self.__instance, attr, value)
-
-

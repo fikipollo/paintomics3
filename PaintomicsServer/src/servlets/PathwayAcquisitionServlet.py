@@ -144,7 +144,8 @@ def pathwayAcquisitionStep1_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, exa
             "jobID":JOB_ID
         })
     except Exception as ex:
-        jobInstance.cleanDirectories(remove_output=True)
+        if(jobInstance != None):
+            jobInstance.cleanDirectories(remove_output=True)
 
         handleException(RESPONSE, ex, __file__ , "pathwayAcquisitionStep1_PART1", userID=userID)
     finally:
