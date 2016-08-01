@@ -631,7 +631,7 @@ def processKEGGMappingData():
     random_transcript_db_id = insertDatabase(DBNAME_Entry("random_transcript_db_id", "Random transcripts (not real)", "Identifier"))
     uniprot_acc_db_id = insertDatabase(DBNAME_Entry("uniprot_acc", "UniProt Accession", "Identifier"))
     ncbi_geneid_db_id = insertDatabase(DBNAME_Entry("ncbi_geneid", "NCBI Gene ID", "Identifier"))
-    ncbi_gi_db_id = insertDatabase(DBNAME_Entry("ncbi_gi", "NCBI GI ID", "Identifier"))
+    # ncbi_gi_db_id = insertDatabase(DBNAME_Entry("ncbi_gi", "NCBI GI ID", "Identifier"))
     kegg_id_db_id = insertDatabase(DBNAME_Entry("kegg_id", "KEGG Feature ID", "Identifier"))
     kegg_gene_symbol_db_id = insertDatabase(DBNAME_Entry("kegg_gene_symbol", "KEGG Gene Symbol", "Identifier"))
     kegg_gene_symbol_synonyms_db_id = insertDatabase(DBNAME_Entry("kegg_gene_symbol_synonyms", "KEGG Gene Symbol Synonyms", "Identifier"))
@@ -653,11 +653,11 @@ def processKEGGMappingData():
         processKEGGMappingDataAUX("NCBI Gene ID 2 KEGG", file_name, ncbi_geneid_db_id, kegg_id_db_id, random_transcript_db_id, "ncbi-geneid:")
 
     #STEP 4. READ THE NCBI GI 2 KEGG FILE
-    file_name= DATA_DIR + "mapping/" + "ncbi-gi2kegg.list"
-    if not os.path.isfile(file_name):
-        stderr.write("\n\nUnable to find the NCBI GI 2 KEGG MAPPING file: " + file_name + "\n")
-    else:
-        processKEGGMappingDataAUX("NCBI GI 2 KEGG", file_name, ncbi_gi_db_id, kegg_id_db_id, random_transcript_db_id, "ncbi-gi:")
+    # file_name= DATA_DIR + "mapping/" + "ncbi-gi2kegg.list"
+    # if not os.path.isfile(file_name):
+    #     stderr.write("\n\nUnable to find the NCBI GI 2 KEGG MAPPING file: " + file_name + "\n")
+    # else:
+    #     processKEGGMappingDataAUX("NCBI GI 2 KEGG", file_name, ncbi_gi_db_id, kegg_id_db_id, random_transcript_db_id, "ncbi-gi:")
 
     #STEP 4. READ THE KEGG 2 GENE SYMBOL FILE
     file_name= DATA_DIR + "mapping/" + "kegg2genesymbol.list"
@@ -897,12 +897,12 @@ def processKEGGPathwaysData():
                                 entryAux = entry.copy()
                                 entryAux["id"] = featureID.replace("cpd:","")
                                 ALL_PATHWAYS[pathway_id]["compounds"].append(entryAux)
-                                already_added[featureID] = 1
+                                #already_added[featureID] = 1
                             elif(entryType == "gene") and not already_added.has_key(featureID):
                                 entryAux = entry.copy()
                                 entryAux["id"] = featureID.replace(SPECIE + ":","")
                                 ALL_PATHWAYS[pathway_id]["genes"].append(entryAux)
-                                already_added[featureID] = 1
+                                #already_added[featureID] = 1
                     elif (entryType == "map"):
                         graphicInfo = child.find("graphics")
                         pathAuxID = child.get("name").replace("path:", "").replace(SPECIE,"")
@@ -1051,7 +1051,8 @@ def generatePathwaysNetwork(ALL_PATHWAYS):
                 try:
                     NODES[previous_pathway]["data"]["total_features"] += nGenes
                 except:
-                    stderr.write("No nodes information for Pathway " + previous_pathway + "Updating common KEGG information may solve this issue. Reinstall this specie after that.\n")
+                    stderr.write("No nodes information for Pathway " + previous_pathway + ".\n")
+                    stderr.write("Updating the installed common KEGG information may solve this issue. Reinstall this specie after that.\n")
                 nGenes=0
             nGenes+=1
             previous_pathway = path_id
@@ -1132,8 +1133,16 @@ def dumpDatabase():
     #STEP 3. DUMP THE pathways TABLE INTO A FILE
     file = open("/tmp/pathways.tmp", 'w')
 
+    error_tolerance = int(len(ALL_PATHWAYS.items()) * 0.05)
     for elem in ALL_PATHWAYS.values():
-        file.write(json.dumps(elem, separators=(',',':')) + "\n")
+        try:
+            file.write(json.dumps(elem, separators=(',',':')) + "\n")
+        except Exception as e:
+            stderr.write("Error when dumping the pathways\n")
+            error_tolerance-=1
+            if error_tolerance == 0:
+                raise Exception("Too many errors while installing the pathways information. Aborting.")
+
     file.close()
 
     #STEP 4. DUMP THE VERSIONS TABLE INTO A FILE

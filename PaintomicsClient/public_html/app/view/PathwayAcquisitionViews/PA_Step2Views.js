@@ -1,4 +1,4 @@
-//@ sourceURL=PA_Step2Views.js
+//# sourceURL=PA_Step2Views.js
 /*
  * (C) Copyright 2014 The Genomics of Gene Expression Lab, CIPF
  * (http://bioinfo.cipf.es/aconesawp) and others.

@@ -1,6 +1,6 @@
 /* global SERVER_URL_DM_DOWNLOAD_FILE, response, application, ajaxErrorHandler, SERVER_URL_DM_DELETE_JOB, Ext, SERVER_URL_DM_GET_MYJOBS, SERVER_URL_DM_DELETE_FILE */
 
-//@ sourceURL=DataManagementController.js
+//# sourceURL=DataManagementController.js
 /*
 * (C) Copyright 2014 The Genomics of Gene Expression Lab, CIPF
 * (http://bioinfo.cipf.es/aconesawp) and others.
@@ -339,10 +339,10 @@ this.sendReportHandler = function(){
             {
                 xtype:"box", html:
                 "<h2>Contact form</h2>"+
-                "<div>Thanks for conctact us! Please use this form is you have any question or suggestion about the application and we'll get back with you very soon.</div>"
+                "<div style='margin-bottom:10px;'>We would love to hear from you! Please use this form if you have any question or suggestion about the application and we'll get back with you soon.<br><b>Note: </b>If you are using a guest account, please provide a valid email address that we can use to contact you if needed.</div>"
             },
             {xtype: 'textfield', itemId : 'nameTextField', fieldLabel: 'Your name', value: Ext.util.Cookies.get("userName")},
-            {xtype: 'textfield', itemId : 'emailTextField', fieldLabel: 'Your email',  value: Ext.util.Cookies.get("lastEmail")},
+            {xtype: 'textfield', itemId : 'emailTextField', fieldLabel: 'Your email',  value: (Ext.util.Cookies.get("lastEmail").indexOf("guest") !== -1?"":Ext.util.Cookies.get("lastEmail"))},
             {xtype: 'textareafield', itemId : 'commentsTextArea', fieldLabel: 'Message', width: 500, height:100}
         ],
         buttons: [

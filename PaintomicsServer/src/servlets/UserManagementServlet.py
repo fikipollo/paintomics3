@@ -24,6 +24,7 @@ from src.conf.serverconf import CLIENT_TMP_DIR
 
 from src.classes.User import User
 from src.common.DAO.UserDAO import UserDAO
+from src.common.DAO.MessageDAO import MessageDAO
 from src.common.UserSessionManager import UserSessionManager
 from src.common.ServerErrorManager import handleException, CredentialException
 from src.common.Util import sendEmail, adapt_string
@@ -65,9 +66,16 @@ def userManagementSignIn(request, response):
         today = strftime("%Y%m%d")
         userInstance.setLastLogin(today)
         daoInstance.update(userInstance, {"fieldList" : ["last_login"]})
-
         logging.info("STEP2 - GETTING A NEW SESSION TOKEN...DONE" )
-        response.setContent({"success": True, "userID":userInstance.getUserId(),"userName":userInstance.getUserName(), "sessionToken" : sessionToken})
+
+        #****************************************************************
+        # Step 3. GET INIT SESSION MESSAGE
+        #****************************************************************
+        logging.info("STEP2 - GETTING NEW SESSION MESSAGE..." )
+        daoInstance = MessageDAO()
+        loginMessage = daoInstance.findByType(message_type= "login_message")
+
+        response.setContent({"success": True, "userID":userInstance.getUserId(),"userName":userInstance.getUserName(), "sessionToken" : sessionToken,  "loginMessage" : loginMessage})
 
     except CredentialException as ex:
         handleException(response, ex, __file__ , "userManagementSignIn", 200)

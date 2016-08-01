@@ -1,4 +1,4 @@
-//@ sourceURL=Util.js
+//# sourceURL=Util.js
 /*
 * (C) Copyright 2014 The Genomics of Gene Expression Lab, CIPF
 * (http://bioinfo.cipf.es/aconesawp) and others.
@@ -33,6 +33,7 @@
 * - showErrorMessage
 * - ajaxErrorHandler
 * - extJSErrorHandler
+* - scaleValue
 *
 */
 function Observer() {
@@ -227,6 +228,8 @@ function showMessage(title, data) {
 
     title = '<i class="fa fa-' + data.icon + '"></i> ' + title;
 
+    message = message.replace(/\[b\]/g, "<b>").replace(/\[\/b\]/g, "</b>").replace(/\[br\]/g, "</br>").replace(/\[ul\]/g, "<ul>").replace(/\[\/ul\]/g, "</ul>").replace(/\[li\]/g, "<li>").replace(/\[\/li\]/g, "</li>");
+
     var buttonClass, color, icon, dialogClass;
     if (messageType === "error") {
         console.error(Date.logFormat() + logMessage);
@@ -268,19 +271,19 @@ function showMessage(title, data) {
 
         if (showButton) {
             $("#messageDialogButton").removeClass("exampleButton acceptButton warningButton cancelButton").addClass(buttonClass);
-            $("#messageDialogButton").css({display:"block"});
+            $("#messageDialogButton").css({display:"inline-block"});
 
         } else {
             $("#messageDialogButton").css({display:"none"});
         }
 
         if (showReportButton) {
-            $("#reportErrorButton").css({display:"block"});
+            $("#reportErrorButton").css({display:"inline-block"});
         } else {
             $("#reportErrorButton").css({display:"none"});
         }
 
-        messageDialog.setHeight(height);
+        messageDialog.setHeight($("#messageDialogPanel").outerHeight()+ 30);
         messageDialog.setWidth(width);
         messageDialog.center();
     };
@@ -312,9 +315,7 @@ function showMessage(title, data) {
                         messageDialog.close();
                     });
                     $("#reportErrorButton").click(function () {
-                        var type = "error";
-                        var message = $("#messageDialogBody").text();
-                        sendReportMessage(type, message);
+                        sendReportMessage("error",  $("#messageDialogTitle").text() + "\n" + $("#messageDialogBody").text());
                     });
                 }
             }
@@ -360,7 +361,7 @@ function showErrorMessage(title, data) {
     data = (data == null) ? {} : data;
     data.messageType = "error";
     data.showButton = (data.showButton == null) ? true : data.showButton;
-    data.showReportButton = true;
+    data.showReportButton =  (data.showReportButton == null) ? true : data.showReportButton;
     data.icon = (data.icon || 'exclamation-circle');
     showMessage(title, data);
 }
@@ -414,6 +415,20 @@ function sendReportMessage(type, message, fromEmail, fromName){
         error: ajaxErrorHandler
     });
 }
+
+/**
+* This function scales a given value for an intervale min/max
+*/
+function scaleValue(x, min, max) {
+  //SCALE FROM [min, max] TO [a, b]
+  //f(x) = (((b - a)*(x - min))/(max - min)) + a
+  //SCALE FROM [min, max] TO [-1, 1]
+  //f(x) = (((1 + 1)*(x - min))/(max - min)) - 1
+  //     = ((2 * (x - min))/(max - min)) - 1
+  var a = -1,
+  b = 1;
+  return ((x === 0) ? 0 : ((((b - a) * (x - min)) / (max - min)) + a));
+};
 
 
 /*********************************************************************************

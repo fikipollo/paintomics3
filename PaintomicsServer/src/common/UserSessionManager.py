@@ -28,31 +28,33 @@ class UserSessionManager(object):
         def registerNewUser(self, user_id):
             import string
             import random
+            user_id = str(user_id)
             sessionToken =''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(50))
             self.logged_users[user_id] = sessionToken
             return sessionToken
 
         def removeUser(self, user_id, sessionToken):
+            user_id = str(user_id)
             assignedSessionToken = self.logged_users.get(user_id, None)
-
             if (assignedSessionToken != None and assignedSessionToken == sessionToken):
                 del self.logged_users[user_id]
                 return True
             return False
 
-        def isValidUser(self, user, sessionToken):
-            if (user == "0"):
+        def isValidUser(self, user_id, sessionToken):
+            user_id = str(user_id)
+            if (user_id == "0"):
                 return True
-            if (user == None or sessionToken == None or sessionToken != self.logged_users.get(user)):
-                raise CredentialException("User not valid")
+            if (user_id == 'None' or sessionToken == None or sessionToken != self.logged_users.get(user_id)):
+                raise CredentialException("[b]User not valid[/b]. It looks like your session is not valid, please log-in again.")
 
         def getLoggedUsersCount(self):
             return len(self.logged_users)
 
-        def isLoggedUser(self, user):
-            if (user == None):
+        def isLoggedUser(self, user_id):
+            if (user_id == None):
                 return False
-            return self.logged_users.get(user, None) != None
+            return self.logged_users.get(str(user_id), None) != None
 
     # storage for the instance reference
     __instance = None
@@ -74,5 +76,3 @@ class UserSessionManager(object):
     def __setattr__(self, attr, value):
         """ Delegate access to implementation """
         return setattr(self.__instance, attr, value)
-
-

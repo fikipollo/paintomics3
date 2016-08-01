@@ -1,4 +1,4 @@
-//@ sourceURL=UserController.js
+//# sourceURL=UserController.js
 /*
  * (C) Copyright 2014 The Genomics of Gene Expression Lab, CIPF
  * (http://bioinfo.cipf.es/aconesawp) and others.
@@ -104,7 +104,12 @@ function UserController() {
                     if (userViewsDialog != null) {
                         userViewsDialog.close();
                     }
-                    showSuccessMessage("Welcome back " + response.userName, {message: "Sign in successfully, you will be redirected automatically.", logMessage: "Signed in as " + response.userName, callback: function () {
+
+                    showSuccessMessage(
+                      "Welcome back " + response.userName, {
+                        message: (response.loginMessage !== null ? response.loginMessage.message_content: ""),
+                        logMessage: "Signed in as " + response.userName,
+                        callback: function () {
                             application.getController("JobController").resetButtonClickHandler(null, true);
                         }
                     });

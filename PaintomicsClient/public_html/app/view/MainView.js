@@ -1,4 +1,4 @@
-//@ sourceURL=MainView.js
+//# sourceURL=MainView.js
 /*
  * (C) Copyright 2014 The Genomics of Gene Expression Lab, CIPF
  * (http://bioinfo.cipf.es/aconesawp) and others.
@@ -81,6 +81,10 @@ function MainView() {
 				aView = new DM_Bed2GenesJobView();
 				aView.setController(application.getController("JobController"));
 				this.subviews[aViewName] = aView;
+			} else if (aViewName === "fromMiRNAtoGenes") {
+				aView = new DM_miRNA2GenesJobView();
+				aView.setController(application.getController("JobController"));
+				this.subviews[aViewName] = aView;
 			} else {
 				aView = new DM_MyDataSubmitJobPanel(aViewName, application.getController("DataManagementController"));
 				this.subviews[aViewName] = aView;
@@ -114,7 +118,7 @@ function MainView() {
 				xtype: "box",
 				cls: "toolbar mainTopToolbar",
 				region: 'north',
-				html: '<div id="header"><img src="resources/images/paintomics_150x150.png" alt="Paintomics logo"><h1> PaintOmics <span style="font-size: 10px;">' + APP_VERSION + '</span></h1></div>' +
+				html: '<div id="header"><img src="resources/images/paintomics_150x150.png" alt="Paintomics logo"><h1> PaintOmics 3<span style="font-size: 8px; margin-left:10px;">' + APP_VERSION + '</span></h1></div>' +
 					'<a href="javascript:void(0)" class="button cancelButton loggedOption" data-name="logout" id="logoutButton"><i class="fa fa-sign-out"></i> Log out</a>'
 			}, {
 				xtype: "box",
@@ -132,12 +136,12 @@ function MainView() {
 					" <ul class='submenu loggedOption'>" +
 					"     <li class='menuOption' data-name='paintPathways'><i class='fa fa-paint-brush'></i>  Paint pathways</li>" +
 					"     <li class='menuOption' data-name='fromBEDtoGenes'><i class='fa fa-code'></i>   From BED to Genes</li>" +
-					// "     <li class='menuOption' data-name='fromMiRNAtoGenes'><i class='fa fa-code'></i>   From miRNA to Genes</li>"+
+					"     <li class='menuOption' data-name='fromMiRNAtoGenes'><i class='fa fa-code'></i>   From miRNA to Genes</li>"+
 					" </ul></li>" +
 					" <li class='menuOption' ><i class='fa fa-info-circle'></i>  Resources" +
 					" <ul class='submenu'>" +
-					"     <li class='menuOption externalOption'><a href='http://www.paintomics.org/'' target='_blank'><i class='fa fa-book'></i>  Paintomics Documentation</a></li>" +
-					"     <li class='menuOption externalOption'><a href='http://www.paintomics.org/'' target='_blank'><i class='fa fa-external-link'></i>  Paintomics v2.0</a></li>" +
+					"     <li class='menuOption externalOption'><a href='http://paintomics.readthedocs.org/en/latest/' target='_blank'><i class='fa fa-book'></i>  Paintomics Documentation</a></li>" +
+					"     <li class='menuOption externalOption'><a href='http://www.paintomics.org/' target='_blank'><i class='fa fa-external-link'></i>  Paintomics v2.0</a></li>" +
 					" </ul></li>" +
 					" <li class='menuOption' ><i class='fa fa-paper-plane-o'></i>  Publications" +
 					" <ul class='submenu'>" +
@@ -151,10 +155,9 @@ function MainView() {
 					"</ul>"
 			}, {
 				xtype: 'panel', itemId: 'mainViewCenterPanel', id: 'mainViewCenterPanel',
-				flex: 1,
-				region: 'center',
-				overflowY: "auto",
+				flex: 1, region: 'center', overflowY: "auto",
 				defaults: {border: 0},
+				layout: {type: 'vbox', pack: 'start', align: 'stretch'},
 				items: []
 			}],
 			listeners: {
@@ -185,13 +188,27 @@ function MainView() {
 						});
 					});
 
+					//TODO: AQUI
 					if (Ext.util.Cookies.get("silence") != null) {
 						console.log("Message already shown, ignoring.");
 					} else {
-						showInfoMessage("Welcome to Paintomics!", {
-							message: "Please note that this is a <b>beta version</b>, which means that some features are not finished and we'\''re still working on it.<br>It also means that some changes may imply that your data could be removed in spite of we always look to keep them when upgrading.<br>Thank you very much for using Paintomics and we will appreciate your <a href='\''mailto:rhernandez@cipf.es'\'' target='\''_blank'\''>feedback</a>.",
-							showButton: true
-						})
+						$.ajax({
+                type: "POST",
+                url: SERVER_URL_GET_MESSAGE,
+                data: {message_type: "starting_message"},
+                success: function (response) {
+                    if (response.success === false) {
+                        return;
+                    }
+										if(response.messageList.length > 0){
+											showInfoMessage("Welcome to PaintOmics 3!", {
+												message: response.messageList[0].message_content,
+												showButton: true
+											})
+										}
+                },
+                error: ajaxErrorHandler
+            });
 					}
 				},
 				resize: function(){

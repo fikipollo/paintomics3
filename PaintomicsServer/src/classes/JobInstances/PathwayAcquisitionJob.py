@@ -110,7 +110,7 @@ class PathwayAcquisitionJob(Job):
             nConditions, error = self.validateFile(inputOmic, nConditions, error)
 
         if error != "":
-            raise Exception("Errors detected in input files, please fix the following issues and try again:" + error)
+            raise Exception("[b]Errors detected in input files, please fix the following issues and try again:[/b][br]" + error)
 
         return True
 
@@ -169,7 +169,7 @@ class PathwayAcquisitionJob(Job):
 
                     if nConditions == -1:
                         if len(line) < 2:
-                            erroneousLines[nLine] =  "   > Line " + str(nLine) + " expected at least 2 columns, but found one."
+                            erroneousLines[nLine] =  "Expected at least 2 columns, but found one."
                             break
                         nConditions = len(line)
 
@@ -177,7 +177,7 @@ class PathwayAcquisitionJob(Job):
                     # STEP 2.2 IF LINE LENGTH DOES NOT MATCH WITH EXPECTED NUMBER OF CONDITIONS, ADD ERROR
                     #**************************************************************************************
                     if(nConditions != len(line) and len(line)>0):
-                        erroneousLines[nLine] = "   > Line " + str(nLine) + ": expected " +  str(nConditions) + " columns but found " + str(len(line)) + "; "
+                        erroneousLines[nLine] = "Expected " +  str(nConditions) + " columns but found " + str(len(line)) + ";"
 
                     #**************************************************************************************
                     # STEP 2.2 IF CONTAINS NOT VALID VALUES, ADD ERROR
@@ -185,10 +185,12 @@ class PathwayAcquisitionJob(Job):
                     try:
                         map(float, line[1:len(line)])
                     except:
-                        erroneousLines[nLine] = erroneousLines.get(nLine,  "   > Line " + str(nLine) + ":") + "Line contains invalid values."
+                        if(" ".join(line[1:len(line)]).count(",") > 0):
+                            erroneousLines[nLine] = erroneousLines.get(nLine,  "") + "Perhaps you are using commas instead of dots as decimal mark?"
+                        else:
+                            erroneousLines[nLine] = erroneousLines.get(nLine,  "") + "Line contains invalid values or symbols."
 
                     if len(erroneousLines)  > 9:
-                        error +=  " - Too many errors detected while processing " + inputOmic.get("inputDataFile") + ", skipping remaining lines...\n"
                         break
 
             inputDataFile.close()
@@ -197,9 +199,14 @@ class PathwayAcquisitionJob(Job):
             # STEP 3. CHECK THE ERRORS AND RETURN
             #*************************************************************************
             if len(erroneousLines)  > 0:
-                error += " - Errors detected while processing " + inputOmic.get("inputDataFile") + ":\n"
+                error += "Errors detected while processing " + inputOmic.get("inputDataFile") + ":\n"
+                error += "[ul]"
                 for k in sorted(erroneousLines.keys()):
-                    error+= erroneousLines.get(k) + "\n"
+                    error+=  "[li]Line " + str(k) + ":" + erroneousLines.get(k) + "[/li]"
+                error += "[/ul]"
+
+                if len(erroneousLines)  > 9:
+                    error +=  "Too many errors detected while processing " + inputOmic.get("inputDataFile") + ", skipping remaining lines...\n"
         else:
             error += " - Error while processing " + omicName + ": File " + inputOmic.get("inputDataFile") + "not found.\n"
 
@@ -607,5 +614,3 @@ class PathwayAcquisitionJob(Job):
                     value = genes
                 bson[attr] = value
         return bson
-
-

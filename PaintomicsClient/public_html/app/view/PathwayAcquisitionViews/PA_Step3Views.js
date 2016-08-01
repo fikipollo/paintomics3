@@ -1,4 +1,4 @@
-//@ sourceURL=PA_Step3Views.js
+//# sourceURL=PA_Step3Views.js
 /*
 * (C) Copyright 2014 The Genomics of Gene Expression Lab, CIPF
 * (http://bioinfo.cipf.es/aconesawp) and others.
@@ -456,6 +456,11 @@ function PA_Step3PathwayClassificationView() {
 		var mainClassifications = [], secondClassifications = [], mainClassificationInstance, secClassificationInstance, drilldownAux;
 		var classificationID, secondClassificationID;
 
+		// var totalPathways = 0;
+		// for(var i in pathways){
+		// 	if(pathways[i].visible){totalPathways++;}
+		// }
+
 		for (classificationID in classificationData){
 			mainClassificationInstance = classificationData[classificationID];
 
@@ -690,6 +695,31 @@ function PA_Step3PathwayClassificationView() {
 					pathwaysVisibility.push(this.id);
 				}
 			});
+
+			// TODO: UPDATE CLASSIFICATION DISTRIBUTION AND HIDE SECTOS AT THE PIE CHART
+			//
+			// var classificationData = me.getParent().getClassificationData();
+			// var indexedPathways = me.getParent().getIndexedPathways();
+			// var pathways = me.getModel().getPathways();
+			// var mainClassificationID, secClassificationID;
+			//
+			// //RESET CLASSIFICATION COUNTERS
+			// for(var i in classificationData){
+			// 	classificationData[i].count=0;
+			// 	for(var j in classificationData[i].children){
+			// 		classificationData[i].children[j].count=0
+			// 	}
+			// }
+			//
+			// for(var i in pathways){
+			// 	mainClassificationID = pathways[i].getClassification().split(";")[0].toLowerCase().replace(/ /g,"_")
+			// 	secClassificationID = pathways[i].getClassification().split(";")[1].toLowerCase().replace(/ /g,"_")
+			// 	if(!pathways[i].visible){
+			// 		classificationData[mainClassificationID].count++;
+			// 		classificationData[mainClassificationID].children[secClassificationID].count++;
+			// 	}
+			// }
+
 			me.getParent().setVisualOptions("pathwaysVisibility", pathwaysVisibility);
 
 			/********************************************************/
@@ -1736,10 +1766,12 @@ function PA_Step3PathwayClassificationView() {
 				},{
 					xtype: 'box', cls: "contentbox", style: 'overflow: hidden; margin:0;', html:
 					//THE PANEL WITH THE NETWORK
-					'<div class="lateralOptionsPanel-toolbar"></div>'+
+					'<div class="lateralOptionsPanel-toolbar">'+
+					'  <a href="javascript:void(0)" class="toolbarOption downloadTool helpTip" id="downloadNetworkTool" title="Download the network" style="margin-top: 10px;"><i class="fa fa-download"></i> Download</a>' +
+					'</div>'+
 					'<h2>Pathways network <span class="helpTip" title="This Network represents the relationships between matched pathways."></h2>' +
 					'<div id="step3-network-toolbar">' +
-					'<div class="lateralOptionsPanel" id="reorderOptions" style="display:none;">' +
+					' <div class="lateralOptionsPanel" id="reorderOptions" style="display:none;">' +
 					'  <div class="lateralOptionsPanel-toolbar">' +
 					'    <a href="javascript:void(0)" class="toolbarOption helpTip hideOption" title="Hide this panel"><i class="fa fa-times"></i></a>' +
 					'  </div>' +
@@ -1749,7 +1781,7 @@ function PA_Step3PathwayClassificationView() {
 					'    <i class="fa fa-minus-square fa-2x" name="less" style="margin-right: 22px;padding-top: 5px; color: #DA643D;"></i>' +
 					'    <i class="fa fa-plus-square fa-2x"  name="more" style="color: #DA643D;"></i>' +
 					'  </span>' +
-					'</div>' +
+					' </div>' +
 					'  <a href="javascript:void(0)" class="toolbarOption helpTip" id="showNetworkSettingsPanelButton" ><i class="fa fa-cog"></i> Configure</a>' +
 					'  <div class="menu">'+
 					'    <a href="javascript:void(0)" class="toolbarOption menuOption helpTip"><i class="fa fa-mouse-pointer"></i> Node selection</a>' +
@@ -1766,12 +1798,6 @@ function PA_Step3PathwayClassificationView() {
 					'      <a href="javascript:void(0)" class="toolbarOption helpTip submenuOption reorderNodesOption" name="block" title="Organize selected nodes in to a block"><i class="fa fa-th"></i> Display as block</a>' +
 					'      <a href="javascript:void(0)" class="toolbarOption helpTip submenuOption reorderNodesOption" name="ring" title="Organize selected nodes into a ring"><i class="fa fa-spinner"></i> Display as ring</a>' +
 					'      <a href="javascript:void(0)" class="toolbarOption helpTip submenuOption reorderNodesOption" name="random" title="Set random positions for selected nodes"><i class="fa fa-random"></i> Randomize positions</a>' +
-					'    </div>'+
-					'  </div>' +
-					'  <div class="menu">'+
-					'    <a href="javascript:void(0)" class="toolbarOption menuOption helpTip"><i class="fa fa-download"></i> Download</a>' +
-					'    <div class="menuBody">' +
-					'      <a href="javascript:void(0)" class="toolbarOption helpTip submenuOption downloadOption" name="png" ><i class="fa fa-file-image-o"></i> Download as PNG image</a>' +
 					'    </div>'+
 					'  </div>' +
 					'  <a href="javascript:void(0)" class="toolbarOption helpTip" id="fullscreenSettingsPanelButton" ><i class="fa fa-arrows-alt"></i> Full screen</a>' +
@@ -1807,13 +1833,13 @@ function PA_Step3PathwayClassificationView() {
 						});
 
 						//HANDLERS FOR BUTTONS IN THE NETWORK TOOLBAR
+						$("#downloadNetworkTool").click(function() {
+							me.stopNetworkLayout();
+							me.downloadNetwork("png");
+						});
 						$("#step3-network-toolbar .selectNodesOption").click(function() {
 							me.stopNetworkLayout();
 							me.selectNodes($(this).attr("name"));
-						});
-						$("#step3-network-toolbar .downloadOption").click(function() {
-							me.stopNetworkLayout();
-							me.downloadNetwork($(this).attr("name"));
 						});
 						$("#step3-network-toolbar .reorderNodesOption").click(function() {
 							me.stopNetworkLayout();
@@ -1883,18 +1909,18 @@ function PA_Step3PathwayClassificationView() {
 
 						//Add a resizer to network panel
 						Ext.create('Ext.resizer.Resizer', {
-						   target: this,
-					       handles: 's',
-						   pinned:true,
-						   maxWidth:1300,
-						   minHeight: 700,
-						   dynamic: true,
-						   transparent:true,
-						   listeners: {
-							   beforeresize: function(resizer, width, height){
-								   resizer.prevHeight= height;
-							   },
-							   resize: function(resizer, width, height){
+							target: this,
+							handles: 's',
+							pinned:true,
+							maxWidth:1300,
+							minHeight: 700,
+							dynamic: true,
+							transparent:true,
+							listeners: {
+								beforeresize: function(resizer, width, height){
+									resizer.prevHeight= height;
+								},
+								resize: function(resizer, width, height){
 									var diff = height - resizer.prevHeight;
 									var panels = ['pathwayNetworkBox', 'networkDetailsPanel', 'networkSettingsPanel', 'patwaysDetailsContainer'];
 
@@ -1902,8 +1928,8 @@ function PA_Step3PathwayClassificationView() {
 										var elem = $('#' + panels[i]);
 										elem.height(elem.height() + diff);
 									}
-							   }
-						   }
+								}
+							}
 						});
 
 						initializeTooltips(".helpTip");
@@ -2027,7 +2053,11 @@ function PA_Step3PathwayClassificationView() {
 
 	function PA_Step3PathwayDetailsView() {
 		/**
-		* About this view: TODO: DOCUMENTAR
+		* About this view: this view shows the details for a given pathway.
+		* Some examples of details are: a table showing the # of matched features
+		* for each omics type and the computed p-value, the main and secondary
+		* classification and the line charts showing the trend for each omics type.
+		* This view is used both in Step 3 and in Step 4
 		**/
 		/*********************************************************************
 		* ATTRIBUTES
@@ -2043,10 +2073,10 @@ function PA_Step3PathwayClassificationView() {
 		***********************************************************************/
 		/**
 		* This function apply the settings that user can change
-		* for the visual representation of the model (w/o reload everything).
+		* for the visual representation of the model (w/o reloading everything).
 		* - STEP 1. Update the name of the pathway and the classification
 		* - STEP 2. Fill the information about metagenes, 3 ALTERNATIVES
-		*    - STEP 2.A IF WE ARE COLORING BY CLASSIFICAITON JUST IGNORE
+		*    - STEP 2.A IF WE ARE COLORING BY CLASSIFICATION JUST IGNORE
 		*    - STEP 2.B IF WE DO NOT HAVE DATA FOR CURRENT PATHWAY
 		*    - STEP 2.C UPDATE THE HEATMAP AND THE PLOT
 		* - STEP 3. ENABLE SOME EVENT HANDLERS
@@ -2061,694 +2091,729 @@ function PA_Step3PathwayClassificationView() {
 			/* STEP 1. Update the name of the pathway and the classificatio */
 			/****************************************************************/
 			$(componentID + " .pathwayNameLabel h4").text(this.getModel().getName());
-			$(componentID + " .pathwayClassificationLabel").html("<b>Classification:</b><ul style='margin: 0;'>" + "<li>" + this.getModel().getClassification().replace(";","</li><li>") + "</li></ul>");
+			$(componentID + " .pathwayClassificationLabel").html(
+				"<b>Classification:</b>"+
+				"<ul style='margin: 0;'>" +
+				"  <li>" + this.getModel().getClassification().replace(";","</li><li>") + "</li>" +
+				"</ul>");
 
-			/****************************************************************/
-			/* STEP 2. Fill the information about metagenes                 */
-			/****************************************************************/
-			var pathwayPlotwrappers = $(componentID + " .pathwayPlotwrappers");
-			pathwayPlotwrappers.empty();
-
-			for(var i in omicDataType){
-				var metagenes = this.getModel().metagenes[omicDataType[i]];
-				if(omicDataType[i] === "classification"){
-					/****************************************************************/
-					/* STEP 2.A IF WE ARE COLORING BY CLASSIFICAITON JUST IGNORE    */
-					/****************************************************************/
-					pathwayPlotwrappers.html('<div class="step3ChartWrapper" style="background-image: url(\'' + location.pathname + "kegg_data/" +  this.getModel().getID() + '_thumb\')"></div>');
-					this.getComponent().setHeight(200);
-					break;
-				}else if (metagenes === undefined){
-					/****************************************************************/
-					/* STEP 2.B IF WE DO NOT HAVE DATA FOR CURRENT PATHWAY          */
-					/****************************************************************/
-					pathwayPlotwrappers.append(
-						"<h4 style='color: #D16949;font-size: 13px;margin: 0;'>" + omicDataType[i] + "</h4>"+
-						"<b>No data for this pathway.</b>"
-					);
-					this.getComponent().setHeight(120);
-				}else{
-					/****************************************************************/
-					/* STEP 2.C UPDATE THE HEATMAP AND THE PLOT                     */
-					/****************************************************************/
-					var divName = this.getComponent().getId() + "_" + omicDataType[i].replace(/ /g, "_").toLowerCase();
-					pathwayPlotwrappers.append(
-						"<div>"+
-						"  <h4>" + omicDataType[i] + "</h4>"+
-						"  <span class='tooltipDetailsSpan'><i class='fa fa-info-circle'></i> " + metagenes.length + " major trends in this pathway.</span></br>"+
-						"  <div class='twoOptionsButtonWrapper'>" +
-						'      <a href="javascript:void(0)" class="button twoOptionsButton" name="heatmap-chart">Heatmap</a>'+
-						'      <a href="javascript:void(0)" class="button twoOptionsButton selected" name="line-chart">Line chart</a>'+
-						"  </div>" +
-						"  <div class='step3-tooltip-plot-container' name='heatmap-chart'  style='display:none;'>" +
-						"    <div id='" + divName + "_heatmapcontainer' name='heatmap-chart' style='height:"+ (metagenes.length * 35 + 10 )+ "px;width: 230px;'></div>" +
-						"  </div>" +
-						"  <div class='step3-tooltip-plot-container selected' name='line-chart'>" +
-						"    <div id='" + divName + "_plotcontainer' style='height:100px;width: 230px;'></div>" +
-						"  </div>"+
-						"</div>"
-					);
-
-					var heatmap = this.generateHeatmap(divName +  "_heatmapcontainer", omicDataType[i], metagenes, dataDistributionSummaries);
-					this.generatePlot(divName + "_plotcontainer", omicDataType[i], metagenes, dataDistributionSummaries, heatmap);
-				}
-			}
-			/****************************************************************/
-			/* STEP 3. ENABLE SOME EVENT HANDLERS                           */
-			/****************************************************************/
-			$("#" + me.getComponent().getId() + " a.twoOptionsButton").click( function(){
-				var parent = $(this).parent(".twoOptionsButtonWrapper");
-				var target = $(this).attr("name").replace("show", "");
-				$(this).siblings("a.twoOptionsButton.selected").removeClass("selected");
-				$(this).addClass("selected");
-				parent.siblings("div.step3-tooltip-plot-container.selected").removeClass("selected").toggle();
-				parent.siblings("div.step3-tooltip-plot-container[name="+ target + "]").addClass("selected").toggle();
-			});
-
-			this.getComponent().setHeight(230);
-
-			return this;
-		};
-
-		//TODO: DOCUMENTAR
-		this.generateHeatmap = function (targetID, omicName, metagenes, dataDistributionSummaries) {
-			var featureValues, x = 0, y = 0, maxX = -1, series = [], yAxisCat = [], serie;
-			for (var i in metagenes) {
-				//restart the x coordinate
-				x = 0;
-				//Get the values and the name for the new serie
-				featureValues = metagenes[i].values.map(Number);
-				serie = {name: "Trend " + (i + 1), data: []};
-				//Add the name for the row (e.g. MagoHb or "miRNA my_mirnaid_1")
-				yAxisCat.push("Trend " + (i + 1) + "#Cluster " + metagenes[i].cluster);
-
-				var limits = getMinMax(dataDistributionSummaries[omicName], "p10p90");
-
-				for (var j in featureValues) {
-					serie.data.push({
-						x: x, y: y,
-						value: featureValues[j],
-						color: getColor(limits, featureValues[j], "bwr")
-					});
-					x++;
-					maxX = Math.max(maxX, x);
-				}
-				series.push(serie);
-				y++;
-			}
-
-			var xAxisCat = [];
-			for (var i = 0; i < maxX; i++) {
-				xAxisCat.push("Timepoint " + (i + 1));
-			}
-
-			var heatmap = new Highcharts.Chart({
-				chart: {type: 'heatmap', renderTo: targetID},
-				title: null, legend: {enabled: false}, credits: {enabled: false},
-				tooltip: {
-					borderColor: "#333",
-					formatter: function () {
-						var title = this.point.series.name.split("#");
-						title[1] = (title.length > 1) ? title[1] : "";
-						return "<b>" + title[0].replace("*", '<i class="relevantFeature"></i>') + "</b><br/>" + "<i class='tooltipInputName'>" + title[1] + "</i>" + (this.point.value === null ? "No data" : this.point.value);
-					},
-					useHTML: true
-				},
-				xAxis: {categories: xAxisCat, labels: {enabled: false}},
-				yAxis: {
-					categories: yAxisCat, title: null, width: 100,
-					labels: {
-						formatter: function () {
-							var title = this.value.split("#");
-							title[1] = (title.length > 1) ? title[1] : "No data";
-							return '<span style="width: 55px;display: block;   text-align: right;">' + ((title[0].length > 14) ? title[0].substring(0, 14) + "..." : title[0]).replace("*", '<i class="relevantFeature"></i>') +
-							'</br><i class="tooltipInputName yAxisLabel">' + ((title[1].length > 14) ? title[1].substring(0, 14) + "..." : title[1]) + '</i></span>';
-						},
-						style: {fontSize: "9px"}, useHTML: true
+				/*******************************************************************/
+				/* STEP 2. Fill the information about matched features and p-values*/
+				/*******************************************************************/
+				if(this.getParent().getName() !== "PA_Step3PathwayNetworkTooltipView"){
+					var htmlCode = '<tbody><tr><th></th><th>Matched<br>features</th><th>p-value</th></tr>';
+					var significanceValues = this.getModel().getSignificanceValues();
+					var renderedValue;
+					for (var i in significanceValues) {
+						renderedValue = (significanceValues[i][2] > 0.001 || significanceValues[i][2] === 0) ? parseFloat(significanceValues[i][2]).toFixed(6) : parseFloat(significanceValues[i][2]).toExponential(4);
+						htmlCode += '<tr><td>' + i + '</td><td>' + significanceValues[i][0] + ' (' + significanceValues[i][1] + ')</td><td>' + renderedValue + '</td></tr>';
 					}
-				},
-				series: series,
-				plotOptions: {
-					heatmap: {borderColor: "#000000",borderWidth: 0.5},
-					series: {
-						point: {
-							events: {
-								mouseOver: function() {
-									var plot = $("#" + this.series.chart.renderTo.id.replace("heatmap", "plot")).highcharts();
-									for (var i in plot.series) {
-										plot.series[i].setVisible(this.series.name.split("#")[0] === plot.series[i].name);
-									}
-								},
-								mouseOut: function() {
-									var plot = $("#" + this.series.chart.renderTo.id.replace("heatmap", "plot")).highcharts();
-									for (var i in plot.series) {
-										plot.series[i].setVisible(true);
-									}
-								}
-							}
-						}
+					htmlCode+='</tbody>';
+					$(componentID + " .pathwaySummaryTable").html('<table style="padding: 10px;text-align: center;">'+ htmlCode + '</table>');
+				}
+
+				/****************************************************************/
+				/* STEP 3. Fill the information about metagenes                 */
+				/****************************************************************/
+				var pathwayPlotwrappers = $(componentID + " .pathwayPlotwrappers");
+				pathwayPlotwrappers.empty();
+
+				//For each omics type
+				for(var i in omicDataType){
+					var metagenes = this.getModel().metagenes[omicDataType[i]];
+					if(omicDataType[i] === "classification"){
+						/****************************************************************/
+						/* STEP 3.A IF WE ARE COLORING BY CLASSIFICAITON JUST IGNORE    */
+						/****************************************************************/
+						pathwayPlotwrappers.html('<div class="step3ChartWrapper" style="background-image: url(\'' + location.pathname + "kegg_data/" +  this.getModel().getID() + '_thumb\')"></div>');
+						this.getComponent().setHeight(200);
+						break;
+					}else if (metagenes === undefined){
+						/****************************************************************/
+						/* STEP 3.B IF WE DO NOT HAVE DATA FOR CURRENT PATHWAY          */
+						/****************************************************************/
+						pathwayPlotwrappers.append(
+							"<h4 style='color: #D16949;font-size: 13px;margin: 0;'>" + omicDataType[i] + "</h4>"+
+							"<b>No data for this pathway.</b>"
+						);
+						this.getComponent().setHeight(120);
+					}else{
+						/****************************************************************/
+						/* STEP 3.C UPDATE THE HEATMAP AND THE PLOT                     */
+						/****************************************************************/
+						var divName = this.getComponent().getId() + "_" + omicDataType[i].replace(/ /g, "_").toLowerCase();
+						pathwayPlotwrappers.append(
+							"<div>"+
+							"  <h4>" + omicDataType[i] + "</h4>"+
+							"  <span class='tooltipDetailsSpan'><i class='fa fa-info-circle'></i> " + metagenes.length + " major trends in this pathway.</span></br>"+
+							"  <div class='twoOptionsButtonWrapper'>" +
+							'      <a href="javascript:void(0)" class="button twoOptionsButton" name="heatmap-chart">Heatmap</a>'+
+							'      <a href="javascript:void(0)" class="button twoOptionsButton selected" name="line-chart">Line chart</a>'+
+							"  </div>" +
+							"  <div class='step3-tooltip-plot-container' name='heatmap-chart'  style='display:none;'>" +
+							"    <div id='" + divName + "_heatmapcontainer' name='heatmap-chart' style='height:"+ (metagenes.length * 35 + 10 )+ "px;width: 230px;'></div>" +
+							"  </div>" +
+							"  <div class='step3-tooltip-plot-container selected' name='line-chart'>" +
+							"    <div id='" + divName + "_plotcontainer' style='height:100px;width: 230px;'></div>" +
+							"  </div>"+
+							"</div>"
+						);
+
+						var heatmap = this.generateHeatmap(divName +  "_heatmapcontainer", omicDataType[i], metagenes, dataDistributionSummaries);
+						this.generatePlot(divName + "_plotcontainer", omicDataType[i], metagenes, dataDistributionSummaries, heatmap);
 					}
 				}
-			});
+				/****************************************************************/
+				/* STEP 4. ENABLE SOME EVENT HANDLERS                           */
+				/****************************************************************/
+				$("#" + me.getComponent().getId() + " a.twoOptionsButton").click( function(){
+					var parent = $(this).parent(".twoOptionsButtonWrapper");
+					var target = $(this).attr("name").replace("show", "");
+					$(this).siblings("a.twoOptionsButton.selected").removeClass("selected");
+					$(this).addClass("selected");
+					parent.siblings("div.step3-tooltip-plot-container.selected").removeClass("selected").toggle();
+					parent.siblings("div.step3-tooltip-plot-container[name="+ target + "]").addClass("selected").toggle();
+				});
 
-			return heatmap;
-		};
+				this.getComponent().setHeight(230);
 
-		//TODO: DOCUMENTAR
-		this.generatePlot = function (targetID, omicName, metagenes, dataDistributionSummaries, heatmap) {
-			var series = [],
-			scaledValues, min, max,
-			maxVal = -100000000,
-			minVal = 100000000,
-			tmpValue,
-			yAxis = [],
-			yAxisItem;
-
-
-			var scale = function(x, min, max) {
-				//SCALE FROM [min, max] TO [a, b]
-				//f(x) = (((b - a)*(x - min))/(max - min)) + a
-				//SCALE FROM [min, max] TO [-1, 1]
-				//f(x) = (((1 + 1)*(x - min))/(max - min)) - 1
-				//     = ((2 * (x - min))/(max - min)) - 1
-				var a = -1,
-				b = 1;
-				return ((x === 0) ? 0 : ((((b - a) * (x - min)) / (max - min)) + a));
+				return this;
 			};
 
-			//1.FILL THE STORE DATA [{name:"timepoint 1", "Gene Expression": -0.8, "Proteomics":-1.2,... },{name:"timepoint2", ...}]
-			for (var i in metagenes) {
-				scaledValues = [];
-				featureValues = metagenes[i].values.map(Number);
+			//TODO: DOCUMENTAR
+			this.generateHeatmap = function (targetID, omicName, metagenes, dataDistributionSummaries) {
+				var featureValues, x = 0, y = 0, maxX = -1, series = [], yAxisCat = [], serie;
+				for (var i in metagenes) {
+					//restart the x coordinate
+					x = 0;
+					//Get the values and the name for the new serie
+					featureValues = metagenes[i].values.map(Number);
+					serie = {name: "Trend " + (i + 1), data: []};
+					//Add the name for the row (e.g. MagoHb or "miRNA my_mirnaid_1")
+					yAxisCat.push("Trend " + (i + 1) + "#Cluster " + metagenes[i].cluster);
 
-				var limits = getMinMax(dataDistributionSummaries[omicName], 'p10p90');
-				for (var j in featureValues) {
-					//SCALE THE VALUE
-					tmpValue = scale(featureValues[j], limits.min, limits.max);
-					tmpValue = featureValues[j];
-					//UPDATE MIN MAX (TO ADJUST THE AXIS)
-					maxVal = Math.max(tmpValue, maxVal);
-					minVal = Math.min(tmpValue, minVal);
-					//ADD THE VALUE (CUSTOM MARKER IF OUTLIER)
-					scaledValues.push({
-						y: tmpValue,
-						marker: ((tmpValue > 1 || tmpValue < -1) ? {
-							fillColor: '#ff6e00'
-						} : null)
-					});
+					var limits = getMinMax(dataDistributionSummaries[omicName], "p10p90");
+
+					for (var j in featureValues) {
+						serie.data.push({
+							x: x, y: y,
+							value: featureValues[j],
+							color: getColor(limits, featureValues[j], "bwr")
+						});
+						x++;
+						maxX = Math.max(maxX, x);
+					}
+					series.push(serie);
+					y++;
 				}
 
-				series.push({
-					name: "Cluster " + metagenes[i].cluster,
-					type: 'spline',
-					color: this.getParent("PA_Step3PathwayNetworkView").getClusterColor(metagenes[i].cluster),
-					startOnTick: false,
-					endOnTick: false,
-					data: scaledValues,
-					yAxis: 0
-				});
-			}
+				var xAxisCat = [];
+				for (var i = 0; i < maxX; i++) {
+					xAxisCat.push("Timepoint " + (i + 1));
+				}
 
-			maxVal = Math.ceil(Math.max(maxVal, 1));
-			minVal = Math.floor(Math.min(minVal, -1));
-
-			var plot = new Highcharts.Chart({
-				chart: {renderTo: targetID},
-				title: null,
-				credits: {enabled: false},
-				xAxis: [{labels: {enabled: false}}],
-				yAxis: {
-					title: null,
-					min: minVal,
-					max: maxVal,
-					plotLines: [
-						{label: {text: '-1',align: 'right', style: {color: 'gray'}},color: '#dedede',value: -1,width: 1},
-						{label: {text: '0',align: 'right', style: {color: 'gray'}},color: '#dedede',value: 0,width: 1},
-						{label: {text: '1',align: 'right', style: {color: 'gray'}},color: '#dedede',value: 1,width: 1}
-					]},
-					series: series,
-					legend: {
-						itemStyle: {fontSize: "9px",fontWeight: 'lighter'},
-						margin: 5,
-						padding: 5
+				var heatmap = new Highcharts.Chart({
+					chart: {type: 'heatmap', renderTo: targetID},
+					title: null, legend: {enabled: false}, credits: {enabled: false},
+					tooltip: {
+						borderColor: "#333",
+						formatter: function () {
+							var title = this.point.series.name.split("#");
+							title[1] = (title.length > 1) ? title[1] : "";
+							return "<b>" + title[0].replace("*", '<i class="relevantFeature"></i>') + "</b><br/>" + "<i class='tooltipInputName'>" + title[1] + "</i>" + (this.point.value === null ? "No data" : this.point.value);
+						},
+						useHTML: true
 					},
-					tooltip: {enabled: false},
+					xAxis: {categories: xAxisCat, labels: {enabled: false}},
+					yAxis: {
+						categories: yAxisCat, title: null, width: 100,
+						labels: {
+							formatter: function () {
+								var title = this.value.split("#");
+								title[1] = (title.length > 1) ? title[1] : "No data";
+								return '<span style="width: 55px;display: block;   text-align: right;">' + ((title[0].length > 14) ? title[0].substring(0, 14) + "..." : title[0]).replace("*", '<i class="relevantFeature"></i>') +
+								'</br><i class="tooltipInputName yAxisLabel">' + ((title[1].length > 14) ? title[1].substring(0, 14) + "..." : title[1]) + '</i></span>';
+							},
+							style: {fontSize: "9px"}, useHTML: true
+						}
+					},
+					series: series,
 					plotOptions: {
+						heatmap: {borderColor: "#000000",borderWidth: 0.5},
 						series: {
 							point: {
 								events: {
 									mouseOver: function() {
-										heatmap.tooltip.refresh(heatmap.series[heatmap.series.length - this.series.index - 1].data[this.x]);
+										var plot = $("#" + this.series.chart.renderTo.id.replace("heatmap", "plot")).highcharts();
+										for (var i in plot.series) {
+											plot.series[i].setVisible(this.series.name.split("#")[0] === plot.series[i].name);
+										}
+									},
+									mouseOut: function() {
+										var plot = $("#" + this.series.chart.renderTo.id.replace("heatmap", "plot")).highcharts();
+										for (var i in plot.series) {
+											plot.series[i].setVisible(true);
+										}
 									}
 								}
 							}
 						}
 					}
-				}
-			);
-
-			plot.yAxis[0].setExtremes(minVal, maxVal);
-
-			return plot;
-		};
-
-		/**
-		* This function generates the component (EXTJS) using the content of the model
-		* @param {String}  renderTo  the ID for the DOM element where this component should be rendered
-		* @returns {Ext.ComponentView} The visual component
-		*/
-		this.initComponent = function(renderTo) {
-			var me = this;
-			this.component = Ext.widget({
-				xtype: "box", renderTo: renderTo, html:
-				"<div class='mainInfoPanel' >" +
-				"  <div class='pathwayNameLabel' style='padding:2px 0px'><h4 style='font-size: 13px;margin: 0;'></h4></div>" +
-				"  <div class='pathwayClassificationLabel' style='padding:2px 0px'></div>" +
-				"  <div class='pathwayPlotwrappers'></div>" +
-				"</div>",
-				listeners: {
-					beforedestroy: function() {
-						me.getModel().deleteObserver(me);
-					}
-				}
-			});
-
-			return this.component;
-		};
-
-		return this;
-	}
-	PA_Step3PathwayDetailsView.prototype = new View();
-
-	function PA_Step3PathwayTableView() {
-		/**
-		* About this view: TODO: DOCUMENTAR
-		**/
-		/*********************************************************************
-		* ATTRIBUTES
-		***********************************************************************/
-		this.name = "PA_Step3PathwayTableView";
-		this.tableData = null;
-
-		/***********************************************************************
-		* GETTER AND SETTERS
-		***********************************************************************/
-		//TODO: DOCUMENTAR
-		this.loadModel= function(model){
-			var me = this;
-
-			/********************************************************/
-			/* STEP 1. LOAD THE MODEL                               */
-			/********************************************************/
-			if (this.model !== null) {
-				this.model.deleteObserver(this);
-			}
-			this.model = model;
-			this.model.addObserver(this);
-
-			/********************************************************/
-			/* STEP 2. GENERATE THE ROWS CONTENT                    */
-			/********************************************************/
-			this.tableData = [];
-
-			var pathways = this.model.getPathways();
-			var pathwayData, pathwayModel, omicName, significanceValues;
-
-			var significativePathways = 0;
-
-			for (var i in pathways) {
-				pathwayModel = pathways[i];
-
-				//NOTE: IGNORE Metabolic pathways (HUGE PATHWAY)
-				if (pathwayModel.getID() === this.getModel().getOrganism() + "01100") {
-					continue;
-				}
-
-				pathwayData = {
-					// selected: pathwayModel.isSelected(),
-					pathwayID: pathwayModel.getID(),
-					title: pathwayModel.getName(),
-					matchedGenes: pathwayModel.getMatchedGenes().length,
-					matchedCompounds: pathwayModel.getMatchedCompounds().length,
-					combinedSignificancePvalue: pathwayModel.getCombinedSignificanceValues(),
-					mainCategory: pathwayModel.getClassification().split(";")[0],
-					visible: pathwayModel.isVisible()
-				};
-
-				significanceValues = pathwayModel.getSignificanceValues();
-				for (var j in significanceValues) {
-					omicName = "-" + j.toLowerCase().replace(/ /g, "-");
-					pathwayData['totalMatched' + omicName] = significanceValues[j][0];
-					pathwayData['totalRelevantMatched' + omicName] = significanceValues[j][1];
-					pathwayData['pValue' + omicName] = significanceValues[j][2];
-				}
-				this.tableData.push(pathwayData);
-
-				significativePathways += (pathwayModel.getCombinedSignificanceValues() <= 0.05) ? 1 : 0;
-			}
-		};
-
-		/*********************************************************************
-		* OTHER FUNCTIONS
-		***********************************************************************/
-		//TODO: DOCUMENTAR
-		this.updateObserver = function() {
-			var me = this;
-
-			/*STEP 3.1 GENERATE THE COLUMNS AND THE ROW MODEL*/
-			var columns = [ //DEFINE FIXED COLUMNS
-				{
-					xtype: 'customactioncolumn',
-					text: "Paint",
-					menuDisabled: true,
-					width: 55,
-					items: [{
-						icon: "fa-paint-brush-o",
-						text: "",
-						tooltip: 'Paint this pathway',
-						style: "font-size: 20px;",
-						handler: function(grid, rowIndex, colIndex) {
-							me.getParent().paintSelectedPathway(grid.getStore().getAt(rowIndex).get('pathwayID'));
-						}
-					}]
-					// }, {
-					// 	xtype: 'customcheckcolumn',
-					// 	header: 'Select',
-					// 	dataIndex: 'selected',
-					// 	width: 55,
-					// 	menuDisabled: true,
-					// 	listeners: {
-					// 		checkchange: {
-					// 			scope: gridPanel,
-					// 			fn: function(elem, rowIndex) {
-					// 				var record = this.getStore().getAt(rowIndex);
-					//
-					// 				var model = me.getModel().getPathway(record.get("pathwayID"));
-					// 				model.setSelected(!model.isSelected());
-					//
-					// 				this.getView().select(rowIndex);
-					// 				this.getStore().sort();
-					// 			}
-					// 		}
-					// 	}
-				}, {
-					text: 'ID',
-					dataIndex: 'pathwayID',
-					hidden: true
-				}, {
-					text: 'Title', dataIndex: 'title',
-					filterable: true, flex: 1,
-					renderer: function(value, metadata, record) {
-						return '<i class="fa fa-square" style="color:' + me.getParent().getClassificationColor(record.get("mainCategory").toLowerCase().replace(/ /g, "_"), []) + ';"></i> ' + value;
-					}
-				}, {
-					text: 'Matched features',
-					columns: [{
-						text: 'Genes',
-						sortable: true,
-						align: "center",
-						filter: {type: 'numeric'},
-						dataIndex: 'matchedGenes'
-					}, {
-						text: 'Compounds',
-						sortable: true,
-						align: "center",
-						filter: {type: 'numeric'},
-						dataIndex: 'matchedCompounds'
-					}]
-				}
-			];
-			//DEFINE FIXED FIELDS FOR THE MODEL
-			var rowModel = {
-				// selected: {name: "selected", defaultValue: false},
-				pathwayID: {name: "pathwayID"},
-				title: {name: "title", defaultValue: ''},
-				matchedGenes: {name: "matchedGenes", defaultValue: '0'},
-				matchedCompounds: {name: "matchedCompounds", defaultValue: '0'},
-				combinedSignificancePvalue: {name: "combinedSignificancePvalue", defaultValue: ''},
-				mainCategory: {name: "mainCategory",defaultValue: ''},
-				visible: {name: "visible", defaultValue: true}
-			};
-
-			//CALL THE PREVIOUS FUNCTION ADDING THE INFORMATION FOR GENE BASED OMIC AND COMPOUND BASED OMICS
-			var secondaryColumns = [];
-			var hidden = (Object.keys(this.model.getGeneBasedInputOmics()).length  + Object.keys(this.model.getCompoundBasedInputOmics()).length  > 5 || $("#mainViewCenterPanel").hasClass("mobileMode"))  ;
-
-			this.generateColumns(this.model.getGeneBasedInputOmics(), secondaryColumns, rowModel, hidden);
-			this.generateColumns(this.model.getCompoundBasedInputOmics(), secondaryColumns, rowModel, hidden);
-
-			//ADD AN ADDITIONAL COLUMN WITH THE COMBINED pValue IF #OMIC > 1
-			if (secondaryColumns.length > 1) {
-				secondaryColumns.push({
-					text: 'Combined </br>pValue',
-					dataIndex: 'combinedSignificancePvalue',
-					sortable: true,filter: {type: 'numeric'}, align: "center",
-					minWidth: 100, flex:1,
-					renderer: function(value, metadata, record) {
-						var myToolTipText = "<b style='display:block; width:200px'>" + metadata.column.text + "</b>";
-						if (value === '') {
-							myToolTipText = myToolTipText + "<i>No data for this pathway</i>";
-							metadata.tdAttr = 'data-qtip="' + myToolTipText + '"';
-							return "-";
-						}
-						//RENDER THE VALUE -> IF LESS THAN 0.05, USE SCIENTIFIC NOTATION
-						return (value > 0.001 || value === 0) ? parseFloat(value).toFixed(6) : parseFloat(value).toExponential(4);
-					}
-				});
-			}
-			//GROUP ALL COLUMNS INTO A NEW COLUMN 'Significance tests'
-			columns.push({text: 'Significance tests',columns: secondaryColumns});
-
-			columns.push({
-				xtype: 'customactioncolumn',
-				text: "External links", width: 150,
-				items: [{
-					icon: "fa-external-link",
-					text: "KEGG",
-					tooltip: 'Find pathway in KEGG Database',
-					handler: function(grid, rowIndex, colIndex) {
-						var term = grid.getStore().getAt(rowIndex).get('pathwayID');
-						window.open("http://www.genome.jp/dbget-bin/www_bget?pathway+" + term, '_blank');
-					}
-				}, {
-					icon: "fa-search", text: "PubMed",
-					tooltip: 'Find related publications',
-					handler: function(grid, rowIndex, colIndex) {
-						var term = grid.getStore().getAt(rowIndex).get('title');
-						window.open("http://www.ncbi.nlm.nih.gov/pubmed/?term=" + term.replace(" ", "%20"), '_blank');
-					}
-				}]
-			});
-
-			var tableStore = Ext.create('Ext.data.Store', {
-				fields: Object.values(rowModel),
-				data: this.tableData,
-				sorters: [{
-					property: ((secondaryColumns.length > 1) ? 'combinedSignificancePvalue' : secondaryColumns[0].dataIndex),
-					direction: 'ASC'
-				}]
-			});
-
-			var gridPanel = this.getComponent().queryById("pathwaysGridPanel");
-			gridPanel.reconfigure(tableStore, columns);
-			this.updateVisiblePathways();
-		};
-
-		//TODO: DOCUMENTAR
-		this.updateVisiblePathways = function(){
-			var store = this.getComponent().queryById("pathwaysGridPanel").getStore();
-			var indexedPathways = this.getParent().getIndexedPathways();
-			var filterBy = function(elem){
-				return indexedPathways[elem.get("pathwayID")].isVisible();
-			};
-			store.filterBy(filterBy);
-		};
-
-		/**
-		* This function generates a new column for the table (pValue column) for a given OMIC, and add the corresponding data to the row model.
-		* @chainable
-		* @param {Object} omics, list of omics for the current JOBINSTANCE
-		* @param {Array} columns, list of Objects defining the columns content
-		* @param {Object} rowModel, Object containing a description for the row model for the table
-		* @return {PA_Step3PathwayTableView}
-		*/
-		this.generateColumns = function(omics, columns, rowModel, hidden) {
-			//FOR EACH OMIC -> ADD COLUM FOR p-value AND CREATE THE HOVER PANEL WITH SUMMARY
-			var omicName;
-
-			var renderFunction = function(value, metadata, record) {
-				var myToolTipText = "<b style='display:block; width:200px'>" + metadata.column.text + "</b>";
-				//IF THERE IS NOT DATA FOR THIS PATHWAY, FOR THIS OMIC, PRINT A '-'
-				if (value === "-") {
-					myToolTipText = myToolTipText + "<i>No data for this pathway</i>";
-					metadata.tdAttr = 'data-qtip="' + myToolTipText + '"';
-					return "-";
-				}
-				//RENDER THE VALUE -> IF LESS THAN 0.05, USE SCIENTIFIC NOTATION
-				var renderedValue = (value > 0.001 || value === 0) ? parseFloat(value).toFixed(6) : parseFloat(value).toExponential(4);
-				var omicName = "-" + metadata.column.text.toLowerCase().replace(/ /g, "-");
-
-				//ELSE, GENERATE SUMMARY TIP
-				myToolTipText = myToolTipText + "Features matched: " + record.get('totalMatched' + omicName) + "</br>";
-				myToolTipText = myToolTipText + "Relevant features matched: " + record.get('totalRelevantMatched' + omicName) + "</br>";
-				myToolTipText = myToolTipText + "p-value: " + (value === -1 ? "-" : renderedValue) + "</br>";
-				metadata.tdAttr = 'data-qtip="' + myToolTipText + '"';
-
-				return renderedValue;
-			};
-
-			for (var i in omics) {
-				omicName = "-" + omics[i].omicName.toLowerCase().replace(/ /g, "-");
-				columns.push({
-					text: omics[i].omicName,
-					dataIndex: 'pValue' + omicName,
-					flex: 1, hidden : hidden, sortable: true, align: "center",
-					filter: {type: 'numeric'},
-					renderer: renderFunction
 				});
 
-				//ADD THE CUSTOM FIELD TO ROW MODEL
-				rowModel['totalMatched' + omicName] = {
-					name: 'totalMatched' + omicName,
-					defaultValue: 0
-				};
-				rowModel['totalRelevantMatched' + omicName] = {
-					name: 'totalRelevantMatched' + omicName,
-					defaultValue: 0
-				};
-				rowModel['pValue' + omicName] = {
-					name: 'pValue' + omicName,
-					defaultValue: "-"
-				};
-			}
-			return this;
-		};
+				return heatmap;
+			};
 
-		//TODO: DOCUMENTAR
-		this.getSelectedPathways = function() {
-			var selectedPathways = [];
-			this.getComponent().queryById("pathwaysGridPanel").getStore().query("selected", true).each(function(item) {
-				selectedPathways.push(item.get("pathwayID"));
-			});
-			return selectedPathways;
-		};
+			//TODO: DOCUMENTAR
+			this.generatePlot = function (targetID, omicName, metagenes, dataDistributionSummaries, heatmap) {
+				var series = [],
+				scaledValues, min, max,
+				maxVal = -100000000,
+				minVal = 100000000,
+				tmpValue,
+				yAxis = [],
+				yAxisItem;
 
-		/**
-		* This function generates the component (EXTJS) using the content of the model
-		* @param {String}  renderTo  the ID for the DOM element where this component should be rendered
-		* @returns {Ext.ComponentView} The visual component
-		*/
-		this.initComponent = function() {
-			var me = this;
 
-			this.component = Ext.widget({
-				xtype: 'container', cls: "contentbox", items: [
-					{xtype: 'box', flex: 1, html: '<h2>Matched Pathways</h2>'},
-					{
-						xtype: "livesearchgrid", itemId: 'pathwaysGridPanel',
-						searchFor: "title",
-						defaults: {border: false}, columnLines: true,
-						download: {
-							title: 'Paintomics pathways ' + me.getModel().getJobID(),
-							ignoreColums: [1, 9]
+				//1.FILL THE STORE DATA [{name:"timepoint 1", "Gene Expression": -0.8, "Proteomics":-1.2,... },{name:"timepoint2", ...}]
+				for (var i in metagenes) {
+					scaledValues = [];
+					featureValues = metagenes[i].values.map(Number);
+
+					var limits = getMinMax(dataDistributionSummaries[omicName], 'p10p90');
+					for (var j in featureValues) {
+						//SCALE THE VALUE
+						tmpValue = scaleValue(featureValues[j], limits.min, limits.max);
+						tmpValue = featureValues[j];
+						//UPDATE MIN MAX (TO ADJUST THE AXIS)
+						maxVal = Math.max(tmpValue, maxVal);
+						minVal = Math.min(tmpValue, minVal);
+						//ADD THE VALUE (CUSTOM MARKER IF OUTLIER)
+						scaledValues.push({
+							y: tmpValue,
+							marker: ((tmpValue > 1 || tmpValue < -1) ? {
+								fillColor: '#ff6e00'
+							} : null)
+						});
+					}
+
+					var parentAux = this.getParent("PA_Step3PathwayNetworkView");
+					if(parentAux === null){
+						parentAux = this.getParent();
+					}
+
+					series.push({
+						name: "Cluster " + metagenes[i].cluster,
+						type: 'spline',
+						color: parentAux.getClusterColor(metagenes[i].cluster),
+						startOnTick: false,
+						endOnTick: false,
+						data: scaledValues,
+						yAxis: 0
+					});
+				}
+
+				maxVal = Math.ceil(Math.max(maxVal, 1));
+				minVal = Math.floor(Math.min(minVal, -1));
+
+				var plot = new Highcharts.Chart({
+					chart: {renderTo: targetID},
+					title: null,
+					credits: {enabled: false},
+					xAxis: [{labels: {enabled: false}}],
+					yAxis: {
+						title: null,
+						min: minVal,
+						max: maxVal,
+						plotLines: [
+							{label: {text: '-1',align: 'right', style: {color: 'gray'}},color: '#dedede',value: -1,width: 1},
+							{label: {text: '0',align: 'right', style: {color: 'gray'}},color: '#dedede',value: 0,width: 1},
+							{label: {text: '1',align: 'right', style: {color: 'gray'}},color: '#dedede',value: 1,width: 1}
+						]},
+						series: series,
+						legend: {
+							itemStyle: {fontSize: "9px",fontWeight: 'lighter'},
+							margin: 5,
+							padding: 5
 						},
-						store: Ext.create('Ext.data.Store', {
-							fields: ['name', 'email', 'phone']
-						}),
-						columns: [{text: 'name', flex: 1, dataIndex: 'name'}]
-					}]
+						tooltip: {enabled: false},
+						plotOptions: {
+							series: {
+								point: {
+									events: {
+										mouseOver: function() {
+											heatmap.tooltip.refresh(heatmap.series[heatmap.series.length - this.series.index - 1].data[this.x]);
+										}
+									}
+								}
+							}
+						}
+					}
+				);
+
+				plot.yAxis[0].setExtremes(minVal, maxVal);
+
+				return plot;
+			};
+
+			/**
+			* This function generates the component (EXTJS) using the content of the model
+			* @param {String}  renderTo  the ID for the DOM element where this component should be rendered
+			* @returns {Ext.ComponentView} The visual component
+			*/
+			this.initComponent = function(renderTo) {
+				var me = this;
+				this.component = Ext.widget({
+					xtype: "box", renderTo: renderTo, html:
+					"<div class='mainInfoPanel' >" +
+					"  <div class='pathwayNameLabel' style='padding:2px 0px'><h4 style='font-size: 13px;margin: 0;'></h4></div>" +
+					"  <div class='pathwayClassificationLabel' style='padding:2px 0px'></div>" +
+					"  <div class='pathwaySummaryTable'></div>" +
+					"  <div class='pathwayPlotwrappers'></div>" +
+					"</div>",
+					listeners: {
+						beforedestroy: function() {
+							me.getModel().deleteObserver(me);
+						}
+					}
+				});
+
+				return this.component;
+			};
+
+			return this;
+		}
+		PA_Step3PathwayDetailsView.prototype = new View();
+
+		function PA_Step3PathwayTableView() {
+			/**
+			* About this view: TODO: DOCUMENTAR
+			**/
+			/*********************************************************************
+			* ATTRIBUTES
+			***********************************************************************/
+			this.name = "PA_Step3PathwayTableView";
+			this.tableData = null;
+
+			/***********************************************************************
+			* GETTER AND SETTERS
+			***********************************************************************/
+			//TODO: DOCUMENTAR
+			this.loadModel= function(model){
+				var me = this;
+
+				/********************************************************/
+				/* STEP 1. LOAD THE MODEL                               */
+				/********************************************************/
+				if (this.model !== null) {
+					this.model.deleteObserver(this);
 				}
-			);
-			return this.component;
-		};
+				this.model = model;
+				this.model.addObserver(this);
 
-		return this;
-	}
-	PA_Step3PathwayTableView.prototype = new View();
+				/********************************************************/
+				/* STEP 2. GENERATE THE ROWS CONTENT                    */
+				/********************************************************/
+				this.tableData = [];
 
-	/**
-	* This function returns the MIN/MAX values that will be used as references
-	* for painting (i.e. min and max colors).
-	*
-	* @param {type} dataDistributionSummaries
-	* @param {type} option [absoluteMinMax, riMinMax, localMinMax, p10p90]
-	* @returns {Array}
-	*/
-	var getMinMax = function(dataDistributionSummaries, option) {
-		//   0        1       2    3    4    5     6,   7   8      9        10
-		//[MAPPED, UNMAPPED, MIN, P10, Q1, MEDIAN, Q3, P90, MAX, MIN_IR, Max_IR]
-		var min, max, absMin, absMax;
+				var pathways = this.model.getPathways();
+				var pathwayData, pathwayModel, omicName, significanceValues;
 
-		absMax = ((dataDistributionSummaries[8] < 0) ? 0 : Math.max(Math.abs(dataDistributionSummaries[2]), Math.abs(dataDistributionSummaries[8])));
-		absMin = ((dataDistributionSummaries[2] > 0) ? 0 : -absMax);
+				var significativePathways = 0;
 
-		if (option === "absoluteMinMax") { //IF USE MIN MAX FOR ORIGINAL DATA (INCLUDE OUTLIERS)
-			max = ((dataDistributionSummaries[8] < 0) ? 0 : Math.max(Math.abs(dataDistributionSummaries[2]), Math.abs(dataDistributionSummaries[8])));
-			min = ((dataDistributionSummaries[2] > 0) ? 0 : -max);
-		} else if (option === "riMinMax") { //IF USE MIN MAX FOR INTERQUARTIL RANGE (OMIT OUTLIERS)
-			max = ((dataDistributionSummaries[10] < 0) ? 0 : Math.max(Math.abs(dataDistributionSummaries[9]), Math.abs(dataDistributionSummaries[10])));
-			min = ((dataDistributionSummaries[9] > 0) ? 0 : -max);
+				for (var i in pathways) {
+					pathwayModel = pathways[i];
 
-			//    } else if (option === "localMinMax") {//IF USE MIN MAX FOR INTERQUARTIL RANGE (OMIT OUTLIERS)
-			//        //TODO: IMPLEMENT
-		} else if (option === "p10p90") { //IF USE PERCENTILES 10 AND 90
-			max = ((dataDistributionSummaries[7] < 0) ? 0 : Math.max(Math.abs(dataDistributionSummaries[3]), Math.abs(dataDistributionSummaries[7])));
-			min = ((dataDistributionSummaries[3] > 0) ? 0 : -max);
+					//NOTE: IGNORE Metabolic pathways (HUGE PATHWAY)
+					if (pathwayModel.getID() === this.getModel().getOrganism() + "01100") {
+						continue;
+					}
+					pathwayData = {
+						// selected: pathwayModel.isSelected(),
+						pathwayID: pathwayModel.getID(),
+						title: pathwayModel.getName(),
+						matchedGenes: pathwayModel.getMatchedGenes().length,
+						matchedCompounds: pathwayModel.getMatchedCompounds().length,
+						combinedSignificancePvalue: pathwayModel.getCombinedSignificanceValues(),
+						mainCategory: pathwayModel.getClassification().split(";")[0],
+						secCategory: pathwayModel.getClassification().split(";")[1],
+						visible: pathwayModel.isVisible()
+					};
+
+					significanceValues = pathwayModel.getSignificanceValues();
+					for (var j in significanceValues) {
+						omicName = "-" + j.toLowerCase().replace(/ /g, "-");
+						pathwayData['totalMatched' + omicName] = significanceValues[j][0];
+						pathwayData['totalRelevantMatched' + omicName] = significanceValues[j][1];
+						pathwayData['pValue' + omicName] = significanceValues[j][2];
+					}
+					this.tableData.push(pathwayData);
+
+					significativePathways += (pathwayModel.getCombinedSignificanceValues() <= 0.05) ? 1 : 0;
+				}
+			};
+
+			/*********************************************************************
+			* OTHER FUNCTIONS
+			***********************************************************************/
+			//TODO: DOCUMENTAR
+			this.updateObserver = function() {
+				var me = this;
+
+				/*STEP 3.1 GENERATE THE COLUMNS AND THE ROW MODEL*/
+				var columns = [ //DEFINE FIXED COLUMNS
+					{
+						xtype: 'customactioncolumn',
+						text: "Paint",
+						menuDisabled: true,
+						width: 55,
+						items: [{
+							icon: "fa-paint-brush-o",
+							text: "",
+							tooltip: 'Paint this pathway',
+							style: "font-size: 20px;",
+							handler: function(grid, rowIndex, colIndex) {
+								me.getParent().paintSelectedPathway(grid.getStore().getAt(rowIndex).get('pathwayID'));
+							}
+						}]
+						// }, {
+						// 	xtype: 'customcheckcolumn',
+						// 	header: 'Select',
+						// 	dataIndex: 'selected',
+						// 	width: 55,
+						// 	menuDisabled: true,
+						// 	listeners: {
+						// 		checkchange: {
+						// 			scope: gridPanel,
+						// 			fn: function(elem, rowIndex) {
+						// 				var record = this.getStore().getAt(rowIndex);
+						//
+						// 				var model = me.getModel().getPathway(record.get("pathwayID"));
+						// 				model.setSelected(!model.isSelected());
+						//
+						// 				this.getView().select(rowIndex);
+						// 				this.getStore().sort();
+						// 			}
+						// 		}
+						// 	}
+					}, {
+						text: 'ID',
+						dataIndex: 'pathwayID',
+						hidden: true
+					}, {
+						text: 'Pathway name', dataIndex: 'title', filterable: true, flex: 1,
+					}, {
+						text: '', dataIndex: 'classification',
+						filterable: true, width:10, resizable: false,
+						renderer: function(value, metadata, record) {
+							metadata.style = "height: 33px; padding: 0; width: 10px; background-color:"+me.getParent().getClassificationColor(record.get("mainCategory").toLowerCase().replace(/ /g, "_"), [])+";";
+							metadata.tdAttr = 'data-qtip="' + "<b>Classification</b><br>" + record.get("mainCategory") + "<br>" + record.get("secCategory") + '"';
+							return '';
+						}
+					}, {
+						text: 'Features',
+						columns: [{
+							text: 'Genes', cls:"header-90deg",
+							sortable: true,
+							align: "center", width: 50,
+							filter: {type: 'numeric'},
+							dataIndex: 'matchedGenes'
+						}, {
+							text: 'Metabolites', cls:"header-90deg",
+							sortable: true,
+							align: "center", width: 50,
+							filter: {type: 'numeric'},
+							dataIndex: 'matchedCompounds'
+						}]
+					}
+				];
+				//DEFINE FIXED FIELDS FOR THE MODEL
+				var rowModel = {
+					// selected: {name: "selected", defaultValue: false},
+					pathwayID: {name: "pathwayID"},
+					title: {name: "title", defaultValue: ''},
+					matchedGenes: {name: "matchedGenes", defaultValue: '0'},
+					matchedCompounds: {name: "matchedCompounds", defaultValue: '0'},
+					combinedSignificancePvalue: {name: "combinedSignificancePvalue", defaultValue: ''},
+					mainCategory: {name: "mainCategory",defaultValue: ''},
+					secCategory: {name: "secCategory",defaultValue: ''},
+					visible: {name: "visible", defaultValue: true}
+				};
+
+				//CALL THE PREVIOUS FUNCTION ADDING THE INFORMATION FOR GENE BASED OMIC AND COMPOUND BASED OMICS
+				var secondaryColumns = [];
+				var hidden = (Object.keys(this.model.getGeneBasedInputOmics()).length  + Object.keys(this.model.getCompoundBasedInputOmics()).length  > 5 || $("#mainViewCenterPanel").hasClass("mobileMode"))  ;
+
+				this.generateColumns(this.model.getGeneBasedInputOmics(), secondaryColumns, rowModel, hidden);
+				this.generateColumns(this.model.getCompoundBasedInputOmics(), secondaryColumns, rowModel, hidden);
+
+				//ADD AN ADDITIONAL COLUMN WITH THE COMBINED pValue IF #OMIC > 1
+				if (secondaryColumns.length > 1) {
+					secondaryColumns.push({
+						text: 'Combined </br>pValue', cls:"header-45deg",
+						dataIndex: 'combinedSignificancePvalue',
+						sortable: true,filter: {type: 'numeric'}, align: "center",
+						minWidth: 100, flex:1, height:75,
+						renderer: function(value, metadata, record) {
+							var myToolTipText = "<b style='display:block; width:200px'>" + metadata.column.text + "</b>";
+							metadata.style = "height: 33px; font-size:10px;"
+							if (value === '') {
+								myToolTipText = myToolTipText + "<i>No data for this pathway</i>";
+								metadata.tdAttr = 'data-qtip="' + myToolTipText + '"';
+								metadata.style += " background-color:#D4D4D4;";
+								return "-";
+							}
+
+							if(value <= 0.065){
+								var color = Math.round(161 * (value/0.065));
+								metadata.style += "background-color:rgb(255, " + color +"," + color + ");";
+							}
+
+							//RENDER THE VALUE -> IF LESS THAN 0.05, USE SCIENTIFIC NOTATION
+							return (value > 0.001 || value === 0) ? parseFloat(value).toFixed(5) : parseFloat(value).toExponential(4);
+						}
+					});
+				}
+				//GROUP ALL COLUMNS INTO A NEW COLUMN 'Significance tests'
+				columns.push({text: 'Significance tests',columns: secondaryColumns});
+
+				columns.push({
+					xtype: 'customactioncolumn',
+					text: "External links", width: 150,
+					items: [{
+						icon: "fa-external-link",
+						text: "KEGG",
+						tooltip: 'Find pathway in KEGG Database',
+						handler: function(grid, rowIndex, colIndex) {
+							var term = grid.getStore().getAt(rowIndex).get('pathwayID');
+							window.open("http://www.genome.jp/dbget-bin/www_bget?pathway+" + term, '_blank');
+						}
+					}, {
+						icon: "fa-search", text: "PubMed",
+						tooltip: 'Find related publications',
+						handler: function(grid, rowIndex, colIndex) {
+							var term = grid.getStore().getAt(rowIndex).get('title');
+							window.open("http://www.ncbi.nlm.nih.gov/pubmed/?term=" + term.replace(" ", "%20"), '_blank');
+						}
+					}]
+				});
+
+				var tableStore = Ext.create('Ext.data.Store', {
+					fields: Object.values(rowModel),
+					data: this.tableData,
+					sorters: [{
+						property: ((secondaryColumns.length > 1) ? 'combinedSignificancePvalue' : secondaryColumns[0].dataIndex),
+						direction: 'ASC'
+					}]
+				});
+
+				var gridPanel = this.getComponent().queryById("pathwaysGridPanel");
+				gridPanel.reconfigure(tableStore, columns);
+				this.updateVisiblePathways();
+			};
+
+			//TODO: DOCUMENTAR
+			this.updateVisiblePathways = function(){
+				var store = this.getComponent().queryById("pathwaysGridPanel").getStore();
+				var indexedPathways = this.getParent().getIndexedPathways();
+				var filterBy = function(elem){
+					return indexedPathways[elem.get("pathwayID")].isVisible();
+				};
+				store.filterBy(filterBy);
+			};
+
+			/**
+			* This function generates a new column for the table (pValue column) for a given OMIC, and add the corresponding data to the row model.
+			* @chainable
+			* @param {Object} omics, list of omics for the current JOBINSTANCE
+			* @param {Array} columns, list of Objects defining the columns content
+			* @param {Object} rowModel, Object containing a description for the row model for the table
+			* @return {PA_Step3PathwayTableView}
+			*/
+			this.generateColumns = function(omics, columns, rowModel, hidden) {
+				//FOR EACH OMIC -> ADD COLUM FOR p-value AND CREATE THE HOVER PANEL WITH SUMMARY
+				var omicName;
+
+				var renderFunction = function(value, metadata, record) {
+					var myToolTipText = "<b style='display:block; width:200px'>" + metadata.column.text + "</b>";
+					//IF THERE IS NOT DATA FOR THIS PATHWAY, FOR THIS OMIC, PRINT A '-'
+					metadata.style = "height: 33px; font-size:10px;"
+
+					if (value === "-") {
+						myToolTipText = myToolTipText + "<i>No data for this pathway</i>";
+						metadata.tdAttr = 'data-qtip="' + myToolTipText + '"';
+						metadata.style += "background-color:#D4D4D4;";
+						return "-";
+					}
+					//RENDER THE VALUE -> IF LESS THAN 0.05, USE SCIENTIFIC NOTATION
+					var renderedValue = (value > 0.001 || value === 0) ? parseFloat(value).toFixed(5) : parseFloat(value).toExponential(4);
+					var omicName = "-" + metadata.column.text.toLowerCase().replace(/ /g, "-");
+
+					if(value <= 0.065){
+						var color = Math.round(225 * (value/0.065));
+						metadata.style += "background-color:rgb(255, " + color +"," + color + ");";
+					}
+
+					//ELSE, GENERATE SUMMARY TIP
+					myToolTipText = myToolTipText + "Features matched: " + record.get('totalMatched' + omicName) + "</br>";
+					myToolTipText = myToolTipText + "Relevant features matched: " + record.get('totalRelevantMatched' + omicName) + "</br>";
+					myToolTipText = myToolTipText + "p-value: " + (value === -1 ? "-" : renderedValue) + "</br>";
+					metadata.tdAttr = 'data-qtip="' + myToolTipText + '"';
+
+					return renderedValue;
+				};
+
+				for (var i in omics) {
+					omicName = "-" + omics[i].omicName.toLowerCase().replace(/ /g, "-");
+					columns.push({
+						text: omics[i].omicName.replace(" ","</br>"), cls:"header-45deg",
+						dataIndex: 'pValue' + omicName, width:90,
+						flex: 1, hidden : hidden, sortable: true, align: "center",
+						filter: {type: 'numeric'},
+						renderer: renderFunction
+					});
+
+					//ADD THE CUSTOM FIELD TO ROW MODEL
+					rowModel['totalMatched' + omicName] = {
+						name: 'totalMatched' + omicName,
+						defaultValue: 0
+					};
+					rowModel['totalRelevantMatched' + omicName] = {
+						name: 'totalRelevantMatched' + omicName,
+						defaultValue: 0
+					};
+					rowModel['pValue' + omicName] = {
+						name: 'pValue' + omicName,
+						defaultValue: "-"
+					};
+				}
+				return this;
+			};
+
+			//TODO: DOCUMENTAR
+			this.getSelectedPathways = function() {
+				var selectedPathways = [];
+				this.getComponent().queryById("pathwaysGridPanel").getStore().query("selected", true).each(function(item) {
+					selectedPathways.push(item.get("pathwayID"));
+				});
+				return selectedPathways;
+			};
+
+			/**
+			* This function generates the component (EXTJS) using the content of the model
+			* @param {String}  renderTo  the ID for the DOM element where this component should be rendered
+			* @returns {Ext.ComponentView} The visual component
+			*/
+			this.initComponent = function() {
+				var me = this;
+				this.component = Ext.widget({
+					xtype: 'container', cls: "contentbox", items: [
+						{xtype: 'box', flex: 1, html: '<h2>Matched Pathways</h2>'},
+						{
+							xtype: "livesearchgrid", itemId: 'pathwaysGridPanel',
+							searchFor: "title",
+							defaults: {border: false}, columnLines: true, stripeRows:false,
+							download: {
+								title: 'Paintomics pathways ' + me.getModel().getJobID(),
+								ignoreColums: [1]
+							},
+							store: Ext.create('Ext.data.Store', {
+								fields: ['name', 'email', 'phone']
+							}),
+							columns: [{text: 'name', flex: 1, dataIndex: 'name'}]
+						}]
+					}
+				);
+				return this.component;
+			};
+
+			return this;
+		}
+		PA_Step3PathwayTableView.prototype = new View();
+
+		/**
+		* This function returns the MIN/MAX values that will be used as references
+		* for painting (i.e. min and max colors).
+		*
+		* @param {type} dataDistributionSummaries
+		* @param {type} option [absoluteMinMax, riMinMax, localMinMax, p10p90]
+		* @returns {Array}
+		*/
+		var getMinMax = function(dataDistributionSummaries, option) {
+			//   0        1       2    3    4    5     6,   7   8      9        10
+			//[MAPPED, UNMAPPED, MIN, P10, Q1, MEDIAN, Q3, P90, MAX, MIN_IR, Max_IR]
+			var min, max, absMin, absMax;
 
 			absMax = ((dataDistributionSummaries[8] < 0) ? 0 : Math.max(Math.abs(dataDistributionSummaries[2]), Math.abs(dataDistributionSummaries[8])));
 			absMin = ((dataDistributionSummaries[2] > 0) ? 0 : -absMax);
-		} else {
-			console.error("getMinMax:" + option + "Not implemented!!");
-			debugger;
-		}
-		//KEEP RANGE SIMETRY
-		return {
-			min: min,
-			max: max,
-			absMin: absMin,
-			absMax: absMax
+
+			if (option === "absoluteMinMax") { //IF USE MIN MAX FOR ORIGINAL DATA (INCLUDE OUTLIERS)
+				max = ((dataDistributionSummaries[8] < 0) ? 0 : Math.max(Math.abs(dataDistributionSummaries[2]), Math.abs(dataDistributionSummaries[8])));
+				min = ((dataDistributionSummaries[2] > 0) ? 0 : -max);
+			} else if (option === "riMinMax") { //IF USE MIN MAX FOR INTERQUARTIL RANGE (OMIT OUTLIERS)
+				max = ((dataDistributionSummaries[10] < 0) ? 0 : Math.max(Math.abs(dataDistributionSummaries[9]), Math.abs(dataDistributionSummaries[10])));
+				min = ((dataDistributionSummaries[9] > 0) ? 0 : -max);
+
+				//    } else if (option === "localMinMax") {//IF USE MIN MAX FOR INTERQUARTIL RANGE (OMIT OUTLIERS)
+				//        //TODO: IMPLEMENT
+			} else if (option === "p10p90") { //IF USE PERCENTILES 10 AND 90
+				max = ((dataDistributionSummaries[7] < 0) ? 0 : Math.max(Math.abs(dataDistributionSummaries[3]), Math.abs(dataDistributionSummaries[7])));
+				min = ((dataDistributionSummaries[3] > 0) ? 0 : -max);
+
+				absMax = ((dataDistributionSummaries[8] < 0) ? 0 : Math.max(Math.abs(dataDistributionSummaries[2]), Math.abs(dataDistributionSummaries[8])));
+				absMin = ((dataDistributionSummaries[2] > 0) ? 0 : -absMax);
+			} else {
+				console.error("getMinMax:" + option + "Not implemented!!");
+				debugger;
+			}
+			//KEEP RANGE SIMETRY
+			return {
+				min: min,
+				max: max,
+				absMin: absMin,
+				absMax: absMax
+			};
+
 		};
 
-	};
+		/**
+		* This function returns the corresponding RGB color (for heatmap) for
+		* a given value, based on a min/max values.
+		*
+		* @param {type} min
+		* @param {type} max
+		* @param {type} value
+		* @param {String} colorScale the color scale (RED-BLACK-GREEN -> "rbg", BLUE-WHITE-RED -> "bwr")
+		* @returns {String}
+		*/
+		var getColor = function(limits, value, colorScale) {
+			var red, blue, green;
+			//RED-BLACK-GREEN
+			if (colorScale === "rbg") {
+				var percentage = Math.abs((value > 0) ? (value / limits.max) : (value / limits.min));
+				green = (value > 0) ? 0 : 255 * percentage;
+				red = (value > 0) ? 255 * percentage : 0;
+				blue = 0;
+			} else if (colorScale === "bwr") {
+				//BLUE-WHITE-RED
+				var percentage = Math.max(0, 1 - Math.abs((value > 0) ? (value / limits.max) : (value / limits.min)));
 
-	/**
-	* This function returns the corresponding RGB color (for heatmap) for
-	* a given value, based on a min/max values.
-	*
-	* @param {type} min
-	* @param {type} max
-	* @param {type} value
-	* @param {String} colorScale the color scale (RED-BLACK-GREEN -> "rbg", BLUE-WHITE-RED -> "bwr")
-	* @returns {String}
-	*/
-	var getColor = function(limits, value, colorScale) {
-		var red, blue, green;
-		//RED-BLACK-GREEN
-		if (colorScale === "rbg") {
-			var percentage = Math.abs((value > 0) ? (value / limits.max) : (value / limits.min));
-			green = (value > 0) ? 0 : 255 * percentage;
-			red = (value > 0) ? 255 * percentage : 0;
-			blue = 0;
-		} else if (colorScale === "bwr") {
-			//BLUE-WHITE-RED
-			var percentage = Math.max(0, 1 - Math.abs((value > 0) ? (value / limits.max) : (value / limits.min)));
+				var outlierPercentage = Math.max(0, Math.abs((value > 0) ? ((value - limits.max) / (limits.absMax - limits.max)) : ((value - limits.min) / (limits.absMin - limits.min))));
+				green = percentage * 255;
+				red = (value > 0) ? ((value > limits.max) ? 255 - (outlierPercentage * 128) : 255) : (percentage * 255);
+				blue = (value < 0) ? ((value < limits.min) ? 255 - (outlierPercentage * 128) : 255) : (percentage * 255);
 
-			var outlierPercentage = Math.max(0, Math.abs((value > 0) ? ((value - limits.max) / (limits.absMax - limits.max)) : ((value - limits.min) / (limits.absMin - limits.min))));
-			green = percentage * 255;
-			red = (value > 0) ? ((value > limits.max) ? 255 - (outlierPercentage * 128) : 255) : (percentage * 255);
-			blue = (value < 0) ? ((value < limits.min) ? 255 - (outlierPercentage * 128) : 255) : (percentage * 255);
+			} else if (colorScale === "bwr2") {
+				//BLUE-WHITE-RED
+				var percentage = Math.max(0, 1 - Math.abs((value > 0) ? (value / limits.max) : (value / limits.min)));
+				var outlierPercentage = Math.max(0, Math.abs((value > 0) ? ((value - limits.max) / (limits.absMax - limits.max)) : ((value - limits.min) / (limits.absMin - limits.min))));
 
-		} else if (colorScale === "bwr2") {
-			//BLUE-WHITE-RED
-			var percentage = Math.max(0, 1 - Math.abs((value > 0) ? (value / limits.max) : (value / limits.min)));
-			var outlierPercentage = Math.max(0, Math.abs((value > 0) ? ((value - limits.max) / (limits.absMax - limits.max)) : ((value - limits.min) / (limits.absMin - limits.min))));
-
-			green = (value > limits.max || value < limits.min) ? (outlierPercentage * 128) : (percentage * 255);
-			red = (value > 0) ? 255 : (percentage * 255);
-			blue = (value > 0) ? (percentage * 255) : 255;
-		} else {
-			console.error("Color scale " + colorScale + "Not implemented!!");
-			debugger;
-		}
-		return "rgb(" + Math.round(red) + ", " + Math.round(green) + "," + Math.round(blue) + ")";
-	};
+				green = (value > limits.max || value < limits.min) ? (outlierPercentage * 128) : (percentage * 255);
+				red = (value > 0) ? 255 : (percentage * 255);
+				blue = (value > 0) ? (percentage * 255) : 255;
+			} else {
+				console.error("Color scale " + colorScale + "Not implemented!!");
+				debugger;
+			}
+			return "rgb(" + Math.round(red) + ", " + Math.round(green) + "," + Math.round(blue) + ")";
+		};
