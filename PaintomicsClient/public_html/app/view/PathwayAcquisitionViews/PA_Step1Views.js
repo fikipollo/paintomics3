@@ -1,6 +1,6 @@
 /* global Ext, APP_VERSION, dragula */
 
-//@ sourceURL=PA_Step1Views.js
+//# sourceURL=PA_Step1Views.js
 /*
 * (C) Copyright 2014 The Genomics of Gene Expression Lab, CIPF
 * (http://bioinfo.cipf.es/aconesawp) and others.

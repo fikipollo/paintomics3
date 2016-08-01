@@ -13131,3 +13131,29 @@
 
 2016-07-14 20:23:50,594 - INFO - DBManager.py : log -      
 2016-07-14 20:23:50,596 - INFO - DBManager.py : log -      STEP 3. CLOSING LOG FILES, GENERATING VERSION FILE
+2016-07-18 18:49:14,074 - INFO - DBManager.py : log -      ######################################################################
+2016-07-18 18:49:14,075 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE INSTALLER 
+2016-07-18 18:49:14,075 - INFO - DBManager.py : log -      ### v.0.11
+2016-07-18 18:49:14,076 - INFO - DBManager.py : log -      ######################################################################
+2016-07-18 18:49:14,077 - INFO - DBManager.py : log -      
+2016-07-18 18:49:14,077 - INFO - DBManager.py : log -      Installation log is at: /data/KEGG_DATA//last/install.log
+2016-07-18 18:49:14,078 - INFO - DBManager.py : log -      
+2016-07-18 18:49:14,079 - INFO - DBManager.py : log -      STEP 1. READ CONFIGURATION AND PARSE INPUT FILES...
+2016-07-18 18:49:16,097 - INFO - DBManager.py : log -             - 1 new organisms will be installed.
+2016-07-18 18:49:16,098 - INFO - DBManager.py : log -             - 1 organisms were downloaded on previous executions.
+2016-07-18 18:49:16,099 - INFO - DBManager.py : log -             - 1 organisms were installed on previous executions.
+2016-07-18 18:49:16,099 - INFO - DBManager.py : log -             - 0 organisms failed during the installation on previous executions.
+2016-07-18 18:49:16,100 - INFO - DBManager.py : log -      
+2016-07-18 18:49:16,100 - INFO - DBManager.py : log -              STEP 2. INSTALLING COMMON KEGG INFORMATION
+2016-07-18 18:49:16,101 - INFO - DBManager.py : log -                  INSTALLING COMMON DATA... 
+2016-07-18 18:49:17,442 - INFO - DBManager.py : log -      
+2016-07-18 18:49:17,442 - INFO - DBManager.py : log -      STEP 3. INSTALLING NEW ORGANISMS
+2016-07-18 18:49:17,443 - INFO - DBManager.py : log -             1 new organisms will be installed.
+2016-07-18 18:49:17,443 - INFO - DBManager.py : log -                  INSTALLING  mmu...
+2016-07-18 18:49:17,443 - INFO - DBManager.py : log -                       INSTALLING MAPPING DATA FOR mmu (1/1)...
+2016-07-18 18:49:17,444 - INFO - DBManager.py : log -                     * PROCESSING AND INSTALLING CUSTOM AND KEGG DATA 
+2016-07-18 18:52:19,984 - INFO - DBManager.py : log -                  INSTALLED IN 182 seconds ---
+2016-07-18 18:52:19,984 - INFO - DBManager.py : log -              INSTALL  1 mmu...SUCCESS
+
+2016-07-18 18:52:19,985 - INFO - DBManager.py : log -      
+2016-07-18 18:52:19,986 - INFO - DBManager.py : log -      STEP 4. CLOSING LOG FILES, GENERATING VERSION FILE

@@ -25,8 +25,8 @@ sudo pip install scipy
 sudo pip install hashlib
 sudo pip install psutil
 
-#sudo pip install pycairo
-#sudo pip install cairosvg
+sudo pip install pycairo ??
+sudo pip install cairosvg ??
 #sudo pip install rq
 #sudo pip install rq-dashboard
 

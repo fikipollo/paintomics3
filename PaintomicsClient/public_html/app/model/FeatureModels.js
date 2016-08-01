@@ -1,4 +1,4 @@
-//@ sourceURL=FeatureModels.js
+//# sourceURL=FeatureModels.js
 /*
  * (C) Copyright 2014 The Genomics of Gene Expression Lab, CIPF 
  * (http://bioinfo.cipf.es/aconesawp) and others.

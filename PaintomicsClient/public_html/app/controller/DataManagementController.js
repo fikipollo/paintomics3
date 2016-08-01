@@ -1,6 +1,6 @@
 /* global SERVER_URL_DM_DOWNLOAD_FILE, response, application, ajaxErrorHandler, SERVER_URL_DM_DELETE_JOB, Ext, SERVER_URL_DM_GET_MYJOBS, SERVER_URL_DM_DELETE_FILE */
 
-//@ sourceURL=DataManagementController.js
+//# sourceURL=DataManagementController.js
 /*
 * (C) Copyright 2014 The Genomics of Gene Expression Lab, CIPF
 * (http://bioinfo.cipf.es/aconesawp) and others.

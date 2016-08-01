@@ -720,27 +720,27 @@ div.availableOmicsBox h4 {
 }
 
 .header-45deg .x-column-header-text {
-    -webkit-transform: rotate(-45deg);
-    -moz-transform: rotate(-45deg);
-    -o-transform: rotate(-45deg);
-		font-size: 10px;
-		/*padding: 0px;*/
-		/*width: 40px;*/
+	-webkit-transform: rotate(-45deg);
+	-moz-transform: rotate(-45deg);
+	-o-transform: rotate(-45deg);
+	font-size: 10px;
+	/*padding: 0px;*/
+	/*width: 40px;*/
 }
 .header-90deg .x-column-header-text {
-    -webkit-transform: rotate(-90deg);
-    -moz-transform: rotate(-90deg);
-    -o-transform: rotate(-90deg);
-		font-size: 10px;
-		/*padding: 0px;*/
-		/*width: 40px;*/
+	-webkit-transform: rotate(-90deg);
+	-moz-transform: rotate(-90deg);
+	-o-transform: rotate(-90deg);
+	font-size: 10px;
+	/*padding: 0px;*/
+	/*width: 40px;*/
 }
 .x-group-sub-header .x-column-header-inner {
 	padding-top: 25px !important;
 }
 /*.sigma-scene, .sigma-labels, .sigma-mouse {
-	max-width: 1300px;
-	max-height: 600px;
+max-width: 1300px;
+max-height: 600px;
 }*/
 #pathwayNetworkWaitBox {
 	position: absolute;
@@ -853,9 +853,9 @@ div#pathwayClassificationContainer {overflow-y: auto; overflow-x: hidden;}
 #step3-network-toolbar div#reorderOptions{position: absolute; width: 200px; height: 80px; margin-top: 35px; border: 1px solid #dfdfdf; background: rgba(255, 255, 255, 0.88);}
 
 .pathwaySummaryTable tr:nth-child(even) {
-    background: #e2eff8;
-    padding: 0;
-    margin: 0;
+	background: #e2eff8;
+	padding: 0;
+	margin: 0;
 }
 /********************************************************************************
 **STYLES FOR STEP 4
@@ -1430,12 +1430,12 @@ span.myDataSummaryCount i {
 	margin-right: 10px;
 }
 table#myDataUserDetails {
-    font-size: 15px;
-    padding: 15px;
+	font-size: 15px;
+	padding: 15px;
 }
 table#myDataUserDetails td:first-child {
-    text-align: right;
-    padding-right: 10px
+	text-align: right;
+	padding-right: 10px
 }
 /***********************************************************/
 /**COMMON STYLES FOR ALL STEPS *************************/
@@ -1475,6 +1475,15 @@ div.lateralOptionsPanel-header .toolbarOption {
 	padding: 5px 8px 0px 8px;
 	margin: 5px 0px;
 }
+.lateralOptionsPanel-toolbar .toolbarOption.downloadTool {
+	font-size: 10px;
+	text-align: center;
+	margin-top: 5px;
+	background: #f2f2f2;
+	line-height: 7px;
+	padding: 3px 5px;
+}
+.lateralOptionsPanel-toolbar .toolbarOption.downloadTool > i {font-size: 16px; display: block;}
 .omicSummaryBox, .metaboliteBox {
 	width: 49%;
 	margin: 5px 0;

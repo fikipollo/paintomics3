@@ -19,16 +19,13 @@
 #**************************************************************
 import logging
 import logging.config
-import cairo
-import rsvg
 
 from src.common.ServerErrorManager import handleException
 from src.common.UserSessionManager import UserSessionManager
 from src.common.JobInformationManager import JobInformationManager
 from src.classes.JobInstances.PathwayAcquisitionJob import PathwayAcquisitionJob
 
-from src.conf.serverconf import CLIENT_TMP_DIR, EXAMPLE_FILES_DIR
-
+from src.conf.serverconf import CLIENT_TMP_DIR, EXAMPLE_FILES_DIR, KEGG_DATA_DIR
 #************************************************************************
 #     _____ _______ ______ _____    __
 #    / ____|__   __|  ____|  __ \  /_ |
@@ -521,18 +518,23 @@ def pathwayAcquisitionSaveImage(request, response):
         sessionToken  = request.cookies.get('sessionToken')
         UserSessionManager().isValidUser(userID, sessionToken)
 
-        svgData = request.form.get("svgCode")
-        fileName = request.form.get("fileName").replace(" ", "_")
         jobID = request.form.get("jobID")
+        jobInstance = JobInformationManager().loadJobInstance(jobID)
+
+        svgData = request.form.get("svgCode")
+        fileName = "paintomics_" + request.form.get("fileName").replace(" ", "_") + "_" + jobID
         fileFormat = request.form.get("format")
 
-        path = CLIENT_TMP_DIR + userID + "/tmp/"
+
+        path = CLIENT_TMP_DIR + userID + jobInstance.getOutputDir()
 
         if(fileFormat == "png"):
+            import cairo
+            import rsvg
             svg = rsvg.Handle(data=svgData)
-            x = width = svg.props.width
-            y = height = svg.props.height
-            surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, x, y)
+            width = svg.props.width
+            height = svg.props.height
+            surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
             context = cairo.Context(surface)
             svg.render_cairo(context)
             surface.write_to_png(path + fileName + "." + fileFormat)
@@ -541,10 +543,9 @@ def pathwayAcquisitionSaveImage(request, response):
             file_.write(svgData)
             file_.close()
 
-        path = path.replace(CLIENT_TMP_DIR, "")
+        path = "/get_cluster_image/" + jobID + "/output/"
 
         response.setContent({"success": True, "filepath": path + fileName + "." + fileFormat})
-
     except Exception as ex:
         handleException(response, ex, __file__ , "pathwayAcquisitionSaveImage")
     finally:

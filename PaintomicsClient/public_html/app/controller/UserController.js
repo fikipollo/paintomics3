@@ -1,4 +1,4 @@
-//@ sourceURL=UserController.js
+//# sourceURL=UserController.js
 /*
  * (C) Copyright 2014 The Genomics of Gene Expression Lab, CIPF
  * (http://bioinfo.cipf.es/aconesawp) and others.

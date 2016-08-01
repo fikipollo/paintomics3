@@ -1,4 +1,4 @@
-//@ sourceURL=DM_Bed2GenesViews.js
+//# sourceURL=DM_Bed2GenesViews.js
 /*
 * (C) Copyright 2014 The Genomics of Gene Expression Lab, CIPF
 * (http://bioinfo.cipf.es/aconesawp) and others.

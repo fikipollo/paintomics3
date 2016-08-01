@@ -1,3 +1,4 @@
+//# sourceURL=JobController.js
 /* global Ext, SERVER_URL_PA_STEP1, SERVER_URL_PA_EXAMPLE_STEP1, extJSErrorHandler, SERVER_URL_DM_FROMBED2GENES, ajaxErrorHandler */
 
 /*

@@ -1,6 +1,6 @@
 /* global Ext, application, SERVER_URL_DM_UPLOAD_FILE, UPLOAD_TIMEOUT */
 
-//@ sourceURL=DM_MyDataView.js
+//# sourceURL=DM_MyDataView.js
 /*
 * (C) Copyright 2014 The Genomics of Gene Expression Lab, CIPF
 * (http://bioinfo.cipf.es/aconesawp) and others.
