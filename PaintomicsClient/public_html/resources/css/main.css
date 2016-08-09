@@ -660,7 +660,7 @@ div.omicboxTitle h4 {
 	background: #738B9D;
 }
 .omicboxTitle.mirnabasedFileBox, .availableOmicsBox[title=mirnabasedomic] {
-	background: #333;
+	background: rgb(154, 150, 78);
 }
 .availableOmicsBox {
 	background: rgb(85, 201, 166);
