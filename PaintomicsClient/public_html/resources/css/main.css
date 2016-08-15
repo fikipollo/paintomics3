@@ -364,7 +364,7 @@ input:focus, textarea:focus {
 **Message dialog styles
 *********************************************************************************/
 #powerTip {
-	max-width: 250px;
+	max-width: 350px;
 	white-space: normal;
 }
 
@@ -659,7 +659,7 @@ div.omicboxTitle h4 {
 .omicboxTitle.bedbasedFileBox, .availableOmicsBox[title=bedbasedomic] {
 	background: #738B9D;
 }
-.omicboxTitle.mirnabasedFileBox, .availableOmicsBox[title=mirnabasedomic] {
+.omicboxTitle.miRNAbasedFileBox, .availableOmicsBox[title=mirnabasedomic] {
 	background: rgb(154, 150, 78);
 }
 .availableOmicsBox {

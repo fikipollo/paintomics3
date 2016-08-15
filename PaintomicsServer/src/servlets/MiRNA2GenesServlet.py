@@ -1,35 +1,41 @@
 #***************************************************************
-#  This file is part of Paintomics v3
+#  This file is part of PaintOmics 3
 #
-#  Paintomics is free software: you can redistribute it and/or
+#  PaintOmics 3 is free software: you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License as
 #  published by the Free Software Foundation, either version 3 of
 #  the License, or (at your option) any later version.
 #
-#  Paintomics is distributed in the hope that it will be useful,
+#  PaintOmics 3 is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with Paintomics.  If not, see <http://www.gnu.org/licenses/>.
+#  along with PaintOmics 3.  If not, see <http://www.gnu.org/licenses/>.
+#  Contributors:
+#     Rafael Hernandez de Diego <paintomics@cipf.es>
+#     Ana Conesa Cegarra
+#     and others
 #
 #  More info http://bioinfo.cipf.es/paintomics
 #  Technical contact paintomics@cipf.es
+#
 #**************************************************************
+
 import logging
 import logging.config
 
-from src.classes.JobInstances.Bed2GeneJob import Bed2GeneJob
+from src.classes.JobInstances.MiRNA2GeneJob import MiRNA2GeneJob
 from src.common.UserSessionManager import UserSessionManager
 from src.common.JobInformationManager import JobInformationManager
 from src.common.ServerErrorManager import handleException
 
 from src.conf.serverconf import CLIENT_TMP_DIR, EXAMPLE_FILES_DIR
 
-def fromBEDtoGenes_STEP1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, exampleMode=False):
+def fromMiRNAtoGenes_STEP1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, exampleMode=False):
     """
-    This function corresponds to FIRST PART of the FIRST step in the Bed2Genes process.
+    This function corresponds to FIRST PART of the FIRST step in the MiRNA2GeneJob process.
     First, it takes a Request object which contains the fields of the form that started the process.
     This is a summary for the steps in the process:
         Step 0. VARIABLE DECLARATION
@@ -52,7 +58,7 @@ def fromBEDtoGenes_STEP1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, exampleMode=
     #****************************************************************
     #Step 0. VARIABLE DECLARATION
     #The following variables are defined:
-    #  - jobInstance: instance of the Bed2GeneJob class. Contains all the information for the current job.
+    #  - jobInstance: instance of the MiRNA2GeneJob class. Contains all the information for the current job.
     #  - userID: the ID for the user
     #****************************************************************
     jobInstance = None
@@ -70,7 +76,7 @@ def fromBEDtoGenes_STEP1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, exampleMode=
         #****************************************************************
         # Step 2. CREATE THE NEW INSTANCE OF JOB
         #****************************************************************
-        jobInstance = Bed2GeneJob(JOB_ID, userID, CLIENT_TMP_DIR)
+        jobInstance = MiRNA2GeneJob(JOB_ID, userID, CLIENT_TMP_DIR)
         jobInstance.initializeDirectories()
         logging.info("STEP1 - NEW JOB SUBMITTED " + jobInstance.getJobID())
 
@@ -94,7 +100,7 @@ def fromBEDtoGenes_STEP1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, exampleMode=
             logging.info("STEP1 - EXAMPLE MODE SELECTED")
             logging.info("STEP1 - COPYING FILES....")
 
-            exampleOmics = ["DNase unmapped"]
+            exampleOmics = ["miRNA unmapped"]
             for omicName in exampleOmics:
                 dataFileName = omicName.replace(" ", "_").lower() + "_values.tab"
                 logging.info("STEP1 - USING ALREADY SUBMITTED FILE (data file) " + EXAMPLE_FILES_DIR + dataFileName + " FOR  " + omicName)
@@ -102,11 +108,10 @@ def fromBEDtoGenes_STEP1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, exampleMode=
                 logging.info("STEP1 - USING ALREADY SUBMITTED FILE (relevant features file) " + EXAMPLE_FILES_DIR + relevantFileName + " FOR  " + omicName)
 
                 jobInstance.addGeneBasedInputOmic({"omicName": omicName, "inputDataFile": EXAMPLE_FILES_DIR + dataFileName, "relevantFeaturesFile": EXAMPLE_FILES_DIR + relevantFileName,  "isExample" : True})
-
+                jobInstance.addGeneBasedInputOmic({"omicName": "Gene expression", "inputDataFile": EXAMPLE_FILES_DIR + "gene_expression_values.tab", "isExample" : True})
                 jobInstance.addReferenceInput({"omicName": omicName, "fileType":  "Reference file", "inputDataFile": EXAMPLE_FILES_DIR + "sorted_mmu.gtf"})
 
-            specie = "mmu"
-            jobInstance.setOrganism(specie)
+            jobInstance.setOrganism("mmu")
         else:
             raise NotImplementedError
 
@@ -115,38 +120,20 @@ def fromBEDtoGenes_STEP1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, exampleMode=
         #****************************************************************
         namePrefix = formFields.get("name_prefix")
         logging.info("STEP2 - INPUT VALUES ARE:")
-        jobInstance.omicName= formFields.get(namePrefix + "_omic_name", "DNase-seq")
+        jobInstance.omicName= formFields.get(namePrefix + "_omic_name", "miRNA-seq")
         logging.info("  - omicName             :" + jobInstance.omicName)
-        jobInstance.presortedGTF= formFields.get(namePrefix + "_presortedGTF", False)
-        logging.info("  - presortedGTF         :" + str(jobInstance.presortedGTF))
-        jobInstance.report= formFields.get(namePrefix + "_report", "gene")
+        jobInstance.report= formFields.get(namePrefix + "_report", "all")
         logging.info("  - report               :" + jobInstance.report)
-        jobInstance.distance= formFields.get(namePrefix + "_distance", 10)
-        logging.info("  - distance             :" + str(jobInstance.distance))
-        jobInstance.tss= formFields.get(namePrefix + "_tss", 200)
-        logging.info("  - tss                  :" + str(jobInstance.tss))
-        jobInstance.promoter= formFields.get(namePrefix + "_promoter", 1300)
-        logging.info("  - promoter             :" + str(jobInstance.promoter))
-        jobInstance.geneAreaPercentage= formFields.get(namePrefix + "_geneAreaPercentage", 90)
-        logging.info("  - geneAreaPercentage   :" + str(jobInstance.geneAreaPercentage))
-        jobInstance.regionAreaPercentage= formFields.get(namePrefix + "_regionAreaPercentage", 50)
-        logging.info("  - regionAreaPercentage :" + str(jobInstance.regionAreaPercentage))
-        #rules
-        jobInstance.geneIDtag= formFields.get(namePrefix + "_geneIDtag", "gene_id")
-        logging.info("  - geneIDtag            :" + str(jobInstance.geneIDtag))
-        jobInstance.summarizationMethod= formFields.get(namePrefix + "_summarization_method", "mean")
-        logging.info("  - summarization_method :" + jobInstance.summarizationMethod)
-        jobInstance.reportRegions= formFields.getlist(namePrefix + "_reportRegions")
-        if len(jobInstance.reportRegions) == 0:
-            jobInstance.reportRegions = ["all"]
-        logging.info("  - reportRegions :" + str(jobInstance.reportRegions))
-
+        jobInstance.selection_method= formFields.get(namePrefix + "_selection_method", "negative_correlation")
+        logging.info("  - selection_method             :" + jobInstance.selection_method)
+        jobInstance.cutoff= formFields.get(namePrefix + "_cutoff", 0.5)
+        logging.info("  - cutoff                  :" + str(jobInstance.cutoff))
 
         #************************************************************************
         # Step 4. Queue job
         #************************************************************************
         QUEUE_INSTANCE.enqueue(
-            fn=fromBEDtoGenes_STEP2,
+            fn=fromMiRNAtoGenes_STEP2,
             args=(jobInstance, userID, exampleMode, RESPONSE),
             timeout=600,
             job_id= JOB_ID
@@ -160,16 +147,15 @@ def fromBEDtoGenes_STEP1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, exampleMode=
             "jobID":JOB_ID
         })
     except Exception as ex:
-        handleException(RESPONSE, ex, __file__ , "fromBEDtoGenes_STEP1")
+        handleException(RESPONSE, ex, __file__ , "fromMiRNAtoGenes_STEP1")
     finally:
         return RESPONSE
 
 
-
-def fromBEDtoGenes_STEP2(jobInstance, userID, exampleMode, RESPONSE):
+def fromMiRNAtoGenes_STEP2(jobInstance, userID, exampleMode, RESPONSE):
     """
-    This function corresponds to SECOND PART of the FIRST step in the Bed2Genes process.
-    Given a JOB INSTANCE, first executes the Bed2Gene function (map regions to genes)
+    This function corresponds to SECOND PART of the FIRST step in the MiRNA2GeneJob process.
+    Given a JOB INSTANCE, first executes the MiRNA2Gene function (map miRNAs to genes)
     and finally generates the response.
     This code is executed at the PyQlite Queue.
 
@@ -178,7 +164,7 @@ def fromBEDtoGenes_STEP2(jobInstance, userID, exampleMode, RESPONSE):
         Step 2. SAVE THE JOB INSTANCE AT THE DATABASE
         Step 3. GENERATE RESPONSE AND FINISH
 
-    @param {Bed2GeneJob} jobInstance
+    @param {MiRNA2GeneJob} jobInstance
     @param {Response} RESPONSE
     @param {String} userID
     @param {Boolean} exampleMode
@@ -196,9 +182,9 @@ def fromBEDtoGenes_STEP2(jobInstance, userID, exampleMode, RESPONSE):
         #****************************************************************
         # Step 1.PROCESS THE FILES DATA
         #****************************************************************
-        logging.info("STEP1 - Executing Bed2Gene function...")
-        fileNames=jobInstance.fromBED2Genes()
-        logging.info("STEP1 - Executing Bed2Gene function... DONE")
+        logging.info("STEP1 - Executing MiRNA2Gene function...")
+        fileNames=jobInstance.fromMiRNA2Genes()
+        logging.info("STEP1 - Executing MiRNA2Gene function... DONE")
 
         #************************************************************************
         # Step 2. Save the jobInstance in the MongoDB
@@ -225,7 +211,7 @@ def fromBEDtoGenes_STEP2(jobInstance, userID, exampleMode, RESPONSE):
         #****************************************************************
         jobInstance.cleanDirectories(remove_output=True)
 
-        handleException(RESPONSE, ex, __file__ , "fromBEDtoGenes_STEP2")
+        handleException(RESPONSE, ex, __file__ , "fromMiRNAtoGenes_STEP2")
 
     finally:
         return RESPONSE

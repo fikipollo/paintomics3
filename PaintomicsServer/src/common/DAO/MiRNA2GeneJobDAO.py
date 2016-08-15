@@ -25,12 +25,12 @@
 
 from src.common.DAO.DAO import DAO
 
-class Bed2GeneJobDAO(DAO):
+class MiRNA2GeneJobDAO(DAO):
     #******************************************************************************************************************
     # CONSTRUCTORS
     #******************************************************************************************************************
     def __init__(self, *args, **kwargs):
-        super(Bed2GeneJobDAO, self).__init__(*args, **kwargs)
+        super(MiRNA2GeneJobDAO, self).__init__(*args, **kwargs)
         self.collectionName = "jobInstanceCollection"
 
     #******************************************************************************************************************
@@ -41,7 +41,7 @@ class Bed2GeneJobDAO(DAO):
         collection = self.dbManager.getCollection(self.collectionName)
         instanceBSON = jobInstance.toBSON(recursive= False)
 
-        instanceBSON["jobType"] = "Bed2GeneJob"
+        instanceBSON["jobType"] = "MiRNA2GeneJob"
 
         collection.insert(instanceBSON)
 

@@ -235,13 +235,13 @@ def adminServletSendReport(request, response):
     @param {Response} response, the response object
     """
     try :
-        logging.info("STEP0 - CHECK IF VALID USER....")
+        #logging.info("STEP0 - CHECK IF VALID USER....")
         #****************************************************************
         # Step 0.CHECK IF VALID USER SESSION
         #****************************************************************
         userID  = request.cookies.get('userID')
-        sessionToken  = request.cookies.get('sessionToken')
-        UserSessionManager().isValidUser(userID, sessionToken)
+        #sessionToken  = request.cookies.get('sessionToken')
+        #UserSessionManager().isValidUser(userID, sessionToken)
 
         userEmail = UserDAO().findByID(userID)
         userName = userEmail.getUserName()

@@ -390,6 +390,37 @@ function PA_Step1JobView() {
 }
 PA_Step1JobView.prototype = new View();
 
+function DefaultSubmittingPanel(nElem, options) {
+	/*********************************************************************
+	* GETTERS AND SETTERS
+	***********************************************************************/
+	this.getOmicName = function() {
+		return this.omicName;
+	};
+	/***********************************************************************
+	* OTHER FUNCTIONS
+	***********************************************************************/
+	this.toogleContent = function() {
+		var component = this.getComponent().queryById("itemsContainerAlt");
+		var isVisible = component.isVisible();
+		component.setVisible(!isVisible);
+		component.setDisabled(isVisible);
+
+		component = this.getComponent().queryById("itemsContainer");
+		if (component) {
+			component.setVisible(isVisible);
+			component.setDisabled(!isVisible);
+		}
+		return this;
+	};
+
+	this.removeOmicSubmittingPanel = function() {
+		this.getParent().removeOmicSubmittingPanel(this);
+		return this;
+	};
+}
+DefaultSubmittingPanel.prototype = new View;
+
 function OmicSubmittingPanel(nElem, options) {
 	/*********************************************************************
 	* ATTRIBUTES
@@ -423,15 +454,10 @@ function OmicSubmittingPanel(nElem, options) {
 	/*********************************************************************
 	* GETTERS AND SETTERS
 	***********************************************************************/
-	this.getOmicName = function() {
-		return this.omicName;
-	};
+
 	/***********************************************************************
 	* OTHER FUNCTIONS
 	***********************************************************************/
-	this.removeOmicSubmittingPanel = function() {
-		this.getParent().removeOmicSubmittingPanel(this);
-	};
 	this.setExampleMode = function(){
 		var fileField = this.getComponent().queryById("mainFileSelector");
 		fileField.setValue("example/" + this.type + "_example.tab");
@@ -566,650 +592,45 @@ function OmicSubmittingPanel(nElem, options) {
 							}),
 							helpTip: "Defines whether the data can be assigned to Genes or to Metabolites, for example  the values of concentration for proteins that can be mapped to the corresponding codifying gene."
 						}
-					]},
-				],
-				isValid: function() {
-					var valid = true;
-
-					if (this.isEmpty) {
-						return true;
-					}
-
-					if (this.queryById("omicNameField").getValue() === "") {
-						valid = false;
-						this.queryById("omicNameField").markInvalid("Please, specify a Omic Name.");
-					}
-					if (this.queryById("mainFileSelector").getValue() === "") {
-						valid = false;
-						this.queryById("mainFileSelector").markInvalid("Please, provide a Data file.");
-					}
-					if (this.queryById("fileTypeSelector").getValue() === null) {
-						valid = false;
-						this.queryById("fileTypeSelector").markInvalid("Please, specify a File type.");
-					}
-					if (this.queryById("secondaryFileSelector").getValue() !== "" && this.queryById("relevantFileTypeSelector").getValue() === null) {
-						valid = false;
-						this.queryById("relevantFileTypeSelector").markInvalid("Please, specify a File type.");
-					}
-					if (this.queryById("mapToSelector").getValue() === null) {
-						valid = false;
-						this.queryById("mapToSelector").markInvalid("Please, specify a this field.");
-					}
-
-					return valid;
-				},
-				isEmpty: function() {
-					return (this.queryById("secondaryFileSelector").getValue() === "" && this.queryById("mainFileSelector").getValue() === "");
-				},
-				listeners: {
-					boxready: function() {
-						initializeTooltips(".helpTip");
-
-						$(this.getEl().dom).find("a.deleteOmicBox").click(function() {
-							me.removeOmicSubmittingPanel();
-						});
-					}
+					]
 				}
-			});
-
-			return this.component;
-		};
-
-
-		return this;
-	}
-	OmicSubmittingPanel.prototype = new View;
-
-	function RegionBasedOmicSubmittingPanel(nElem, options) {
-		/*********************************************************************
-		* ATTRIBUTES
-		***********************************************************************/
-		options = (options || {});
-
-		this.title = "Region based omic";
-		this.namePrefix = "omic" + nElem;
-		this.omicName = "";
-		this.mapTo = "Gene";
-		this.fileType = null;
-		this.relevantFileType = null;
-
-		this.allowToogle = options.allowToogle !== false;
-		this.removable = options.removable !== false;
-
-		this.class = "bedbasedFileBox";
-
-		/*IF THE TYPE WAS SPECIFIED (e.g. gene_expression)*/
-		if (options.type !== undefined) {
-			//TODO CAPITALIZE THE FIRST LETTER
-			this.omicName = options.type;
-			this.title = options.type;
-
-			this.fileType = options.fileType;
-			this.relevantFileType = options.relevantFileType;
-			this.type = this.title.replace(" ", "").toLowerCase();
-			this.class = this.type + "FileBox";
-		}
-		/*********************************************************************
-		* GETTERS AND SETTERS
-		***********************************************************************/
-		this.getOmicName = function() {
-			return this.omicName;
-		};
-		/***********************************************************************
-		* OTHER FUNCTIONS
-		***********************************************************************/
-		this.removeOmicSubmittingPanel = function() {
-			this.getParent().removeOmicSubmittingPanel(this);
-			return this;
-		};
-		this.toogleContent = function() {
-			var component = this.getComponent().queryById("itemsContainerAlt");
-			var isVisible = component.isVisible();
-			component.setVisible(!isVisible);
-			component.setDisabled(isVisible);
-
-			component = this.getComponent().queryById("itemsContainer");
-			if (component) {
-				component.setVisible(isVisible);
-				component.setDisabled(!isVisible);
-			}
-			return this;
-		};
-		this.setExampleMode = function(){
-			var component = this.getComponent();
-			//component.queryById("toogleMapRegions").setVisible(false);
-
-			component = component.queryById("itemsContainer");
-
-			var field = component.queryById("mainFileSelector");
-			field.setValue("example/" + this.type + "_example.tab");
-			field.setDisabled(true);
-
-			field = component.queryById("secondaryFileSelector");
-			field.setValue("example/" + this.type + "_relevant_example");
-			field.setDisabled(true);
-
-			field = component.queryById("tertiaryFileSelector");
-			field.setValue("example/mmu_reference.gtf");
-			field.setDisabled(true);
-
-			var otherFields = ["distanceField", "tssDistanceField", "promoterDistanceField", "geneAreaPercentageField", "regionAreaPercentageField", "gtfTagField", "summarizationMethodField", "reportSelector1","reportSelector2"];
-			for(var i in otherFields){
-				field = component.queryById(otherFields[i]);
-				field.setReadOnly(true);
-			}
-		};
-		this.setContent = function(target, values) {
-			var component = this.getComponent().queryById(target);
-
-			if (values.title) {
-				component.queryById("omicNameField").setValue(values.title);
-			}
-			if (values.omicName) {
-				component.queryById("omicNameField").setValue(values.omicName);
-			}
-			if (values.mainFile) {
-				component.queryById("mainFileSelector").setValue(values.mainFile);
-			}
-			if (values.mainFileType) {
-				component.queryById("fileTypeSelector").setValue(values.mainFileType);
-			}
-			if (values.secondaryFile) {
-				component.queryById("secondaryFileSelector").setValue(values.secondaryFile);
-			}
-			if (values.secondaryFileType) {
-				component.queryById("relevantFileTypeSelector").setValue(values.secondaryFileType);
-			}
-			if (values.toogleMapRegions) {
-				component.queryById("toogleMapRegions").setVisible(values.toogleMapRegions === true);
-			}
-
-			if (!component.isVisible()) {
-				this.toogleContent();
-			}
-			return this;
-		};
-
-		/*********************************************************************
-		* COMPONENT DECLARATION
-		***********************************************************************/
-		this.initComponent = function() {
-			var me = this;
-			this.component = Ext.widget({
-				xtype: "container",
-				flex: 1,
-				type: me.type,
-				cls: "omicbox regionBasedOmic",
-				layout: {
-					align: 'stretch',
-					type: 'vbox'
-				},
-				items: [{
-					xtype: "box",
-					flex: 1,
-					cls: "omicboxTitle " + this.class,
-					html: '<h4><a class="deleteOmicBox" href="javascript:void(0)" style="margin: 0; float:right;  padding-right: 15px;">' +
-					(me.removable ? ' <i class="fa fa-trash"></i></a>' : "</a>") + this.title +
-					'</h4>'
-				}, {
-					xtype: "box",
-					itemId: "toogleMapRegions",
-					hidden: !this.allowToogle,
-					html: '<div class="checkbox" style=" margin: 10px 50px; font-size: 16px; "><input type="checkbox" id="' + this.namePrefix + '_mapRegions"><label for="' + this.namePrefix + '_mapRegions">My regions are already mapped to Gene IDs, skip this step.</label></div>'
-				}, {
-					xtype: "container",
-					itemId: "itemsContainerAlt",
-					layout: {
-						align: 'stretch',
-						type: 'vbox'
-					},
-					padding: 10,
-					hidden: true,
-					disabled: true,
-					defaults: {
-						labelAlign: "right",
-						labelWidth: 150,
-						maxLength: 100,
-						maxWidth: 500
-					},
-					items: [{
-						xtype: 'combo',
-						fieldLabel: 'Omic Name',
-						name: this.namePrefix + '_omic_name',
-						value: this.omicName,
-						itemId: "omicNameField",
-						displayField: 'name',
-						valueField: 'name',
-						emptyText: 'Type or choose the omic type',
-						queryMode: 'local',
-						hidden: this.omicName !== "",
-						editable: true,
-						allowBlank: false,
-						store: Ext.create('Ext.data.ArrayStore', {
-							fields: ['name'],
-							autoLoad: true,
-							proxy: {
-								type: 'ajax',
-								url: 'resources/data/all_omics.json',
-								reader: {
-									type: 'json',
-									root: 'omics',
-									successProperty: 'success'
-								}
-							}
-						})
-					}, {
-						xtype: "myFilesSelectorButton",
-						fieldLabel: 'Data file',
-						namePrefix: this.namePrefix,
-						itemId: "mainFileSelector",
-						helpTip: "Upload the feature quantification file (Gene expression, proteomics quantification,...) or choose it from your data folder."
-					}, {
-						xtype: 'textfield',
-						fieldLabel: 'File Type',
-						name: this.namePrefix + '_file_type',
-						itemId: "fileTypeSelector",
-						value: "Bed file (regions mapped to Genes)",
-						hidden: true,
-						helpTip: "Specify the type of data for uploaded file (Gene Expression file, Proteomic quatification,...)."
-					}, {
-						xtype: "myFilesSelectorButton",
-						fieldLabel: 'Relevant features file',
-						namePrefix: this.namePrefix + '_relevant',
-						itemId: "secondaryFileSelector",
-						helpTip: "Upload the list of relevant features (relevant genes, relevant proteins,...)."
-					}, {
-						xtype: 'textfield',
-						fieldLabel: 'File Type',
-						name: this.namePrefix + '_relevant_file_type',
-						itemId: "relevantFileTypeSelector",
-						value: "Relevant regions list (mapped to Genes)",
-						hidden: true,
-						helpTip: "Specify the type of data for uploaded file (Relevant Genes list, Relevant proteins list,...)."
-					}, {
-						xtype: 'textfield',
-						fieldLabel: 'Map to',
-						name: this.namePrefix + '_match_type',
-						itemId: "mapToSelector",
-						value: this.mapTo,
-						hidden: true
-					}]
-				}, {
-					xtype: "container",
-					itemId: "itemsContainer",
-					layout: {
-						align: 'stretch',
-						type: 'vbox'
-					},
-					padding: 10,
-					defaults: {
-						labelAlign: "right",
-						labelWidth: 150,
-						maxLength: 100,
-						maxWidth: 500
-					},
-					items: [{
-						xtype: 'textfield',
-						name: "name_prefix",
-						hidden: true,
-						itemId: "namePrefix",
-						value: this.namePrefix
-					}, {
-						xtype: 'combo',
-						fieldLabel: 'Omic Name',
-						name: this.namePrefix + '_omic_name',
-						hidden: this.omicName !== "",
-						itemId: "omicNameField",
-						displayField: 'name',
-						valueField: 'name',
-						emptyText: 'Type or choose the omic type',
-						editable: true,
-						queryMode: 'local',
-						allowBlank: false,
-						value: (this.fileType !== null) ? this.fileType : null,
-						store: Ext.create('Ext.data.ArrayStore', {
-							fields: ['name'],
-							autoLoad: true,
-							proxy: {
-								type: 'ajax',
-								url: 'resources/data/all_omics.json',
-								reader: {
-									type: 'json',
-									root: 'omics',
-									successProperty: 'success'
-								}
-							}
-						})
-					}, {
-						xtype: 'textfield',
-						hidden: true,
-						fieldLabel: 'Map to',
-						name: this.namePrefix + '_match_type',
-						itemId: "mapToSelector",
-						value: this.mapTo
-					},
-					/*REGIONS FILE*/
-					{
-						xtype: "myFilesSelectorButton",
-						fieldLabel: 'Regions file <br>(BED + Quantification)',
-						namePrefix: this.namePrefix,
-						itemId: "mainFileSelector",
-						helpTip: "Upload the regions file (BED format + Quantification) or choose it from your data folder."
-					}, {
-						xtype: 'textfield',
-						fieldLabel: 'File Type',
-						name: this.namePrefix + '_file_type',
-						hidden: true,
-						itemId: "fileTypeSelector",
-						value: "Bed file (regions)"
-					},
-					/*RELEVANT REGIONS FILE*/
-					{
-						xtype: "myFilesSelectorButton",
-						fieldLabel: "Relevant regions file",
-						namePrefix: this.namePrefix + '_relevant',
-						itemId: "secondaryFileSelector",
-						helpTip: "Upload the list of relevant regions (TAB format) or choose it from your data folder."
-					}, {
-						xtype: 'textfield',
-						fieldLabel: 'File Type',
-						name: this.namePrefix + '_relevant_file_type',
-						hidden: true,
-						itemId: "relevantFileTypeSelector",
-						value: "Relevant regions list"
-					},
-					/*ANNOTATIONS FILE*/
-					{
-						xtype: "myFilesSelectorButton",
-						fieldLabel: "Annotations file (GTF)",
-						namePrefix: this.namePrefix + '_annotations',
-						itemId: "tertiaryFileSelector",
-						extraButtons: [{
-							text: 'Use a GTF from Paintomics',
-							handler: function() {
-								var me = this;
-								var _callback = function(selectedItem) {
-									if (selectedItem !== null) {
-										me.up("myFilesSelectorButton").queryById("visiblePathField").setValue("[inbuilt GTF files]/" + selectedItem[0].get("fileName"));
-										me.up("myFilesSelectorButton").queryById("originField").setValue("inbuilt_gtf");
-									}
-								};
-								Ext.widget("GTFSelectorDialog").showDialog(_callback);
-							}
-						}],
-						helpTip: "Upload the Annotations file (GTF format), choose it from your data folder or browse the GFT files included in Paintomics."
-					}, {
-						xtype: 'textfield',
-						hidden: true,
-						fieldLabel: 'File Type',
-						name: this.namePrefix + '_annotations_file_type',
-						itemId: "referenceFileTypeSelector",
-						value: "GTF file"
-					},
-					/*
-					* OTHER FIELDS
-					*/
-					//report
-					{
-						xtype: 'textfield',
-						hidden: true,
-						name: this.namePrefix + '_report',
-						fieldLabel: 'Report',
-						value: "gene"
-					},
-					//distance
-					{
-						xtype: 'numberfield',
-						itemId: "distanceField",
-						name: this.namePrefix + '_distance',
-						fieldLabel: 'Distance (kb)',
-						value: 10,
-						minValue: 0,
-						allowDecimals: false,
-						allowBlank: false,
-						helpTip: "Maximum distance in kb to report associations. Default: 10 (10kb)"
-					},
-					//tss
-					{
-						xtype: 'numberfield',
-						itemId: "tssDistanceField",
-						name: this.namePrefix + '_tss',
-						fieldLabel: 'TSS region distance (bps)',
-						value: 200,
-						minValue: 0,
-						allowDecimals: false,
-						allowBlank: false,
-						helpTip: "TSS region distance. Default: 200 bps"
-					},
-					//promoter
-					{
-						xtype: 'numberfield',
-						itemId: "promoterDistanceField",
-						name: this.namePrefix + '_promoter',
-						fieldLabel: 'Promoter region distance (bps)',
-						value: 1300,
-						minValue: 0,
-						allowDecimals: false,
-						allowBlank: false,
-						helpTip: "Promoter region distance. Default: 1300 bps"
-					},
-					//geneAreaPercentage
-					{
-						xtype: 'numberfield',
-						itemId: "geneAreaPercentageField",
-						name: this.namePrefix + '_geneAreaPercentage',
-						fieldLabel: 'Overlapped gene area (%)',
-						value: 50,
-						minValue: 0,
-						maxValue: 100,
-						allowDecimals: false,
-						allowBlank: false,
-						helpTip: "Percentage of the area of the gene overlapped to be considered to discriminate at transcript and gene level. Default: 90 (90%)"
-					},
-					//regionAreaPercentage
-					{
-						xtype: 'numberfield',
-						itemId: "regionAreaPercentageField",
-						name: this.namePrefix + '_regionAreaPercentage',
-						fieldLabel: 'Overlapped region area (%)',
-						value: 50,
-						minValue: 0,
-						maxValue: 100,
-						allowDecimals: false,
-						allowBlank: false,
-						helpTip: "Percentage of the region overlapped by the gene to be considered to discriminate at transcript and gene level. Default: 50 (50%)"
-					},
-					//rules //TODO
-					//{xtype: 'textfield', hidden: true, fieldLabel: 'rules', name: this.namePrefix + '_report', itemId: "reportSelector", value: "gene"},
-					//geneIDtag
-					{
-						xtype: 'textfield',
-						itemId: "gtfTagField",
-						name: this.namePrefix + '_geneIDtag',
-						fieldLabel: 'GTF Tag for gene ID/name ',
-						value: "gene_id",
-						allowBlank: false,
-						helpTip: "GTF tag used to get gene ids/names. Default: gene_id"
-					},
-					//summarization_method
-					{
-						xtype: 'combo',
-						itemId: "summarizationMethodField",
-						name: this.namePrefix + '_summarization_method',
-						fieldLabel: 'Summarization method',
-						editable: false,
-						allowBlank: false,
-						value: "mean",
-						displayField: 'label',
-						valueField: 'value',
-						store: Ext.create('Ext.data.ArrayStore', {
-							fields: ['label', 'value'],
-							data: [
-								["None", "none"],
-								["Mean", "mean"],
-								["Maximum", "max"]
-							]
-						}),
-						helpTip: "Choose the strategy used to resolve regions mapping to the same gen region. Default: 'Mean'"
-					}, {
-						xtype: 'fieldcontainer',
-						fieldLabel: 'Report',
-						defaultType: 'radiofield',
-						items: [{
-							boxLabel: 'All regions',
-							itemId: "reportSelector1",
-							name: this.namePrefix + '_report',
-							submitValue: false,
-							checked: true,
-							listeners: {
-								change: function(radio, newValue, oldValue) {
-									radio.up().queryById("reportOptionsContainer").setVisible(!newValue);
-									var elems = radio.up().queryById("reportOptionsContainer").query("checkboxfield");
-									for (var i in elems) {
-										elems[i].setDisabled(newValue);
-									}
-									elems = radio.up().queryById("reportAllRegionsOption");
-									elems.setDisabled(!newValue);
-									elems.setValue(newValue);
-								}
-							}
-						}, {
-							boxLabel: 'Let me choose',
-							itemId: "reportSelector2",
-							name: this.namePrefix + '_report',
-							submitValue: false,
-							helpTip: "Indicates which regions will be selected from rgmatch output. E.g. Option 'First exon' will filter out all regions that do not map into the first exon of the corresponding gene."
-						}, {
-							xtype: 'container',
-							defaultType: 'checkboxfield',
-							hidden: true,
-							itemId: 'reportOptionsContainer',
-							items: [{
-								xtype: 'label',
-								text: 'Regions mapping at...'
-							}, {
-								boxLabel: 'All regions',
-								name: this.namePrefix + '_reportRegions',
-								inputValue: 'all',
-								itemId: 'reportAllRegionsOption',
-								checked: true,
-								hidden: true
-							}, {
-								xtype: 'container',
-								layout: 'hbox',
-								defaultType: 'checkboxfield',
-								defaults: {
-									hideLabel: false,
-									labelAlign: 'top',
-									boxLabel: '',
-									labelSeparator: "",
-									style: 'text-align: center'
-								},
-								items: [{
-									fieldLabel: 'Upstream',
-									name: this.namePrefix + '_reportRegions',
-									inputValue: 'UPSTREAM',
-									labelStyle: 'padding: 2px 3px; font-size:9px; background-color: #E3CEB0;'
-								}, {
-									fieldLabel: 'Promoter',
-									name: this.namePrefix + '_reportRegions',
-									inputValue: 'PROMOTER',
-									labelStyle: 'padding: 2px 3px; font-size:9px; background-color: #FFF2C0;'
-								}, {
-									fieldLabel: 'TSS',
-									name: this.namePrefix + '_reportRegions',
-									inputValue: 'TSS',
-									labelAlign: 'top',
-									labelStyle: 'padding: 2px 3px; font-size:9px; background-color: #FFF6D3;'
-								}, {
-									fieldLabel: '1st Exon',
-									name: this.namePrefix + '_reportRegions',
-									inputValue: '1st_EXON',
-									labelStyle: 'padding: 2px 3px; font-size:9px; background-color: #FFC4AD;'
-								}, {
-									fieldLabel: 'Introns',
-									name: this.namePrefix + '_reportRegions',
-									inputValue: 'INTRON',
-									labelStyle: 'padding: 2px 3px; font-size:9px; background-color: #D0DFF1;'
-								}, {
-									fieldLabel: 'Gene body',
-									name: this.namePrefix + '_reportRegions',
-									inputValue: 'GENE_BODY',
-									labelStyle: 'padding: 2px 3px; font-size:9px; background-color: #FFE0D3;'
-								}, {
-									xtype: 'label',
-									text: 'Intr.',
-									style: 'padding: 5px 3px; font-size:9px; margin-top:4px; background-color: #D0DFF1;'
-								}, {
-									xtype: 'label',
-									text: 'G.B.',
-									style: 'padding: 5px 3px; font-size:9px; margin-top:4px;  background-color: #FFE0D3;'
-								}, {
-									fieldLabel: 'Downstream',
-									name: this.namePrefix + '_reportRegions',
-									inputValue: 'DOWNSTREAM',
-									labelStyle: 'padding: 2px 3px; font-size:9px; background-color: #B2C9E3;'
-								}]
-							}]
-						}]
-					},
-				]
-			}],
-			setContent: function(target, values) {
-				me.setContent(target, values);
-			},
+			],
 			isValid: function() {
 				var valid = true;
-				var component = this.queryById("itemsContainerAlt");
 
-				if (!component.isVisible()) {
-					component = this.queryById("itemsContainer");
-				}
-				var items = component.query("field");
-				for (var i in items) {
-					valid = valid && (this.items[i] || items[i].validate());
+				if (this.isEmpty) {
+					return true;
 				}
 
-				if (component.queryById("mainFileSelector").getValue() === "") {
+				if (this.queryById("omicNameField").getValue() === "") {
 					valid = false;
-					component.queryById("mainFileSelector").markInvalid("Please, provide a Data file.");
+					this.queryById("omicNameField").markInvalid("Please, specify a Omic Name.");
 				}
-				if (component.queryById("tertiaryFileSelector") && component.queryById("tertiaryFileSelector").getValue() === "") {
+				if (this.queryById("mainFileSelector").getValue() === "") {
 					valid = false;
-					component.queryById("tertiaryFileSelector").markInvalid("Please, provide a GTF file.");
+					this.queryById("mainFileSelector").markInvalid("Please, provide a Data file.");
 				}
-
-				if (this.queryById("reportOptionsContainer").query("checkboxfield[checked=true]") < 1) {
+				if (this.queryById("fileTypeSelector").getValue() === null) {
 					valid = false;
-					this.queryById("reportOptionsContainer").query("checkboxfield").forEach(function(elem) {
-						elem.markInvalid("Please, check at least one gene region.");
-					});
+					this.queryById("fileTypeSelector").markInvalid("Please, specify a File type.");
+				}
+				if (this.queryById("secondaryFileSelector").getValue() !== "" && this.queryById("relevantFileTypeSelector").getValue() === null) {
+					valid = false;
+					this.queryById("relevantFileTypeSelector").markInvalid("Please, specify a File type.");
+				}
+				if (this.queryById("mapToSelector").getValue() === null) {
+					valid = false;
+					this.queryById("mapToSelector").markInvalid("Please, specify a this field.");
 				}
 
 				return valid;
 			},
 			isEmpty: function() {
-				var component = this.queryById("itemsContainerAlt");
-				if (!component.isVisible()) {
-					component = this.queryById("itemsContainer");
-				}
-				var empty = true;
-				if (component.queryById("mainFileSelector").getValue() !== "") {
-					empty = false;
-				}
-				if (component.queryById("tertiaryFileSelector") && component.queryById("tertiaryFileSelector").getValue() !== "") {
-					empty = false;
-				}
-
-				return empty;
+				return (this.queryById("secondaryFileSelector").getValue() === "" && this.queryById("mainFileSelector").getValue() === "");
 			},
 			listeners: {
 				boxready: function() {
 					initializeTooltips(".helpTip");
-
-					$("#" + me.namePrefix + "_mapRegions").change(function() {
-						me.toogleContent();
-					});
 
 					$(this.getEl().dom).find("a.deleteOmicBox").click(function() {
 						me.removeOmicSubmittingPanel();
@@ -1220,18 +641,17 @@ function OmicSubmittingPanel(nElem, options) {
 
 		return this.component;
 	};
-
 	return this;
 }
-RegionBasedOmicSubmittingPanel.prototype = new View;
+OmicSubmittingPanel.prototype = new DefaultSubmittingPanel;
 
-function MiRNAOmicSubmittingPanel(nElem, options) {
+function RegionBasedOmicSubmittingPanel(nElem, options) {
 	/*********************************************************************
 	* ATTRIBUTES
 	***********************************************************************/
 	options = (options || {});
 
-	this.title = "miRNA based omic";
+	this.title = "Region based omic";
 	this.namePrefix = "omic" + nElem;
 	this.omicName = "";
 	this.mapTo = "Gene";
@@ -1241,7 +661,7 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 	this.allowToogle = options.allowToogle !== false;
 	this.removable = options.removable !== false;
 
-	this.class = "mirnabasedFileBox";
+	this.class = "bedbasedFileBox";
 
 	/*IF THE TYPE WAS SPECIFIED (e.g. gene_expression)*/
 	if (options.type !== undefined) {
@@ -1257,29 +677,10 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 	/*********************************************************************
 	* GETTERS AND SETTERS
 	***********************************************************************/
-	this.getOmicName = function() {
-		return this.omicName;
-	};
+
 	/***********************************************************************
 	* OTHER FUNCTIONS
 	***********************************************************************/
-	this.removeOmicSubmittingPanel = function() {
-		this.getParent().removeOmicSubmittingPanel(this);
-		return this;
-	};
-	this.toogleContent = function() {
-		var component = this.getComponent().queryById("itemsContainerAlt");
-		var isVisible = component.isVisible();
-		component.setVisible(!isVisible);
-		component.setDisabled(isVisible);
-
-		component = this.getComponent().queryById("itemsContainer");
-		if (component) {
-			component.setVisible(isVisible);
-			component.setDisabled(!isVisible);
-		}
-		return this;
-	};
 	this.setExampleMode = function(){
 		var component = this.getComponent();
 		//component.queryById("toogleMapRegions").setVisible(false);
@@ -1295,10 +696,10 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 		field.setDisabled(true);
 
 		field = component.queryById("tertiaryFileSelector");
-		field.setValue("example/mmu_mirBase_to_ensembl.tab");
+		field.setValue("example/mmu_reference.gtf");
 		field.setDisabled(true);
 
-		var otherFields = ["summarizationMethodField"];
+		var otherFields = ["distanceField", "tssDistanceField", "promoterDistanceField", "geneAreaPercentageField", "regionAreaPercentageField", "gtfTagField", "summarizationMethodField", "reportSelector1","reportSelector2"];
 		for(var i in otherFields){
 			field = component.queryById(otherFields[i]);
 			field.setReadOnly(true);
@@ -1356,6 +757,89 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 				html: '<h4><a class="deleteOmicBox" href="javascript:void(0)" style="margin: 0; float:right;  padding-right: 15px;">' +
 				(me.removable ? ' <i class="fa fa-trash"></i></a>' : "</a>") + this.title +
 				'</h4>'
+			}, {
+				xtype: "box",
+				itemId: "toogleMapRegions",
+				hidden: !this.allowToogle,
+				html: '<div class="checkbox" style=" margin: 10px 50px; font-size: 16px; "><input type="checkbox" id="' + this.namePrefix + '_mapRegions"><label for="' + this.namePrefix + '_mapRegions">My regions are already mapped to Gene IDs, skip this step.</label></div>'
+			}, {
+				xtype: "container",
+				itemId: "itemsContainerAlt",
+				layout: {
+					align: 'stretch',
+					type: 'vbox'
+				},
+				padding: 10,
+				hidden: true,
+				disabled: true,
+				defaults: {
+					labelAlign: "right",
+					labelWidth: 150,
+					maxLength: 100,
+					maxWidth: 500
+				},
+				items: [{
+					xtype: 'combo',
+					fieldLabel: 'Omic Name',
+					name: this.namePrefix + '_omic_name',
+					value: this.omicName,
+					itemId: "omicNameField",
+					displayField: 'name',
+					valueField: 'name',
+					emptyText: 'Type or choose the omic type',
+					queryMode: 'local',
+					hidden: this.omicName !== "",
+					editable: true,
+					allowBlank: false,
+					store: Ext.create('Ext.data.ArrayStore', {
+						fields: ['name'],
+						autoLoad: true,
+						proxy: {
+							type: 'ajax',
+							url: 'resources/data/all_omics.json',
+							reader: {
+								type: 'json',
+								root: 'omics',
+								successProperty: 'success'
+							}
+						}
+					})
+				}, {
+					xtype: "myFilesSelectorButton",
+					fieldLabel: 'Data file',
+					namePrefix: this.namePrefix,
+					itemId: "mainFileSelector",
+					helpTip: "Upload the feature quantification file (Gene expression, proteomics quantification,...) or choose it from your data folder."
+				}, {
+					xtype: 'textfield',
+					fieldLabel: 'File Type',
+					name: this.namePrefix + '_file_type',
+					itemId: "fileTypeSelector",
+					value: "Bed file (regions mapped to Genes)",
+					hidden: true,
+					helpTip: "Specify the type of data for uploaded file (Gene Expression file, Proteomic quatification,...)."
+				}, {
+					xtype: "myFilesSelectorButton",
+					fieldLabel: 'Relevant features file',
+					namePrefix: this.namePrefix + '_relevant',
+					itemId: "secondaryFileSelector",
+					helpTip: "Upload the list of relevant features (relevant genes, relevant proteins,...)."
+				}, {
+					xtype: 'textfield',
+					fieldLabel: 'File Type',
+					name: this.namePrefix + '_relevant_file_type',
+					itemId: "relevantFileTypeSelector",
+					value: "Relevant regions list (mapped to Genes)",
+					hidden: true,
+					helpTip: "Specify the type of data for uploaded file (Relevant Genes list, Relevant proteins list,...)."
+				}, {
+					xtype: 'textfield',
+					fieldLabel: 'Map to',
+					name: this.namePrefix + '_match_type',
+					itemId: "mapToSelector",
+					value: this.mapTo,
+					hidden: true
+				}]
 			}, {
 				xtype: "container",
 				itemId: "itemsContainer",
@@ -1471,6 +955,88 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 				/*
 				* OTHER FIELDS
 				*/
+				//report
+				{
+					xtype: 'textfield',
+					hidden: true,
+					name: this.namePrefix + '_report',
+					fieldLabel: 'Report',
+					value: "gene"
+				},
+				//distance
+				{
+					xtype: 'numberfield',
+					itemId: "distanceField",
+					name: this.namePrefix + '_distance',
+					fieldLabel: 'Distance (kb)',
+					value: 10,
+					minValue: 0,
+					allowDecimals: false,
+					allowBlank: false,
+					helpTip: "Maximum distance in kb to report associations. Default: 10 (10kb)"
+				},
+				//tss
+				{
+					xtype: 'numberfield',
+					itemId: "tssDistanceField",
+					name: this.namePrefix + '_tss',
+					fieldLabel: 'TSS region distance (bps)',
+					value: 200,
+					minValue: 0,
+					allowDecimals: false,
+					allowBlank: false,
+					helpTip: "TSS region distance. Default: 200 bps"
+				},
+				//promoter
+				{
+					xtype: 'numberfield',
+					itemId: "promoterDistanceField",
+					name: this.namePrefix + '_promoter',
+					fieldLabel: 'Promoter region distance (bps)',
+					value: 1300,
+					minValue: 0,
+					allowDecimals: false,
+					allowBlank: false,
+					helpTip: "Promoter region distance. Default: 1300 bps"
+				},
+				//geneAreaPercentage
+				{
+					xtype: 'numberfield',
+					itemId: "geneAreaPercentageField",
+					name: this.namePrefix + '_geneAreaPercentage',
+					fieldLabel: 'Overlapped gene area (%)',
+					value: 50,
+					minValue: 0,
+					maxValue: 100,
+					allowDecimals: false,
+					allowBlank: false,
+					helpTip: "Percentage of the area of the gene overlapped to be considered to discriminate at transcript and gene level. Default: 90 (90%)"
+				},
+				//regionAreaPercentage
+				{
+					xtype: 'numberfield',
+					itemId: "regionAreaPercentageField",
+					name: this.namePrefix + '_regionAreaPercentage',
+					fieldLabel: 'Overlapped region area (%)',
+					value: 50,
+					minValue: 0,
+					maxValue: 100,
+					allowDecimals: false,
+					allowBlank: false,
+					helpTip: "Percentage of the region overlapped by the gene to be considered to discriminate at transcript and gene level. Default: 50 (50%)"
+				},
+				//rules //TODO
+				//{xtype: 'textfield', hidden: true, fieldLabel: 'rules', name: this.namePrefix + '_report', itemId: "reportSelector", value: "gene"},
+				//geneIDtag
+				{
+					xtype: 'textfield',
+					itemId: "gtfTagField",
+					name: this.namePrefix + '_geneIDtag',
+					fieldLabel: 'GTF Tag for gene ID/name ',
+					value: "gene_id",
+					allowBlank: false,
+					helpTip: "GTF tag used to get gene ids/names. Default: gene_id"
+				},
 				//summarization_method
 				{
 					xtype: 'combo',
@@ -1491,8 +1057,108 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 						]
 					}),
 					helpTip: "Choose the strategy used to resolve regions mapping to the same gen region. Default: 'Mean'"
+				}, {
+					xtype: 'fieldcontainer',
+					fieldLabel: 'Report',
+					defaultType: 'radiofield',
+					items: [{
+						boxLabel: 'All regions',
+						itemId: "reportSelector1",
+						name: this.namePrefix + '_report',
+						submitValue: false,
+						checked: true,
+						listeners: {
+							change: function(radio, newValue, oldValue) {
+								radio.up().queryById("reportOptionsContainer").setVisible(!newValue);
+								var elems = radio.up().queryById("reportOptionsContainer").query("checkboxfield");
+								for (var i in elems) {
+									elems[i].setDisabled(newValue);
+								}
+								elems = radio.up().queryById("reportAllRegionsOption");
+								elems.setDisabled(!newValue);
+								elems.setValue(newValue);
+							}
+						}
+					}, {
+						boxLabel: 'Let me choose',
+						itemId: "reportSelector2",
+						name: this.namePrefix + '_report',
+						submitValue: false,
+						helpTip: "Indicates which regions will be selected from rgmatch output. E.g. Option 'First exon' will filter out all regions that do not map into the first exon of the corresponding gene."
+					}, {
+						xtype: 'container',
+						defaultType: 'checkboxfield',
+						hidden: true,
+						itemId: 'reportOptionsContainer',
+						items: [{
+							xtype: 'label',
+							text: 'Regions mapping at...'
+						}, {
+							boxLabel: 'All regions',
+							name: this.namePrefix + '_reportRegions',
+							inputValue: 'all',
+							itemId: 'reportAllRegionsOption',
+							checked: true,
+							hidden: true
+						}, {
+							xtype: 'container',
+							layout: 'hbox',
+							defaultType: 'checkboxfield',
+							defaults: {
+								hideLabel: false,
+								labelAlign: 'top',
+								boxLabel: '',
+								labelSeparator: "",
+								style: 'text-align: center'
+							},
+							items: [{
+								fieldLabel: 'Upstream',
+								name: this.namePrefix + '_reportRegions',
+								inputValue: 'UPSTREAM',
+								labelStyle: 'padding: 2px 3px; font-size:9px; background-color: #E3CEB0;'
+							}, {
+								fieldLabel: 'Promoter',
+								name: this.namePrefix + '_reportRegions',
+								inputValue: 'PROMOTER',
+								labelStyle: 'padding: 2px 3px; font-size:9px; background-color: #FFF2C0;'
+							}, {
+								fieldLabel: 'TSS',
+								name: this.namePrefix + '_reportRegions',
+								inputValue: 'TSS',
+								labelAlign: 'top',
+								labelStyle: 'padding: 2px 3px; font-size:9px; background-color: #FFF6D3;'
+							}, {
+								fieldLabel: '1st Exon',
+								name: this.namePrefix + '_reportRegions',
+								inputValue: '1st_EXON',
+								labelStyle: 'padding: 2px 3px; font-size:9px; background-color: #FFC4AD;'
+							}, {
+								fieldLabel: 'Introns',
+								name: this.namePrefix + '_reportRegions',
+								inputValue: 'INTRON',
+								labelStyle: 'padding: 2px 3px; font-size:9px; background-color: #D0DFF1;'
+							}, {
+								fieldLabel: 'Gene body',
+								name: this.namePrefix + '_reportRegions',
+								inputValue: 'GENE_BODY',
+								labelStyle: 'padding: 2px 3px; font-size:9px; background-color: #FFE0D3;'
+							}, {
+								xtype: 'label',
+								text: 'Intr.',
+								style: 'padding: 5px 3px; font-size:9px; margin-top:4px; background-color: #D0DFF1;'
+							}, {
+								xtype: 'label',
+								text: 'G.B.',
+								style: 'padding: 5px 3px; font-size:9px; margin-top:4px;  background-color: #FFE0D3;'
+							}, {
+								fieldLabel: 'Downstream',
+								name: this.namePrefix + '_reportRegions',
+								inputValue: 'DOWNSTREAM',
+								labelStyle: 'padding: 2px 3px; font-size:9px; background-color: #B2C9E3;'
+							}]
+						}]
+					}]
 				},
-				
 			]
 		}],
 		setContent: function(target, values) {
@@ -1563,4 +1229,385 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 
 return this;
 }
-MiRNAOmicSubmittingPanel.prototype = new View;
+RegionBasedOmicSubmittingPanel.prototype = new DefaultSubmittingPanel;
+
+function MiRNAOmicSubmittingPanel(nElem, options) {
+	/*********************************************************************
+	* ATTRIBUTES
+	***********************************************************************/
+	options = (options || {});
+
+	this.title = "miRNA based omic";
+	this.namePrefix = "omic" + nElem;
+	this.omicName = "";
+	this.mapTo = "Gene";
+	this.fileType = null;
+	this.relevantFileType = null;
+
+	this.allowToogle = options.allowToogle !== false;
+	this.removable = options.removable !== false;
+
+	this.class = "miRNAbasedFileBox";
+
+	/*IF THE TYPE WAS SPECIFIED (e.g. gene_expression)*/
+	if (options.type !== undefined) {
+		//TODO CAPITALIZE THE FIRST LETTER
+		this.omicName = options.type;
+		this.title = options.type;
+
+		this.fileType = options.fileType;
+		this.relevantFileType = options.relevantFileType;
+		this.type = this.title.replace(" ", "").toLowerCase();
+		this.class = this.type + "FileBox";
+	}
+	/*********************************************************************
+	* GETTERS AND SETTERS
+	***********************************************************************/
+
+	/***********************************************************************
+	* OTHER FUNCTIONS
+	***********************************************************************/
+	this.setExampleMode = function(){
+		var component = this.getComponent();
+		//component.queryById("toogleMapRegions").setVisible(false);
+
+		component = component.queryById("itemsContainer");
+
+		var field = component.queryById("mainFileSelector");
+		field.setValue("example/" + this.type + "_example.tab");
+		field.setDisabled(true);
+
+		field = component.queryById("secondaryFileSelector");
+		field.setValue("example/" + this.type + "_relevant_example");
+		field.setDisabled(true);
+
+		field = component.queryById("mirnaTargetsFileSelector");
+		field.setValue("example/mmu_mirBase_to_ensembl.tab");
+		field.setDisabled(true);
+
+		field = component.queryById("rnaseqauxFileSelector");
+		field.setValue("example/gene_expression_values.tab");
+		field.setDisabled(true);
+
+		var otherFields = ["summarizationMethodField"];
+		for(var i in otherFields){
+			field = component.queryById(otherFields[i]);
+			field.setReadOnly(true);
+		}
+	};
+	this.setContent = function(target, values) {
+		var component = this.getComponent().queryById(target);
+
+		if (values.title) {
+			component.queryById("omicNameField").setValue(values.title);
+		}
+		if (values.omicName) {
+			component.queryById("omicNameField").setValue(values.omicName);
+		}
+		if (values.mainFile) {
+			component.queryById("mainFileSelector").setValue(values.mainFile);
+		}
+		if (values.mainFileType) {
+			component.queryById("fileTypeSelector").setValue(values.mainFileType);
+		}
+		if (values.secondaryFile) {
+			component.queryById("secondaryFileSelector").setValue(values.secondaryFile);
+		}
+		if (values.secondaryFileType) {
+			component.queryById("relevantFileTypeSelector").setValue(values.secondaryFileType);
+		}
+		if (values.toogleMapRegions) {
+			component.queryById("toogleMapRegions").setVisible(values.toogleMapRegions === true);
+		}
+
+		if (!component.isVisible()) {
+			this.toogleContent();
+		}
+		return this;
+	};
+
+	/*********************************************************************
+	* COMPONENT DECLARATION
+	***********************************************************************/
+	this.initComponent = function() {
+		var me = this;
+		this.component = Ext.widget({
+			xtype: "container",
+			flex: 1,
+			type: me.type,
+			cls: "omicbox miRNABasedOmic",
+			itemId: "itemsContainerAlt",
+			layout: {
+				align: 'stretch',
+				type: 'vbox'
+			},
+			items: [{
+				xtype: "box",
+				flex: 1,
+				cls: "omicboxTitle " + this.class,
+				html: '<h4><a class="deleteOmicBox" href="javascript:void(0)" style="margin: 0; float:right;  padding-right: 15px;">' +
+				(me.removable ? ' <i class="fa fa-trash"></i></a>' : "</a>") + this.title +
+				'</h4>'
+			},
+			{
+				xtype: "container",
+				itemId: "itemsContainerAlt",
+				layout: {
+					align: 'stretch',
+					type: 'vbox'
+				},//TODO
+				items:[],
+				hidden: true
+			},
+			{
+				xtype: "container",
+				itemId: "itemsContainer",
+				layout: {
+					align: 'stretch',
+					type: 'vbox'
+				},
+				padding: 10,
+				defaults: {
+					labelAlign: "right",
+					labelWidth: 150,
+					maxLength: 100,
+					maxWidth: 500
+				},
+				items: [{
+					xtype: 'textfield',
+					name: "name_prefix",
+					hidden: true,
+					itemId: "namePrefix",
+					value: this.namePrefix
+				}, {
+					xtype: 'combo',
+					fieldLabel: 'Omic Name',
+					name: this.namePrefix + '_omic_name',
+					hidden: this.omicName !== "",
+					itemId: "omicNameField",
+					displayField: 'name',
+					valueField: 'name',
+					emptyText: 'Type or choose the omic type',
+					editable: true,
+					queryMode: 'local',
+					allowBlank: false,
+					value: (this.fileType !== null) ? this.fileType : null,
+					store: Ext.create('Ext.data.ArrayStore', {
+						fields: ['name'],
+						autoLoad: true,
+						proxy: {
+							type: 'ajax',
+							url: 'resources/data/all_omics.json',
+							reader: {
+								type: 'json',
+								root: 'omics',
+								successProperty: 'success'
+							}
+						}
+					})
+				}, {
+					xtype: 'textfield',
+					hidden: true,
+					fieldLabel: 'Map to',
+					name: this.namePrefix + '_match_type',
+					itemId: "mapToSelector",
+					value: this.mapTo
+				},
+				/*miRNA FILE*/
+				{
+					xtype: "myFilesSelectorButton",
+					fieldLabel: 'miRNA seq file <br>(miRNA Quantification)',
+					namePrefix: this.namePrefix,
+					itemId: "mainFileSelector",
+					helpTip: "Upload the quantification file (miRNA Quantification) or choose it from your data folder. See above the accepted format for the file."
+				}, {
+					xtype: 'textfield',
+					fieldLabel: 'File Type',
+					name: this.namePrefix + '_file_type',
+					hidden: true,
+					itemId: "fileTypeSelector",
+					value: "Gene Expression file"
+				},
+				/*RELEVANT miRNA FILE*/
+				{
+					xtype: "myFilesSelectorButton",
+					fieldLabel: "Relevant miRNA file",
+					namePrefix: this.namePrefix + '_relevant',
+					itemId: "secondaryFileSelector",
+					helpTip: "Upload the list of relevant (differentially expressed) miRNAs (TAB format) or choose it from your data folder. See above the accepted format for the file."
+				}, {
+					xtype: 'textfield',
+					fieldLabel: 'File Type',
+					name: this.namePrefix + '_relevant_file_type',
+					hidden: true,
+					itemId: "relevantFileTypeSelector",
+					value: "Relevant gene list"
+				},
+				/*TARGETS FILE*/
+				{
+					xtype: "myFilesSelectorButton",
+					fieldLabel: "miRNA targets<br>reference file",
+					namePrefix: this.namePrefix + '__annotations',
+					itemId: "mirnaTargetsFileSelector",
+					helpTip: "Upload the reference file that relates each miRNA with its potential targets. This information is usually extracted from popular databases such as miRbase. See above the accepted format for the file."
+				}, {
+					xtype: 'textfield',
+					fieldLabel: 'File Type',
+					name: this.namePrefix + '_annotations_file_type',
+					hidden: true,
+					itemId: "mirnaTargetsFileTypeSelector",
+					value: "miRNA targets reference"
+				},
+				/*RNA-SEQ FILE*/
+				{
+					xtype: 'textfield',
+					fieldLabel: 'Omic Name',
+					name: this.namePrefix + '_rnaseqaux_omic_name',
+					hidden: true,
+					itemId: "rnaseqauxOmicNameField",
+					value: "Gene Expression"
+				},
+				{
+					xtype: "myFilesSelectorButton",
+					fieldLabel: "Gene expression<br>quantification (optional)",
+					namePrefix: this.namePrefix + '_rnaseqaux',
+					itemId: "rnaseqauxFileSelector",
+					helpTip: "Upload the quantification file for the gene expression. This file is used to calculate the correlation of the expression of the genes and their associated miRNAs. Using this correlation we can filter and order the miRNAs that will be assigned to each gene. See above the accepted format for the file."
+				}, {
+					xtype: 'textfield',
+					fieldLabel: 'File Type',
+					name: this.namePrefix + '_rnaseqaux_file_type',
+					hidden: true,
+					itemId: "rnaseqauxFileTypeSelector",
+					value: "Gene Expression file"
+				},
+				{
+					xtype: 'textfield',
+					hidden: true,
+					fieldLabel: 'Map to',
+					name: this.namePrefix + '_rnaseqaux_match_type',
+					itemId: "rnaseqauxFileMapToSelector",
+					value: 'gene'
+				},
+				/*
+				* OTHER FIELDS
+				*/
+				//report
+				{
+					xtype: 'combo',
+					itemId: "reportMethodField",
+					name: this.namePrefix + '_report',
+					fieldLabel: 'Report',
+					editable: false,
+					allowBlank: false,
+					value: "all",
+					displayField: 'label',
+					valueField: 'value',
+					store: Ext.create('Ext.data.ArrayStore', {
+						fields: ['label', 'value'],
+						data: [
+							["All miRNAs", "all"],
+							["Only relevant (DE) miRNAs", "DE"]
+						]
+					}),
+					helpTip: "Choose between consider all miRNAs in the quantification file or only those miRNAs that belong to the list of relevant or differentially expressed miRNAs. Default: 'All miRNAs'"
+				},
+				{
+					xtype: 'combo',
+					itemId: "selectionMethodField",
+					name: this.namePrefix + '_selection_method',
+					fieldLabel: 'Selection method',
+					editable: false,
+					allowBlank: false,
+					value: "negative_correlation",
+					displayField: 'label',
+					valueField: 'value',
+					store: Ext.create('Ext.data.ArrayStore', {
+						fields: ['label', 'value'],
+						data: [
+							["by Fold Change", "fc"],
+							["by absolute correlation with gene", "abs_correlation"],
+							["by positive correlation with gene", "positive_correlation"],
+							["by negative correlation with gene", "negative_correlation"]
+						]
+					}),
+					helpTip:
+					"Usually a single miRNA has multiple potential target genes, but not all targets are being " +
+					"regulated by the miRNA at certain moment. Consequently, it is necessary to discriminate the real targets for a miRNA."+
+					"We use different methods. If Gene expression data is available then we calculate the correlation between each miRNA " +
+					"and each target gene and filter out all those miRNAs that has a lower correlation value than a given threadhold." +
+					"If no gene expression is available then we filter out based on the values of fold change for the expression of the miRNAs." +
+					"Default: 'by negative correlation with gene' if gene expression is available. 'by Fold Change' in other case."
+				},
+				{
+					xtype: 'numberfield',
+					itemId: "cutoffField",
+					name: this.namePrefix + '_cutoff',
+					fieldLabel: 'Filter cutoff',
+					value: 0.5,
+					minValue: 0,
+					maxValue: 1,
+					allowDecimals: true,
+					allowBlank: false,
+					helpTip: "The value for the threadhold. All miRNAs with a lower value of correlation or FC will be filterd out from the results. Default: 0.5"
+				}
+			]
+		}],
+		setContent: function(target, values) {
+			me.setContent(target, values);
+		},
+		isValid: function() {
+			var valid = true;
+			var component = this.queryById("itemsContainerAlt");
+
+			if (!component.isVisible()) {
+				component = this.queryById("itemsContainer");
+			}
+			var items = component.query("field");
+			for (var i in items) {
+				valid = valid && (this.items[i] || items[i].validate());
+			}
+
+			if (component.queryById("mainFileSelector").getValue() === "") {
+				valid = false;
+				component.queryById("mainFileSelector").markInvalid("Please, provide a data file.");
+			}
+			if (component.queryById("mirnaTargetsFileSelector") && component.queryById("mirnaTargetsFileSelector").getValue() === "") {
+				valid = false;
+				component.queryById("mirnaTargetsFileSelector").markInvalid("Please, provide a miRNA targets reference file.");
+			}
+
+			return valid;
+		},
+		isEmpty: function() {
+			var component = this.queryById("itemsContainerAlt");
+			if (!component.isVisible()) {
+				component = this.queryById("itemsContainer");
+			}
+			var empty = true;
+			if (component.queryById("mainFileSelector").getValue() !== "") {
+				empty = false;
+			}
+			if (component.queryById("mirnaTargetsFileSelector") && component.queryById("mirnaTargetsFileSelector").getValue() !== "") {
+				empty = false;
+			}
+
+			return empty;
+		},
+		listeners: {
+			boxready: function() {
+				initializeTooltips(".helpTip");
+
+				$(this.getEl().dom).find("a.deleteOmicBox").click(function() {
+					me.removeOmicSubmittingPanel();
+				});
+			}
+		}
+	});
+
+	return this.component;
+};
+
+return this;
+}
+MiRNAOmicSubmittingPanel.prototype = new DefaultSubmittingPanel;

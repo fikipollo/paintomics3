@@ -28,7 +28,7 @@ function DM_miRNA2GenesJobView() {
     * ATTRIBUTES
     ***********************************************************************/
     this.name = "PA_Step1JobView";
-    this.nFiles = 3;
+    this.nFiles = 4;
     this.exampleMode = false;
     /*********************************************************************
     * GETTERS AND SETTERS
@@ -44,11 +44,11 @@ function DM_miRNA2GenesJobView() {
     };
 
     this.submitFormHandler = function () {
-        this.controller.fromBed2GenesOnFormSubmitHandler(this);
+        this.controller.fromMiRNA2GenesOnFormSubmitHandler(this);
     };
 
     this.checkForm = function () {
-        var items = this.getComponent().query("container[cls=omicbox regionBasedOmic]");
+        var items = this.getComponent().query("container[cls=omicbox miRNABasedOmic]");
         var emptyFields = 0;
 
         for (var i in items) {
@@ -137,7 +137,8 @@ function DM_miRNA2GenesJobView() {
                             defaults: {labelAlign: "right", labelWidth: 220, maxWidth: 800},
                             items: [
                                 {xtype: "box", flex: 1, maxWidth: 1300, html: '<h2>Data uploading</h2><h3>1. Choose the files to upload </h3>'},
-                                new MiRNAOmicSubmittingPanel(0, {removable: false, allowToogle: false}).getComponent()
+                                new MiRNAOmicSubmittingPanel(0, {removable: false, allowToogle: false}).getComponent(),
+																{xtype: "box", html: '<div style="height:150px"></div>'},
                             ]
                         }
                     ]

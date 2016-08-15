@@ -246,7 +246,6 @@ class Job(Model):
             logging.info("REMOVING THE TEMPORAL CACHE FOR JOB " + self.getJobID() + "..."  )
             KeggInformationManager().clearTranslationCache(self.getJobID())
 
-
     def parseGeneBasedFiles(self, inputOmic):
         """
         This function...
