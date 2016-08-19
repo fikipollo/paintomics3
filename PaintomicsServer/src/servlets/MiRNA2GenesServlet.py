@@ -124,6 +124,8 @@ def fromMiRNAtoGenes_STEP1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, exampleMod
         logging.info("  - omicName             :" + jobInstance.omicName)
         jobInstance.report= formFields.get(namePrefix + "_report", "all")
         logging.info("  - report               :" + jobInstance.report)
+        jobInstance.score_method= formFields.get(namePrefix + "_score_method", "kendall")
+        logging.info("  - score_method             :" + jobInstance.score_method)
         jobInstance.selection_method= formFields.get(namePrefix + "_selection_method", "negative_correlation")
         logging.info("  - selection_method             :" + jobInstance.selection_method)
         jobInstance.cutoff= formFields.get(namePrefix + "_cutoff", 0.5)

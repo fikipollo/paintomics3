@@ -29,7 +29,6 @@ from src.classes.Job import Job
 from src.classes.Feature import OmicValue, Gene
 from src.servlets.DataManagementServlet import copyFile
 from src.common.bioscripts.miRNA2Target import run as run_miRNA2Target
-from src.conf.serverconf import MAX_WAIT_THREADS #MULTITHREADING
 
 from os import path as os_path, mkdir as os_mkdir
 from csv import reader as csv_reader
@@ -45,12 +44,14 @@ class MiRNA2GeneJob(Job):
         super(MiRNA2GeneJob, self).__init__(jobID, userID, CLIENT_TMP_DIR)
         self.omicName = None
         self.report               = "all" #all or DE
-        self.selection_method     = "negative_correlation" #fc OR abs_correlation OR positive_correlation OR negative_correlation
-        self.cutoff               = 0.5
+        self.score_method         = "kendall" #fc OR kendall OR spearman OR pearson
+        self.selection_method     = "negative_correlation" #max_fc OR similar_fc OR abs_correlation OR positive_correlation OR negative_correlation
+        self.cutoff               = -0.6
 
     def getOptions(self):
         return {
             "report": self.report,
+            "score_method": self.score_method,
             "selection_method": self.selection_method,
             "cutoff": self.cutoff
         }
@@ -59,6 +60,7 @@ class MiRNA2GeneJob(Job):
         if generate:
             self.description  = "Input data:" + os_path.basename(dataFile) + ";Relevant file: " + os_path.basename(relevantFile)  + ";Targets file: " + os_path.basename(targetsFile) + ";Gene expression file: " + os_path.basename(geneExpressionFile) + ";"
             self.description += "Params:;Report=" + str(self.report) + ";"
+            self.description += "Score method=" + str(self.score_method)+ ";"
             self.description += "Selection method=" + str(self.selection_method)+ ";"
             self.description += "Cutoff=" + str(self.cutoff)+ ";"
         return self.description
@@ -70,7 +72,7 @@ class MiRNA2GeneJob(Job):
         @returns True if not error
         """
         error = ""
-
+        #TODO: CHECK VALID SCORE AND SELECTION METHODS
         try:
             self.cutoff = float(self.cutoff)
         except:
@@ -87,7 +89,6 @@ class MiRNA2GeneJob(Job):
             raise Exception("Errors detected in input files, please fix the following issues and try again:" + error)
 
         return True
-
 
     def validateFile(self, inputOmic, nConditions, error):
         """
@@ -204,13 +205,17 @@ class MiRNA2GeneJob(Job):
         inputOmic= self.getGeneBasedInputOmics()[0]
         dataFile = inputOmic.get("inputDataFile")
         relevantFile = inputOmic.get("relevantFeaturesFile")
-        inputOmic= self.getGeneBasedInputOmics()[1]
-        geneExpressionFile = inputOmic.get("inputDataFile")
+
+        geneExpressionFile =  None
+        if len(self.getGeneBasedInputOmics()) > 1:
+            inputOmic= self.getGeneBasedInputOmics()[1]
+            geneExpressionFile = inputOmic.get("inputDataFile")
 
         if(inputOmic.get("isExample", False) == False):
             dataFile = self.getInputDir()+  dataFile
             relevantFile = self.getInputDir()+ relevantFile
-            geneExpressionFile = self.getInputDir()+ geneExpressionFile
+            if geneExpressionFile != None:
+                geneExpressionFile = self.getInputDir() + geneExpressionFile
 
         if not os_path.isdir(self.getTemporalDir()):
             os_mkdir(self.getTemporalDir())
@@ -219,13 +224,7 @@ class MiRNA2GeneJob(Job):
 
         #STEP 2. CALL TO miRNA2Target SCRIPT AND GENERATE ASSOCIATION BETWEEN miRNAS AND TARGET GENES
         logging.info("STARTING miRNA2Target PROCESS.")
-
-        from multiprocessing import Process
-        thread = Process(target=run_miRNA2Target, args=(referenceFile, dataFile, geneExpressionFile, tmpFile, self.getOptions()))
-        thread.start()
-        thread.join(MAX_WAIT_THREADS)
-        del thread
-
+        run_miRNA2Target(referenceFile, dataFile, geneExpressionFile, tmpFile, self.score_method)
         logging.info("STARTING miRNA2Target PROCESS...Done")
 
         #STEP 3. PARSE RELEVANT FILE
@@ -237,35 +236,43 @@ class MiRNA2GeneJob(Job):
         logging.info("PROCESSING miRNA2Target OUTPUT...")
         if os_path.isfile(tmpFile):
              with open(tmpFile, 'rU') as inputDataFile:
-                mirnaID = geneID = correlation = None
-                correlationsTable = {}
-                #TODO: (OPTIONAL) if result ordered by gene id -> reduce processing time
+                mirnaID = geneID = score = methodsHasChanged = score_type = sortedScores = None
+                scoresTable = {}
+
                 csvReader = csv_reader(inputDataFile, delimiter="\t")
-                #IGNORE THE HEADER
+
+                #READ THE HEADER
                 line = csvReader.next()
                 #SAVE THE NAME OF THE CONDITIONS (e.g. COND1, COND2,...)
-                header = "\t".join(line[3:])
+                header = "\t".join(line[4:])
+
+                if self.selection_method == "negative_correlation":
+                    self.cutoff *= -1 #INVERT VALUES
 
                 for line in csvReader:
                     #STEP 5.1 GET THE mirna ID, THE ASSOCIATED GENE ID AND THE QUANTIFICATION VALUES
                     mirnaID   = line[0]
                     geneID    = line[1]
-                    correlation = float(line[2])
-                    values    =  map(float, line[3:])
-                    isRelevant = relevantMiRNAS.has_key(mirnaID)
+                    score      = float(line[2])
+                    score_type = line[3]
+                    values    =  map(float, line[4:])
+                    isRelevant = relevantMiRNAS.has_key(mirnaID.lower())
 
                     #STEP 5.2 FILTER MIRNAS
                     #IF THE OPTION "ONLY RELEVANTS" WAS SELECTED, IGNORE ENTRY
                     if self.report == "DE" and not isRelevant:
                         continue
 
-                    #FILTER BY SELECTION METHODS, IF CORRELATION OR FC IS LOWER THAN THE CUTOFF, IGNORE ENTRY
-                    #INVERT VALUES
-                    if self.selection_method == "negative_correlation":
-                        correlation *= -1
-                        self.cutoff *= -1
+                    #EVEN WHEN THE USER HAS CHOOSE THE OPTION "FC", if the conditions do no allow to calculate the
+                    #correlation, the script will calculate the FC
+                    if score_type != "fc" and self.selection_method == "negative_correlation":
+                        score *= -1  #INVERT VALUES
+                    elif score_type != "fc" and self.selection_method == "abs_correlation":
+                        score = abs(score)
+                    #TODO: SIMILAR FC SELECTION
 
-                    if correlation < self.cutoff:
+                    #FILTER BY SELECTION METHODS, IF CORRELATION OR FC IS LOWER THAN THE CUTOFF, IGNORE ENTRY
+                    if score < self.cutoff:
                         continue
 
                     #STEP 5.3 CREATE A NEW OMIC VALUE WITH ROW DATA
@@ -284,10 +291,14 @@ class MiRNA2GeneJob(Job):
                     self.addInputGeneData(geneAux)
 
                     #STEP 5.6 ADD THE OMIC VALUE TO THE LIST, FOR FURTHER ORDERING
-                    if not geneID in correlationsTable:
-                        correlationsTable[geneID] = []
-                    correlationsTable[geneID].append((correlation, omicValueAux))
+                    if not geneID in scoresTable:
+                        scoresTable[geneID] = []
+                    scoresTable[geneID].append((score, omicValueAux))
                 logging.info("PROCESSING miRNA2Target OUTPUT...DONE")
+
+                #EVEN WHEN THE USER HAS CHOOSE THE OPTION "FC", if the conditions do no allow to calculate the
+                #correlation, the script will calculate the FC
+                methodsHasChanged = (score_type == "fc" and self.score_method != "fc")
 
                 #STEP 6. FOR EACH GENE, ORDER THE MIRNAS BY THE HIGHER CORRELATION OR FC
                 genesToMiRNAFile = open(self.getTemporalDir() + '/genesToMiRNAFile.tab', 'w')
@@ -300,23 +311,23 @@ class MiRNA2GeneJob(Job):
                 mirna2genesRelevant.write("Gene name\tmiRNA ID\n")
 
                 logging.info("ORDERING miRNAS BY CORRELATION / FC...")
-                sortedCorrelations = None
                 for geneID, gene in self.getInputGenesData().iteritems():
                     #GET ALL THE miRNAs AND SORT
-                    sortedCorrelations = sorted(correlationsTable[geneID], key=lambda omicValue: omicValue[0], reverse=True)
+                    sortedScores = sorted(scoresTable[geneID], key=lambda omicValue: omicValue[0], reverse=True)
 
                     #STEP 6.1 WRITE RESULTS
-                    for omicValue in sortedCorrelations:
-                        correlation = omicValue[0]
+                    for omicValue in sortedScores:
+                        score = omicValue[0]
                         omicValue = omicValue[1]
 
                         lineAux = geneID + "\t" + omicValue.getOmicName() + "\t"
 
-                        if self.selection_method == "negative_correlation":
-                            correlation *= -1
+                        #Recover the original value for the score
+                        if not methodsHasChanged and self.selection_method == "negative_correlation":
+                            score *= -1
 
                         #WRITE RESULTS TO genesToMiRNAFile FILE -->   gen_id mirna relevant score
-                        genesToMiRNAFile.write(lineAux + ("*" if omicValue.isRelevant() else "") + "\t" + str(correlation) + "\t" + self.selection_method + "\n")
+                        genesToMiRNAFile.write(lineAux + ("*" if omicValue.isRelevant() else "") + "\t" + str(score) + "\t" + self.selection_method + "\n")
                         #WRITE RESULTS TO miRNA2Gene_output FILE -->   gen_id mirna values
                         mirna2genesOutput.write(lineAux + '\t'.join(map(str, omicValue.getValues())) + "\n")
 
@@ -330,6 +341,7 @@ class MiRNA2GeneJob(Job):
 
                 #STEP 7. GENERATE THE COMPRESSED FILE WITH RESULTS, COPY THE mirna2genesOutput FILE AT INPUT DIR AND CLEAN TEMPORAL FILES
                 #COMPRESS THE RESULTING FILES AND CLEAN TEMPORAL DATA
+                #TODO: REMOVE THE genesToMiRNAFile
                 logging.info("COMPRESSING RESULTS...")
                 fileName = "mirna2genes_" + time.strftime("%Y%m%d_%H%M")
                 shutil.make_archive(self.getOutputDir() + fileName, "zip", self.getTemporalDir() + "/")

@@ -26,9 +26,7 @@
 import getopt
 import sys
 import os.path
-
-# Global variables
-method       = "negative_correlation"
+import scipy.stats
 
 def main():
     try:
@@ -42,8 +40,10 @@ def main():
     dataFile = None
     geneExpresion = None
     outputfile = None
+    method = None
 
-    global method
+    if len(opts) == 0:
+        print_usage()
 
     for o, a in opts:
         if o in ("-h","--help"):
@@ -73,15 +73,13 @@ def main():
             print "Unknown option"
             print "Use python miRNA2Target.py -h for help"
 
-    options = {"method" : method}
-
     if referenceFile is not None and dataFile is not None and outputfile is not None:
-        run(referenceFile, dataFile, outputfile, geneExpresion, options)
+        run(referenceFile, dataFile, outputfile, geneExpresion, method)
 
 def print_usage():
     print "\nUsage: python miRNA2Target.py [options] <mandatory>"
     print "Options:"
-    print "\t-m, --method:\n\t\t The score method, accepted values are 'FC' (Fold change), 'abs_correlation', 'positive_correlation' and 'negative_correlation'"
+    print "\t-m, --method:\n\t\t The score method, accepted values are 'fc' (Fold change) | 'spearman' | 'kendall' | 'pearson'"
     print "\t-g, --genes:\n\t\t A file containing the gene expression quantification. These values are necessary to calculate the correlation between miRNAs and targets."
     print "\t-h, --help:\n\t\t show this help message and exit"
     print "Mandatory:"
@@ -91,21 +89,72 @@ def print_usage():
     print "\nVersion 0.1 August 2016\n"
 
 
-def run(referenceFile, dataFile, geneExpresion, outputFile, options):
-    dataFile = open(dataFile, 'r')
-    outputFile = open(outputFile, 'w')
+def run(referenceFile, dataFile, geneExpresion, outputFile, method="fc"):
+    miRNAtable = {}
+    geneTable = {}
+    dataFile_header = ""
 
-    import random
+    #STEP 1. GENERATE THE TABLE WITH ALL THE MIRNAS IN THE INPUT
+    with open(dataFile, 'r') as f:
+        dataFile_header = f.readline().split("\t")[1:]
+        for line in f:
+            line = line.split("\t")
+            miRNAtable[line[0]] = {"values" : line[1:], "targets" : [] }
+    f.close()
 
-    for line in dataFile:
-        line = line.split("\t")
-        score = random.uniform(-1, 1)
-        id = "ENSM000" + str(random.randrange(1, 99999))
-        outputFile.write(line[0] + "\t" + id + "\t" + str(score) + "\t" + "\t".join(line[1:]))
+    #STEP 2. FILL THE TABLE WITH ALL THE TARGETS FOR EACH MIRNA
+    with open(referenceFile, 'r') as f:
+        for line in f:
+            line = line.split("\t")
+            if line[0] in miRNAtable:
+                miRNAtable[line[0]]["targets"].append(line[1])
+    f.close()
 
-    dataFile.close()
-    outputFile.close()
+    #STEP 3. FILL THE TABLE WITH ALL THE GENES
+    if geneExpresion != None:
+        with open(geneExpresion, 'r') as f:
+            for line in f:
+                line = line.split("\t")
+                geneTable[line[0]] = line[1:]
+        f.close()
+    else:
+        method = "fc"
+
+    #STEP 4. FOR EACH MIRNA AND EACH TARGET, CALCULATE THE SCORE AND SAVE RESULTS TO A FILE
+    try:
+        outputFile = open(outputFile, 'w')
+        outputFile.write("# miRNA_id\ttarget_id\tscore\tscore method\t" + "\t".join(dataFile_header))
+
+        miRNA_id = miRNA_values = miRNA_targets = target_id = target_values = score = None
+        for miRNA_id in miRNAtable:
+            miRNA_values = miRNAtable[miRNA_id]["values"]
+            miRNA_targets = miRNAtable[miRNA_id]["targets"]
+            for target_id in miRNA_targets:
+                target_values = geneTable.get(target_id, None)
+                if method == "fc" or target_values is not None:
+                    score = getScore(miRNA_values, target_values, method)
+                    outputFile.write(miRNA_id + "\t" + target_id + "\t" + str(score) + "\t" + method + "\t" + "\t".join(miRNA_values))
+    except Exception as e:
+        pass
+    finally:
+        outputFile.close()
+
     return True
+
+def getScore(values_1, values_2, method):
+    if method == "fc":
+        #CALCULATE THE FOLD CHANGE
+        import random
+        return random.uniform(-1, 1)
+    elif method == "spearman":
+        #CALCULATE THE CORRELATION USING SPEARMAN
+        return scipy.stats.spearmanr(map(float, values_1), map(float, values_2)).correlation
+    elif method == "kendall":
+        #CALCULATE THE CORRELATION USING KENDALL
+        return scipy.stats.kendalltau(map(float, values_1), map(float, values_2)).correlation
+    elif method == "pearson":
+        #CALCULATE THE CORRELATION USING PEARSON
+        return scipy.stats.pearsonr(map(float, values_1), map(float, values_2))[0]
 
 if __name__ == "__main__":
     main()

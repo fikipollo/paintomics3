@@ -1510,7 +1510,34 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 							["Only relevant (DE) miRNAs", "DE"]
 						]
 					}),
-					helpTip: "Choose between consider all miRNAs in the quantification file or only those miRNAs that belong to the list of relevant or differentially expressed miRNAs. Default: 'All miRNAs'"
+					helpTip: "Choose between consider all miRNAs in the quantification file or just those miRNAs that are differentially expressed. Default: 'All miRNAs'"
+				},
+				{
+					xtype: 'combo',
+					itemId: "scoreMethodField",
+					name: this.namePrefix + '_score_method',
+					fieldLabel: 'Score method',
+					editable: false,
+					allowBlank: false,
+					value: "kendall",
+					displayField: 'label',
+					valueField: 'value',
+					store: Ext.create('Ext.data.ArrayStore', {
+						fields: ['label', 'value'],
+						data: [
+							["Fold Change of miRNA expression", "fc"],
+							["Correlation with gene expression (Spearman)", "spearman"],
+							["Correlation with gene expression (Kendall)", "kendall"],
+							["Correlation with gene expression (Pearson)", "pearson"]
+						]
+					}),
+					helpTip:
+					"Usually a single miRNA has multiple potential target genes, but not all targets are being " +
+					"regulated by a certain miRNA at certain moment. Consequently, we need to discriminate the real targets for a miRNA."+
+					"If Gene expression (GE) data is available, then we calculate the correlation between each miRNA " +
+					"and each target gene and filter out all those miRNAs that has a lower correlation value than a given threadhold." +
+					"If no GE is available then we filter based on the fold-change for the expression of the miRNAs." +
+					"Default: 'Kendall correlation' if GE is available. 'Fold Change' in other case."
 				},
 				{
 					xtype: 'combo',
@@ -1525,28 +1552,39 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 					store: Ext.create('Ext.data.ArrayStore', {
 						fields: ['label', 'value'],
 						data: [
-							["by Fold Change", "fc"],
-							["by absolute correlation with gene", "abs_correlation"],
-							["by positive correlation with gene", "positive_correlation"],
-							["by negative correlation with gene", "negative_correlation"]
+							["by max. fold-change of miRNA expression", "fc"],
+							["by absolute correlation with gene expression", "abs_correlation"],
+							["by positive correlation with gene expression", "positive_correlation"],
+							["by negative correlation with gene expression", "negative_correlation"]
 						]
 					}),
+					//TODO: THIS HELP TOOL IS NOT DISPLAYED, WHY??
 					helpTip:
-					"Usually a single miRNA has multiple potential target genes, but not all targets are being " +
-					"regulated by the miRNA at certain moment. Consequently, it is necessary to discriminate the real targets for a miRNA."+
-					"We use different methods. If Gene expression data is available then we calculate the correlation between each miRNA " +
-					"and each target gene and filter out all those miRNAs that has a lower correlation value than a given threadhold." +
-					"If no gene expression is available then we filter out based on the values of fold change for the expression of the miRNAs." +
-					"Default: 'by negative correlation with gene' if gene expression is available. 'by Fold Change' in other case."
+					"Determines how we select the potential miRNAs that are regulating a certain gene. " +
+					"Usually miRNA act as inhibitors of gene expression so we should expect an opposite behavior " +
+					"to the regulated gene. A negative correlation will fit better to this expected profile. " +
+					"Default: If gene expression (GE) if avilable, select and order by 'negative correlation'. 'Max fold-change' in other case.",
+					listeners:{
+						change: function(elem, newValue, oldValue){
+							debugger
+							var elem = elem.nextSibling("numberfield");
+							if(newValue === "negative_correlation"){
+								elem.setValue(Math.abs(elem.value) * -1);
+							}else{
+								elem.setValue(Math.abs(elem.value));
+							}
+						}
+					}
 				},
 				{
 					xtype: 'numberfield',
 					itemId: "cutoffField",
 					name: this.namePrefix + '_cutoff',
 					fieldLabel: 'Filter cutoff',
-					value: 0.5,
-					minValue: 0,
+					value: -0.5,
+					minValue: -1,
 					maxValue: 1,
+					step: 0.1,
 					allowDecimals: true,
 					allowBlank: false,
 					helpTip: "The value for the threadhold. All miRNAs with a lower value of correlation or FC will be filterd out from the results. Default: 0.5"
