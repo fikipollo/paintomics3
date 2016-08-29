@@ -2728,7 +2728,7 @@ function PA_Step4GlobalHeatmapView() {
 			"  <h2>Global heatmap</h2>" +
 			"</div>" +
 			"<div class='lateralOptionsPanel-body globalHeatmapView-body'>" +
-			'  <p>This panel contains the heatmap for all features involved on this pathway. <br>Choose the visible omics and features using the <i class="fa fa-cogs"></i> Settings button.</p>' +
+			'  <p>This panel contains the heatmap for all the features involved on this pathway. <br>Choose the visible omics features will be visible using the <i class="fa fa-cogs"></i> Settings button.</p>' +
 			'  <div class="updateMessageContainer"> <h3>Visual changes detected! </h3> <p>Some visual settings changed recently but the Heatmap content did not change.<br>Click <a id="refreshHeatmap" href="javascript:void(0)">here</a> if you want to refresh the Heatmap content. </p> </div>' +
 			'  <div class="globalHeatmapConfigurator" ' + (this.showConfigurator ? 'style="display:none"' : '') + '>' +
 			htmlCode +

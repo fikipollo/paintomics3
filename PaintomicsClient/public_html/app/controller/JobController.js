@@ -414,7 +414,7 @@ function JobController() {
 
 		var _recover = function (btn, jobID) {
 			if (btn === "ok" && jobID !== "") {
-				showInfoMessage("Getting Job information...", {logMessage: "Sending new request (recover job).", showSpin: true});
+				showInfoMessage("Loading job information...", {logMessage: "Sending new request (recover job).", showSpin: true});
 				$.ajax({
 					type: "POST", headers: {"Content-Encoding": "gzip"},
 					url: SERVER_URL_PA_RECOVER_JOB,
@@ -574,7 +574,7 @@ function JobController() {
 		var jobModel = jobView.getModel();
 		var me = this;
 		if (jobModel.getStepNumber() > 1) {
-			showInfoMessage("Getting Job information...", {
+			showInfoMessage("Loading job information...", {
 				callback: function () {
 					jobModel.setStepNumber(jobModel.getStepNumber() - 1);
 					me.updateStoredApplicationData("jobModel", jobModel);

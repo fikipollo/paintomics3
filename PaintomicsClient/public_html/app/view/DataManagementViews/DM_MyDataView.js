@@ -172,7 +172,7 @@ function DM_MyDataSummaryPanel() {
 			' <div class="myDataSummaryChartWrapper" id="usedSpaceSummaryPlot"></div>'+
 			' <span class="myDataSummaryCount"><i class="fa fa-file-text-o"></i> <span id="myDataTotalFiles" class="odometer odometer-theme-default">0</span>  Files</span>' +
 			' <span class="myDataSummaryCount"><i class="fa fa-code" style=" background: rgb(255, 182, 28);"></i><span id="myDataTotalJobs" class="odometer odometer-theme-default">0</span> Jobs</span>' +
-   		' <p style="text-align: center;">This is your <b id="myDataAvailableSpace">20 MB</b> personal cloud space, where you can find all your <b>Files</b> and <b>Jobs</b>.<br>Use it carefully and remember that you can always delete old files to free space.</p>'+
+   		' <p style="text-align: center;">This is your <b id="myDataAvailableSpace">20 MB</b> personal cloud storage, where you can find all your <b>Files</b> and <b>Jobs</b>.<br>Use it carefully and remember that you can always delete old files to free space.</p>'+
 			'</div>',
 			listeners: {
 				boxready: function() {
@@ -277,7 +277,7 @@ function DM_MyDataFileListView() {
 				items: [{
 					xtype: "box",
 					flex: 1,
-					html: '<h3>My files</h3>' + "<p>" + " Use this section to avoid uploading your files again and again, when running Paintomics's tools.<br>" + " Everytime you submit a new file using the available forms, files are automatically stored on your personal space so you can reuse them in future analysis as well as download and visualize on-line.<br>" + " Additionally, use the <a id='myFilesUploadFilesLink' href='javascript:void(0)'><i>Upload new files</i></a> option at main menu to upload multiple files in batch. <b>Mind the available space!</b>" + "</p>"
+					html: '<h3>My files</h3>' + "<p>" + " Use this section to avoid uploading your files again and again, when running Paintomics's tools.<br>" + " Everytime you submit a new file using the available forms, files are automatically stored on your personal space so you can reuse them in future analysis as well as download and visualize them online.<br>" + " Additionally, use the <a id='myFilesUploadFilesLink' href='javascript:void(0)'><i>Upload new files</i></a> option on the main menu to upload multiple files in batch. <b>Keep your available space in mind!</b>" + "</p>"
 				}, {
 					xtype: "livesearchgrid",
 					itemId: "myFilesGrid",
@@ -468,7 +468,7 @@ function DM_MyDataJobListView() {
 			items: [{
 				xtype: "box",
 				flex: 1,
-				html: '<h3>My jobs</h3>' + "<p>" + " As you run new jobs in Paintomics, this section will show the status of your Jobs.</br>" + " You can resume your Jobs and continue working or download the resulting after each process." + "</p>"
+				html: '<h3>My jobs</h3>' + "<p>" + " As you run new jobs in Paintomics, this section will show the status of your Jobs.</br>" + " You can resume your Jobs and continue working or download the results after each process." + "</p>"
 			}, {
 				xtype: "livesearchgrid",
 				itemId: "myFilesGrid",

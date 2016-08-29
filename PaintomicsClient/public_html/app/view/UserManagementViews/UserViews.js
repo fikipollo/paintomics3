@@ -133,8 +133,8 @@ function SignInPanel() {
                                     '<div style="padding-left: 30px; border-left: 1px solid #E7E7E7;">' +
                                     '<h2>Guest session</h2>' +
                                     '<h4>Start a new Guest session on Paintomics.</h4>' +
-                                    '<p><b>Please note</b> that all data submitted by Guest users as well as jobs and the generated data, will keep on the system a maximum of <b>7 days</b>.</p>' +
-                                    '<p>If you plan to use Paintomics more extensively or want to keep your data longer time, please <b><a class="signUpLink" href="javascript:void(0)">Sign up.</a></b>, it will take you just some seconds.</br>' +
+                                    '<p><b>Please note</b> that all data submitted by Guest users as well as jobs and the generated data, will be stored on the system a maximum of <b>7 days</b>.</p>' +
+                                    '<p>If you plan to use Paintomics more extensively or if you want to keep your data for longer, please <b><a class="signUpLink" href="javascript:void(0)">Sign Up.</a></b>. It only takes a few seconds.</br>' +
                                     '   More info about <a>Registration.</a></p>' +
                                     '<a class="button acceptButton" id="guestUserButton" style=" width: 100%; text-align: center; margin: 10px 0px; "><i class="fa fa-sign-in"></i> Start Guest session</a>' +
                                     '</div>'
@@ -209,7 +209,7 @@ function SignUpPanel() {
                                 {xtype: "box", html: '<h2>Sign Up in seconds</h2>'},
                                 {xtype: "textfield", name: 'email', fieldLabel: 'Your Email ', vtype: 'email', allowBlank: false},
                                 {xtype: "textfield", name: 'password', fieldLabel: 'Choose a Password', inputType: 'password', allowBlank: false},
-                                {xtype: "textfield", name: 'password2', fieldLabel: 'Confirm the Password', inputType: 'password', submitValue: false, allowBlank: false,
+                                {xtype: "textfield", name: 'password2', fieldLabel: 'Confirm Password', inputType: 'password', submitValue: false, allowBlank: false,
                                     validator: function (value) {
                                         if ($("input[name=password]").val() != value) {
                                             return "Password do not match!";
@@ -217,7 +217,7 @@ function SignUpPanel() {
                                         return true;
                                     }
                                 },
-                                {xtype: "textfield", name: 'userName', fieldLabel: 'Your name or a nick', allowBlank: false},
+                                {xtype: "textfield", name: 'userName', fieldLabel: 'Your name or nickname', allowBlank: false},
                                 {xtype: "textfield", name: 'affiliation', fieldLabel: 'Your Affiliation '},
                                 {xtype: "box", html: '<p class="formNode">Please let us know your university, research centre or company and the department or institute.</p>'},
                                 {xtype: "box", html: '<div style="color: #D22; font-size: 16px;" id="invalidSignUpMessage" style="display:none"></div>' +
@@ -278,12 +278,12 @@ function GuestSessionPanel(email, p) {
                     html:
                             '<div style="padding-left: 30px; border-left: 1px solid #E7E7E7;">' +
                             '<h2>Guest session</h2>' +
-                            '<p><b>Welcome guest!</b>, please find below your temporal crendentials. Use this information to resume your jobs or recover your data.</p>' +
+                            '<p><b>Welcome Guest</b>, please find your temporary credentials below. Use this information to resume your jobs or recover your data.</p>' +
                             '<h4><b>Email:    </b> ' + me.email + '</h4>' +
                             '<h4><b>Password: </b> ' + me.p + '</h4>' +
-                            '<b>Remember:</b> all data, jobs and results for Guest Users will keep on the system a maximum of <b>7 days</b>.</p>' +
-                            '<p><a class="signUpLink" href="javascript:void(0)">Sign up.</a></b>, it will take you just some seconds. <a>More info</a>.</p>' +
-                            '<a class="button exampleButton" id="continueButton" style=" width: 100%; text-align: center; margin: 10px 0px; "><i class="fa fa-sign-in"></i> Got it. Let\'s work.</a>' +
+                            '<b>Remember:</b> all data, jobs, and results for Guest Users will be kept on the system for a maximum of <b>7 days</b>.</p>' +
+                            '<p><a class="signUpLink" href="javascript:void(0)">Sign Up</a></b>. It only takes a few seconds. <a>More info</a>.</p>' +
+                            '<a class="button exampleButton" id="continueButton" style=" width: 100%; text-align: center; margin: 10px 0px; "><i class="fa fa-sign-in"></i> Got it! Let\'s get to work!</a>' +
                             '</div>',
                     listeners: {
                         afterrender: function () {

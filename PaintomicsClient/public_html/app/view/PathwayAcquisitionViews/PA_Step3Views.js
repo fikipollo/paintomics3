@@ -507,7 +507,7 @@ function PA_Step3PathwayClassificationView() {
 				pointFormat: '<span style="color:{point.color}">{point.name}</span>: <b>{point.y:.2f}%</b> of total<br/>'
 			},
 			series: [{
-				name: "Pathways classification",
+				name: "Pathways Classification",
 				colorByPoint: true,
 				data: mainClassifications
 			}],
@@ -742,11 +742,11 @@ function PA_Step3PathwayClassificationView() {
 				maxWidth: 1300, html:
 				'<h2>Pathways classification</h2>' +
 				'<div id="pathwayClassificationPlot1Box" style="padding-left: 10px;overflow:hidden;  min-height:300px; width: 45%; float: left;">'+
-				'  <h4>Categories distribution<span class="infoTip">Click on each slice to view the distribution of subcategories.</span></h4> '+
+				'  <h4>Category Distribution<span class="infoTip">Click on each slice to view the distribution of the subcategories.</span></h4> '+
 				'  <div id="pathwayDistributionsContainer" style="height: 240px;"></div>'+
 				'</div>' +
 				'<div id="pathwayClassificationPlot2Box" style="overflow:hidden;  min-height:300px; width: 55%; display:inline-block; padding: 0px 30px">'+
-				'  <h4>Filter by category<span class="infoTip">Use this tool to <b>Show or Hide Pathways</b> based on the classification</span></h4> '+
+				'  <h4>Filter by category<span class="infoTip">Use this tool to <b>Show or Hide Pathways</b> based on their classification</span></h4> '+
 				'  <div id="pathwayClassificationContainer"></div>'+
 				'  <a href="javascript:void(0)" class="button acceptButton helpTip" id="applyClassificationSettingsButton" style="margin: 0px 50px 17px 0px;" title="Apply changes"><i class="fa fa-check"></i> Apply</a>' +
 				'</div>',
@@ -1802,7 +1802,7 @@ function PA_Step3PathwayClassificationView() {
 					'  </div>' +
 					'  <a href="javascript:void(0)" class="toolbarOption helpTip" id="fullscreenSettingsPanelButton" ><i class="fa fa-arrows-alt"></i> Full screen</a>' +
 					'  <a href="javascript:void(0)" class="toolbarOption helpTip resumeLayout" id="resumeLayoutButton" style="float:right"><i class="fa fa-play"></i> Resume layout</a>' +
-					'  <a href="javascript:void(0)" class="toolbarOption resumeLayout helpTip" id="saveNodePositionsButton"  style="float:right"><i class="fa fa-floppy-o"></i> Save nodes position</a>' +
+					'  <a href="javascript:void(0)" class="toolbarOption resumeLayout helpTip" id="saveNodePositionsButton"  style="float:right"><i class="fa fa-floppy-o"></i> Save Node Positions</a>' +
 					'  <p id="step3-network-toolbar-message"></p>'+
 					'</div>' +
 					'<div id="pathwayNetworkBox" style="position: relative;overflow:hidden; height:595px; width: 100%;"><div id="pathwayNetworkWaitBox"><i class="fa fa-cog fa-spin"></i> Building network...</div></div>'
@@ -2513,13 +2513,13 @@ function PA_Step3PathwayClassificationView() {
 					}, {
 						text: 'Features',
 						columns: [{
-							text: 'Genes', cls:"header-90deg",
+							text: 'Unique</br>genes', cls:"header-90deg",
 							sortable: true,
 							align: "center", width: 50,
 							filter: {type: 'numeric'},
 							dataIndex: 'matchedGenes'
 						}, {
-							text: 'Metabolites', cls:"header-90deg",
+							text: 'Unique</br>metabol.', cls:"header-90deg",
 							sortable: true,
 							align: "center", width: 50,
 							filter: {type: 'numeric'},
@@ -2647,7 +2647,7 @@ function PA_Step3PathwayClassificationView() {
 					}
 					//RENDER THE VALUE -> IF LESS THAN 0.05, USE SCIENTIFIC NOTATION
 					var renderedValue = (value > 0.001 || value === 0) ? parseFloat(value).toFixed(5) : parseFloat(value).toExponential(4);
-					var omicName = "-" + metadata.column.text.toLowerCase().replace(/ /g, "-");
+					var omicName = "-" + metadata.column.text.toLowerCase().replace(/ /g, "-").replace(/<\/br>/g, "-");
 
 					if(value <= 0.065){
 						var color = Math.round(225 * (value/0.065));

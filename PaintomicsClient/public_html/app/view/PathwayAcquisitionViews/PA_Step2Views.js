@@ -66,9 +66,9 @@ function PA_Step2JobView() {
 			html: '<div id="about">' +
 				'  <h2 >Feature ID/name translation summary <span class="helpTip" title="For example, for Gene Expression data, the diagram indicated the percentage of the input genes (names or identifiers) which were successfully mapped to a Kegg Gene Identifier."></h2>' +
 				'  <p>' +
-				'    Below you will find an overview of the results after matching the input files against Paintomics Databases.<br>' +
-				'    As general rule, the bigger the percentage of mapped features, the better results will be obtained in later steps.<br>' +
-				'    Check the results and review your input data in case of low level of mapping.<br>' +
+				'    Below you will find an overview of the results after matching the input files against the PaintOmics databases.<br>' +
+				'    As a general rule, the bigger the percentage of mapped features, the better the results obtained in later stages.<br>' +
+				'    If the mapping percentage was low, manually check your results and input data.<br>' +
 				((Object.keys(dataDistribution).length > 0) ? '  <a href="javascript:void(0)" id="download_mapping_file"><i class="fa fa-download"></i> Download ID/Name mapping results.</a>' : "") +
 				'</div>'
 		}];

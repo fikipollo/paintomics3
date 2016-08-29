@@ -377,7 +377,7 @@ class PathwayAcquisitionJob(Job):
         After that, the function calculates the significance for each omic type for the current pathway
 
         @param {List} genesInPathway, list of gene IDs in the pathway (ordered)
-        @param {List} compoundsInPathway, list of gene IDs in the pathway (ordered)
+        @param {List} compoundsInPathway, list of compound IDs in the pathway (ordered)
         @param {List} inputGenes, list of genes (class Gene) in the input
         @param {List} inputCompounds, list of compounds (class Compound) in the input
         @param {Dict} totalFeaturesByOmic, contains the total features for each omic type (for statistics)
@@ -401,7 +401,7 @@ class PathwayAcquisitionJob(Job):
 
         compoundsInPathway=set([x.lower() for x in compoundsInPathway])
         for compound in inputCompounds:
-            if(compound.getID() in compoundsInPathway or compound.getID().lower() in compoundsInPathway):
+            if(compound.getID().lower() in compoundsInPathway):
                 isValidPathway= True
                 pathwayInstance.addMatchedCompoundID(compound.getID())
                 for omicValue in compound.getOmicsValues():

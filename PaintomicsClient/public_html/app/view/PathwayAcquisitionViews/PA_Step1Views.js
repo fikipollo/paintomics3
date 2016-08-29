@@ -1566,7 +1566,6 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 					"Default: If gene expression (GE) if avilable, select and order by 'negative correlation'. 'Max fold-change' in other case.",
 					listeners:{
 						change: function(elem, newValue, oldValue){
-							debugger
 							var elem = elem.nextSibling("numberfield");
 							if(newValue === "negative_correlation"){
 								elem.setValue(Math.abs(elem.value) * -1);
