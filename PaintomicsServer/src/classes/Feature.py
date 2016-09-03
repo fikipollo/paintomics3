@@ -106,9 +106,10 @@ class OmicValue(Model):
     #******************************************************************************************************************
     def __init__(self, inputName):
         self.inputName = inputName
-        self.omicName= ""
-        self.relevant = ""
-        self.values=None
+        self.originalName = inputName
+        self.omicName  = ""
+        self.relevant  = ""
+        self.values    = None
 
     #******************************************************************************************************************
     # GETTERS AND SETTER
@@ -117,6 +118,11 @@ class OmicValue(Model):
         self.inputName = inputName
     def getInputName(self):
         return self.inputName
+
+    def setOriginalName(self, originalName):
+        self.originalName= originalName
+    def getOriginalName(self):
+        return self.originalName
 
     def setRelevant(self, relevant):
         self.relevant = relevant
@@ -168,8 +174,10 @@ class Compound(Feature):
 
     def calculateSimilarity(self, other_name):
         mainPrefixes = {"", "cis-","trans-","d-","l-","(s)-","alpha-","beta-","alpha-d-","beta-d-","alpha-l-","beta-l-"}
-        if self.getName().lower().replace(other_name.lower(), "") in mainPrefixes:
+        if self.getName().lower() == other_name.lower():
             self.similarity = 1
+        elif self.getName().lower().replace(other_name.lower(), "") in mainPrefixes:
+            self.similarity = 0.9
         else:
             self.similarity = SequenceMatcher(a=self.getName().lower(), b=other_name.lower()).ratio()
         return self.similarity

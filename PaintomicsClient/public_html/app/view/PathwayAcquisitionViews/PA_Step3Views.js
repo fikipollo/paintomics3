@@ -355,8 +355,8 @@ function PA_Step3JobView() {
 			items: [
 				{ //THE TOOLBAR
 					xtype: "box",cls: "toolbar secondTopToolbar", html:
-					'<a href="javascript:void(0)" class="button backButton"><i class="fa fa-arrow-left"></i> Go back</a>' +
-					'<a href="javascript:void(0)" class="button cancelButton" id="resetButton"><i class="fa fa-refresh"></i> Reset</a>'
+					'<a href="javascript:void(0)" class="button btn-danger btn-right" id="resetButton"><i class="fa fa-refresh"></i> Reset</a>' +
+					'<a href="javascript:void(0)" class="button btn-default btn-right backButton"><i class="fa fa-arrow-left"></i> Go back</a>'
 				},{ //THE SUMMARY PANEL
 					xtype: 'container', itemId: "pathwaysSummaryPanel",
 					layout: 'column', style: "max-width:1300px; margin: 5px 10px; margin-top:50px;", items: [
@@ -748,7 +748,7 @@ function PA_Step3PathwayClassificationView() {
 				'<div id="pathwayClassificationPlot2Box" style="overflow:hidden;  min-height:300px; width: 55%; display:inline-block; padding: 0px 30px">'+
 				'  <h4>Filter by category<span class="infoTip">Use this tool to <b>Show or Hide Pathways</b> based on their classification</span></h4> '+
 				'  <div id="pathwayClassificationContainer"></div>'+
-				'  <a href="javascript:void(0)" class="button acceptButton helpTip" id="applyClassificationSettingsButton" style="margin: 0px 50px 17px 0px;" title="Apply changes"><i class="fa fa-check"></i> Apply</a>' +
+				'  <a href="javascript:void(0)" class="button btn-success btn-right helpTip" id="applyClassificationSettingsButton" style="margin: 0px 50px 17px 0px;" title="Apply changes"><i class="fa fa-check"></i> Apply</a>' +
 				'</div>',
 				listeners: {
 					boxready: function() {
@@ -1761,7 +1761,7 @@ function PA_Step3PathwayClassificationView() {
 					'  <div class="slider-ui" style="margin:10px;" id="minSharedFeaturesSlider"></div>' +
 					'  <h5>Min p-value for the pathway (<span id="minPValue">0.05</span>)<span class="helpTip" style="float:right;" title="Pathways with lower p-value (more significant) will be represented with bigger nodes. Pathways with higher p-value (less significant), will be shown as small nodes."</span></h5>' +
 					'  <div class="slider-ui" style="margin:10px;" id="minPValueSlider"></div>' +
-					'  <a href="javascript:void(0)" class="button acceptButton helpTip" id="applyNetworkSettingsButton" style="margin-top: 20px;" title="Apply changes"><i class="fa fa-check"></i> Apply</a>' +
+					'  <a href="javascript:void(0)" class="button btn-success btn-right helpTip" id="applyNetworkSettingsButton" style="margin-top: 20px;" title="Apply changes"><i class="fa fa-check"></i> Apply</a>' +
 					'</div>'
 				},{
 					xtype: 'box', cls: "contentbox", style: 'overflow: hidden; margin:0;', html:

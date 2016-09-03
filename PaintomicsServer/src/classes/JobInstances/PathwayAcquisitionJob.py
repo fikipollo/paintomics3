@@ -19,11 +19,13 @@
 #**************************************************************
 
 import logging
-from os import path as os_path, system as os_system
+from os import path as os_path, system as os_system, makedirs as os_makedirs
 from csv import reader as csv_reader
 from zipfile import ZipFile as zipFile
 from subprocess import check_call, STDOUT, CalledProcessError
-from shutil import move as shutil_move
+from shutil import make_archive as shutil_make_archive
+from src.common.Util import unifyAndSort
+
 
 from src.common.Statistics import calculateSignificance, calculateCombinedSignificancePvalue
 from src.common.Util import chunks, getImageSize
@@ -212,32 +214,103 @@ class PathwayAcquisitionJob(Job):
 
         return nConditions, error
 
+    def processFilesContent(self):
+        """
+        This function processes all the files and returns a checkboxes list to show to the user
 
+        @returns list of matched Metabolites
+        """
+        if not os_path.exists(self.getTemporalDir() ):
+            os_makedirs(self.getTemporalDir() )
+
+        omicSummary = None
+
+        logging.info("CREATING THE TEMPORAL CACHE FOR JOB " + self.getJobID() + "..."  )
+        KeggInformationManager().createTranslationCache(self.getJobID())
+
+        try:
+            logging.info("PROCESSING GENE BASED FILES..." )
+            for inputOmic in self.geneBasedInputOmics:
+                [omicName, omicSummary] = self.parseGeneBasedFiles(inputOmic)
+                logging.info("   * PROCESSED " + omicName + "..." )
+                inputOmic["omicSummary"] = omicSummary
+            logging.info("PROCESSING GENE BASED FILES...DONE" )
+
+            logging.info("PROCESSING COMPOUND BASED FILES..." )
+            checkBoxesData=[]
+            for inputOmic in self.compoundBasedInputOmics:
+                [omicName, checkBoxesData, omicSummary]  = self.parseCompoundBasedFile(inputOmic, checkBoxesData)
+                logging.info("   * PROCESSED " + omicName + "..." )
+                inputOmic["omicSummary"] = omicSummary
+            #REMOVE REPETITIONS AND ORDER ALPHABETICALLY
+            checkBoxesData = unifyAndSort(checkBoxesData, lambda checkBoxData: checkBoxData["title"].lower())
+
+            logging.info("PROCESSING COMPOUND BASED FILES...DONE" )
+
+            #GENERATE THE COMPRESSED FILE WITH MATCHING, COPY THE FILE AT RESULTS DIR AND CLEAN TEMPORAL FILES
+            #COMPRESS THE RESULTING FILES AND CLEAN TEMPORAL DATA
+            #TODO: MOVE THIS CODE TO JOBINFORMATIONMANAGER
+            logging.info("COMPRESSING RESULTS...")
+            fileName = "mapping_results_" + self.getJobID()
+            shutil_make_archive(self.getOutputDir() + fileName, "zip", self.getTemporalDir() + "/")
+            logging.info("COMPRESSING RESULTS...DONE")
+
+            return checkBoxesData
+
+        except Exception as ex:
+            raise ex
+        finally:
+            logging.info("REMOVING THE TEMPORAL CACHE FOR JOB " + self.getJobID() + "..."  )
+            KeggInformationManager().clearTranslationCache(self.getJobID())
+			
     #GENERATE PATHWAYS LIST FUNCTIONS -----------------------------------------------------------------------------------------
     def updateSubmitedCompoundsList(self, selectedCompounds):
         """
         This function is used to generate the final list of selected compounds
 
         @param selectedCompounds, list of selected compounds in format originalName#comopundCode
-        @param keggInformationManager, contains all the tools and info for ids and names matching
         """
 
-        #1. SAVE THE PREVIOUS COMPOUNDS DICT
+        #1. GET THE PREVIOUS COMPOUND TABLE
         initialCompounds = self.getInputCompoundsData()
-        #LOAD THE KEGG INFORMATION FOR GIVEN SPECIE
-        keggInformationManager = KeggInformationManager() #Singleton instance
 
-        #2. CLEAN THE JOBINSTANCE COMPOUNDS LIST
+        #2. CLEAN THE COMPOUNDS TABLE FOR THE JOB INSTANCE
         self.setInputCompoundsData({})
 
         #3. FOR EACH SELECTED COMPOUND
-        #     -  adenosine#C00212 i.e. THE NAME OF THE ORIGINAL COMPOUND AND THE SELECTED COMPOUND ID
-        compoundAux = None
+        #   The input includes the ID for the selected compound followed by the name
+        #   this is important because some compounds could appear in several boxes with different name (but same ID)
+        #   and we need to distinguish which one the user selected
+        #   e.g. C00075#Uridine 5'-triphosphate, Uridine triphosphate
+        #   e.g. C00075#UTP
+        compoundID = compoundName = initialCompound = newCompound = None
         for selectedCompound in selectedCompounds:
-            selectedCompound = selectedCompound.split(",")
+            selectedCompound = selectedCompound.split("#")
+            compoundID = selectedCompound[0]
+            compoundName = selectedCompound[1]
+            originalName = selectedCompound[2]
+            initialCompound = initialCompounds.get(compoundID)
+            newCompound = self.getInputCompoundsData().get(compoundID, None)
 
-            for compoundID in selectedCompound:
-                self.addInputCompoundData(initialCompounds.get(compoundID))
+            if initialCompound is None:
+                continue
+            #If there is not any entry for the current compound yet, add a new empty compound
+            if newCompound is None:
+                newCompound = initialCompound.clone()
+                newCompound.setOmicsValues([]) #Clean the entry
+                self.addInputCompoundData(newCompound)
+
+            #TODO: this could ignore multiple values of different omics types for the same feature
+            for i in sorted(range(len(initialCompound.omicsValues)), reverse=True):
+                omicValue = initialCompound.omicsValues[i]
+                if omicValue.inputName in compoundName.split(", ") and omicValue.originalName.lower() == originalName.lower(): #Some compounds can have combined names, separated by commas
+                    newCompound.addOmicValue(omicValue)
+                    del initialCompound.omicsValues[i]
+            #
+            #
+            # for compoundID in selectedCompound:
+            #     compoundName = compoundID.split
+            #     self.addInputCompoundData(initialCompounds.get(compoundID))
 
             #initialCompoundName = selectedCompound.split("#")[0]
             #selectedCompoundID= selectedCompound.split("#")[1]
@@ -387,7 +460,7 @@ class PathwayAcquisitionJob(Job):
         """
         isValidPathway = False
         pathwayInstance= Pathway("")
-        #TODO: RETURN AS A SET IN KEGGINFORMATION MANAGER
+        #TODO: RETURN AS A SET IN KEGG INFORMATION MANAGER
         genesInPathway=set([x.lower() for x in genesInPathway])
         for gene in inputGenes:
             if(gene.getID().lower() in genesInPathway):
@@ -399,16 +472,35 @@ class PathwayAcquisitionJob(Job):
                     #AS WE WILL CALCULATE IT LATER.
                     pathwayInstance.addSignificanceValues(omicValue.getOmicName(), omicValue.isRelevant())
 
+        #First we get the list of IDs for the compounds that participate in the pathway
         compoundsInPathway=set([x.lower() for x in compoundsInPathway])
+        #Keeps a track of which compounds participates in the pathway, without counting twice compounds that come from the
+        #same measurement (it occurs due to disambiguation step).
+        originalNames = {}
+        #Now, for each compound in the input
         for compound in inputCompounds:
+            #Check if the compound participates in the pathway
             if(compound.getID().lower() in compoundsInPathway):
+                #If at least one compound participates, then the pathway is valid
                 isValidPathway= True
+                #Register that the compound participates in the pathway
                 pathwayInstance.addMatchedCompoundID(compound.getID())
+                #Register the original name for the compound (to avoid duplicate counts for significance test)
+
                 for omicValue in compound.getOmicsValues():
-                    #SIGNIFICANCE-VALUES LIST STORES FOR EACH OMIC 3 VALUES: [TOTAL MATCHED, TOTAL RELEVANT, PVALUE]
-                    #IN THIS LINE WE JUST ADD A NEW MATCH AND, IF RELEVANT, A NEW RELEVANT FEATURE, BUT KEEP PVALUE TO -1
-                    #AS WE WILL CALCULATE IT LATER.
-                    pathwayInstance.addSignificanceValues(omicValue.getOmicName(), omicValue.isRelevant())
+                    if omicValue.getOmicName() not in originalNames:
+                        originalNames[omicValue.getOmicName()] = {} #If the omics type is not in the table yet add it
+                    #Add the original name to the table for the corresponding omics type, specifying if the feature is relevant or not.
+                    # Metabolomics --> Glutamine --> [prev value for isRelevant] or [current feature isRelevant]
+                    #TODO: what if L-Glutamine coming from "Glutamine" is in the list of relevants but Glutamine not? Now we consider Glutamine as relevant
+                    originalNames[omicValue.getOmicName()][omicValue.getOriginalName()] = (originalNames.get(omicValue.getOmicName()).get(omicValue.getOriginalName(), False) or omicValue.isRelevant())
+
+        for omicName, compoundNames in originalNames.iteritems():
+            for isRelevant in compoundNames.values():
+                #SIGNIFICANCE-VALUES LIST STORES FOR EACH OMIC 3 VALUES: [TOTAL MATCHED, TOTAL RELEVANT, PVALUE]
+                #IN THIS LINE WE JUST ADD A NEW MATCH AND, IF RELEVANT, A NEW RELEVANT FEATURE, BUT KEEP PVALUE TO -1
+                #AS WE WILL CALCULATE IT LATER.
+                pathwayInstance.addSignificanceValues(omicName, isRelevant)
 
         if(isValidPathway):
             for omicName in pathwayInstance.getSignificanceValues().keys():
@@ -423,7 +515,7 @@ class PathwayAcquisitionJob(Job):
                 pathwayInstance.setSignificancePvalue(omicName, pValue)
 
             #SIGNIFICANCE VALUES PER OMIC in format OmicName -> [totalFeatures, totalRelevantFeatures, pValue]
-            pathwayInstance.setCombinedSignificancePvalue( calculateCombinedSignificancePvalue(self.getCombinedTest(),pathwayInstance.getSignificanceValues().values()))
+            pathwayInstance.setCombinedSignificancePvalue(calculateCombinedSignificancePvalue(self.getCombinedTest(), pathwayInstance.getSignificanceValues().values()))
 
         else:
             pathwayInstance=None
@@ -588,8 +680,8 @@ class PathwayAcquisitionJob(Job):
         """
         This function...
 
-        @param {type}
-        @returns
+        @param recursive:
+        @return:
         """
         bson = {}
         for attr, value in self.__dict__.iteritems():

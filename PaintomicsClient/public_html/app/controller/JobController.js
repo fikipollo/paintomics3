@@ -258,6 +258,26 @@ function JobController() {
 							jobModel.addFoundCompound(matchedCompound);
 						}
 
+						//UPDATE SELECTED METABOLITES IN ORDER TO AVOID REPEATED SELECTIONS
+						// e.g. if the user uploaded "Alanine" and "beta-Alanine" separately,
+						// the beta-Alanine proposed by the "Alanine" panel will be unselected
+						// by default
+						var selectedCompounds = {};
+						var auxCompound=null;
+						for(var i in jobModel.foundCompounds){
+							for(var j in jobModel.foundCompounds[i].mainCompounds){
+								matchedCompound = jobModel.foundCompounds[i].mainCompounds[j];
+								auxCompound = (selectedCompounds[matchedCompound.getID()] || matchedCompound) ;
+								if(matchedCompound.similarity >= auxCompound.similarity){
+									auxCompound.selected = false;
+									matchedCompound.selected = true;
+									selectedCompounds[matchedCompound.getID()] = matchedCompound;
+								}else{
+									matchedCompound.selected = false;
+								}
+							}
+						}
+
 						me.updateStoredApplicationData("jobModel", jobModel);
 						me.showJobInstance(jobModel);
 						showSuccessMessage("Done", {logMessage: "Generating Metabolites list...DONE", showTimeout: 1, closeTimeout: 0.5});
@@ -287,7 +307,10 @@ function JobController() {
 				type: "POST",
 				headers: {"Content-Encoding": "gzip"},
 				url: SERVER_URL_PA_STEP2,
-				data: {jobID: jobView.getModel().getJobID(), selectedCompounds: jobView.getSelectedCompounds()},
+				data: {
+					jobID: jobView.getModel().getJobID(),
+					selectedCompounds: jobView.getSelectedCompounds()
+				},
 				success: function (response) {
 					console.log("JOB " + response.jobID + " is queued ");
 

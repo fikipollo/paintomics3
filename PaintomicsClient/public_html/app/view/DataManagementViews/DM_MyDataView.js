@@ -74,7 +74,7 @@ function DM_MyDataListView() {
 				items: [
 					{
 						xtype: "box", cls: "toolbar secondTopToolbar", html:
-						'<a href="javascript:void(0)" class="button backButton" id="uploadNewFilesButton"><i class="fa fa-cloud-upload"></i> Upload new files</a>'
+						'<a class="button btn-secondary" id="uploadNewFilesButton"><i class="fa fa-cloud-upload"></i> Upload new files</a>'
 					},
 					{
 						xtype: 'container',

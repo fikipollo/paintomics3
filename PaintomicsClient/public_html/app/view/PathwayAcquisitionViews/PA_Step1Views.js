@@ -237,9 +237,10 @@ function PA_Step1JobView() {
 			items: [{
 				xtype: "box",
 				cls: "toolbar secondTopToolbar",
-				html: '<a href="javascript:void(0)" class="button acceptButton" id="submitButton"><i class="fa fa-play"></i> Run Paintomics</a>' +
-				'<a href="javascript:void(0)" class="button exampleButton" id="exampleButton"><i class="fa fa-file-text-o"></i> Load example</a>' +
-				'<a href="javascript:void(0)" class="button cancelButton" id="resetButton" style="float:right"><i class="fa fa-refresh"></i> Reset</a>'
+				html:
+				'<a class="button btn-danger btn-right" id="resetButton"><i class="fa fa-refresh"></i> Reset</a>' +
+				'<a class="button btn-success btn-right" id="submitButton"><i class="fa fa-play"></i> Run PaintOmics</a>' +
+				'<a class="button btn-secondary btn-right" id="exampleButton"><i class="fa fa-file-text-o"></i> Load example</a>'
 			}, {
 				xtype: 'box',
 				cls: "contentbox",

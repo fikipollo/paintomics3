@@ -201,8 +201,6 @@ ul.menu li.loggedOption, ul.menu span.loggedOption {
 
 .button {
 	background-color: #5b5a59;
-	-moz-border-radius: px;
-	-webkit-border-radius: 8px;
 	cursor: pointer;
 	color: #E2E2E2;
 	font-family: Arial;
@@ -211,26 +209,112 @@ ul.menu li.loggedOption, ul.menu span.loggedOption {
 	text-decoration: none;
 	float: right;
 	margin: 0px 5px;
-}
-.secondTopToolbar .button {
-	background: #ffffff;
-	box-shadow: 0px 1px 1px #DAD9D9;
-	color: #777777;
-}
-.button.acceptButton {
-	background: #12a22f;
-	color: #ffffff;
+	white-space: nowrap;
+	vertical-align: middle;
+	border: 1px solid transparent;
+	border-radius: 4px;
 }
 .button:hover {
 	background: #50c0ed;
 	color: #ffffff;
 }
-.acceptButton:hover {
-	background: #23D046;
+.button.btn-sm {
+	font-size: 10px;
+}
+.button.btn-no-float {
+	float:none; /*TODO: REPLACE BY btn-float*/
+}
+.btn-right {
+	float:right; /*TODO: REPLACE BY btn-float*/
+}
+.btn-left {
+	float:left; /*TODO: REPLACE BY btn-float*/
+}
+.btn-default {
+    color: #333;
+    background-color: #fff;
+    border-color: #ccc;
+}
+.btn-default:hover {
+    color: #333;
+    background-color: #e6e6e6;
+    border-color: #adadad;
+}
+.btn-primary {
+    color: #fff;
+    background-color: #337ab7;
+    border-color: #2e6da4;
+}
+.btn-primary:hover {
+    color: #fff;
+    background-color: #286090;
+    border-color: #204d74;
+}
+.btn-secondary {
+    color: #fff;
+		background-color: #55c9a6;
+		border-color: #53af93;
+}
+.btn-secondary:hover {
+    color: #fff;
+    background-color: #59b790;
+    border-color: #419875;
+}
+.btn-info{
+	color: #fff;
+	background-color: #5bc0de;
+	border-color: #46b8da;
+}
+.btn-info:hover {
+    color: #fff;
+    background-color: #31b0d5;
+    border-color: #269abc;
+}
+.btn-success {
+    color: #fff;
+    background-color: #5cb85c;
+    border-color: #4cae4c;
+}
+.btn-success:hover {
+    color: #fff;
+    background-color: #449d44;
+    border-color: #398439;
+}
+.btn-warning {
+    color: #fff;
+    background-color: #f0ad4e;
+    border-color: #eea236;
+}
+.btn-warning:hover {
+    color: #fff;
+    background-color: #ec971f;
+    border-color: #d58512;
+}
+.btn-danger {
+    color: #fff;
+    background-color: #d9534f;
+    border-color: #d43f3a;
+}
+.btn-danger {
+    color: #fff;
+    background-color: #d9534f;
+    border-color: #d43f3a;
+}
+.btn-danger:hover {
+    color: #fff;
+    background-color: #c9302c;
+    border-color: #ac2925;
+}
+.button.acceptButton {
+	background: #12a22f;
 	color: #ffffff;
 }
-.backButton:hover {
-	background: #23D39E;
+.button.acceptButton {
+	background: #12a22f;
+	color: #ffffff;
+}
+.acceptButton:hover {
+	background: #23D046;
 	color: #ffffff;
 }
 .cancelButton:hover {
@@ -629,8 +713,8 @@ div.checkbox label, div.radio label {
 	overflow: hidden;
 	margin: 5px 10px;
 	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
-	border-top-left-radius: 10px;
-	border-top-right-radius: 10px;
+	border-top-left-radius: 2px;
+	border-top-right-radius: 2px;
 }
 .omicboxTitle {
 	height: 50px;
@@ -860,7 +944,7 @@ div#pathwayClassificationContainer {overflow-y: auto; overflow-x: hidden;}
 /********************************************************************************
 **STYLES FOR STEP 4
 *********************************************************************************/
-
+#diagramPin{background-color: #d9534f; border-color: #d43f3a;}
 .x-tab-bar-strip-default-top {
 	height: 1px;
 }
@@ -1053,7 +1137,7 @@ i.relevantFeature:before {
 }
 .lateralOptionsPanel-header {
 	padding: 8px;
-	background: #47A780;
+	background: #333;
 }
 .lateralOptionsPanel-header h2 {
 	color: #fff;
@@ -1450,10 +1534,7 @@ p.formHelpTip {
 a.toolbarOption {
 	font-size: 30px;
 	padding: 7px 10px 0px 10px;
-	background: #4C4C4C;
 	margin: 0px 10px;
-	border-radius: 2px;
-	color: #FFFFFF;
 	float: right;
 }
 div.contentbox {
@@ -1478,8 +1559,6 @@ div.lateralOptionsPanel-header .toolbarOption {
 .lateralOptionsPanel-toolbar .toolbarOption.downloadTool {
 	font-size: 10px;
 	text-align: center;
-	margin-top: 5px;
-	background: #f2f2f2;
 	line-height: 7px;
 	padding: 3px 5px;
 }

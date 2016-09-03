@@ -202,23 +202,25 @@ function PA_Step4JobView() {
 		var me = this;
 
 		this.component = Ext.widget({
-			xtype: "container", id: "pathwaysPanelsContainer", flex:1,
-			layout: {type: 'vbox',pack: 'start',align: 'stretch'},
+			xtype: "container",
+			id: "pathwaysPanelsWrapper",
+			flex:1,
+			layout: {type: 'vbox',pack: 'start', align: 'stretch'},
 			items: [{ //THE SECONDARY TOOLBAR
 				xtype: "container", cls: "toolbar secondTopToolbar",
 				items: [{
 					xtype: "box", html:
-					'<a href="javascript:void(0)" class="button helpTip" id="visualSettingsButton"><i class="fa fa-wrench"></i> Settings</a>' +
-					'<a href="javascript:void(0)" class="button helpTip" id="searchButton"><i class="fa fa-search"></i> Search</a>' +
-					'<a href="javascript:void(0)" class="button helpTip" id="globalHeatmapButton" style="background: #47A780;color: #fff;"><i class="fa fa-th"></i> Show Heatmap</a>' +
-					'<a href="javascript:void(0)" class="button helpTip" id="pathwayButton" style="background: #5780BB;color: #fff;"><i class="fa fa-sitemap"></i>  Show Pathway</a></div>' +
-					'<a href="javascript:void(0)" class="button backButton"><i class="fa fa-arrow-left"></i> Go back</a>' +
+					'<a href="javascript:void(0)" class="button btn-danger helpTip" id="visualSettingsButton"><i class="fa fa-wrench"></i> Settings</a>' +
+					'<a href="javascript:void(0)" class="button btn-info helpTip" id="searchButton"><i class="fa fa-search"></i> Search</a>' +
+					'<a href="javascript:void(0)" class="button btn-secondary helpTip" id="globalHeatmapButton"><i class="fa fa-th"></i> Show Heatmap</a>' +
+					'<a href="javascript:void(0)" class="button btn-primary helpTip" id="showPathwayButton"><i class="fa fa-sitemap"></i>  Show Pathway</a></div>' +
+					'<a href="javascript:void(0)" class="button btn-default backButton"><i class="fa fa-arrow-left"></i> Go back</a>' +
 					'<a href="javascript:void(0)" class="button helpTip" style=" float: left; background-color: #D66379; color: #fff;" id="showHistoryButton"><i class="fa fa-history"></i> History</a>' +
 					'<div id="pathwayHistoryContainer" class="step4HistoryBox"><h2>History</h2><div></div></div>'
 				}]
 			}, { //THE CONTAINER FOR THE PATHWAY VIEWS
 				xtype: "container", flex:1,
-				style: "min-height:800px; padding: 5px 10px;",
+				style: "padding: 5px 10px;",
 				itemId: "pathwaysPanelsContainer",
 				layout: 'fit',
 				items: []
@@ -230,7 +232,7 @@ function PA_Step4JobView() {
 						me.backButtonHandler();
 					});
 
-					$("#pathwayButton").click(function() {
+					$("#showPathwayButton").click(function() {
 						me.currentView.showDiagramPanel();
 					});
 
@@ -547,7 +549,7 @@ function PA_Step4PathwayView() {
 	//TODO: DOCUMENTAR
 	this.adjustChildrenWidth = function() {
 		var savedSpace = 450; //min width for pathway view
-		var parentSize = $("#pathwaysPanelsContainer").width();
+		var parentSize = $("#pathwaysPanelsWrapper").width();
 
 		if ((this.findFeaturesPanel && this.findFeaturesPanel.isVisible()) ||
 		this.visualOptionsPanel && this.visualOptionsPanel.isVisible()) {
@@ -819,13 +821,14 @@ function PA_Step4KeggDiagramView() {
 			xtype: "box",
 			cls: "lateralOptionsPanel",
 			defaults: {border: false},
-			flex: 1, minWidth: 400, previousWidth: 400, width: 400, html:
-			'<div class="lateralOptionsPanel-header" style="background: #5780BB;">' +
+			flex: 1, minWidth: 400, previousWidth: 400, width: 400,  height: ($("#mainViewCenterPanel").height() - 100),
+			html:
+			'<div class="lateralOptionsPanel-header" style="background: #337ab7;">' +
 			'   <div class="lateralOptionsPanel-toolbar">' +
-			'    <a href="javascript:void(0)" class="toolbarOption helpTip" id="hideDiagramPanelButton" title="Hide this panel" style="background: #5780BB;"><i class="fa fa-times"></i></a>' +
-			'    <a href="javascript:void(0)" class="toolbarOption helpTip" id="expandDiagramPanelButton" style="display:none; background: #5780BB;"  title="Expand this panel"><i class="fa fa-expand"></i></a>' +
-			'    <a href="javascript:void(0)" class="toolbarOption helpTip" id="shrinkDiagramPanelButton" style="background: #5780BB;" title="Shrink this panel"><i class="fa fa-compress"></i></a>' +
-			'    <a href="javascript:void(0)" class="toolbarOption downloadTool helpTip" id="downloadDiagramPanelButton" title="Download the diagram" style="color: #5780bb;"><i class="fa fa-download"></i> Download</a>' +
+			'    <a href="javascript:void(0)" class="toolbarOption btn-primary helpTip" id="hideDiagramPanelButton" title="Hide this panel"><i class="fa fa-times"></i></a>' +
+			'    <a href="javascript:void(0)" class="toolbarOption btn-primary helpTip" id="expandDiagramPanelButton" style="display:none;"  title="Expand this panel"><i class="fa fa-expand"></i></a>' +
+			'    <a href="javascript:void(0)" class="toolbarOption btn-primary helpTip" id="shrinkDiagramPanelButton" title="Shrink this panel"><i class="fa fa-compress"></i></a>' +
+			'    <a href="javascript:void(0)" class="toolbarOption btn-default downloadTool helpTip" id="downloadDiagramPanelButton" title="Download the diagram"><i class="fa fa-download"></i> Download</a>' +
 			'   </div>' +
 			'   <h2>' + this.model.getName() + '</h2>' +
 			'</div>' +
@@ -840,7 +843,9 @@ function PA_Step4KeggDiagramView() {
 
 					//GET THE VIEW PORT AND IF THE IMAGE IS BIGGER, CALCULATE THE ADJUST FACTOR
 					var viewportWidth = $(this.el.dom).width();
-					var viewportHeight = $(this.el.dom).height();
+					var headerHeight = $(this.el.dom).find(".lateralOptionsPanel-header").outerHeight();
+					var viewportHeight = $("#mainViewCenterPanel").height() - headerHeight - 90;
+					// var viewportHeight = $(this.el.dom).height();
 					var imageWidth = graphicalOptions.getImageWidth();
 					var imageHeight = graphicalOptions.getImageHeight();
 					var imageProportion = imageHeight / imageWidth;
@@ -1067,6 +1072,11 @@ function PA_Step4KeggDiagramFeatureSetTooltip() {
 		}
 	};
 
+	this.hide = function(force) {
+		this.forceHide = force;
+		this.getComponent().hide();
+	};
+
 	//TODO: DOCUMENTAR
 	this.showFeatureSetDetails = function(targetID, feature) {
 		this.getParent().showFeatureSetDetails(targetID, this.getModel(), feature);
@@ -1134,6 +1144,7 @@ function PA_Step4KeggDiagramFeatureSetTooltip() {
 		this.featureView = new PA_Step4KeggDiagramFeatureView();
 		this.featureView.setParent(me);
 		this.featureView.setCollapsible(false);
+		this.featureView.setClosable(true);
 
 		this.component = Ext.create('Ext.tip.ToolTip', {
 			target: "", id: "theTooltip",
@@ -1178,10 +1189,10 @@ function PA_Step4KeggDiagramFeatureSetTooltip() {
 					});
 				},
 				beforehide: function() {
-					var me = this;
-					if ($("#theTooltip").is(":hover")) {
+					if ($("#theTooltip").is(":hover") && me.forceHide !== true) {
 						return false;
 					}
+					delete me.forceHide;
 				}
 			}
 		});
@@ -1192,7 +1203,7 @@ function PA_Step4KeggDiagramFeatureSetTooltip() {
 }
 PA_Step4KeggDiagramFeatureSetTooltip.prototype = new View();
 
-function PA_Step4KeggDiagramFeatureView() {
+function PA_Step4KeggDiagramFeatureView(showButtons) {
 	/**
 	* About this view: this class creates a new view for a given Feature, view is a panel
 	* containing a HEATMAP and a LINE PLOT showing an overview of the feature information
@@ -1204,12 +1215,17 @@ function PA_Step4KeggDiagramFeatureView() {
 	***********************************************************************/
 	this.name = "PA_Step4KeggDiagramFeatureView";
 	this.collapsible = true;
+	this.closable = false;
+	this.showButtons = (showButtons === true);
 
 	/***********************************************************************
 	* GETTER AND SETTERS
 	***********************************************************************/
 	this.setCollapsible = function(collapsible){
 		this.collapsible = collapsible;
+	};
+	this.setClosable = function(closable){
+		this.closable = closable;
 	};
 	/***********************************************************************
 	* OTHER FUNCTIONS
@@ -1229,8 +1245,9 @@ function PA_Step4KeggDiagramFeatureView() {
 		var visualOptions = this.getParent("PA_Step4PathwayView").getVisualOptions();
 		var componentID = "#" + this.getComponent().getId();
 
-		/*UPDATE THE NAME OF THE FEATURE*/
-		$(componentID + " .featureNameLabel").text(" " + this.getModel().getFeature().getName());
+		//UPDATE THE NAME OF THE FEATURE
+		var componentNames = this.getModel().getFeature().getName().split(",");
+		$(componentID + " .featureNameLabel").text(" " + componentNames[0]);
 		$(componentID + " .featureNameLabelRelevant").toggle(this.getModel().getFeature().isRelevant());
 
 		//Do not render if the component was never expanded (lazy rendering)
@@ -1252,7 +1269,6 @@ function PA_Step4KeggDiagramFeatureView() {
 		}
 
 		/*UPDATE THE HEATMAP AND THE PLOT*/
-
 		var visibleOmics =[];
 		var allOmics = null;
 		if(featureType.toLowerCase() === "gene"){
@@ -1291,16 +1307,31 @@ function PA_Step4KeggDiagramFeatureView() {
 			parent.siblings("div.step4-tooltip-plot-container[name="+ target + "]").addClass("selected").toggle();
 		});
 
-		if (hideLinks !== true) {
-			this.generateLinks(componentID + " .extraInfoPanel", specie, this.getModel().getFeature().getName(), this.getModel().getFeature().getID(), featureType);
-		}else{
+		if (hideLinks === true) {
 			$(componentID + " .extraInfoPanel").hide();
+		}else{
+			this.generateExtraInfoPanelContent(componentID + " .extraInfoPanel", specie, componentNames, this.getModel().getFeature().getID(), featureType);
 		}
 	};
 
 	//TODO: DOCUMENTAR
-	this.generateLinks = function(target, specie, featureName, featureID, featureType) {
+	this.generateExtraInfoPanelContent = function(target, specie, componentNames, featureID, featureType) {
+		var me = this;
+
 		$.getJSON(SERVER_URL_GET_AVAILABLE_SPECIES, function(data){
+			var htmlCode = "";
+
+			var featureName = componentNames.shift();
+			if(componentNames.length > 0){
+				htmlCode +=
+				'<p><b>Other names:</b> ' + componentNames.join(", ") + '</p>';
+			}
+
+			htmlCode+=
+			"<div class='externalLinksContainer'>" +
+			"<b>External links</b>" +
+			"  <ul style='list-style-type: none;'>";
+
 			var species = data.species;
 			var specieName = "";
 			for (var i in species) {
@@ -1313,33 +1344,62 @@ function PA_Step4KeggDiagramFeatureView() {
 			var alternativeName = specieName.split("(")[1];
 			alternativeName = alternativeName.substring(0,1).toUpperCase() +  alternativeName.substring(1,alternativeName.length-1);
 			// specieName = encodeURIComponent(featureName + " " + specieName);
+
 			if(featureType.toLowerCase() === "gene"){
-				$(target).html(
-					"<div class='externalLinksContainer'>" +
-					"<b>External links</b>" +
-					"  <ul style='list-style-type: none;'>" +
+				htmlCode +=
 					"    <li><a href='http://www.kegg.jp/dbget-bin/www_bget?" + specie + ":" + featureID + "' target='_blank'><i class='fa fa-external-link'></i>Search at KEGG Database</a></li>" +
 					"    <li><a id='ensemblGenomesSearch' href='http://ensemblgenomes.org/search/eg/" + featureName + "' target='_blank'><i class='fa fa-external-link'></i>Search at Ensembl Genomes</a></li>" +
 					"    <li><a id='ensemblSearch' href='http://www.ensembl.org/Multi/Search/Results?q=" + encodeURIComponent(featureName) + ";facet_species="+ encodeURIComponent(alternativeName) + "' target='_blank'><i class='fa fa-external-link'></i>Search at Ensembl (vertebrates)</a></li>" +
 					((specie === "hsa") ? "<li><a href='http://www.genecards.org/cgi-bin/carddisp.pl?gene=" + featureName + "' target='_blank'><i class='fa fa-external-link'></i>Search at GeneCards Database</a></li>" : "") +
 					"    <li><a href='http://www.ncbi.nlm.nih.gov/pubmed/?term=" + specieName + "' target='_blank'><i class='fa fa-external-link'></i> Related publications at PubMed</a></li>" +
 					"    <li><a href='http://www.ncbi.nlm.nih.gov/gene/?term=" + encodeURIComponent("(" + featureName + "[Gene Name]) AND ()"+ alternativeName + "[Organism])") + "' target='_blank'><i class='fa fa-external-link'></i>Search at NCBI Gene</a></li>" +
-					"    <li><a href='http://www.ncbi.nlm.nih.gov/gquery/?term=" + encodeURIComponent(featureName + " "+ specieName) + "' target='_blank'><i class='fa fa-external-link'></i>Search at all NCBI Databases</a></li>" +
-					"  </ul>" +
-					"</div>"
-				).css({"display" : "inline-block"});
+					"    <li><a href='http://www.ncbi.nlm.nih.gov/gquery/?term=" + encodeURIComponent(featureName + " "+ specieName) + "' target='_blank'><i class='fa fa-external-link'></i>Search at all NCBI Databases</a></li>";
 			}else{
-				$(target).html(
-					"<div class='externalLinksContainer'>" +
-					"<b>External links</b>" +
-					"  <ul style='list-style-type: none;'>" +
+				htmlCode +=
 					"    <li><a href='http://www.kegg.jp/dbget-bin/www_bget?" + featureID + "' target='_blank'><i class='fa fa-external-link'></i>Search at KEGG Database</a></li>" +
 					"    <li><a href='http://www.ncbi.nlm.nih.gov/pccompound?term=" + featureID + "' target='_blank'><i class='fa fa-external-link'></i>Search at PubChem Compound</a></li>" +
-					"    <li><a href='https://www.ebi.ac.uk/chebi/advancedSearchFT.do?searchString=" + featureID + "' target='_blank'><i class='fa fa-external-link'></i>Search at ChEBI Database</a></li>" +
-					"  </ul>" +
-					"</div>"
-				).css({"display" : "inline-block"});
+					"    <li><a href='https://www.ebi.ac.uk/chebi/advancedSearchFT.do?searchString=" + featureID + "' target='_blank'><i class='fa fa-external-link'></i>Search at ChEBI Database</a></li>";
 			}
+
+			htmlCode+= "  </ul></div>";
+
+			if(me.showButtons === true){
+				htmlCode+=
+				'<div style=" text-align: center; margin: 15px 0px; ">'+
+				'  <a class="button btn-info btn-sm btn-no-float findInMapButton"><i class="fa fa-map-marker"></i> Find in Pathway</a>'+
+				'  <a class="button btn-default btn-sm btn-no-float moreDetailsButton"><i class="fa fa-search-plus"></i> Show details</a>'+
+				'</div>';
+			}
+
+			$(target).html(htmlCode).css({"display" : "inline-block"});
+
+			$(target).find(".findInMapButton").click( function(){
+				var matches = [];
+				$("svg.keggPathwaySVG > image").each(function(){
+					if(this.id.indexOf(me.model.feature.ID) !== -1){
+						matches.push(this);
+					}
+				});
+				$(matches).data('powertip', me.model.feature.name.split(",")[0]);
+				$(matches).powerTip({
+					smartPlacement: true,
+					placement: 's',
+				});
+
+				var showAllPositions = function(){
+					if(matches.length > 0){
+						$.powerTip.show($(matches.shift()));
+						setTimeout(showAllPositions, 2000);
+					}else{
+						$.powerTip.hide();
+					}
+				};
+				showAllPositions();
+			});
+
+			$(target).find(".moreDetailsButton").click( function(){
+
+			});
 		});
 
 		return this;
@@ -1558,8 +1618,13 @@ function PA_Step4KeggDiagramFeatureView() {
 	this.initComponent = function() {
 		var me = this;
 		this.component = Ext.widget({
-			xtype: "box", cls: "contentbox mainInfoPanel neverExpanded", style:"margin:0;", html:
-			"<h3 class='geneInfoTitle'>"+ ((this.collapsible)?"<i class='fa fa-chevron-circle-right'></i>":"") +
+			xtype: "box",
+			cls: "contentbox mainInfoPanel neverExpanded",
+			style:"margin:0;",
+			html:
+			((this.closable)?'<a class="toolbarOption hideOption" style="margin: 2px; "><i class="fa fa-times"></i></a>':'') +
+			"<h3 class='geneInfoTitle'>"+
+			((this.collapsible)?"<i class='fa fa-chevron-circle-right'></i>":"") +
 			"  <span class='featureNameLabel'></span><i class='featureNameLabelRelevant relevantFeature'></i>"+
 			"</h3>" +
 			"<div class='geneInfoContainer' style='display:none;'>" +
@@ -1573,12 +1638,10 @@ function PA_Step4KeggDiagramFeatureView() {
 					//ADD THE EVENT WHEN CLICK ON THE EXPAND LINK
 					$(this.el.dom).find(".geneInfoTitle").click(function () {
 						var elem = $(this);
-
 						if(elem.parents(".mainInfoPanel").first().hasClass("neverExpanded")){
 							elem.parents(".mainInfoPanel").first().removeClass("neverExpanded");
 							me.updateObserver();
 						}
-
 						if (elem.hasClass("expanded")) {
 							elem.removeClass("expanded");
 							elem.find("i").removeClass("fa-chevron-circle-down").addClass("fa-chevron-circle-right");
@@ -1587,6 +1650,11 @@ function PA_Step4KeggDiagramFeatureView() {
 							elem.find("i").removeClass("fa-chevron-circle-right").addClass("fa-chevron-circle-down");
 						}
 						$(this).siblings(".geneInfoContainer").toggle();
+					});
+					$(this.el.dom).find(".hideOption").click(function () {
+						if(me.parent.hide !== undefined){
+							me.parent.hide(true);
+						}
 					});
 				},
 				beforedestroy: function() {
@@ -1971,15 +2039,16 @@ function PA_Step4VisualOptionsView() {
 		'</div>'; //advanceOptionsPanel
 
 		this.component = Ext.widget({
-			xtype: "box", cls: "lateralOptionsPanel", width: 300, html:
-			"<div class='lateralOptionsPanel-header' style='background: #C5567B;'>" +
+			xtype: "box", cls: "lateralOptionsPanel", width: 300,  height: ($("#mainViewCenterPanel").height() - 100),
+			html:
+			"<div class='lateralOptionsPanel-header' style='background: #d9534f;'>" +
 			'  <div class="lateralOptionsPanel-toolbar">' +
-			'    <a href="javascript:void(0)" class="toolbarOption helpTip" id="hideVisualSettingsPanelButton" title="Close this panel" style="background: #C5567B;"><i class="fa fa-times"></i></a>' +
+			'    <a href="javascript:void(0)" class="toolbarOption btn-danger helpTip" id="hideVisualSettingsPanelButton" title="Close this panel"><i class="fa fa-times"></i></a>' +
 			'  </div>' +
 			"  <h2>Visual settings</h2>" +
 			"</div>" +
 			"<div class='lateralOptionsPanel-body'>" +
-			windowContent + '    <a href="javascript:void(0)" class="button acceptButton helpTip" id="applyVisualSettingsButton" style="margin-top: 20px;" title="Apply changes"><i class="fa fa-check"></i> Apply</a>' +
+			windowContent + '    <a href="javascript:void(0)" class="button btn-success helpTip" id="applyVisualSettingsButton" style="margin-top: 20px;" title="Apply changes"><i class="fa fa-check"></i> Apply</a>' +
 			"</div>",
 			listeners: {
 				boxready: function() {
@@ -2058,7 +2127,7 @@ function PA_Step4FindFeaturesView() {
 		this.items = [];
 		var itemAux;
 		for (i in availableTags) {
-			this.items.push(new PA_Step4KeggDiagramFeatureView().loadModel(results[availableTags[i]]).setParent(this.getParent()));
+			this.items.push(new PA_Step4KeggDiagramFeatureView(true).loadModel(results[availableTags[i]]).setParent(this.getParent()));
 		}
 
 		this.updateObserver();
@@ -2146,20 +2215,20 @@ function PA_Step4FindFeaturesView() {
 		var me = this, selected, omicsAux;
 
 		this.component = Ext.widget({
-			xtype: "container", cls: "lateralOptionsPanel",  width: 300,
+			xtype: "container", cls: "lateralOptionsPanel",  width: 300, height: ($("#mainViewCenterPanel").height() - 100),
 			items:[{
 				xtype: "box", html:
-				"<div class='lateralOptionsPanel-header' style='background: #4c4c4c;'>" +
+				"<div class='lateralOptionsPanel-header' style='background: #5bc0de;'>" +
 				'  <div class="lateralOptionsPanel-toolbar">' +
-				'    <a href="javascript:void(0)" class="toolbarOption helpTip" id="hideFindFeaturePanelButton" title="Close this panel" style="background: #4c4c4c;"><i class="fa fa-times"></i></a>' +
+				'    <a href="javascript:void(0)" class="toolbarOption btn-info helpTip" id="hideFindFeaturePanelButton" title="Close this panel"><i class="fa fa-times"></i></a>' +
 				'  </div>' +
 				"  <h2>Pathway information</h2>" +
 				"</div>" +
 				"<div class='lateralOptionsPanel-body findFeaturesContainer'>" +
 				'  <div>'+
-				'    <h4>Search in pathway</h4>' +
+				'    <h4>Search in this pathway</h4>' +
 				'    <div id="findFeaturesInput" class="input" style="width:170px; display:inline-block;"><input type="text" style="width:160px;"></div>'+
-				'    <a href="javascript:void(0)" class="button helpTip" id="findFeatureButton" style="margin: 20px 5px; background: #40AFFF; display:inline-block; title="Find features"><i class="fa fa-search"></i> Search</a>' +
+				'    <a class="button btn-info helpTip" id="findFeatureButton" style="margin: 20px 5px" title="Find features"><i class="fa fa-search"></i> Search</a>' +
 				'    <div class="applyWaitMessage" style="color:#4c4c4c; margin: 10px;"> Searching...<i class="fa fa-cog fa-spin" style=" float: left; margin-right: 10px; "></i></div>' +
 				'  </div>'+
 				'  <div id="patwaysDetailsContainer"></div>'+
@@ -2203,7 +2272,7 @@ function PA_Step4FindFeaturesView() {
 			resize: function( view, width, height, oldWidth, oldHeight, eOpts ){
 				var componentHeight = $(view.getEl().dom).outerHeight();
 				var headerHeight = $(view.getEl().dom).find(".lateralOptionsPanel-header").outerHeight() + 10;
-				$(view.getEl().dom).find(".lateralOptionsPanel-body").height(componentHeight - headerHeight);
+				$(view.getEl().dom).find(".lateralOptionsPanel-body").height($("#mainViewCenterPanel").height() - headerHeight - 100);
 			},
 			beforedestroy: function() {
 				if (me.items !== null) {
@@ -2704,7 +2773,7 @@ function PA_Step4GlobalHeatmapView() {
 		'</div>'; //clusterSelection
 
 		this.component = Ext.widget({
-			xtype: "box", cls: "lateralOptionsPanel", flex: 0,
+			xtype: "box", cls: "lateralOptionsPanel", flex: 0,  height: ($("#mainViewCenterPanel").height() - 100),
 			resizable: {
 				handles: 'w',
 				listeners: {
@@ -2717,13 +2786,13 @@ function PA_Step4GlobalHeatmapView() {
 				}
 			},
 			previousWidth: 400, width: 400, minWidth: 400, html:
-			"<div class='lateralOptionsPanel-header'>" +
+			'<div class="lateralOptionsPanel-header" style="background: #55c9a6;">' +
 			'  <div class="lateralOptionsPanel-toolbar">' +
-			'    <a href="javascript:void(0)" class="toolbarOption helpTip" id="hideHeatmapPanelButton" title="Hide this panel" style="background: #47A780;"><i class="fa fa-times"></i></a>' +
-			'    <a href="javascript:void(0)" class="toolbarOption helpTip" id="configureHeatmapButton" style="background: #47A780;"  title="Configure heatmap"><i class="fa fa-cogs"></i></a>' +
-			'    <a href="javascript:void(0)" class="toolbarOption helpTip" id="expandHeatmapButton" style="background: #47A780;"  title="Expand this panel"><i class="fa fa-expand"></i></a>' +
-			'    <a href="javascript:void(0)" class="toolbarOption helpTip" id="shrinkHeatmapButton" style="display:none; background: #47A780;"  title="Shrink this panel"><i class="fa fa-compress"></i></a>' +
-			// '    <a href="javascript:void(0)" class="toolbarOption helpTip" id="downloadHeatmapButton" style="background: #47A780;"><i class="fa fa-download"></i></a>' +
+			'    <a href="javascript:void(0)" class="toolbarOption btn-secondary helpTip" id="hideHeatmapPanelButton" title="Hide this panel"><i class="fa fa-times"></i></a>' +
+			'    <a href="javascript:void(0)" class="toolbarOption btn-secondary helpTip" id="configureHeatmapButton" title="Configure heatmap"><i class="fa fa-cogs"></i></a>' +
+			'    <a href="javascript:void(0)" class="toolbarOption btn-secondary helpTip" id="expandHeatmapButton" title="Expand this panel"><i class="fa fa-expand"></i></a>' +
+			'    <a href="javascript:void(0)" class="toolbarOption btn-secondary helpTip" id="shrinkHeatmapButton" style="display:none;"  title="Shrink this panel"><i class="fa fa-compress"></i></a>' +
+			// '    <a href="javascript:void(0)" class="toolbarOption helpTip" id="downloadHeatmapButton"><i class="fa fa-download"></i></a>' +
 			'  </div>' +
 			"  <h2>Global heatmap</h2>" +
 			"</div>" +
@@ -2732,7 +2801,7 @@ function PA_Step4GlobalHeatmapView() {
 			'  <div class="updateMessageContainer"> <h3>Visual changes detected! </h3> <p>Some visual settings changed recently but the Heatmap content did not change.<br>Click <a id="refreshHeatmap" href="javascript:void(0)">here</a> if you want to refresh the Heatmap content. </p> </div>' +
 			'  <div class="globalHeatmapConfigurator" ' + (this.showConfigurator ? 'style="display:none"' : '') + '>' +
 			htmlCode +
-			'    <a href="javascript:void(0)" class="button acceptButton helpTip" id="updateHeatmapButton" title="Apply changes"><i class="fa fa-check"></i> Apply</a>' +
+			'    <a href="javascript:void(0)" class="button btn-success helpTip" id="updateHeatmapButton" title="Apply changes"><i class="fa fa-check"></i> Apply</a>' +
 			'    <div class="applyWaitMessage"><i class="fa fa-cog fa-spin"></i> Drawing heatmap...</div>' +
 			'  </div>' +
 			"  <div id='globalHeatmapContainer'></div>" +
@@ -2802,7 +2871,7 @@ function PA_Step4GlobalHeatmapView() {
 				resize: function( view, width, height, oldWidth, oldHeight, eOpts ){
 					var componentHeight = $(view.getEl().dom).outerHeight();
 					var headerHeight = $(view.getEl().dom).find(".lateralOptionsPanel-header").outerHeight() + 10;
-					$(view.getEl().dom).find(".lateralOptionsPanel-body").height(componentHeight - headerHeight);
+					$(view.getEl().dom).find(".lateralOptionsPanel-body").height($("#mainViewCenterPanel").height() - headerHeight - 100);
 				},
 				beforedestroy: function() {
 					me.getModel().deleteObserver(me);
@@ -3114,7 +3183,7 @@ function PA_Step4DetailsView() {
 		var me = this;
 
 		this.component = Ext.widget({
-			xtype: "container", cls: "lateralOptionsPanel", flex: 0, width: 400, minWidth: 400,
+			xtype: "container", cls: "lateralOptionsPanel", flex: 0, width: 400, minWidth: 400,  height: ($("#mainViewCenterPanel").height() - 100),
 			resizable: {
 				handles: 'w',
 				listeners: {
@@ -3128,11 +3197,11 @@ function PA_Step4DetailsView() {
 			},
 			items: [{
 				xtype: 'box', html:
-				"<div class='lateralOptionsPanel-header'>" +
-				'  <div class="featureSetOptionsToolbar">' +
-				'    <a href="javascript:void(0)" class="toolbarOption helpTip" id="hideFeatureSetButton" title="Hide this panel" style="background: #47a780;"><i class="fa fa-times"></i></a>' +
-				'    <a href="javascript:void(0)" class="toolbarOption helpTip" id="expandFeatureSetButton" style="background: #47a780;"  title="Expand this panel"><i class="fa fa-expand"></i></a>' +
-				'    <a href="javascript:void(0)" class="toolbarOption helpTip" id="shrinkFeatureSetButton" style="display:none; background: #47a780;"  title="Shrink this panel"><i class="fa fa-compress"></i></a>' +
+				'<div class="lateralOptionsPanel-header" style="background: #55c9a6;">' +
+				'  <div class="lateralOptionsPanel-toolbar">' +
+				'    <a class="toolbarOption btn-secondary helpTip" id="hideFeatureSetButton" title="Hide this panel"><i class="fa fa-times"></i></a>' +
+				'    <a class="toolbarOption btn-secondary helpTip" id="expandFeatureSetButton" title="Expand this panel"><i class="fa fa-expand"></i></a>' +
+				'    <a class="toolbarOption btn-secondary helpTip" id="shrinkFeatureSetButton" style="display:none;"  title="Shrink this panel"><i class="fa fa-compress"></i></a>' +
 				'  </div>' +
 				"  <h2>Feature set overview</h2>" +
 				"</div>"
@@ -3164,7 +3233,7 @@ function PA_Step4DetailsView() {
 				resize: function (view, width) {
 					var componentHeight = $(view.getEl().dom).outerHeight();
 					var headerHeight = $(view.getEl().dom).find(".lateralOptionsPanel-header").outerHeight() + 10;
-					$(view.getEl().dom).find(".lateralOptionsPanel-body").height(componentHeight - headerHeight);
+					$(view.getEl().dom).find(".lateralOptionsPanel-body").height($("#mainViewCenterPanel").height() - headerHeight - 100);
 
 					$(".PA_step5_plotContainer").width(Math.max(300, width - 400));
 					$(".PA_step5_plotContainer .highcharts-container").width(Math.max(300, width - 400));

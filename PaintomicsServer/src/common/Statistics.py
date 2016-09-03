@@ -10,7 +10,9 @@ def calculateSignificance(test, totalFeatures, totalRelevantFeatures, totalFeatu
         raise NotImplementedError;
 
 def calculateCombinedSignificancePvalue(combinedTest, significanceValuesList):
-    if(combinedTest == "fisher-combined"):
+    if len(significanceValuesList) < 2: #Do not calculate if only one omic
+        return None
+    elif(combinedTest == "fisher-combined"):
         return calculateCombinedFisher(significanceValuesList)
     else:
         raise NotImplementedError;

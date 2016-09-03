@@ -106,7 +106,7 @@ function MainView() {
 		var sessionInfoBar = new SessionInfoBar();
 		sessionInfoBar.setController(application.getController("UserController"));
 		sessionInfoBar.getComponent().updateLoginState();
-		
+
 		this.component = Ext.create('Ext.container.Viewport', {
 			id: 'mainView',
 			border: false,
@@ -116,8 +116,12 @@ function MainView() {
 				xtype: "box",
 				cls: "toolbar mainTopToolbar",
 				region: 'north',
-				html: '<div id="header"><img src="resources/images/paintomics_150x150.png" alt="Paintomics logo"><h1> PaintOmics 3<span style="font-size: 8px; margin-left:10px;">' + APP_VERSION + '</span></h1></div>' +
-				'<a href="javascript:void(0)" class="button cancelButton loggedOption" data-name="logout" id="logoutButton"><i class="fa fa-sign-out"></i> Log out</a>'
+				html:
+				'<div id="header">'+
+				'  <img src="resources/images/paintomics_150x150.png" alt="Paintomics logo">' +
+				'  <h1> PaintOmics 3<span style="font-size: 8px; margin-left:10px;">' + APP_VERSION + '</span></h1>' +
+				'</div>' +
+				'<a class="button btn-sm btn-right loggedOption" data-name="logout" id="logoutButton"><i class="fa fa-sign-out"></i> Log out</a>'
 			}, {
 				xtype: "box",
 				id: "lateralMenu",
@@ -152,10 +156,10 @@ function MainView() {
 				" </ul></li>" +
 				"</ul>"
 			}, {
-				xtype: 'panel', itemId: 'mainViewCenterPanel', id: 'mainViewCenterPanel',
-				flex: 1, region: 'center', overflowY: "auto",
+				xtype: 'container', itemId: 'mainViewCenterPanel', id: 'mainViewCenterPanel',
+				flex: 1, region: 'center', overflowY: "auto", style: "background-color:#f3f3f3;",
 				defaults: {border: 0},
-				layout: {type: 'vbox', pack: 'start', align: 'stretch'},
+				// layout: {type: 'vbox', pack: 'start', align: 'stretch'},
 				items: []
 			}],
 			listeners: {
