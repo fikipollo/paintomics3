@@ -192,8 +192,6 @@ class Job(Model):
 
         return self
 
-
-
     def validateInput(self):
         raise NotImplementedError()
 
@@ -449,18 +447,14 @@ class Job(Model):
         #TODO: HEADER
         relevantFeatures = {}
         if os_path.isfile(fileName):
-            f = open(fileName, 'rU')
-            lines = f.readlines()
-            logging.info("PARSING RELEVANT FEATURES FILE (" + fileName + ")... THE FILE CONTAINS " + str(len(lines)) + " RELEVANT FEATURES" );
-            f.close()
-
-            for line in lines:
-                line=line.rstrip()
-                if(isBedFormat == True):
-                    line = line.split("\t")
-                    line = line[0] + "_" + line[1] + "_" + line[2]
-
-                relevantFeatures[line.lower()] = 1
+            with open(fileName, 'rU') as inputDataFile:
+                for line in csv_reader(inputDataFile, delimiter="\t"):
+                    line = line[0]
+                    if(isBedFormat == True):
+                        line = line + "_" + line[1] + "_" + line[2]
+                    relevantFeatures[line.lower()] = 1
+            inputDataFile.close()
+            logging.info("PARSING RELEVANT FEATURES FILE (" + fileName + ")... THE FILE CONTAINS " + str(len(relevantFeatures.keys())) + " RELEVANT FEATURES" );
         else:
             logging.info("PARSING RELEVANT FEATURES FILE (" + fileName + ")... NO RELEVANT FEATURES FILE SUBMITTED" );
 

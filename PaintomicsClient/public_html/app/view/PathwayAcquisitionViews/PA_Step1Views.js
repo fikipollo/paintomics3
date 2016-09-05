@@ -1417,7 +1417,7 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 				/*miRNA FILE*/
 				{
 					xtype: "myFilesSelectorButton",
-					fieldLabel: 'miRNA seq file <br>(miRNA Quantification)',
+					fieldLabel: 'miRNA seq file <br>(miRNA expression)',
 					namePrefix: this.namePrefix,
 					itemId: "mainFileSelector",
 					helpTip: "Upload the quantification file (miRNA Quantification) or choose it from your data folder. See above the accepted format for the file."
@@ -1432,7 +1432,7 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 				/*RELEVANT miRNA FILE*/
 				{
 					xtype: "myFilesSelectorButton",
-					fieldLabel: "Relevant miRNA file",
+					fieldLabel: "Relevant miRNA file<br> (optional)",
 					namePrefix: this.namePrefix + '_relevant',
 					itemId: "secondaryFileSelector",
 					helpTip: "Upload the list of relevant (differentially expressed) miRNAs (TAB format) or choose it from your data folder. See above the accepted format for the file."
@@ -1470,7 +1470,7 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 				},
 				{
 					xtype: "myFilesSelectorButton",
-					fieldLabel: "Gene expression<br>quantification (optional)",
+					fieldLabel: "Gene expression"/*<br> (optional)"*/,
 					namePrefix: this.namePrefix + '_rnaseqaux',
 					itemId: "rnaseqauxFileSelector",
 					helpTip: "Upload the quantification file for the gene expression. This file is used to calculate the correlation of the expression of the genes and their associated miRNAs. Using this correlation we can filter and order the miRNAs that will be assigned to each gene. See above the accepted format for the file."
@@ -1508,7 +1508,7 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 						fields: ['label', 'value'],
 						data: [
 							["All miRNAs", "all"],
-							["Only relevant (DE) miRNAs", "DE"]
+							["Only relevant miRNAs (e.g. DE)", "DE"]
 						]
 					}),
 					helpTip: "Choose between consider all miRNAs in the quantification file or just those miRNAs that are differentially expressed. Default: 'All miRNAs'"
@@ -1526,7 +1526,7 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 					store: Ext.create('Ext.data.ArrayStore', {
 						fields: ['label', 'value'],
 						data: [
-							["Fold Change of miRNA expression", "fc"],
+							// ["Fold Change of miRNA expression", "fc"],
 							["Correlation with gene expression (Spearman)", "spearman"],
 							["Correlation with gene expression (Kendall)", "kendall"],
 							["Correlation with gene expression (Pearson)", "pearson"]
@@ -1614,7 +1614,11 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 				valid = false;
 				component.queryById("mirnaTargetsFileSelector").markInvalid("Please, provide a miRNA targets reference file.");
 			}
-
+			//TODO: REMOVE
+			if (component.queryById("rnaseqauxFileSelector") && component.queryById("rnaseqauxFileSelector").getValue() === "") {
+				valid = false;
+				component.queryById("rnaseqauxFileSelector").markInvalid("Please, provide a transcriptomics file.");
+			}
 			return valid;
 		},
 		isEmpty: function() {

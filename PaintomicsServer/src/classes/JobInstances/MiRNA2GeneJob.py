@@ -278,7 +278,7 @@ class MiRNA2GeneJob(Job):
                     #STEP 5.3 CREATE A NEW OMIC VALUE WITH ROW DATA
                     omicValueAux = OmicValue(mirnaID)
                     #TODO: set omic name with chipseq, dnase,...?
-                    omicValueAux.setOmicName(mirnaID)
+                    omicValueAux.setOriginalName(mirnaID)
                     omicValueAux.setRelevant(isRelevant)
                     omicValueAux.setValues(values)
 
@@ -305,10 +305,12 @@ class MiRNA2GeneJob(Job):
                 mirna2genesOutput = open(self.getTemporalDir() + '/' + "miRNA2Gene_output_" + time.strftime("%Y%m%d_%H%M") + ".tab", 'w')
                 mirna2genesRelevant = open(self.getTemporalDir() +  '/' + "miRNA2Gene_relevant_" + time.strftime("%Y%m%d_%H%M") + ".tab", 'w')
 
-                #PRINT HEADER
-                genesToMiRNAFile.write("Gene name\tmiRNA ID\tDE\tScore\tSelection\n")
-                mirna2genesOutput.write("Gene name\tmiRNA ID\t"+ header + "\n")
-                mirna2genesRelevant.write("Gene name\tmiRNA ID\n")
+                # PRINT HEADER
+                genesToMiRNAFile.write("# Gene name\tmiRNA ID\tDE\tScore\tSelection\n")
+                #TODO: RE-ENABLE THIS CODE
+                mirna2genesOutput.write("# Gene name\t"+ header + "\n")
+                #mirna2genesOutput.write("# Gene name\tmiRNA ID\t"+ header + "\n")
+                mirna2genesRelevant.write("# Gene name\tmiRNA ID\n")
 
                 logging.info("ORDERING miRNAS BY CORRELATION / FC...")
                 for geneID, gene in self.getInputGenesData().iteritems():
@@ -320,7 +322,7 @@ class MiRNA2GeneJob(Job):
                         score = omicValue[0]
                         omicValue = omicValue[1]
 
-                        lineAux = geneID + "\t" + omicValue.getOmicName() + "\t"
+                        lineAux = geneID + "\t" + omicValue.getOriginalName() + "\t"
 
                         #Recover the original value for the score
                         if not methodsHasChanged and self.selection_method == "negative_correlation":
@@ -328,12 +330,15 @@ class MiRNA2GeneJob(Job):
 
                         #WRITE RESULTS TO genesToMiRNAFile FILE -->   gen_id mirna relevant score
                         genesToMiRNAFile.write(lineAux + ("*" if omicValue.isRelevant() else "") + "\t" + str(score) + "\t" + self.selection_method + "\n")
+
                         #WRITE RESULTS TO miRNA2Gene_output FILE -->   gen_id mirna values
-                        mirna2genesOutput.write(lineAux + '\t'.join(map(str, omicValue.getValues())) + "\n")
+                        #TODO: RE-ENABLE THIS CODE
+                        #mirna2genesOutput.write(lineAux + '\t'.join(map(str, omicValue.getValues())) + "\n")
+                        mirna2genesOutput.write(geneID + "\t" + '\t'.join(map(str, omicValue.getValues())) + "\n")
 
                         if omicValue.isRelevant():
                             #WRITE RESULTS TO mirna2genesRelevant FILE -->   gen_id mirna
-                            mirna2genesRelevant.write(lineAux + "\n")
+                            mirna2genesRelevant.write(geneID + "\t" + omicValue.getOriginalName() + "\n")
 
                 genesToMiRNAFile.close()
                 mirna2genesOutput.close()

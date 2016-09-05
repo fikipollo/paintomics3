@@ -128,27 +128,27 @@ function MainView() {
 				cls: "lateralMenu",
 				region: 'west',
 				html: "<ul class='lateralMenu-body'>" +
-				" <li class='menuOption loggedOption' ><i class='fa fa-tachometer'></i>  Cloud drive" +
+				" <li class='menuOption loggedOption' ><i class='fa fa-cloud'></i>  Personal storage" +
 				"  <ul class='submenu loggedOption'>" +
-				"     <li class='menuOption' data-name='DM_MyDataListView'><i class='fa fa-files-o'></i>  My files and Jobs</li>" +
+				"     <li class='menuOption' data-name='DM_MyDataListView'><i class='fa fa-file-text'></i>  My files and Jobs</li>" +
 				"     <li class='menuOption' data-name='DM_MyDataUploadFilesPanel'><i class='fa fa-cloud-upload'></i>   Upload new files</li>" +
 				// "     <li class='menuOption' data-name='fileEdition'><i class='fa fa-cloud-upload'></i>   File edition</li>"+
 				" </ul></li>" +
-				" <li class='menuOption loggedOption' ><i class='fa fa-cogs'></i>  Tools" +
+				" <li class='menuOption loggedOption' ><i class='fa fa-rocket'></i>  Tools" +
 				" <ul class='submenu loggedOption'>" +
 				"     <li class='menuOption' data-name='paintPathways'><i class='fa fa-paint-brush'></i>  Paint pathways</li>" +
-				"     <li class='menuOption' data-name='fromBEDtoGenes'><i class='fa fa-code'></i>   From BED to Genes</li>" +
-				"     <li class='menuOption' data-name='fromMiRNAtoGenes'><i class='fa fa-code'></i>   From miRNA to Genes</li>"+
+				"     <li class='menuOption' data-name='fromBEDtoGenes'><i class='fa fa-align-center'></i>   From Regions to Genes</li>" +
+				"     <li class='menuOption' data-name='fromMiRNAtoGenes'><i class='fa fa-link'></i>   From miRNA to Genes</li>"+
 				" </ul></li>" +
 				" <li class='menuOption' ><i class='fa fa-info-circle'></i>  Resources" +
 				" <ul class='submenu'>" +
 				"     <li class='menuOption externalOption'><a href='http://paintomics.readthedocs.org/en/latest/' target='_blank'><i class='fa fa-book'></i>  Paintomics Documentation</a></li>" +
-				"     <li class='menuOption externalOption'><a href='http://www.paintomics.org/' target='_blank'><i class='fa fa-external-link'></i>  Paintomics v2.0</a></li>" +
+				"     <li class='menuOption externalOption'><a href='http://www.paintomics.org/' target='_blank'><i class='fa fa-external-link'></i>  PaintOmics 2</a></li>" +
 				" </ul></li>" +
 				" <li class='menuOption' ><i class='fa fa-paper-plane-o'></i>  Publications" +
 				" <ul class='submenu'>" +
 				// "     <li class='menuOption'><a href='http://www.paintomics.org/'' target='_blank'><i class='fa fa-book'></i>  Paintomics Documentation</a></li>"+
-				"     <li class='menuOption externalOption' style='font-size: 9px;'><a href='http://bioinformatics.oxfordjournals.org/content/early/2010/11/23/bioinformatics.btq594' target='_blank'>García-Alcalde F, García-López F, Dopazo J, Conesa A. <b>Paintomics: a web based tool for the joint visualization of transcriptomics and metabolomics data</b>. <i>Bioinformatics</i> 2011 27(1): 137–139.</a></li>" +
+				"     <li class='menuOption externalOption' style='font-size: 9px;'><a href='http://bioinformatics.oxfordjournals.org/content/early/2010/11/23/bioinformatics.btq594' target='_blank'>García-Alcalde F, García-López F, Dopazo J, Conesa A. <b>Paintomics: a web based tool for the joint visualization of transcriptomics and metabolomics data</b>. <i>Bioinformatics</i> 2011 27(1): 137–139.</a><br><a href='resources/images/paintomics2-garcia-alcalde.bib' target='_blank'>BibTeX</a></li>" +
 				" </ul></li>" +
 				" <li class='menuOption'><i class='fa fa-envelope-o'></i>  Contact" +
 				" <ul class='submenu'>" +

@@ -235,19 +235,19 @@ function showMessage(title, data) {
 	var buttonClass, color, icon, dialogClass;
 	if (messageType === "error") {
 		console.error(Date.logFormat() + logMessage);
-		buttonClass = "cancelButton";
+		buttonClass = "btn-danger";
 		dialogClass = "errorDialog";
 	} else if (messageType === "warning") {
 		console.warn(Date.logFormat() + logMessage);
-		buttonClass = "warningButton";
+		buttonClass = "btn-warning";
 		dialogClass = "warningDialog";
 	} else if (messageType === "info") {
 		console.info(Date.logFormat() + logMessage);
-		buttonClass = "exampleButton ";
+		buttonClass = "btn-info";
 		dialogClass = "infoDialog";
 	} else { //success
 		console.info(Date.logFormat() + logMessage);
-		buttonClass = "exampleButton";
+		buttonClass = "btn-success";
 		dialogClass = "successDialog";
 	}
 
@@ -273,9 +273,8 @@ function showMessage(title, data) {
 		}
 
 		if (showButton) {
-			$("#messageDialogButton").removeClass("exampleButton acceptButton warningButton cancelButton").addClass(buttonClass);
+			$("#messageDialogButton").removeClass("btn-danger btn-success btn-warning btn-default").addClass(buttonClass);
 			$("#messageDialogButton").css({display:"inline-block"});
-
 		} else {
 			$("#messageDialogButton").css({display:"none"});
 		}
@@ -306,9 +305,9 @@ function showMessage(title, data) {
 			' <div id="messageDialogBody"></div>' +
 			' <div id="hiddenMessageDialogBody" style="display:none;"></div>' +
 			' <p id="messageDialogSpin" ><img src="resources/images/loadingpaintomics2.gif"></img></p>' +
-			' <div style="text-align:center;">' +
-			'   <a id="reportErrorButton" class="button cancelButton" id="messageDialogButton"><i class="fa fa-bug"></i> Report error</a>' +
-			'   <a id="messageDialogButton" class="button acceptButton" id="messageDialogButton">Close</a>' +
+			' <div style="text-align:center; margin-top:10px;">' +
+			'   <a id="reportErrorButton" class="button btn-warning" id="messageDialogButton"><i class="fa fa-bug"></i> Report error</a>' +
+			'   <a id="messageDialogButton" class="button btn-default" id="messageDialogButton">Close</a>' +
 			" </div>"+
 			"</div>",
 			listeners: {

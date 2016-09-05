@@ -144,7 +144,18 @@ def mapFeatureIdentifiers(jobID, organism, featureList, matchedFeatures, notMatc
         matches=0
         matchedGeneIDsTable={}
         matchedGeneSymbolsTable={}
+        total = len(featureList)
+        current=0
+        prev = -1
+        aux=0
         for feature in featureList:
+            current+=1
+            if  (current*100/total) % 20 == 0:
+                aux= (current*100/total)
+                if aux != prev:
+                    prev = aux
+                    print "Processed " + str(prev) + "% of " + str(total) + " total features"
+
             if feature.getName() != "" and feature.getName()!= None:
                 featureIDs, found = findKeggIDByFeatureName(jobID, feature.getName(), organism, db, databaseConvertion_id)
 

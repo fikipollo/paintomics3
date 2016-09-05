@@ -1,14 +1,26 @@
+Changelog (v0.4.3) - 2016-09-05
+
+	- Improved the metabolite selection panel: more information and added some control for repeated metabolites
+	- Now it is possible to find all the occurrences of a feature in the diagram using the "Search" tool
+	- New tool for miRNA data: using "miRNA2Genes" users can convert their miRNA data into a valid input format for PaintOmics 3.
+	- Added a "close" button for tooltip in the pathway diagram
+	- Some improvements in visual styles
+	- Improved the Metabolomics significance analysis, now it is more accurate
+	- Fixed problems with the height of some pathways diagram
+	- Fixed many bugs
+
+Changelog (v0.4.2) - 2016-08-01
+
+	- Now it is possible to export the KEGG diagrams to PNG images.
+	- Fixed many bugs
 
 Changelog (v0.4.1) - 2016-03-10
 
-	- Fixed problems when logging in the application (thanks Paul Vu).  
-	- New ranking table visualization: now the table is colored by significance (p-value), a nice tool to identify the enriched functions.  
-	- Improved administration tools. Fixed issues when installing new species. 
-	- Added this nice messaging system. 
-	- Fixed some issues with panel layouts during pathway visualization 
-	- Added new information about trends at pathway visualization 
-	- Clustering for metagenes trends now uses silhouette method to approximate the optimal number of clusters (thanks Sonia and Monica) 
+	- Fixed problems when logging in the application (thanks Paul Vu).
+	- New ranking table visualization: now the table is colored by significance (p-value), a nice tool to identify the enriched functions.
+	- Improved administration tools. Fixed issues when installing new species.
+	- Added this nice messaging system.
+	- Fixed some issues with panel layouts during pathway visualization
+	- Added new information about trends at pathway visualization
+	- Clustering for metagenes trends now uses silhouette method to approximate the optimal number of clusters (thanks Sonia and Monica)
 	- Removed GI download from specie installation (not longer supported by KEGG)
-
-
-

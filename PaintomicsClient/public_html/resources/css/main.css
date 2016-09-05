@@ -24,7 +24,8 @@ root {
 body {
 	background-color: #000;
 	font-family: 'SourceSansPro', sans-serif !important;
-	text-align: justify
+	text-align: justify;
+	font-size: 14px !important;
 }
 span.helpTip {
 	color: #C9C9C9;
@@ -523,21 +524,9 @@ select {
 #messageDialogSpin img {
 	width: 100px;
 }
-#messageDialogButton {
-	float: none;
-	margin: auto;
-	margin-top: 10px;
-}
-#messageDialog .button{
-	max-width: 120px;
-	display: inline-block;
-}
+#messageDialog .button{float: none;}
 
-#reportErrorButton{
-	float: none;
-}
 /** SIGMA TOOLTIP OPTIONS **/
-
 .sigma-tooltip {
 	width: 200px;
 	height: 180px;
@@ -1536,6 +1525,7 @@ a.toolbarOption {
 	padding: 7px 10px 0px 10px;
 	margin: 0px 10px;
 	float: right;
+	cursor: pointer;
 }
 div.contentbox {
 	max-width: 1300px;

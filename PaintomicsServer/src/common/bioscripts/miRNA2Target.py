@@ -27,6 +27,7 @@ import getopt
 import sys
 import os.path
 import scipy.stats
+from csv import reader as csv_reader
 
 def main():
     try:
@@ -95,48 +96,62 @@ def run(referenceFile, dataFile, geneExpresion, outputFile, method="fc"):
     dataFile_header = ""
 
     #STEP 1. GENERATE THE TABLE WITH ALL THE MIRNAS IN THE INPUT
-    with open(dataFile, 'r') as f:
-        dataFile_header = f.readline().split("\t")[1:]
-        for line in f:
-            line = line.split("\t")
-            miRNAtable[line[0]] = {"values" : line[1:], "targets" : [] }
-    f.close()
+    print "STEP 1. Reading miRNA expression file..."
+    with open(dataFile, 'rU') as inputDataFile:
+        isFirstLine = True
+        for line in csv_reader(inputDataFile, delimiter="\t"):
+            if isFirstLine:
+                dataFile_header = line[1:]
+                isFirstLine = False
+            else:
+                miRNAtable[line[0]] = {"values" : line[1:], "targets" : [] }
+    inputDataFile.close()
 
     #STEP 2. FILL THE TABLE WITH ALL THE TARGETS FOR EACH MIRNA
-    with open(referenceFile, 'r') as f:
-        for line in f:
-            line = line.split("\t")
+    print "STEP 2. Reading miRNA -> targets file..."
+    with open(referenceFile, 'rU') as inputDataFile:
+        for line in csv_reader(inputDataFile, delimiter="\t"):
             if line[0] in miRNAtable:
                 miRNAtable[line[0]]["targets"].append(line[1])
-    f.close()
+    inputDataFile.close()
 
     #STEP 3. FILL THE TABLE WITH ALL THE GENES
     if geneExpresion != None:
-        with open(geneExpresion, 'r') as f:
-            for line in f:
-                line = line.split("\t")
+        print "STEP 3. Processing mRNA expression file..."
+        with open(geneExpresion, 'rU') as inputDataFile:
+            for line in csv_reader(inputDataFile, delimiter="\t"):
                 geneTable[line[0]] = line[1:]
-        f.close()
+        inputDataFile.close()
     else:
+        print "STEP 3. No mRNA expression file was provided..."
         method = "fc"
 
     #STEP 4. FOR EACH MIRNA AND EACH TARGET, CALCULATE THE SCORE AND SAVE RESULTS TO A FILE
     try:
+        print "STEP 4. Processing miRNAs and calculating score..."
         outputFile = open(outputFile, 'w')
-        outputFile.write("# miRNA_id\ttarget_id\tscore\tscore method\t" + "\t".join(dataFile_header))
+        outputFile.write("# miRNA_id\ttarget_id\tscore\tscore method\t" + "\t".join(dataFile_header) + "\n")
 
         miRNA_id = miRNA_values = miRNA_targets = target_id = target_values = score = None
+        total = len(miRNAtable.keys())
+        current=0
         for miRNA_id in miRNAtable:
+            current+=1
+            if (current*100/total) % 20 == 0:
+                print "Processed " + str(current*100/total) + "% of " + str(total) + " total miRNAs"
+
             miRNA_values = miRNAtable[miRNA_id]["values"]
             miRNA_targets = miRNAtable[miRNA_id]["targets"]
             for target_id in miRNA_targets:
                 target_values = geneTable.get(target_id, None)
                 if method == "fc" or target_values is not None:
                     score = getScore(miRNA_values, target_values, method)
-                    outputFile.write(miRNA_id + "\t" + target_id + "\t" + str(score) + "\t" + method + "\t" + "\t".join(miRNA_values))
+                    outputFile.write(miRNA_id + "\t" + target_id + "\t" + str(score) + "\t" + method + "\t" + "\t".join(miRNA_values) + "\n")
     except Exception as e:
+        print "Exception catched " +  str(e)
         pass
     finally:
+        print "STEP 4. Done"
         outputFile.close()
 
     return True

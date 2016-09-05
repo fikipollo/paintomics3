@@ -1155,7 +1155,7 @@ function PA_Step4KeggDiagramFeatureSetTooltip() {
 				this.featureView.getComponent(),{
 					xtype: "box", html:
 					'<div style="text-align: center;margin: 10px 0px;">'+
-					'  <a href="javascript:void(0)" id="step4TooltipMoreButton" style="float: none;" class="button"><i class="fa fa-search-plus"></i>Show details</a>'+
+					'  <a href="javascript:void(0)" id="step4TooltipMoreButton" style="color: #fff;" class="button btn-primary btn-no-float"><i class="fa fa-search-plus"></i> Show details</a>'+
 					'</div>'+
 					'<div id="otherFeaturesLabel" style="text-align: center; display: block;">' +
 					'  <span id="step4TooltipPrevButton" class="tooltipDetailsSpan" style="display: inline;">' +
@@ -1347,18 +1347,18 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 
 			if(featureType.toLowerCase() === "gene"){
 				htmlCode +=
-					"    <li><a href='http://www.kegg.jp/dbget-bin/www_bget?" + specie + ":" + featureID + "' target='_blank'><i class='fa fa-external-link'></i>Search at KEGG Database</a></li>" +
-					"    <li><a id='ensemblGenomesSearch' href='http://ensemblgenomes.org/search/eg/" + featureName + "' target='_blank'><i class='fa fa-external-link'></i>Search at Ensembl Genomes</a></li>" +
-					"    <li><a id='ensemblSearch' href='http://www.ensembl.org/Multi/Search/Results?q=" + encodeURIComponent(featureName) + ";facet_species="+ encodeURIComponent(alternativeName) + "' target='_blank'><i class='fa fa-external-link'></i>Search at Ensembl (vertebrates)</a></li>" +
-					((specie === "hsa") ? "<li><a href='http://www.genecards.org/cgi-bin/carddisp.pl?gene=" + featureName + "' target='_blank'><i class='fa fa-external-link'></i>Search at GeneCards Database</a></li>" : "") +
-					"    <li><a href='http://www.ncbi.nlm.nih.gov/pubmed/?term=" + specieName + "' target='_blank'><i class='fa fa-external-link'></i> Related publications at PubMed</a></li>" +
-					"    <li><a href='http://www.ncbi.nlm.nih.gov/gene/?term=" + encodeURIComponent("(" + featureName + "[Gene Name]) AND ()"+ alternativeName + "[Organism])") + "' target='_blank'><i class='fa fa-external-link'></i>Search at NCBI Gene</a></li>" +
-					"    <li><a href='http://www.ncbi.nlm.nih.gov/gquery/?term=" + encodeURIComponent(featureName + " "+ specieName) + "' target='_blank'><i class='fa fa-external-link'></i>Search at all NCBI Databases</a></li>";
+				"    <li><a href='http://www.kegg.jp/dbget-bin/www_bget?" + specie + ":" + featureID + "' target='_blank'><i class='fa fa-external-link'></i> Search at KEGG Database</a></li>" +
+				"    <li><a id='ensemblGenomesSearch' href='http://ensemblgenomes.org/search/eg/" + featureName + "' target='_blank'><i class='fa fa-external-link'></i> Search at Ensembl Genomes</a></li>" +
+				"    <li><a id='ensemblSearch' href='http://www.ensembl.org/Multi/Search/Results?q=" + encodeURIComponent(featureName) + ";facet_species="+ encodeURIComponent(alternativeName) + "' target='_blank'><i class='fa fa-external-link'></i> Search at Ensembl (vertebrates)</a></li>" +
+				((specie === "hsa") ? "<li><a href='http://www.genecards.org/cgi-bin/carddisp.pl?gene=" + featureName + "' target='_blank'><i class='fa fa-external-link'></i> Search at GeneCards Database</a></li>" : "") +
+				"    <li><a href='http://www.ncbi.nlm.nih.gov/pubmed/?term=" + specieName + "' target='_blank'><i class='fa fa-external-link'></i> Find related publications (PubMed)</a></li>" +
+				"    <li><a href='http://www.ncbi.nlm.nih.gov/gene/?term=" + encodeURIComponent("(" + featureName + "[Gene Name]) AND ()"+ alternativeName + "[Organism])") + "' target='_blank'><i class='fa fa-external-link'></i> Search at NCBI Gene</a></li>" +
+				"    <li><a href='http://www.ncbi.nlm.nih.gov/gquery/?term=" + encodeURIComponent(featureName + " "+ specieName) + "' target='_blank'><i class='fa fa-external-link'></i> Search at all NCBI Databases</a></li>";
 			}else{
 				htmlCode +=
-					"    <li><a href='http://www.kegg.jp/dbget-bin/www_bget?" + featureID + "' target='_blank'><i class='fa fa-external-link'></i>Search at KEGG Database</a></li>" +
-					"    <li><a href='http://www.ncbi.nlm.nih.gov/pccompound?term=" + featureID + "' target='_blank'><i class='fa fa-external-link'></i>Search at PubChem Compound</a></li>" +
-					"    <li><a href='https://www.ebi.ac.uk/chebi/advancedSearchFT.do?searchString=" + featureID + "' target='_blank'><i class='fa fa-external-link'></i>Search at ChEBI Database</a></li>";
+				"    <li><a href='http://www.kegg.jp/dbget-bin/www_bget?" + featureID + "' target='_blank'><i class='fa fa-external-link'></i>Search at KEGG Database</a></li>" +
+				"    <li><a href='http://www.ncbi.nlm.nih.gov/pccompound?term=" + featureID + "' target='_blank'><i class='fa fa-external-link'></i>Search at PubChem Compound</a></li>" +
+				"    <li><a href='https://www.ebi.ac.uk/chebi/advancedSearchFT.do?searchString=" + featureID + "' target='_blank'><i class='fa fa-external-link'></i>Search at ChEBI Database</a></li>";
 			}
 
 			htmlCode+= "  </ul></div>";
@@ -1374,22 +1374,35 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 			$(target).html(htmlCode).css({"display" : "inline-block"});
 
 			$(target).find(".findInMapButton").click( function(){
-				var matches = [];
-				$("svg.keggPathwaySVG > image").each(function(){
-					if(this.id.indexOf(me.model.feature.ID) !== -1){
-						matches.push(this);
+				//Reset the zoom to have a complete view of the diagram
+				me.parent.diagramPanel.zoomTool.reset();
+				//Iterate through all the featureSets and find those that contain the target feature
+				//Note that a feature can be drawn many times in the same diagram
+				var matches = [], featureSetView, featureSetElem;
+				for(var i in me.parent.diagramPanel.items){
+					featureSetView = me.parent.diagramPanel.items[i];
+					for(var j in featureSetView.model.features){
+						featureSetElem = featureSetView.model.features[j];
+						if(featureSetElem.getFeature().getID() === me.model.feature.ID){
+							featureSetView.model.setMainFeature(featureSetElem);
+							featureSetView.updateObserver();
+							matches.push($("#" + featureSetView.getComponent().id)[0]);
+						}
 					}
-				});
+				}
+				//For each found feature, show a popup indicating the location of the feature
 				$(matches).data('powertip', me.model.feature.name.split(",")[0]);
 				$(matches).powerTip({
 					smartPlacement: true,
 					placement: 's',
 				});
-
+				//For the tooltips sequencially
 				var showAllPositions = function(){
 					if(matches.length > 0){
-						$.powerTip.show($(matches.shift()));
-						setTimeout(showAllPositions, 2000);
+						var elem = $(matches.shift());
+						$.powerTip.show(elem);
+						$.powerTip.destroy(elem);
+						setTimeout(showAllPositions, 1700);
 					}else{
 						$.powerTip.hide();
 					}
@@ -1398,7 +1411,7 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 			});
 
 			$(target).find(".moreDetailsButton").click( function(){
-
+				me.parent.showFeatureSetDetails("", me.model.parent);
 			});
 		});
 
@@ -1712,6 +1725,9 @@ function PA_Step4KeggDiagramFeatureSetSVGBox() {
 		var dataDistributionSummaries = this.getParent("PA_Step4PathwayView").getDataDistributionSummaries();
 		var visualOptions = this.getParent("PA_Step4PathwayView").getVisualOptions();
 		$("#" + this.getComponentID()).attr("href", this.generateBox(dataDistributionSummaries, visualOptions));
+		// var newID = this.componentID.split("_");
+		// newID[newID.length-1] = this.model.getFeature().getID();
+		// $("#" + this.getComponentID()).attr("id", newID.join("_"));
 		return this;
 	};
 
@@ -1741,8 +1757,8 @@ function PA_Step4KeggDiagramFeatureSetSVGBox() {
 		//   }
 
 		//GET THE WIDTH AND THE HEIGHT
-		var width = (featureGraphicalData.getBoxWidth()  ) * scaleFactor;
-		var height = (featureGraphicalData.getBoxHeight() ) * scaleFactor;
+		var width = (featureGraphicalData.getBoxWidth()  || 10 ) * scaleFactor;
+		var height = (featureGraphicalData.getBoxHeight() || 10 ) * scaleFactor;
 
 		var boxHeigth = (((height - boxPadding * 2) / visibleOmics.length) * boxProportion);
 		var boxWidth = width - boxPadding * 2;
@@ -1810,10 +1826,12 @@ function PA_Step4KeggDiagramFeatureSetSVGBox() {
 			context.strokeStyle = '#000';
 		}
 
-		context.stroke();
-		context.font = "normal " + (fontSize * scaleFactor) + "px serif";
-		context.fillStyle = 'black';
-		context.fillText(feature.getName(), 0, fontSize * scaleFactor);
+		if(width > 80){
+			context.stroke();
+			context.font = "normal " + (fontSize * scaleFactor) + "px serif";
+			context.fillStyle = 'black';
+			context.fillText(feature.getName(), 0, fontSize * scaleFactor);
+		}
 
 		//Add start glyph if relevant
 		if (isRelevant === true) {
@@ -1900,11 +1918,8 @@ function PA_Step4KeggDiagramFeatureSetSVGBox() {
 			x: ((this.getModel().getFeatureGraphicalData().getX() * visualOptions.adjustFactor - width / 2) || 0),
 			y: ((this.getModel().getFeatureGraphicalData().getY() * visualOptions.adjustFactor - height / 2)  || 0),
 		};
-
 		return this.component;
 	};
-
-
 	return this;
 }
 PA_Step4KeggDiagramFeatureSetSVGBox.prototype = new View();

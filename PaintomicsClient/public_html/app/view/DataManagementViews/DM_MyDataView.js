@@ -296,12 +296,16 @@ function DM_MyDataFileListView() {
 							{name: 'description'}
 						],
 						sorters: [{
-							property: 'omicType',
-							direction: 'ASC'
-						}, {
-							property: 'dataType',
-							direction: 'ASC'
+							property: 'submissionDate',
+							direction: 'DESC'
 						}]
+						// sorters: [{
+						// 	property: 'omicType',
+						// 	direction: 'ASC'
+						// }, {
+						// 	property: 'dataType',
+						// 	direction: 'ASC'
+						// }]
 					}),
 					columns: [{
 						xtype: 'customcheckcolumn',
