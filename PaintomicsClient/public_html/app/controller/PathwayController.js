@@ -76,7 +76,7 @@ function PathwayController() {
 			//
 			//
 			//	 //GET THE VIEW PORT AND IF THE IMAGE IS BIGGER, CALCULATE THE ADJUST FACTOR
-			//	 var viewportWidth = $("#pathwaysPanelsContainer").width();
+			//	 var viewportWidth = $("#pathwaysPanelsWrapper").width();
 			//	 var graphicalOptions = pathwayView.getModel().getGraphicalOptions();
 			//	 var imageWidth = graphicalOptions.getImageWidth(), imageHeight = graphicalOptions.getImageHeight();
 			//	 var imageProportion = imageHeight / imageWidth;

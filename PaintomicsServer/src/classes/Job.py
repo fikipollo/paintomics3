@@ -21,11 +21,11 @@
 import logging
 from time import strftime as formatDate
 from os import path as os_path, makedirs as os_makedirs
-from shutil import rmtree as shutil_rmtree, make_archive as shutil_make_archive
+from shutil import rmtree as shutil_rmtree
 from csv import reader as csv_reader
 from numpy import percentile as numpy_percentile, min as numpy_min, max as numpy_max
 
-from src.common.Util import Model, unifyAndSort
+from src.common.Util import Model
 from Feature import Gene, Compound, OmicValue
 from src.common.KeggInformationManager import KeggInformationManager
 from src.common.FeatureNamesToKeggIDsMapper import mapFeatureNamesToKeggIDs, mapFeatureNamesToCompoundsIDs
@@ -192,60 +192,11 @@ class Job(Model):
 
         return self
 
-
-
     def validateInput(self):
         raise NotImplementedError()
 
     def processFilesContent(self):
-        """
-        This function processes all the files and returns a checkboxes list to show to the user
-
-        @returns list of matched Metabolites
-        """
-        if not os_path.exists(self.getTemporalDir() ):
-            os_makedirs(self.getTemporalDir() )
-
-        omicSummary = None
-
-        logging.info("CREATING THE TEMPORAL CACHE FOR JOB " + self.getJobID() + "..."  )
-        KeggInformationManager().createTranslationCache(self.getJobID())
-
-        try:
-            logging.info("PROCESSING GENE BASED FILES..." )
-            for inputOmic in self.geneBasedInputOmics:
-                [omicName, omicSummary] = self.parseGeneBasedFiles(inputOmic)
-                logging.info("   * PROCESSED " + omicName + "..." )
-                inputOmic["omicSummary"] = omicSummary
-            logging.info("PROCESSING GENE BASED FILES...DONE" )
-
-            logging.info("PROCESSING COMPOUND BASED FILES..." )
-            checkBoxesData=[]
-            for inputOmic in self.compoundBasedInputOmics:
-                [omicName, checkBoxesData, omicSummary]  = self.parseCompoundBasedFile(inputOmic, checkBoxesData)
-                logging.info("   * PROCESSED " + omicName + "..." )
-                inputOmic["omicSummary"] = omicSummary
-            #REMOVE REPETITIONS AND ORDER ALPHABETICALLY
-            checkBoxesData = unifyAndSort(checkBoxesData, lambda checkBoxData: checkBoxData["title"].lower())
-
-            logging.info("PROCESSING COMPOUND BASED FILES...DONE" )
-
-            #GENERATE THE COMPRESSED FILE WITH MATCHING, COPY THE FILE AT RESULTS DIR AND CLEAN TEMPORAL FILES
-            #COMPRESS THE RESULTING FILES AND CLEAN TEMPORAL DATA
-            #TODO: MOVE THIS CODE TO JOBINFORMATIONMANAGER
-            logging.info("COMPRESSING RESULTS...")
-            fileName = "mapping_results_" + self.getJobID()
-            shutil_make_archive(self.getOutputDir() + fileName, "zip", self.getTemporalDir() + "/")
-            logging.info("COMPRESSING RESULTS...DONE")
-
-            return checkBoxesData
-
-        except Exception as ex:
-            raise ex
-        finally:
-            logging.info("REMOVING THE TEMPORAL CACHE FOR JOB " + self.getJobID() + "..."  )
-            KeggInformationManager().clearTranslationCache(self.getJobID())
-
+        raise NotImplementedError()
 
     def parseGeneBasedFiles(self, inputOmic):
         """
@@ -392,7 +343,7 @@ class Job(Model):
         @returns the changed instances of checkBoxesData
         """
         #GET KEGG DATA FOR THE GIVEN SPECIE
-        keggInformationManager = KeggInformationManager()
+        # keggInformationManager = KeggInformationManager()
 
         #E.G. Metabolomics, Metabolomics 2, My Metab
         omicName = inputOmic.get("omicName")
@@ -471,7 +422,6 @@ class Job(Model):
                     outliers.append(allValues[i])
                     del allValues[i]
 
-            #TODO: MEJORABLE meter en el bucle anterior
             try:
                 summary = summary.tolist() + [numpy_min(allValues), numpy_max(allValues)]
             except:
@@ -497,18 +447,14 @@ class Job(Model):
         #TODO: HEADER
         relevantFeatures = {}
         if os_path.isfile(fileName):
-            f = open(fileName, 'rU')
-            lines = f.readlines()
-            logging.info("PARSING RELEVANT FEATURES FILE (" + fileName + ")... THE FILE CONTAINS " + str(len(lines)) + " RELEVANT FEATURES" );
-            f.close()
-
-            for line in lines:
-                line=line.rstrip()
-                if(isBedFormat == True):
-                    line = line.split("\t")
-                    line = line[0] + "_" + line[1] + "_" + line[2]
-
-                relevantFeatures[line.lower()] = 1
+            with open(fileName, 'rU') as inputDataFile:
+                for line in csv_reader(inputDataFile, delimiter="\t"):
+                    line = line[0]
+                    if(isBedFormat == True):
+                        line = line + "_" + line[1] + "_" + line[2]
+                    relevantFeatures[line.lower()] = 1
+            inputDataFile.close()
+            logging.info("PARSING RELEVANT FEATURES FILE (" + fileName + ")... THE FILE CONTAINS " + str(len(relevantFeatures.keys())) + " RELEVANT FEATURES" );
         else:
             logging.info("PARSING RELEVANT FEATURES FILE (" + fileName + ")... NO RELEVANT FEATURES FILE SUBMITTED" );
 
@@ -559,4 +505,3 @@ class Job(Model):
                     value = genes
                 bson[attr] = value
         return bson
-
