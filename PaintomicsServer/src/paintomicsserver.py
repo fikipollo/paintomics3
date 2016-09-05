@@ -33,6 +33,7 @@ from src.servlets.PathwayAcquisitionServlet import *
 from src.servlets.DataManagementServlet import *
 from src.servlets.UserManagementServlet import *
 from src.servlets.Bed2GenesServlet import *
+from src.servlets.MiRNA2GenesServlet import *
 from src.servlets.AdminServlet import *
 from src.common.KeggInformationManager import KeggInformationManager
 from src.common.JobInformationManager import JobInformationManager
@@ -286,6 +287,14 @@ class Application(object):
         @self.app.route(SERVER_SUBDOMAIN + '/dm_fromBEDtoGenes', methods=['OPTIONS', 'POST'])
         def fromBEDtoGenesHandler(exampleMode=False):
             result = fromBEDtoGenes_STEP1(request, Response(), self.queue, self.generateRandomID(), exampleMode).getResponse()
+            return result
+        #*******************************************************************************************
+        # fromMiRNAtoGenes HANDLERS
+        #*******************************************************************************************
+        @self.app.route(SERVER_SUBDOMAIN + '/dm_fromMiRNAtoGenes/<path:exampleMode>', methods=['OPTIONS', 'POST'])
+        @self.app.route(SERVER_SUBDOMAIN + '/dm_fromMiRNAtoGenes', methods=['OPTIONS', 'POST'])
+        def fromMiRNAtoGenesHandler(exampleMode=False):
+            result = fromMiRNAtoGenes_STEP1(request, Response(), self.queue, self.generateRandomID(), exampleMode).getResponse()
             return result
         #*******************************************************************************************
         ##* ALTERNATIVE PIPELINES SERVLETS HANDLERS - END

@@ -1,41 +1,41 @@
 //# sourceURL=PA_Step2Views.js
 /*
- * (C) Copyright 2014 The Genomics of Gene Expression Lab, CIPF
- * (http://bioinfo.cipf.es/aconesawp) and others.
- *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser General Public License
- * (LGPL) version 3 which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl.html
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- *
- * Contributors:
- *     Rafael Hernandez de Diego
- *     rhernandez@cipf.es
- *     Ana Conesa Cegarra
- *     aconesa@cipf.es
- * THIS FILE CONTAINS THE FOLLOWING COMPONENT DECLARATION
- * - PA_Step2JobView
- * - PA_Step2CompoundSetView
- * - PA_Step2CompoundView
- *
- */
+* (C) Copyright 2014 The Genomics of Gene Expression Lab, CIPF
+* (http://bioinfo.cipf.es/aconesawp) and others.
+*
+* All rights reserved. This program and the accompanying materials
+* are made available under the terms of the GNU Lesser General Public License
+* (LGPL) version 3 which accompanies this distribution, and is available at
+* http://www.gnu.org/licenses/lgpl.html
+*
+* This library is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+* Lesser General Public License for more details.
+*
+* Contributors:
+*     Rafael Hernandez de Diego
+*     rhernandez@cipf.es
+*     Ana Conesa Cegarra
+*     aconesa@cipf.es
+* THIS FILE CONTAINS THE FOLLOWING COMPONENT DECLARATION
+* - PA_Step2JobView
+* - PA_Step2CompoundSetView
+* - PA_Step2CompoundView
+*
+*/
 //Ext.require('Ext.chart.*');
 
 function PA_Step2JobView() {
 	/*********************************************************************
-	 * ATTRIBUTES
-	 ***********************************************************************/
+	* ATTRIBUTES
+	***********************************************************************/
 	this.name = "PA_Step2JobView";
 	this.items = [];
 
 	/*********************************************************************
-	 * GETTERS AND SETTERS
-	 ***********************************************************************/
+	* GETTERS AND SETTERS
+	***********************************************************************/
 	this.loadModel = function(jobModel) {
 		if (this.model !== null) {
 			this.model.deleteObserver(this);
@@ -53,8 +53,8 @@ function PA_Step2JobView() {
 	};
 
 	/*********************************************************************
-	 * OTHER FUNCTIONS
-	 ***********************************************************************/
+	* OTHER FUNCTIONS
+	***********************************************************************/
 	this.initComponent = function() {
 		var me = this;
 
@@ -64,13 +64,13 @@ function PA_Step2JobView() {
 			xtype: 'box',
 			cls: "contentbox omicSummaryBox", minHeight: 230,
 			html: '<div id="about">' +
-				'  <h2 >Feature ID/name translation summary <span class="helpTip" title="For example, for Gene Expression data, the diagram indicated the percentage of the input genes (names or identifiers) which were successfully mapped to a Kegg Gene Identifier."></h2>' +
-				'  <p>' +
-				'    Below you will find an overview of the results after matching the input files against Paintomics Databases.<br>' +
-				'    As general rule, the bigger the percentage of mapped features, the better results will be obtained in later steps.<br>' +
-				'    Check the results and review your input data in case of low level of mapping.<br>' +
-				((Object.keys(dataDistribution).length > 0) ? '  <a href="javascript:void(0)" id="download_mapping_file"><i class="fa fa-download"></i> Download ID/Name mapping results.</a>' : "") +
-				'</div>'
+			'  <h2 >Feature ID/name translation summary <span class="helpTip" title="For example, for Gene Expression data, the diagram indicated the percentage of the input genes (names or identifiers) which were successfully mapped to a Kegg Gene Identifier."></h2>' +
+			'  <p>' +
+			'    Below you will find an overview of the results after matching the input files against the PaintOmics databases.<br>' +
+			'    As a general rule, the bigger the percentage of mapped features, the better the results obtained in later stages.<br>' +
+			'    If the mapping percentage was low, manually check your results and input data.<br>' +
+			((Object.keys(dataDistribution).length > 0) ? '  <a href="javascript:void(0)" id="download_mapping_file"><i class="fa fa-download"></i> Download ID/Name mapping results.</a>' : "") +
+			'</div>'
 		}];
 
 		for (var omicName in dataDistribution) {
@@ -82,10 +82,10 @@ function PA_Step2JobView() {
 			compoundsComponents.push({
 				xtype: 'box', cls: "contentbox omicSummaryBox",
 				html: '<div id="about">' +
-					'  <h2>Compounds disambiguation</h2>' +
-					'  <p>Some compounds names need to be disambiguated.</p>' +
-					'  <p>Please check the list below and choose the compounds in which you are interested.</p> ' +
-					'</div>'
+				'  <h2>Compounds disambiguation</h2>' +
+				'  <p>Some compounds names need to be disambiguated.</p>' +
+				'  <p>Please check the list below and choose the compounds in which you are interested.</p> ' +
+				'</div>'
 			});
 
 			for (var i in me.items) {
@@ -100,9 +100,10 @@ function PA_Step2JobView() {
 			items: [{
 				xtype: "box",
 				cls: "toolbar secondTopToolbar",
-				html: '<a href="javascript:void(0)" class="button acceptButton" id="runButton"><i class="fa fa-play"></i> Next step</a>' +
-					'<a href="javascript:void(0)" class="button backButton" ><i class="fa fa-arrow-left"></i> Go back</a>' +
-					'<a href="javascript:void(0)" class="button cancelButton" id="resetButton"><i class="fa fa-refresh"></i> Reset</a>'
+				html:
+				'<a href="javascript:void(0)" class="button btn-danger btn-right" id="resetButton"><i class="fa fa-refresh"></i> Reset</a>' +
+				'<a href="javascript:void(0)" class="button btn-success btn-right" id="runButton"><i class="fa fa-play"></i> Next step</a>' +
+				'<a href="javascript:void(0)" class="button btn-default btn-right backButton"><i class="fa fa-arrow-left"></i> Go back</a>'
 			}, {
 				xtype: 'container', itemId: "omicSummaryPanel",
 				cls: "omicSummaryContainer",
@@ -161,10 +162,22 @@ function PA_Step2JobView() {
 	};
 
 	this.getSelectedCompounds = function() {
-		var checkedCompounds = $(".compoundsPanelsContainer input[type=checkbox]:checked");
-		var checkedCompoundsIDs = [];
-		for (var i in checkedCompounds) {
-			checkedCompoundsIDs.push(checkedCompounds[i].value);
+		var foundCompounds = this.model.getFoundCompounds();
+		var checkedCompoundsIDs = [], compoundSet, compound;
+		for(var i in foundCompounds){
+			compoundSet = foundCompounds[i];
+			for(var j in compoundSet.mainCompounds){
+				compound = compoundSet.mainCompounds[j];
+				if(compound.selected === true){
+					checkedCompoundsIDs.push(compound.ID + "#" + compound.name + "#" + compoundSet.title);
+				}
+			}
+			for(var j in compoundSet.otherCompounds){
+				compound = compoundSet.otherCompounds[j];
+				if(compound.selected === true){
+					checkedCompoundsIDs.push(compound.ID + "#" + compound.name + "#" + compoundSet.title);
+				}
+			}
 		}
 		return checkedCompoundsIDs;
 	};
@@ -175,14 +188,14 @@ PA_Step2JobView.prototype = new View();
 
 function PA_Step2CompoundSetView() {
 	/***********************************************************************
-	 * ATTRIBUTES
-	 ***********************************************************************/
+	* ATTRIBUTES
+	***********************************************************************/
 	this.mainCompoundsPanelItems = [];
 	this.otherCompoundsPanelItems = [];
 
 	/***********************************************************************
-	 * GETTERS AND SETTERS
-	 ***********************************************************************/
+	* GETTERS AND SETTERS
+	***********************************************************************/
 	this.loadModel = function(model) {
 		this.model = model;
 
@@ -202,8 +215,8 @@ function PA_Step2CompoundSetView() {
 		}
 	};
 	/***********************************************************************
-	 * OTHER FUNCTIONS
-	 ***********************************************************************/
+	* OTHER FUNCTIONS
+	***********************************************************************/
 	this.initComponent = function() {
 		var me = this;
 
@@ -216,10 +229,14 @@ function PA_Step2CompoundSetView() {
 			xtype: "container", cls: "contentbox metaboliteBox",
 			items: [{
 				xtype: "label", itemId: "titleBox",
-				html: '<h3 class="metaboliteTitle">' + this.getModel().getTitle() + '</h3>' + '<h4 style="padding-left: 10px;">' + mainCompoundsPanelComponents.length + ' compounds founds</h4>'
+				html:
+				'<h3 class="metaboliteTitle">' + this.getModel().getTitle() + '</h3>' +
+				'<h4 style="padding-left: 10px;">' + mainCompoundsPanelComponents.length + ' compounds founds</h4>'
 			}, {
-				xtype: 'container', itemId: "mainCompoundsPanel",
-				style: "padding: 3px 15px;", layout: 'column',
+				xtype: 'container',
+				itemId: "mainCompoundsPanel",
+				style: "padding: 3px 15px;",
+				layout: 'column',
 				items: mainCompoundsPanelComponents
 			}, {
 				xtype: "label",
@@ -232,15 +249,49 @@ function PA_Step2CompoundSetView() {
 			listeners: {
 				boxready: function() {
 					var container = this.queryById("otherCompoundsPanel");
+
+					var inputSelectionHandler = function() {
+						var id = $(this).val();
+						var selected = $(this).is(":checked");
+						var compound = me.model.findOtherCompound(id) || me.model.findMainCompound(id);
+						compound.selected = selected;
+
+						if(selected){
+							//If the user select a compound which is repeated and already selected, warn
+							var others = $("input[value=" + id + "]:checked");
+							if(others.length > 1){
+								var message = "<b>Duplicated compounds:</b><ul>";
+								others.each(function(){
+									message += "<li>" + $(this).next().text() + "</li>";
+								});
+								message += "</ul>";
+
+								showWarningMessage("Compound already selected", {
+									message : "This compound has been already selected in other box. Duplicated compounds may affect to the results in next stages.<br>" + message,
+									showButton : true
+								});
+							}
+						}
+					};
+
+					//TODO: Event fired when a checkbox is checked
+					$(this.el.dom).find("input").change(inputSelectionHandler);
+
 					$(this.el.dom).find(".showOtherCompoundsButton").click(function() {
 						var isVisible = $(this).hasClass("visible");
 						if (!isVisible) {
+							//If the items haven't been created yet, create them
 							if (container.items.length === 0) {
 								var otherCompoundsPanelComponents = [];
 								for (var i in me.otherCompoundsPanelItems) {
 									otherCompoundsPanelComponents.push(me.otherCompoundsPanelItems[i].getComponent());
 								}
 								container.add(otherCompoundsPanelComponents);
+								//Add the event for the new checboxes
+								setTimeout(function(){
+									$(container.el.dom).find("input").change(inputSelectionHandler);
+								}, 2000);
+
 							}
 							$(this).parents(".metaboliteBox").addClass("expandedBox");
 							$(this).addClass("visible");
@@ -268,34 +319,39 @@ PA_Step2CompoundSetView.prototype = new View();
 
 function PA_Step2CompoundView(maxLength, columnWidth) {
 	/***********************************************************************
-	 * ATTRIBUTES
-	 ***********************************************************************/
+	* ATTRIBUTES
+	***********************************************************************/
 	this.title = "";
 	this.columnWidth = columnWidth;
 	this.maxLength = maxLength;
 	/***********************************************************************
-	 * GETTERS AND SETTERS
-	 ***********************************************************************/
+	* GETTERS AND SETTERS
+	***********************************************************************/
 	this.loadModel = function(model) {
 		this.model = model;
 		this.title = this.model.getName();
 	};
 	/***********************************************************************
-	 * OTHER FUNCTIONS
-	 ***********************************************************************/
+	* OTHER FUNCTIONS
+	***********************************************************************/
 	this.initComponent = function() {
 		var me = this;
 		var titleAux = this.title;
-		if (this.title.length > this.maxLength) {
-			titleAux = this.title.substr(0, this.maxLength) + "[...]";
-		}
+		// if (this.title.length > this.maxLength) {
+		// 	titleAux = this.title.substr(0, this.maxLength) + "[...]";
+		// }
 		this.component = Ext.widget({
 			xtype: "box",
-			html: '<input type="checkbox"' + (this.model.isSelected() ? "checked" : "") + ' name="metabolite" value="' + this.model.getID() + '">' + titleAux,
+			html:
+			'<div style="max-width:' + this.columnWidth + 'px; white-space: nowrap; overflow: hidden; text-overflow:ellipsis;">' +
+			'  <input type="checkbox"' + (this.model.isSelected() ? "checked" : "") + ' name="metabolite" value="' + this.model.getID() + '">' +
+			'  <a href="http://www.kegg.jp/dbget-bin/www_bget?' + this.model.getID() + '" target="_blank">' + titleAux +'</a>' +
+			'</div>',
 			style: {
 				marginTop: "5px",
 				width: this.columnWidth + "px",
-				display: "inline-box"
+				display: "inline-box",
+				textOverflow : "ellipsis"
 			},
 			listeners: {
 				beforedestroy: function() {
@@ -303,15 +359,28 @@ function PA_Step2CompoundView(maxLength, columnWidth) {
 				}
 			}
 		});
-		if (this.title.length > this.maxLength) {
-			this.component.tip = this.title;
-			this.component.addListener("afterrender", function(c) {
-				Ext.create('Ext.tip.ToolTip', {
-					target: c.getEl(),
-					html: c.tip
-				});
+
+		this.component.tip =
+		'<b>' + this.title + '</b> (' + this.model.getID() + ')' +
+		'<div>'+
+		'  <div style="display: block; text-align:center; padding: 20px;"><i class="fa fa-circle-o-notch fa-spin fa-fw"></i> Loading image...</div>' +
+		'  <img style="display: block; margin:auto;" src="http://rest.kegg.jp/get/' + this.model.getID() + '/image">' +
+		'</div>';
+		this.component.addListener("afterrender", function(c) {
+			Ext.create('Ext.tip.ToolTip', {
+				target: c.getEl(),
+				html: c.tip,
+				listeners: {
+					boxready: function() {
+						var tip = this;
+						$(this.el.dom).find("img").on('load', function() {
+							$(this).prev().remove();
+							tip.doLayout();
+						});
+					}
+				}
 			});
-		}
+		});
 		return this.component;
 	};
 	return this;
@@ -320,16 +389,16 @@ PA_Step2CompoundView.prototype = new View();
 
 function PA_OmicSummaryPanel(omicName, dataDistribution) {
 	/***********************************************************************
-	 * ATTRIBUTES
-	 ***********************************************************************/
+	* ATTRIBUTES
+	***********************************************************************/
 	this.omicName = omicName;
 	//   0        1       2    3    4    5     6,   7   8      9        10
 	//[MAPPED, UNMAPPED, MIN, P10, Q1, MEDIAN, Q3, P90, MAX, MIN_IR, Max_IR]
 	this.dataDistribution = dataDistribution;
 
 	/***********************************************************************
-	 * OTHER FUNCTIONS
-	 ***********************************************************************/
+	* OTHER FUNCTIONS
+	***********************************************************************/
 	this.initComponent = function() {
 		var me = this;
 
@@ -339,10 +408,10 @@ function PA_OmicSummaryPanel(omicName, dataDistribution) {
 			xtype: "box",
 			cls: "contentbox omicSummaryBox",
 			html: '<h3 class = "metaboliteTitle" style="display:inline-block;margin-right: 20px;">' + this.omicName + '</h3>' +
-				'<div>' +
-				'  <div style="height:195px; overflow:hidden; width:50%; float: right;" id="' + divName + 'data_dstribution_plot"></div>' +
-				'  <div style="height:195px; overflow:hidden; width:50%; " id="' + divName + 'mapping_summary_plot"></div>' +
-				'</div>',
+			'<div>' +
+			'  <div style="height:195px; overflow:hidden; width:50%; float: right;" id="' + divName + 'data_dstribution_plot"></div>' +
+			'  <div style="height:195px; overflow:hidden; width:50%; " id="' + divName + 'mapping_summary_plot"></div>' +
+			'</div>',
 			listeners: {
 				boxready: function() {
 					if (me.dataDistribution[1] !== -1 && me.dataDistribution[0] !== -1) {

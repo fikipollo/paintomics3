@@ -21,7 +21,7 @@ PaintOmics 3 consists of three simple steps:
 * **Identifier and Name Matching and Metabolite assignment**: as Paintomics requires Entrez IDs for working with KEGG pathways, the tool will try to convert the names and identifiers from different sources and databases for the input data. Additionally, it's necessary to specify of metabolite assignments in ambiguity cases.
 * **Pathway selection:** finally, Paintomics will obtain the list of KEGG Pathway that are ?.
 
-Currently PaintOmics 3 supports integrated visualization of multipel species of different biological kingdoms and offers user the possibility to request any other organism present in the KEGG database. 
+Currently PaintOmics 3 supports integrated visualization of multipel species of different biological kingdoms and offers user the possibility to request any other organism present in the KEGG database.
 
 
 **PaintOmics 3** application is distributed under **GNU General Public License, Version 3**.
@@ -49,3 +49,6 @@ For any question on STATegraEMS, users can send a mail to [paintomics@cipf.es](m
 <div class="imageContainer" style="margin-top:50px; text-align:center; font-size:10px; color:#898989" >
     <img src="docs/img/stategra_partners_logo.jpg" title="The STATegra Consorcium."/>
 </div>
+
+## TODO list
+https://trello.com/b/58vOjrpW/paintomics-3-todos

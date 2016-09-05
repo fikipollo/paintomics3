@@ -33,6 +33,10 @@ sudo pip install cairosvg ??
 #TODO: INSTALL R PACKAGES (amap)
 sudo apt-get install r-base r-base-dev
 
+R
+install.packages("amap")
+q()
+
 #*********************************************************
 #INITIALIZE MONGO DB
 #*********************************************************

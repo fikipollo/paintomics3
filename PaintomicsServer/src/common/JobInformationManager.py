@@ -1,24 +1,26 @@
 #***************************************************************
-#  This file is part of Paintomics v3
+#  This file is part of PaintOmics 3
 #
-#  Paintomics is free software: you can redistribute it and/or
+#  PaintOmics 3 is free software: you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License as
 #  published by the Free Software Foundation, either version 3 of
 #  the License, or (at your option) any later version.
 #
-#  Paintomics is distributed in the hope that it will be useful,
+#  PaintOmics 3 is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with Paintomics.  If not, see <http://www.gnu.org/licenses/>.
+#  along with PaintOmics 3.  If not, see <http://www.gnu.org/licenses/>.
+#  Contributors:
+#     Rafael Hernandez de Diego <paintomics@cipf.es>
+#     Ana Conesa Cegarra
+#     and others
 #
 #  More info http://bioinfo.cipf.es/paintomics
 #  Technical contact paintomics@cipf.es
 #
-# THIS FILE CONTAINS THE FOLLOWING COMPONENT DECLARATION
-#  - JobInformationManager
 #**************************************************************
 
 import logging
@@ -30,6 +32,7 @@ from src.conf.serverconf import JOB_CACHE_MAX_SIZE
 
 from src.common.DAO.PathwayAcquisitionJobDAO import PathwayAcquisitionJobDAO
 from src.common.DAO.Bed2GeneJobDAO import Bed2GeneJobDAO
+from src.common.DAO.MiRNA2GeneJobDAO import MiRNA2GeneJobDAO
 from src.common.DAO.FeatureDAO import FeatureDAO
 from src.common.DAO.PathwayDAO import PathwayDAO
 from src.common.DAO.VisualOptionsDAO import VisualOptionsDAO
@@ -56,6 +59,12 @@ class JobInformationManager:
                 #SAVE THE WHOLE JOB INSTANCE
                 logging.info("SAVING Bed2GeneJob "  + jobInstance.getJobID() + " TO DATABASE...")
                 daoInstance = Bed2GeneJobDAO()
+                daoInstance.insert(jobInstance)
+
+            elif type(jobInstance).__name__ == "MiRNA2GeneJob":
+                #SAVE THE WHOLE JOB INSTANCE
+                logging.info("SAVING MiRNA2GeneJob "  + jobInstance.getJobID() + " TO DATABASE...")
+                daoInstance = MiRNA2GeneJobDAO()
                 daoInstance.insert(jobInstance)
 
             elif type(jobInstance).__name__ == "PathwayAcquisitionJob":

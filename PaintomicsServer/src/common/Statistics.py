@@ -1,3 +1,5 @@
+from math import log
+from scipy.stats import chisqprob, fisher_exact
 ##*******************************************************************************************
 ##****AUXLIAR FUNCTION DEFINITION************************************************************
 ##*******************************************************************************************
@@ -8,26 +10,28 @@ def calculateSignificance(test, totalFeatures, totalRelevantFeatures, totalFeatu
         raise NotImplementedError;
 
 def calculateCombinedSignificancePvalue(combinedTest, significanceValuesList):
-    if(combinedTest == "fisher-combined"):
+    if len(significanceValuesList) < 2: #Do not calculate if only one omic
+        return None
+    elif(combinedTest == "fisher-combined"):
         return calculateCombinedFisher(significanceValuesList)
     else:
         raise NotImplementedError;
 
 def calculateFisher(totalElems, foundElems, totalSignificative, foundSignificative):
-    import fisher
-
     foundNoSig = foundElems - foundSignificative
     notFoundSig = totalSignificative - foundSignificative
     notFoundNoSig = (totalElems - foundElems) - notFoundSig
 
-    p = fisher.pvalue(foundSignificative, foundNoSig, notFoundSig, notFoundNoSig)
-
-    return(p.right_tail)
+    #___________| DE | Not DE |
+    #     Found |    |        |
+    # Not Found |    |        |
+    #TODO: WHY RIGHT TAIL?
+    p = fisher_exact([[foundSignificative, foundNoSig],[notFoundSig, notFoundNoSig]], 'greater')[1]
+    return p
 
 def calculateCombinedFisher(significanceValuesList):
     #X^2_2k ~ -2 * sum(ln(p_i))
-    from math import log
-    from scipy.stats import chisqprob
+
 
     accumulatedValue = 0
     for significanceValues in significanceValuesList:
