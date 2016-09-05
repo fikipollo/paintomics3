@@ -1,0 +1,1 @@
+Ext.define("Ext.upload.header.Base64FilenameEncoder",{extend:"Ext.upload.header.AbstractFilenameEncoder",config:{},type:"base64",encode:function(filename){return window.btoa(unescape(encodeURIComponent(filename)))}});
