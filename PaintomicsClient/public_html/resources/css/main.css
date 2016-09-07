@@ -232,34 +232,34 @@ ul.menu li.loggedOption, ul.menu span.loggedOption {
 	float:left; /*TODO: REPLACE BY btn-float*/
 }
 .btn-default {
-    color: #333;
-    background-color: #fff;
-    border-color: #ccc;
+	color: #333;
+	background-color: #fff;
+	border-color: #ccc;
 }
 .btn-default:hover {
-    color: #333;
-    background-color: #e6e6e6;
-    border-color: #adadad;
+	color: #333;
+	background-color: #e6e6e6;
+	border-color: #adadad;
 }
 .btn-primary {
-    color: #fff;
-    background-color: #337ab7;
-    border-color: #2e6da4;
+	color: #fff;
+	background-color: #337ab7;
+	border-color: #2e6da4;
 }
 .btn-primary:hover {
-    color: #fff;
-    background-color: #286090;
-    border-color: #204d74;
+	color: #fff;
+	background-color: #286090;
+	border-color: #204d74;
 }
 .btn-secondary {
-    color: #fff;
-		background-color: #55c9a6;
-		border-color: #53af93;
+	color: #fff;
+	background-color: #55c9a6;
+	border-color: #53af93;
 }
 .btn-secondary:hover {
-    color: #fff;
-    background-color: #59b790;
-    border-color: #419875;
+	color: #fff;
+	background-color: #59b790;
+	border-color: #419875;
 }
 .btn-info{
 	color: #fff;
@@ -267,44 +267,44 @@ ul.menu li.loggedOption, ul.menu span.loggedOption {
 	border-color: #46b8da;
 }
 .btn-info:hover {
-    color: #fff;
-    background-color: #31b0d5;
-    border-color: #269abc;
+	color: #fff;
+	background-color: #31b0d5;
+	border-color: #269abc;
 }
 .btn-success {
-    color: #fff;
-    background-color: #5cb85c;
-    border-color: #4cae4c;
+	color: #fff;
+	background-color: #5cb85c;
+	border-color: #4cae4c;
 }
 .btn-success:hover {
-    color: #fff;
-    background-color: #449d44;
-    border-color: #398439;
+	color: #fff;
+	background-color: #449d44;
+	border-color: #398439;
 }
 .btn-warning {
-    color: #fff;
-    background-color: #f0ad4e;
-    border-color: #eea236;
+	color: #fff;
+	background-color: #f0ad4e;
+	border-color: #eea236;
 }
 .btn-warning:hover {
-    color: #fff;
-    background-color: #ec971f;
-    border-color: #d58512;
+	color: #fff;
+	background-color: #ec971f;
+	border-color: #d58512;
 }
 .btn-danger {
-    color: #fff;
-    background-color: #d9534f;
-    border-color: #d43f3a;
+	color: #fff;
+	background-color: #d9534f;
+	border-color: #d43f3a;
 }
 .btn-danger {
-    color: #fff;
-    background-color: #d9534f;
-    border-color: #d43f3a;
+	color: #fff;
+	background-color: #d9534f;
+	border-color: #d43f3a;
 }
 .btn-danger:hover {
-    color: #fff;
-    background-color: #c9302c;
-    border-color: #ac2925;
+	color: #fff;
+	background-color: #c9302c;
+	border-color: #ac2925;
 }
 .button.acceptButton {
 	background: #12a22f;
@@ -780,7 +780,21 @@ div.availableOmicsBox h4 {
 /********************************************************************************
 **STYLES FOR STEP 3
 *********************************************************************************/
-
+.contingencyTable {
+	border-collapse: collapse;
+	text-align: center;
+	font-size: 8px;
+	margin: 2px 15px;
+}
+.contingencyTable tbody tr {
+	border-top: 1px solid #9c9c9c;
+}
+.contingencyTable td, .contingencyTable th {
+	border-right: 1px solid #9c9c9c;
+}
+.contingencyTable td:last-child, .contingencyTable th:last-child {
+	border: none;
+}
 .pathwaysTable {
 	width: 100%;
 	text-align: center;

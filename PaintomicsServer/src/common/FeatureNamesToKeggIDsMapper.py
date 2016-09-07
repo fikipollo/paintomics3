@@ -208,10 +208,11 @@ def mapFeatureNamesToKeggIDs(jobID, organism, featureList, mapGeneIDs=True):
     #***********************************************************************************
     #* STEP 1. CALCULATE THE MAX NUMBER OF THREADS AND PREPARE DATA
     #***********************************************************************************
-    try:
-        nThreads = min(cpu_count(), MAX_THREADS)        #NUMBER OF THREADS
-    except NotImplementedError as ex:
-        nThreads = MAX_THREADS
+    # try:
+    #     nThreads = min(cpu_count(), MAX_THREADS)        #NUMBER OF THREADS
+    # except NotImplementedError as ex:
+    #     nThreads = MAX_THREADS
+    nThreads = MAX_THREADS
 
     logging.info("USING " + str(nThreads) + " THREADS")
     logging.info("INPUT " + str(len(featureList)) + " FEATURES")
@@ -425,10 +426,11 @@ def mapFeatureNamesToCompoundsIDs(jobID, featureList):
     #***********************************************************************************
     #* STEP 1. CALCULATE THE MAX NUMBER OF THREADS AND PREPARE DATA
     #***********************************************************************************
-    try:
-        nThreads = min(cpu_count(), MAX_THREADS)        #NUMBER OF THREADS
-    except NotImplementedError as ex:
-        nThreads = MAX_THREADS
+    # try:
+    #     nThreads = min(cpu_count(), MAX_THREADS)        #NUMBER OF THREADS
+    # except NotImplementedError as ex:
+    #     nThreads = MAX_THREADS
+    nThreads = MAX_THREADS
 
     logging.info("USING " + str(nThreads) + " THREADS")
     logging.info("INPUT " + str(len(featureList)) + " FEATURES")

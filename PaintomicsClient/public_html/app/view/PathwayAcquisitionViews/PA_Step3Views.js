@@ -2633,18 +2633,22 @@ function PA_Step3PathwayClassificationView() {
 			this.generateColumns = function(omics, columns, rowModel, hidden) {
 				//FOR EACH OMIC -> ADD COLUM FOR p-value AND CREATE THE HOVER PANEL WITH SUMMARY
 				var omicName;
+				var me = this;
 
+				//TODO: REMOVE THIS SPAGETTI CODE :/
 				var renderFunction = function(value, metadata, record) {
-					var myToolTipText = "<b style='display:block; width:200px'>" + metadata.column.text + "</b>";
-					//IF THERE IS NOT DATA FOR THIS PATHWAY, FOR THIS OMIC, PRINT A '-'
+					var myToolTipText = "<b style='display:block; width:200px'>" + metadata.column.text.replace(/<\/br>/g, " ") + "</b>";
 					metadata.style = "height: 33px; font-size:10px;"
 
+					//IF THERE IS NOT DATA FOR THIS PATHWAY, FOR THIS OMIC, PRINT A '-'
 					if (value === "-") {
 						myToolTipText = myToolTipText + "<i>No data for this pathway</i>";
 						metadata.tdAttr = 'data-qtip="' + myToolTipText + '"';
 						metadata.style += "background-color:#D4D4D4;";
 						return "-";
 					}
+					//ELSE, GENERATE SUMMARY TIP
+
 					//RENDER THE VALUE -> IF LESS THAN 0.05, USE SCIENTIFIC NOTATION
 					var renderedValue = (value > 0.001 || value === 0) ? parseFloat(value).toFixed(5) : parseFloat(value).toExponential(4);
 					var omicName = "-" + metadata.column.text.toLowerCase().replace(/ /g, "-").replace(/<\/br>/g, "-");
@@ -2654,10 +2658,25 @@ function PA_Step3PathwayClassificationView() {
 						metadata.style += "background-color:rgb(255, " + color +"," + color + ");";
 					}
 
-					//ELSE, GENERATE SUMMARY TIP
-					myToolTipText = myToolTipText + "Features matched: " + record.get('totalMatched' + omicName) + "</br>";
-					myToolTipText = myToolTipText + "Relevant features matched: " + record.get('totalRelevantMatched' + omicName) + "</br>";
-					myToolTipText = myToolTipText + "p-value: " + (value === -1 ? "-" : renderedValue) + "</br>";
+					var totalFeatures = me.model.summary[4][metadata.column.text.replace(/<\/br>/g, " ")];
+					var totalRelevant = me.model.summary[5][metadata.column.text.replace(/<\/br>/g, " ")];
+					var foundFeatures = record.get('totalMatched' + omicName);
+					var foundRelevant = record.get('totalRelevantMatched' + omicName);
+
+					var foundNotRelevant = foundFeatures - foundRelevant;
+					var notFoundRelevant = totalRelevant - foundRelevant;
+					var notFoundNotRelev = (totalFeatures - foundFeatures) - notFoundRelevant;
+
+					myToolTipText +=
+					'<b>p-value:</b>'  + (value === -1 ? "-" : renderedValue) + "</br>" +
+					"<table class='contingencyTable'>" +
+					' <thead><th></th><th>Relevant</th><th>Not Relevant</th><th></th></thead>' +
+					'  <tr><td>Found</td><td>' + foundRelevant + '</td><td>' + foundNotRelevant + '</td><td>' + foundFeatures + '</td></tr>' +
+					'  <tr><td>Not found</td><td>' + notFoundRelevant + '</td><td>' + notFoundNotRelev + '</td><td>' + (totalFeatures - foundFeatures) + '</td></tr>' +
+					'  <tr><td></td><td>' + totalRelevant + '</td><td>' + (totalFeatures - totalRelevant) + '</td><td>' + (totalFeatures) + '</td></tr>' +
+					'</table>';
+					// myToolTipText = myToolTipText + "Features matched: " + ) + "</br>";
+					// myToolTipText = myToolTipText + "Relevant features matched: " +  + "</br>";
 					metadata.tdAttr = 'data-qtip="' + myToolTipText + '"';
 
 					return renderedValue;

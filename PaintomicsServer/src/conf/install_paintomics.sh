@@ -12,17 +12,27 @@ sudo apt-get install mongodb
 sudo apt-get install python-dev python-mysqldb python-rsvg python-cairo python-cairosvg python-imaging python-pip libatlas-base-dev gfortran libapache2-mod-wsgi
 #sudo apt-get install tk8.5 tcl8.5
 
+#Tested with flask 0.10.1 |
 sudo pip install flask
+#Tested with gevent 1.0 |
 sudo pip install gevent
+#Tested with numpy 1.9.1 | 1.9.2
 sudo pip install numpy
-sudo pip install fisher
+#Tested with enum 0.4.4 |
 sudo pip install enum
+#Tested with configparser 3.3.0r2 |
 sudo pip install configparser
+#Tested with pymongo 2.7.2 |
 sudo pip install pymongo
+#Tested with scriptine 0.2.1 |
 sudo pip install scriptine
+#Tested with datetime 4.0.1 |
 sudo pip install datetime
+#Tested with scipy 0.17.0 | 0.18.0
 sudo pip install scipy
+#Tested with hashlib 20081119 |
 sudo pip install hashlib
+#Tested with psutil 1.2.1 |
 sudo pip install psutil
 
 sudo pip install pycairo ??
