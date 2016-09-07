@@ -37,7 +37,7 @@ from src.classes.Feature import Gene, Compound
 from src.classes.Pathway import Pathway
 from src.classes.PathwayGraphicalData import PathwayGraphicalData
 
-from src.conf.serverconf import ROOT_DIRECTORY, KEGG_DATA_DIR
+from src.conf.serverconf import ROOT_DIRECTORY, KEGG_DATA_DIR, MAX_THREADS, MAX_WAIT_THREADS
 
 
 class PathwayAcquisitionJob(Job):
@@ -357,12 +357,12 @@ class PathwayAcquisitionJob(Job):
         # Step 2. FOR EACH PATHWAY OF THE SPECIE, CHECK IF THERE IS ONE OR
         #         MORE FEATURES FROM THE INPUT (USING MULTITHREADING)
         #****************************************************************
-        from src.conf.serverconf import MAX_THREADS, MAX_WAIT_THREADS
-        try:
-            #CALCULATE NUMBER OF THREADS
-            nThreads = min(cpu_count(), MAX_THREADS)
-        except NotImplementedError as ex:
-            nThreads = MAX_THREADS
+        # try:
+        #     #CALCULATE NUMBER OF THREADS
+        #     nThreads = min(cpu_count(), MAX_THREADS)
+        # except NotImplementedError as ex:
+        #     nThreads = MAX_THREADS
+        nThreads = MAX_THREADS
         logging.info("USING " + str(nThreads) + " THREADS")
 
         def matchPathways(jobInstance, pathwaysList, inputGenes, inputCompounds, totalFeaturesByOmic, totalRelevantFeaturesByOmic, matchedPathways):
@@ -425,13 +425,19 @@ class PathwayAcquisitionJob(Job):
         totalFeaturesByOmic = {}
         totalRelevantFeaturesByOmic = {}
 
+        originalNames = {}
         for compound in self.getInputCompoundsData().values():
             for omicValue in compound.getOmicsValues():
-                totalFeaturesByOmic[omicValue.getOmicName()] = totalFeaturesByOmic.get(omicValue.getOmicName(),0) + 1
-                sum = 0
-                if(omicValue.isRelevant()):
-                    sum = 1
-                totalRelevantFeaturesByOmic[omicValue.getOmicName()] = totalRelevantFeaturesByOmic.get(omicValue.getOmicName(),0) + sum
+                if omicValue.getOmicName() not in originalNames:
+                    originalNames[omicValue.getOmicName()] = {} #If the omics type is not in the table yet add it
+                originalNames[omicValue.getOmicName()][omicValue.getOriginalName()] = (originalNames.get(omicValue.getOmicName()).get(omicValue.getOriginalName(), False) or omicValue.isRelevant())
+
+        for omicName, compoundNames in originalNames.iteritems():
+            totalFeaturesByOmic[omicName] = len(compoundNames.keys())
+            totalRelevantFeaturesByOmic[omicName] = 0
+            for isRelevant in compoundNames.values():
+                if(isRelevant):
+                    totalRelevantFeaturesByOmic[omicName] = totalRelevantFeaturesByOmic.get(omicName) + 1
 
         for gene in self.getInputGenesData().values():
             for omicValue in gene.getOmicsValues():

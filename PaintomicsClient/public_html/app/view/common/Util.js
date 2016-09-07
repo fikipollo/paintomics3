@@ -383,7 +383,10 @@ function ajaxErrorHandler(responseObj) {
 		err = eval("(" + responseObj.responseText + ")");
 	} catch (error) {
 		err = {message: "Unable to parse the error message."};
+	} finally{
+		err = err || {message: "Unable to parse the error message."};
 	}
+
 	showErrorMessage("Oops..Internal error!", {
 		message: err.message + "</br>Please try again later.</br>If the error persists, please contact the <a href='mailto:paintomics@cipf.es' target='_blank'> administrator</a>.",
 		extra : err.extra,
