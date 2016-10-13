@@ -2657,9 +2657,9 @@ function PA_Step3PathwayClassificationView() {
 						var color = Math.round(225 * (value/0.065));
 						metadata.style += "background-color:rgb(255, " + color +"," + color + ");";
 					}
-
-					var totalFeatures = me.model.summary[4][metadata.column.text.replace(/<\/br>/g, " ")];
-					var totalRelevant = me.model.summary[5][metadata.column.text.replace(/<\/br>/g, " ")];
+					//TODO: ARREGLAR ESTO
+					var totalFeatures = 10000; //me.model.summary[4][metadata.column.text.replace(/<\/br>/g, " ")];
+					var totalRelevant = 5000;//me.model.summary[5][metadata.column.text.replace(/<\/br>/g, " ")];
 					var foundFeatures = record.get('totalMatched' + omicName);
 					var foundRelevant = record.get('totalRelevantMatched' + omicName);
 

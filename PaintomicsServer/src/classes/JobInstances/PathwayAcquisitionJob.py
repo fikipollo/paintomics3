@@ -252,6 +252,9 @@ class PathwayAcquisitionJob(Job):
             #TODO: MOVE THIS CODE TO JOBINFORMATIONMANAGER
             logging.info("COMPRESSING RESULTS...")
             fileName = "mapping_results_" + self.getJobID()
+            logging.info("OUTPUT FILES IS " + self.getOutputDir() + fileName)
+            logging.info("TEMPORAL DIR IS " + self.getTemporalDir() + "/")
+
             shutil_make_archive(self.getOutputDir() + fileName, "zip", self.getTemporalDir() + "/")
             logging.info("COMPRESSING RESULTS...DONE")
 

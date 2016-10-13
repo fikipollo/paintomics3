@@ -26,7 +26,7 @@ function DM_miRNA2GenesJobView() {
 	/*********************************************************************
 	* ATTRIBUTES
 	***********************************************************************/
-	this.name = "PA_Step1JobView";
+	this.name = "DM_miRNA2GenesJobView";
 	this.nFiles = 4;
 	this.exampleMode = false;
 	/*********************************************************************

@@ -420,6 +420,8 @@ def registerFile(userID, fileName, options, location):
     daoInstance = FileDAO()
     daoInstance.insert(fileInstance, otherParams={"userID":userID})
     logging.info("\tREGISTERING " + fileName + " INTO DATABASE...DONE")
+    if(daoInstance != None):
+        daoInstance.closeConnection()
 
     return fileName
 

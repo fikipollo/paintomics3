@@ -7,3 +7,4 @@ PaintomicsServer/src/AdminTools/log/application.log
 *.pyc
 PaintomicsServer/.idea/workspace.xml
 PaintomicsServer/src/conf/serverconf.py
+PaintomicsServer/src/examplefiles/GTF/*.gtf

@@ -267,9 +267,14 @@ class JobInformationManager:
                     jobInstance.addReferenceInput({"omicName": omicType, "fileType": dataType, "inputDataFile": dataFileName})
 
     def getVisualOptions(self, jobID):
-        return VisualOptionsDAO().findByID(jobID)
+        daoInstance = VisualOptionsDAO()
+        visualOptions = daoInstance.findByID(jobID)
+        daoInstance.closeConnection()
+        return visualOptions
 
     def storeVisualOptions(self, jobID, visualOptionsInstance):
         daoInstance = VisualOptionsDAO()
         daoInstance.remove(jobID)
-        return daoInstance.insert(visualOptionsInstance, {"jobID":jobID})
+        success = daoInstance.insert(visualOptionsInstance, {"jobID":jobID})
+        daoInstance.closeConnection()
+        return success

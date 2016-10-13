@@ -449,9 +449,10 @@ class Job(Model):
         if os_path.isfile(fileName):
             with open(fileName, 'rU') as inputDataFile:
                 for line in csv_reader(inputDataFile, delimiter="\t"):
-                    line = line[0]
                     if(isBedFormat == True):
-                        line = line + "_" + line[1] + "_" + line[2]
+                        line = line[0] + "_" + line[1] + "_" + line[2]
+                    else:
+                        line = line[0]
                     relevantFeatures[line.lower()] = 1
             inputDataFile.close()
             logging.info("PARSING RELEVANT FEATURES FILE (" + fileName + ")... THE FILE CONTAINS " + str(len(relevantFeatures.keys())) + " RELEVANT FEATURES" );

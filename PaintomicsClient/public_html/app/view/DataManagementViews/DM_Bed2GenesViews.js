@@ -26,7 +26,7 @@ function DM_Bed2GenesJobView() {
 	/*********************************************************************
 	* ATTRIBUTES
 	***********************************************************************/
-	this.name = "PA_Step1JobView";
+	this.name = "DM_Bed2GenesJobView";
 	this.nFiles = 3;
 	this.exampleMode = false;
 	/*********************************************************************

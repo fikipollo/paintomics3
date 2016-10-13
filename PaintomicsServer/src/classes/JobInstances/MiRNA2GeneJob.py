@@ -271,16 +271,21 @@ class MiRNA2GeneJob(Job):
                         score = abs(score)
                     #TODO: SIMILAR FC SELECTION
 
+                    #DEPRECATED: WE REPORT ALL MIRNAS BUT NOW THE RELEVANT DEPEND ON THE DE AND THE SCORE
                     #FILTER BY SELECTION METHODS, IF CORRELATION OR FC IS LOWER THAN THE CUTOFF, IGNORE ENTRY
-                    if score < self.cutoff:
-                        continue
+                    #if score < self.cutoff:
+                    #    continue
+
+                    if geneID == "ENSMUSG00000028986" and mirnaID == "mmu-miR-3074-1-3p":
+                        pass
+
 
                     #STEP 5.3 CREATE A NEW OMIC VALUE WITH ROW DATA
                     omicValueAux = OmicValue(mirnaID)
                     #TODO: set omic name with chipseq, dnase,...?
                     omicValueAux.setOriginalName(mirnaID)
-                    omicValueAux.setRelevant(isRelevant)
                     omicValueAux.setValues(values)
+                    omicValueAux.setRelevant(isRelevant and score > self.cutoff)
 
                     #STEP 5.4 CREATE A NEW TEMPORAL GENE INSTANCE
                     geneAux = Gene(geneID)

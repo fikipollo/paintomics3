@@ -54,5 +54,6 @@ class JobDAO(DAO):
             daoInstance = PathwayAcquisitionJobDAO()
 
         daoInstance.remove(id, otherParams)
+        daoInstance.closeConnection()
 
         return True

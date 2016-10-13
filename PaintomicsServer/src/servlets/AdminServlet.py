@@ -422,7 +422,7 @@ def adminServletSaveMessage(request, response):
         daoInstance = MessageDAO()
         daoInstance.removeAll(otherParams={"message_type" : messageInstance.message_type})
         daoInstance.insert(messageInstance)
-
+        daoInstance.closeConnection()
         response.setContent({"success": True })
 
     except Exception as ex:
@@ -449,7 +449,7 @@ def adminServletGetMessage(request, response):
         #****************************************************************
         daoInstance = MessageDAO()
         matchedMessages = daoInstance.findAll(otherParams={"message_type" : message_type})
-
+        daoInstance.closeConnection()
         response.setContent({"success": True, "messageList" : matchedMessages})
 
     except Exception as ex:
@@ -478,6 +478,7 @@ def adminServletDeleteMessage(request, response):
         message_type = request.form.get("message_type")
         daoInstance = MessageDAO()
         daoInstance.removeAll(otherParams={"message_type" : message_type})
+        daoInstance.closeConnection()
 
         response.setContent({"success": True})
 
