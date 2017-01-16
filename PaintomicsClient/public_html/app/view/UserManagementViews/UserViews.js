@@ -131,12 +131,11 @@ function SignInPanel() {
                         },
                         {xtype: "box", flex: 1, html:
                                     '<div style="padding-left: 30px; border-left: 1px solid #E7E7E7;">' +
-                                    '<h2>Guest session</h2>' +
-                                    '<h4>Start a new Guest session on Paintomics.</h4>' +
-                                    '<p><b>Please note</b> that all data submitted by Guest users as well as jobs and the generated data, will be stored on the system a maximum of <b>7 days</b>.</p>' +
-                                    '<p>If you plan to use Paintomics more extensively or if you want to keep your data for longer, please <b><a class="signUpLink" href="javascript:void(0)">Sign Up.</a></b>. It only takes a few seconds.</br>' +
-                                    '   More info about <a>Registration.</a></p>' +
-                                    '<a class="button acceptButton" id="guestUserButton" style=" width: 100%; text-align: center; margin: 10px 0px; "><i class="fa fa-sign-in"></i> Start Guest session</a>' +
+                                    '  <h2>Guest session</h2>' +
+                                    '  <h4>Start a new Guest session on Paintomics.</h4>' +
+																		'  <p><b>Please note</b> that all data submitted by Guest users as well as jobs and the generated data, will be stored on the system a maximum of <b>7 days</b>. Besides, <b style="color: #ef2020">Guest accounts do not receive assistance in case of problems</b> as there is not contact information.</p>' +
+                                    '  <p style="text-align:center;font-size: 17px;"><b><a class="signUpLink" href="javascript:void(0)">Sign Up.</a></b> It only takes a few seconds!</p>' +
+                                    '  <a class="button acceptButton" id="guestUserButton" style=" width: 100%; text-align: center; margin: 10px 0px; "><i class="fa fa-sign-in"></i> Start Guest session</a>' +
                                     '</div>'
                         }
                     ],
