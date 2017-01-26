@@ -5,11 +5,11 @@ ADMIN_EMAIL="test@test.es"; #WILL BE USED FOR LOGIN AS ADMIN
 ADMIN_PASS="40bd001563085fc35165329ea1ff5c5ecbdbbeef"; #PASSWORD CODIFIED IN SHA1
 ADMIN_AFFILIATION="ADMIN"
 
-DATA_DIR="/data/";
+DATA_DIR="/data";
 
 sudo apt-get install mongodb
 
-sudo apt-get install python-dev python-mysqldb python-rsvg python-cairo python-cairosvg python-imaging python-pip libatlas-base-dev gfortran libapache2-mod-wsgi
+sudo apt-get install python-dev python-mysqldb python-rsvg python-cairo python-cairosvg python-imaging python-pip libatlas-base-dev gfortran libapache2-mod-wsgi r-base r-base-dev mongodb-clients
 #sudo apt-get install tk8.5 tcl8.5
 
 #Tested with flask 0.10.1 |
@@ -31,21 +31,19 @@ sudo pip install datetime
 #Tested with scipy 0.17.0 | 0.18.0
 sudo pip install scipy
 #Tested with hashlib 20081119 |
-sudo pip install hashlib
+#sudo pip install hashlib
 #Tested with psutil 1.2.1 |
 sudo pip install psutil
 
-sudo pip install pycairo ??
-sudo pip install cairosvg ??
+#sudo pip install pycairo ??
+#sudo pip install cairosvg ??
 #sudo pip install rq
 #sudo pip install rq-dashboard
 
-#TODO: INSTALL R PACKAGES (amap)
-sudo apt-get install r-base r-base-dev
-
-R
-install.packages("amap")
-q()
+#INSTALL R PACKAGES (amap)
+sudo R
+install.packages('amap', repos='http://cran.us.r-project.org')
+q(save="no")
 
 #*********************************************************
 #INITIALIZE MONGO DB
@@ -64,9 +62,11 @@ db.createCollection("counters")
 db.userCollection.insert({userID:"0",userName:"${ADMIN_USER}",email:"${ADMIN_EMAIL}",password:"${ADMIN_PASS}", affiliation:"${ADMIN_AFFILIATION}", activated:"True"})
 db.counters.insert({_id:"userID",sequence_value:1})
 
+db.userCollection.ensureIndex( { userID : 1 } )
 db.jobInstanceCollection.ensureIndex( { jobID: 1, userID : 1 } )
 db.featuresCollection.ensureIndex( { jobID: 1, featureType: 1 } )
 db.pathwaysCollection.ensureIndex( { jobID: 1, ID: 1 } )
+db.visualOptionsCollection.ensureIndex( { jobID: 1 } )
 db.fileCollection.ensureIndex( { userID: 1 } )
 
 EOF
@@ -79,7 +79,8 @@ tar -zxvf /tmp/paintomics-dbs.tar.gz -C /tmp/
 
 rm -r $DATA_DIR/KEGG_DATA
 mv /tmp/paintomics-dbs/KEGG_DATA/ $DATA_DIR
-mongorestore /tmp/paintomics-dbs/dump/
+mongorestore --db mmu-paintomics /tmp/paintomics-dbs/dump/mmu-paintomics/
+mongorestore --db global-paintomics /tmp/paintomics-dbs/dump/global-paintomics/
 rm -r  /tmp/paintomics-dbs
 rm -r  /tmp/paintomics-dbs.tar.gz
 
