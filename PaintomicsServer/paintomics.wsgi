@@ -1,4 +1,4 @@
 import sys
 sys.path.insert(0, '/var/www/paintomics')
 
-from src.paintomics import app as application
+from src. import app as application
