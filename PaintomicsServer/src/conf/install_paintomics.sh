@@ -1,17 +1,28 @@
 #!/bin/bash
 
-ADMIN_USER="admin";
-ADMIN_EMAIL="test@test.es"; #WILL BE USED FOR LOGIN AS ADMIN
+#******************************************************************************
+#YOU CAN SET THIS OPTIONS IN THE DOCKER COMPOSE FILE OR USING ENVIROMENT OPTIONS
+#******************************************************************************
+ADMIN_EMAIL="admin@paintomics.es"; #WILL BE USED FOR LOGIN AS ADMIN
 ADMIN_PASS="40bd001563085fc35165329ea1ff5c5ecbdbbeef"; #PASSWORD CODIFIED IN SHA1
-ADMIN_AFFILIATION="ADMIN"
+ADMIN_AFFILIATION="My awesome workplace"
+DATA_DIR="/data/paintomics3";
 
-DATA_DIR="/data";
+#DO NOT CHANGE THIS OPTIONS
+ADMIN_USER="admin";
+DATA_HOST="http://bioinfo.cipf.es/paintomics"
+#*********************************************************
 
-sudo apt-get install mongodb
+#*********************************************************
+#STEP 1. INSTALL DEPENDENCIES
+#*********************************************************
+sudo apt-get update
+sudo apt-get install mongodb python-dev python-mysqldb python-rsvg python-cairo python-cairosvg python-imaging python-pip libatlas-base-dev gfortran libapache2-mod-wsgi r-base r-base-dev mongodb-clients
 
-sudo apt-get install python-dev python-mysqldb python-rsvg python-cairo python-cairosvg python-imaging python-pip libatlas-base-dev gfortran libapache2-mod-wsgi r-base r-base-dev mongodb-clients
-#sudo apt-get install tk8.5 tcl8.5
 
+#*********************************************************
+#STEP 2. INSTALL PYTHON MODULES
+#*********************************************************
 #Tested with flask 0.10.1 |
 sudo pip install flask
 #Tested with gevent 1.0 |
@@ -30,23 +41,20 @@ sudo pip install scriptine
 sudo pip install datetime
 #Tested with scipy 0.17.0 | 0.18.0
 sudo pip install scipy
-#Tested with hashlib 20081119 |
-#sudo pip install hashlib
 #Tested with psutil 1.2.1 |
 sudo pip install psutil
+#Tested with hashlib 20081119 |
+#sudo pip install hashlib
 
-#sudo pip install pycairo ??
-#sudo pip install cairosvg ??
-#sudo pip install rq
-#sudo pip install rq-dashboard
-
-#INSTALL R PACKAGES (amap)
-sudo R
-install.packages('amap', repos='http://cran.us.r-project.org')
-q(save="no")
 
 #*********************************************************
-#INITIALIZE MONGO DB
+#STEP 3. INSTALL R PACKAGES
+#*********************************************************
+sudo R --no-save -e "install.packages('amap', repos='http://cran.us.r-project.org'); q();"
+
+
+#*********************************************************
+#STEP 4. CREATE THE MAIN PAINTOMICS DATABASE
 #*********************************************************
 cat <<EOF > /tmp/mongo.js
 use PaintomicsDB;
@@ -58,39 +66,46 @@ db.createCollection("pathwaysCollection");
 db.createCollection("userCollection");
 db.createCollection("fileCollection");
 db.createCollection("messageCollection");
-db.createCollection("counters")
-db.userCollection.insert({userID:"0",userName:"${ADMIN_USER}",email:"${ADMIN_EMAIL}",password:"${ADMIN_PASS}", affiliation:"${ADMIN_AFFILIATION}", activated:"True"})
-db.counters.insert({_id:"userID",sequence_value:1})
-
-db.userCollection.ensureIndex( { userID : 1 } )
-db.jobInstanceCollection.ensureIndex( { jobID: 1, userID : 1 } )
-db.featuresCollection.ensureIndex( { jobID: 1, featureType: 1 } )
-db.pathwaysCollection.ensureIndex( { jobID: 1, ID: 1 } )
-db.visualOptionsCollection.ensureIndex( { jobID: 1 } )
-db.fileCollection.ensureIndex( { userID: 1 } )
-
+db.createCollection("counters");
+db.userCollection.insert({userID:"0",userName:"${ADMIN_USER}",email:"${ADMIN_EMAIL}",password:"${ADMIN_PASS}", affiliation:"${ADMIN_AFFILIATION}", activated:"True"});
+db.counters.insert({_id:"userID",sequence_value:1});
+db.userCollection.ensureIndex( { userID : 1 } );
+db.jobInstanceCollection.ensureIndex( { jobID: 1, userID : 1 } );
+db.featuresCollection.ensureIndex( { jobID: 1, featureType: 1 } );
+db.pathwaysCollection.ensureIndex( { jobID: 1, ID: 1 } );
+db.visualOptionsCollection.ensureIndex( { jobID: 1 } );
+db.fileCollection.ensureIndex( { userID: 1 } );
 EOF
 
 mongo < /tmp/mongo.js
 rm /tmp/mongo.js
 
-wget http://bioinfo.cipf.es/paintomics/paintomics-dbs.tar.gz --directory-prefix=/tmp/
+#*********************************************************
+#STEP 5. DOWNLOAD AND CREATE THE DEFAULT SPECIES DATABASE
+#*********************************************************
+echo "DOWNLOADING DATA (THIS MAY TAKE FEW MINUTES)..."
+wget --quiet $DATA_HOST/paintomics-dbs.tar.gz --directory-prefix=/tmp/
+echo "EXTRACTING AND INSTALLING DATA... "
 tar -zxvf /tmp/paintomics-dbs.tar.gz -C /tmp/
-
-rm -r $DATA_DIR/KEGG_DATA
 mv /tmp/paintomics-dbs/KEGG_DATA/ $DATA_DIR
-mongorestore --db mmu-paintomics /tmp/paintomics-dbs/dump/mmu-paintomics/
-mongorestore --db global-paintomics /tmp/paintomics-dbs/dump/global-paintomics/
+chown -R www-data:www-data $DATA_DIR/KEGG_DATA/
+mongorestore --host paintomics3-mongo  --db mmu-paintomics /tmp/paintomics-dbs/dump/mmu-paintomics/
+mongorestore --host paintomics3-mongo  --db global-paintomics /tmp/paintomics-dbs/dump/global-paintomics/
 rm -r  /tmp/paintomics-dbs
 rm -r  /tmp/paintomics-dbs.tar.gz
+cat <<EOF > $DATA_DIR/KEGG_DATA/last/species/species.json
+{"success": true, "species": [
+			{"name": "Mus musculus (mouse)", "value": "mmu"}
+]}
+EOF
 
-rm -r $DATA_DIR/CLIENT_TMP
+
+#*********************************************************
+#STEP 6. CREATE THE DIRECTORY FOR USER DATA
+#*********************************************************
 mkdir $DATA_DIR/CLIENT_TMP
 mkdir $DATA_DIR/CLIENT_TMP/0
 mkdir $DATA_DIR/CLIENT_TMP/0/inputData
 mkdir $DATA_DIR/CLIENT_TMP/0/jobsData
 mkdir $DATA_DIR/CLIENT_TMP/0/tmp
-
-sudo ln -s /home/rhernandez/workspace/paintomics3/PaintomicsClient/public_html/ /var/www/html/paintomics
-
-sudo service apache2 restart
+chown -R www-data:www-data $DATA_DIR/CLIENT_TMP/
