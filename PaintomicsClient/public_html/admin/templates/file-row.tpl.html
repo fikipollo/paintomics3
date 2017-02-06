@@ -1,0 +1,49 @@
+<tr ng-class="(service.enabled)?'':'disabled'" >
+	<td width="210px;">{{ service.title }}</td>
+	<td width="200px;">
+		<span ng-show="!service.enabled">-</span>
+		<span ng-show="service.enabled && service.status === undefined">
+			<i class="fa fa-spinner fa-pulse fa-fw"></i> {{current_action}}
+		</span>
+		<span ng-show="service.enabled && service.status !== undefined" >
+			<span  ng-show="service.status === 'RUNNING'" >
+				<i class="fa fa-play text-success"></i> Running
+			</span>
+			<span  ng-show="service.status === 'STOPPED'" >
+				<i class="fa fa-times text-danger"></i> Stopped
+			</span>
+			<span  ng-show="service.status === 'WARNING'" >
+				<i class="fa fa-exclamation-triangle text-warning"></i> Running with problems
+			</span>
+		</span>
+	</td>
+	<td width="210px;">
+		<span ng-show="!service.enabled">-</span>
+		<i ng-show="service.enabled && service.status === undefined" class="fa fa-spinner fa-pulse fa-fw"></i>
+		<span ng-show="service.enabled && service.status !== undefined" >
+			<a ng-show="service.status !== 'STOPPED'" class="clickable" style="margin-right: 10px;" ng-click="controller.stopServiceHandler(service)">
+				<i class="fa fa-stop text-danger"></i> Stop
+			</a>
+			<a ng-show="service.status !== 'STOPPED'" class="clickable" style="margin-right: 10px;" ng-click="controller.restartServiceHandler(service)">
+				<i class="fa fa-refresh text-info"></i> Reset
+			</a>
+			<a ng-show="service.status !== 'STOPPED'" href="{{service.website}}" target="_blank" >
+				<i class="fa fa-external-link text-info"></i> Open
+			</a>
+			<a ng-show="service.status === 'STOPPED'" class="clickable" ng-click="controller.startServiceHandler(service)">
+				<i class="fa fa-play text-success"></i> Start
+			</a>
+		</span>
+	</td>
+	<td width="150px;">
+		<span class="clickable" ng-show="service.enabled" >
+			<i class="fa fa-toggle-on text-success"></i>
+			<b class="text-success">Enabled</b>
+		</span>
+		<span class="clickable" ng-show="!service.enabled" >
+			<i class="fa fa-toggle-off text-danger"></i>
+			<b class="text-danger">Disabled</b>
+		</span>
+	</td>
+	<td >{{ service.status_msg }}</td>
+</tr>

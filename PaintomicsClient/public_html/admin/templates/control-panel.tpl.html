@@ -1,0 +1,43 @@
+<div ng-controller="ServiceListController as controller">
+	<div class=" admin-section-title-div">
+		<div class="panel-body">
+			<h1>eBioKit control panel</h1>
+			<h3>Manage your system easily</h3>
+		</div>
+	</div>
+	<div class="panel panel-default">
+		<div class="panel-body" style="height:350px;">
+			<h2>System information</h2>
+			<div style="margin:auto; width: 800px;">
+				<div style="height:250px; width:200px; margin-right:50px; display:inline-block;">
+					<canvas class="chart chart-doughnut"  chart-data="cpu_load" chart-options="cpu_options" ></canvas>
+				</div>
+				<div style="height:250px; width:200px; margin-right:50px; display:inline-block;">
+					<canvas class="chart chart-doughnut" chart-data="mem_load" chart-options="mem_options" ></canvas>
+				</div>
+				<div style="height:250px; width:200px; margin-right:50px; display:inline-block;">
+					<canvas class="chart chart-doughnut" chart-data="swap_load" chart-options="swap_options" ></canvas>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="panel panel-default">
+		<div class="panel-body">
+			<h2>Services management</h2>
+			<table class="table" style=" max-width: 1020px; margin: auto; ">
+				<thead>
+					<tr style="text-align:center;">
+						<th>Service name</th>
+						<th>Status</th>
+						<th>Tools</th>
+						<th>Enable</th>
+						<th>Message</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr service-row ng-repeat="service in services | filter:{installed : '!!'}" ></tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>

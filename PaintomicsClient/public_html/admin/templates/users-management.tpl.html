@@ -1,0 +1,29 @@
+<div ng-controller="UserListController as controller">
+	<div class=" admin-section-title-div">
+		<div class="panel-body">
+			<h1>User management</h1>
+			<h3>Manage your users easily</h3>
+		</div>
+	</div>
+	<div class="panel panel-default">
+		<div class="panel-body">
+			<table class="table" style=" max-width: 1020px; margin: auto; ">
+				<thead>
+					<tr style="text-align:center;">
+						<th>User name</th>
+						<th>User ID</th>
+						<th>Email</th>
+						<th>Affiliation</th>
+						<th>Creation date</th>
+						<th>Last login</th>
+						<th>Used space</th>
+						<th>Options</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr user-row ng-repeat="user in users" ></tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>

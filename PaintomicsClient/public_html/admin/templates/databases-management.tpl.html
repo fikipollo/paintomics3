@@ -1,0 +1,25 @@
+<div ng-controller="ServiceListController as controller">
+	<div class=" admin-section-title-div">
+		<div class="panel-body">
+			<h1>Organisms management</h1>
+			<h3>Add, update or remove organisms to PaintOmics 3</h3>
+		</div>
+	</div>
+	<div class="store-content-div">
+		<div class="panel-body">
+			<div class="col-sm-3">
+				<h4>Categories</h4>
+				<div>
+					<div class="category-chooser clickable" ng-repeat="category in categories | orderBy:'name'">
+						<i ng-show="!category.selected" class="fa fa-square-o" aria-hidden="true"></i>
+						<i ng-show="category.selected" class="fa fa-check-square-o" aria-hidden="true"></i>
+						<span ng-click="category.selected = !(category.selected === true)">{{category.name}}</span>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-9">
+				<database-row ng-repeat="organism in organisms"></database-row>
+			</div>
+		</div>
+	</div>
+</div>

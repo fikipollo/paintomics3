@@ -1,0 +1,18 @@
+<div class="store-organism-div clickable" ng-repeat="organism in organisms">
+	<div class="col-sm-12">
+		<div>
+			<span ng-show="organism.installed !== undefined" class="label label-success" style="float: right;padding: 5px;">Installed</span>
+			<span ng-show="organism.version !== undefined && organism.last_version !== organism.version" class="label label-info" style="float: right;padding: 5px;">Update available</span>
+			<h4>{{organism.organism_name}}</h4>
+		</div>
+		<div>
+			<p><b>KEGG code:</b>{{organism.organism_code}}</p>
+			<hr>
+			<div>
+				<p><b>Accepted IDs:</b>{{organism.acceptedIDs}}</p>
+				<p><b>KEGG info date:</b>{{organism.kegg_date}}</p>
+				<p><b>Mapping info:</b>{{organism.mapping_date}}</p>
+			</div>
+		</div>
+	</div>
+</div>
