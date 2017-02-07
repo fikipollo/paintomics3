@@ -75,7 +75,7 @@ def main():
             print "Use python miRNA2Target.py -h for help"
 
     if referenceFile is not None and dataFile is not None and outputfile is not None:
-        run(referenceFile, dataFile, outputfile, geneExpresion, method)
+        run(referenceFile, dataFile, geneExpresion, outputfile, method)
 
 def print_usage():
     print "\nUsage: python miRNA2Target.py [options] <mandatory>"

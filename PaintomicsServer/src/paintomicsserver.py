@@ -228,9 +228,9 @@ class Application(object):
                 return self.queue.get_result(jobID).getResponse()
             elif jobInstance.is_failed():
                 self.queue.get_result(jobID) #remove job
-                return Response().setContent({"success": False, "status" : jobInstance.get_status(), "message": jobInstance.error_message})
+                return Response().setContent({"success": False, "status" : str(jobInstance.get_status()), "message": jobInstance.error_message})
             else:
-                return Response().setContent({"success": False, "status" : jobInstance.get_status()}).getResponse()
+                return Response().setContent({"success": False, "status" : str(jobInstance.get_status())}).getResponse()
         #*******************************************************************************************
         ##* COMMON JOB HANDLERS - END
         #############################################################################################
