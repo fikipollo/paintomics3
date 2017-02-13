@@ -7,7 +7,10 @@
 	</div>
 	<div class="panel panel-default">
 		<div class="panel-body">
-			<table class="table" style=" max-width: 1020px; margin: auto; ">
+			<h2 ng-show="isLoading === true">
+				<i class="fa fa-circle-o-notch fa-spin fa-fw"></i> Loading...
+			</h2>
+			<table class="table" style="margin: auto; ">
 				<thead>
 					<tr style="text-align:center;">
 						<th>User name</th>

@@ -1,17 +1,24 @@
-<div class="store-organism-div clickable" ng-repeat="organism in organisms">
+<div class="store-database-div clickable">
 	<div class="col-sm-12">
 		<div>
-			<span ng-show="organism.installed !== undefined" class="label label-success" style="float: right;padding: 5px;">Installed</span>
-			<span ng-show="organism.version !== undefined && organism.last_version !== organism.version" class="label label-info" style="float: right;padding: 5px;">Update available</span>
-			<h4>{{organism.organism_name}}</h4>
+			<span ng-show="database.status === 'installed'" class="label label-success" style="float: right;padding: 5px;">Installed</span>
+			<span ng-show="database.status !== 'installed'" class="label label-danger" style="float: right;padding: 5px;">Not installed</span>
+			<h4>{{database.organism_name}}</h4>
 		</div>
 		<div>
-			<p><b>KEGG code:</b>{{organism.organism_code}}</p>
+			<p><b>KEGG code:</b>{{database.organism_code}}</p>
 			<hr>
-			<div>
-				<p><b>Accepted IDs:</b>{{organism.acceptedIDs}}</p>
-				<p><b>KEGG info date:</b>{{organism.kegg_date}}</p>
-				<p><b>Mapping info:</b>{{organism.mapping_date}}</p>
+			<div style="float: left;">
+				<p><b>Accepted IDs:</b> {{database.acceptedIDs}}</p>
+				<p><b>KEGG info date:</b> {{formatDate(database.kegg_date)}}</p>
+				<p><b>Mapping info:</b> {{formatDate(database.mapping_date)}}</p>
+				<div><span class="label label-default" ng-repeat="category in database.categories">{{category}}</span></div>
+			</div>
+			<div class="store-database-tools">
+				<b>Options: </b>
+				<a ng-show="database.status === 'installed'" ng-click="controller.updateDatabaseHandler(database)" class="btn btn-info" style="padding: 5px;"><i class="fa fa-refresh" aria-hidden="true"></i> Update</a>
+				<a ng-show="database.status === 'installed'" ng-click="controller.deleteDatabaseHandler(database)" class="btn btn-danger" style="padding: 5px;"><i class="fa fa-trash" aria-hidden="true"></i> Uninstall</a>
+				<a ng-show="database.status !== 'installed'" ng-click="controller.installDatabaseHandler(database)" class="btn btn-primary" style="padding: 5px;"><i class="fa fa-download" aria-hidden="true"></i> Install</a>
 			</div>
 		</div>
 	</div>

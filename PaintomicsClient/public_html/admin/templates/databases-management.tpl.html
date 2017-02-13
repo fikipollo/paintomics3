@@ -1,4 +1,4 @@
-<div ng-controller="ServiceListController as controller">
+<div ng-controller="DatabaseListController as controller">
 	<div class=" admin-section-title-div">
 		<div class="panel-body">
 			<h1>Organisms management</h1>
@@ -7,18 +7,37 @@
 	</div>
 	<div class="store-content-div">
 		<div class="panel-body">
-			<div class="col-sm-3">
+			<div class="col-sm-4">
 				<h4>Categories</h4>
 				<div>
-					<div class="category-chooser clickable" ng-repeat="category in categories | orderBy:'name'">
+					<div class="category-chooser clickable" ng-repeat="category in categories | orderBy:'-times'">
 						<i ng-show="!category.selected" class="fa fa-square-o" aria-hidden="true"></i>
 						<i ng-show="category.selected" class="fa fa-check-square-o" aria-hidden="true"></i>
-						<span ng-click="category.selected = !(category.selected === true)">{{category.name}}</span>
+						<span ng-click="category.selected = !(category.selected === true)">{{category.name}} <span class="badge">{{category.times}}</span></span>
 					</div>
 				</div>
 			</div>
-			<div class="col-sm-9">
-				<database-row ng-repeat="organism in organisms"></database-row>
+			<div class="col-sm-8">
+				<h2 ng-show="isLoading === true">
+					<i class="fa fa-circle-o-notch fa-spin fa-fw"></i> Loading...
+				</h2>
+				<div class="input-group" style="width: 100%;margin-bottom: 4px;">
+					<input type="text" class="form-control" placeholder="Search for..." ng-model="searchFor" ng-enter="controller.applySearchHandler()">
+					<span class="input-group-btn">
+						<button class="btn btn-default" type="button" ng-click="controller.applySearchHandler()">
+							<span class="glyphicon glyphicon-search"></span>
+						</button>
+					</span>
+				</div>
+				<div style="margin: 10px 5px;">
+					<span class="label label-default" ng-repeat="item in filters">{{item}}</span>
+				</div>
+				<database-row ng-repeat="database in databases | filter:filterDatabases() | orderBy: ['status','organism_name'] | limitTo : visibleDatabases"></database-row>
+				<div class="row" style="text-align: center;">
+					<button class="btn btn-lg btn-success" type="button" ng-click="controller.showMoreDatabasesHandler()" ng-show="(filteredDatabases-visibleDatabases)>0">
+						Show more organisms ({{filteredDatabases-visibleDatabases}} left)
+					</button>
+				</div>
 			</div>
 		</div>
 	</div>

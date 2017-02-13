@@ -24,11 +24,12 @@
 *
 */
 (function(){
-	var app = angular.module('admin.controllers.database-list', [
+	var app = angular.module('admin.controllers.database-controllers', [
 		'ui.bootstrap',
 		'common.dialogs',
 		'chart.js',
-		'databases.databases.database-list'
+		'databases.databases.database-list',
+		'admin.directives.admin-directives'
 	]);
 
 	app.controller('DatabaseListController', function($rootScope, $scope, $http, $dialogs, $state, $interval, APP_EVENTS, DatabaseList) {
@@ -43,7 +44,7 @@
 				then(
 					function successCallback(response){
 						$scope.isLoading = false;
-						$scope.databases = DatabaseList.setDatabases(response.data).getDatabases();
+						$scope.databases = DatabaseList.setDatabases(response.data, 'installed').getDatabases();
 
 						if(callback_function !== undefined){
 							callback_caller[callback_function]();
@@ -75,7 +76,7 @@
 			then(
 				function successCallback(response){
 					$scope.isLoading = false;
-					$scope.databases = DatabaseList.updateDatabases(response.data.availableApps, true).getDatabases();
+					$scope.databases = DatabaseList.updateDatabases(response.data.databaseList, true).getDatabases();
 					$scope.categories = DatabaseList.updateCategories().getCategories();
 				},
 				function errorCallback(response){
@@ -100,16 +101,40 @@
 		* @returns {Boolean} true if the model passes all the filters.
 		*/
 		$scope.filterDatabases = function(propertyName) {
-			$scope.foundDatabases = $scope.foundDatabases || {};
-			$scope.foundDatabases[propertyName] = 0;
+			$scope.filteredDatabases = 0;
 			return function( item ) {
-				var filterAux, item_categories;
-				var valid = ($scope.searchFor !== undefined) && ($scope.searchFor.length > $scope.minSearchLength) && (item[propertyName].toLowerCase().indexOf( $scope.searchFor.toLowerCase()) !== -1);
-				if(valid){$scope.foundDatabases[propertyName]++;}
-				return valid;
+				if($scope.show === "installed" && item.status !== "installed"){
+					return false;
+				}
+
+				var filterAux, item_tags;
+				for(var i in $scope.filters){
+					filterAux = $scope.filters[i].toLowerCase();
+					item_tags = item.categories.join("");
+					if(!((item.organism_name.toLowerCase().indexOf(filterAux)) !== -1 || (item.organism_code.toLowerCase().indexOf(filterAux)) !== -1 || (item_tags.toLowerCase().indexOf(filterAux)) !== -1)){
+						return false;
+					}
+				}
+				$scope.filteredDatabases++;
+				return true;
 			};
 		};
 
+		this.showMoreDatabasesHandler = function() {
+			if(window.innerWidth > 1500){
+				$scope.visibleDatabases += 10;
+			}else if(window.innerWidth > 1200){
+				$scope.visibleDatabases += 6;
+			}else{
+				$scope.visibleDatabases += 4;
+			}
+			$scope.visibleDatabases = Math.min($scope.filteredDatabases, $scope.visibleDatabases);
+		};
+
+
+		$scope.formatDate= function(date){
+			return (date?date.substring(6,8) + "/" + date.substring(4,6) + "/"  + date.substring(0,4) + " "  + date.substring(9,11) + ":"  + date.substring(11,13):"");
+		}
 		//--------------------------------------------------------------------
 		// EVENT HANDLERS
 		//--------------------------------------------------------------------
@@ -118,11 +143,95 @@
 		*/
 		this.applySearchHandler = function() {
 			var filters = arrayUnique($scope.filters.concat($scope.searchFor.split(" ")));
-			$scope.filters = WorkflowList.setFilters(filters).getFilters();
+			$scope.filters = DatabaseList.setFilters(filters).getFilters();
 		};
 
 		this.launchDatabaseHandler = function(database){
 			$rootScope.$broadcast(APP_EVENTS.launchDatabase, database);
+		};
+
+		this.deleteDatabaseHandler = function (database){
+			var sendRemoveRequest = function(option){
+				if(option === "ok"){
+					$http($rootScope.getHttpRequestConfig("DELETE", "databases", {
+						extra: database.organism_code
+					})).then(
+						function successCallback(response){
+							debugger;
+							if(response.data.success){
+								me.retrieveDatabasesListData(true, me, "retrieveAvailableDatabases");
+							}
+						},
+						function errorCallback(response){
+							$scope.isLoading = false;
+
+							debugger;
+							var message = "Failed while deleting the organism.";
+							$dialogs.showErrorDialog(message, {
+								logMessage : message + " at DatabaseListController:deleteDatabaseHandler."
+							});
+							console.error(response.data);
+						}
+					);
+				}
+			}
+			$dialogs.showConfirmationDialog("Are you sure?", {title: "Uninstall the selected organism?", callback : sendRemoveRequest});
+		};
+
+		this.updateDatabaseHandler = function (database){
+			var sendUpdateRequest = function(option){
+				if(option === "ok"){
+					$http($rootScope.getHttpRequestConfig("PUT", "databases", {
+						extra: database.organism_code
+					})).then(
+						function successCallback(response){
+							debugger;
+							if(response.data.success){
+								me.retrieveDatabasesListData(true, me, "retrieveAvailableDatabases");
+							}
+						},
+						function errorCallback(response){
+							$scope.isLoading = false;
+
+							debugger;
+							var message = "Failed while updating the organism.";
+							$dialogs.showErrorDialog(message, {
+								logMessage : message + " at DatabaseListController:updateDatabaseHandler."
+							});
+							console.error(response.data);
+						}
+					);
+				}
+			}
+			$dialogs.showConfirmationDialog("Are you sure?", {title: "Update the selected organism?", callback : sendUpdateRequest});
+		};
+
+		this.installDatabaseHandler = function (database){
+			var sendInstallRequest = function(option){
+				if(option === "ok"){
+					$http($rootScope.getHttpRequestConfig("POST", "databases", {
+						extra: database.organism_code
+					})).then(
+						function successCallback(response){
+							debugger;
+							if(response.data.success){
+								me.retrieveDatabasesListData(true, me, "retrieveAvailableDatabases");
+							}
+						},
+						function errorCallback(response){
+							$scope.isLoading = false;
+
+							debugger;
+							var message = "Failed while installing the organism.";
+							$dialogs.showErrorDialog(message, {
+								logMessage : message + " at DatabaseListController:installDatabaseHandler."
+							});
+							console.error(response.data);
+						}
+					);
+				}
+			}
+			$dialogs.showConfirmationDialog("Are you sure?", {title: "Install the selected organism?", callback : sendInstallRequest});
 		};
 
 		//--------------------------------------------------------------------
@@ -130,48 +239,17 @@
 		//--------------------------------------------------------------------
 		var me = this;
 		$scope.databases = DatabaseList.getDatabases();
-		$scope.minSearchLength = 2;
 		$scope.categories =  DatabaseList.getCategories();
 		$scope.filters =  DatabaseList.getFilters();
 		$scope.filteredDatabases = $scope.databases.length;
+		$scope.minSearchLength = 2;
+		$scope.visibleDatabases = 20;
 
-		if($state.current.name === "control-panel"){
-			this.retrieveDatabasesListData(true, this, "checkAvailableUpdates");
-			this.retrieveSystemInfo();
-			while($scope.interval.length > 0){
-				$interval.cancel($scope.interval[0]);
-				$scope.interval.shift();
-			}
-			$scope.interval.push($interval(this.retrieveSystemInfo, 1000));
-
-			$scope.cpu_load = [0, 100];
-			$scope.cpu_options = {
-				animation: {duration: 500},
-				tooltip:{enabled:false},
-				title: {display: true,text: 'CPU usage (%)'},
-				maintainAspectRatio:false
-			};
-			$scope.mem_load = [0, 100];
-			$scope.mem_options = {
-				animation: {duration: 500},
-				title: {display: true,text: 'Mem usage (%)'},
-				tooltip:{enabled:false},
-				maintainAspectRatio:false
-			};
-			$scope.swap_load = [0, 100];
-			$scope.swap_options = {
-				animation: {duration: 500},
-				tooltip:{enabled:false},
-				title: {display: true,text: 'Swap usage (%)'},
-				maintainAspectRatio:false
-			};
-		} else{
-			this.retrieveDatabasesListData(true, this, "retrieveAvailableApplications");
-		}
+		this.retrieveDatabasesListData(true, this, "retrieveAvailableDatabases");
 
 	});
 
-	app.controller('DatabaseController', function($rootScope, $scope, $http, $dialogs, APP_EVENTS, DatabaseList) {
+	app.controller('DatabaseDetailController', function($rootScope, $scope, $http, $dialogs, APP_EVENTS, DatabaseList) {
 		//--------------------------------------------------------------------
 		// CONTROLLER FUNCTIONS
 		//--------------------------------------------------------------------

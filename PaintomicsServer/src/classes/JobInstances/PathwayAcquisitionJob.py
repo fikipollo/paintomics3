@@ -37,7 +37,7 @@ from src.classes.Feature import Gene, Compound
 from src.classes.Pathway import Pathway
 from src.classes.PathwayGraphicalData import PathwayGraphicalData
 
-from src.conf.serverconf import ROOT_DIRECTORY, KEGG_DATA_DIR, MAX_THREADS, MAX_WAIT_THREADS
+from src.conf.serverconf import KEGG_DATA_DIR, MAX_THREADS, MAX_WAIT_THREADS
 
 
 class PathwayAcquisitionJob(Job):
@@ -614,7 +614,7 @@ class PathwayAcquisitionJob(Job):
 
 
     #GENERATE METAGENES LIST FUNCTIONS -----------------------------------------------------------------------------------------
-    def generateMetagenesList(self):
+    def generateMetagenesList(self, ROOT_DIRECTORY):
         """
         This function obtains the metagenes for each pathway in KEGG based on the input values.
 

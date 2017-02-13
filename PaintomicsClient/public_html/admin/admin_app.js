@@ -3,7 +3,9 @@
 	var app = angular.module('PaintomicsAdminSiteApp', [
 		'common.dialogs',
 		'ui.router',
-		'ngSanitize'
+		'ngSanitize',
+		'admin.controllers.database-controllers',
+		'admin.controllers.user-controllers'
 	]);
 
 	app.constant('myAppConfig', {
@@ -26,25 +28,25 @@
 			var controlPanel = {
 				name: 'control-panel',
 				url: '/',
-				templateUrl: "app/admin/templates/control-panel.tpl.html",
+				templateUrl: "templates/control-panel.tpl.html",
 				data: {requireLogin: false}
 			},
 			usersManagement = {
 				name: 'users-management',
 				url: '/users-management',
-				templateUrl: "app/admin/templates/users-management.tpl.html",
+				templateUrl: "templates/users-management.tpl.html",
 				data: {requireLogin: false}
 			},
 			filesManagement = {
 				name: 'files-management',
 				url: '/files-management',
-				templateUrl: "app/admin/templates/files-management.tpl.html",
+				templateUrl: "templates/files-management.tpl.html",
 				data: {requireLogin: false}
 			},
 			databasesManagement = {
 				name: 'databases-management',
 				url: '/databases-management',
-				templateUrl: "app/admin/templates/databases-management.tpl.html",
+				templateUrl: "templates/databases-management.tpl.html",
 				data: {requireLogin: false}
 			};
 			$stateProvider.state(controlPanel);
@@ -80,15 +82,15 @@
 			extra = (extra || "");
 			switch (service) {
 				case "users":
-				return myAppConfig.SERVER_URL + "api/users/" + extra;
+				return myAppConfig.SERVER_URL + "api/admin/users/" + extra;
 				case "files":
-				return myAppConfig.SERVER_URL + "api/files/" + extra;
+				return myAppConfig.SERVER_URL + "api/admin/files/" + extra;
 				case "system-info":
-				return myAppConfig.SERVER_URL + "api/system-info/" + extra;
+				return myAppConfig.SERVER_URL + "api/admin/system-info/" + extra;
 				case "messages":
-				return myAppConfig.SERVER_URL + "api/messages/" + extra;
+				return myAppConfig.SERVER_URL + "api/admin/messages/" + extra;
 				case "databases":
-				return myAppConfig.SERVER_URL + "api/databases/" + extra;
+				return myAppConfig.SERVER_URL + "api/admin/databases/" + extra;
 				default:
 				return "";
 			}
@@ -166,9 +168,9 @@
 
 		$scope.open_services = [
 			{name:"control-panel", title: 'Control panel', description: 'The main Paintomics admin page', icon : 'fa-tachometer'},
-			{name:"users-management", title: 'Users management', description: 'Manage the users in the applications', icon : 'fa-shopping-cart'},
-			{name:"databases-management", title: 'Databases management', description: 'Manage the installed organisms', icon : 'fa-shopping-cart'},
-			{name:"files-management", title: 'Files management', description: 'Mange available reference files', icon : 'fa-shopping-cart'}
+			{name:"users-management", title: 'Users management', description: 'Manage the users in the applications', icon : 'fa-users'},
+			{name:"databases-management", title: 'Database management', description: 'Manage the installed organisms', icon : 'fa-database'},
+			{name:"files-management", title: 'Files management', description: 'Manage available reference files', icon : 'fa-files-o'}
 		];
 
 		$scope.visible_services = [$scope.open_services[0]];

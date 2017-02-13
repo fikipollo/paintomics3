@@ -242,7 +242,7 @@ def download_command(inputfile=None, specie=None, kegg=0, mapping=0, common=0, r
             #GET THE MAPPING DATA
             if(SPECIES_UPDATE[specie] == 1 or SPECIES_UPDATE[specie] == 3): #1=updateMapping, 3 = updateKegg && updateMapping
                 os.mkdir(dirNameAux + "mapping")
-                mapping_errors = getSpecieMappingData(specie, downloadLog, dirNameAux + "mapping/", str(step)+ "/" + total, ROOT_DIRECTORY + "AdminTools/scripts/")
+                mapping_errors = getSpecieMappingData(specie, downloadLog, dirNameAux + "mapping/", str(step)+ "/" + total, self.ROOT_DIRECTORY + "AdminTools/scripts/")
 
             else: #COPY PREVIOUS DATA
                 log("COPYING PREVIOUS MAPPING DATA...")
@@ -373,7 +373,7 @@ def install_command(inputfile=None, specie=None, common=0):
         #********************************************************************************
         if common == True:
             log("STEP " + str(currentStep) + ". INSTALLING COMMON KEGG INFORMATION")
-            installCommonData(rootName, ROOT_DIRECTORY + "AdminTools/scripts/")
+            installCommonData(rootName, self.ROOT_DIRECTORY + "AdminTools/scripts/")
             currentStep+=1
 
     except Exception as e:
@@ -403,7 +403,7 @@ def install_command(inputfile=None, specie=None, common=0):
         log("        INSTALLING  " + specie + "...")
 
         try:
-            installSpecieData(specie, installLog, dirNameAux, str(step)+ "/" + total, ROOT_DIRECTORY + "AdminTools/scripts/")
+            installSpecieData(specie, installLog, dirNameAux, str(step)+ "/" + total, self.ROOT_DIRECTORY + "AdminTools/scripts/")
             INSTALLED_SPECIES.append(specie)
             summary.write(specie + '\tINSTALL\tSUCCESS\t' + str(SPECIES_INSTALL[specie]) + '\n')
             log("INSTALL  "+ str(SPECIES_INSTALL[specie]) + " " + specie + "...SUCCESS\n")
@@ -569,7 +569,7 @@ def getSpecieMappingData(specie, downloadLog, dirName, step, scriptsDir):
         if os.path.isfile(scriptsDir + specie + "_resources/download_others.py"):
             log("     * RETRIEVING EXTERNAL MAPPING DATA")
             try:
-                check_call(["python", scriptsDir + specie + "_resources/download_others.py", specie, ROOT_DIRECTORY + "AdminTools/", dirName], stdout=downloadLogFile, stderr=downloadLogFile)
+                check_call(["python", scriptsDir + specie + "_resources/download_others.py", specie, self.ROOT_DIRECTORY + "AdminTools/", dirName], stdout=downloadLogFile, stderr=downloadLogFile)
             except CalledProcessError as exc:
                 raise Exception("Error while calling " + scriptsDir + specie + "_resources/download_others.py" +": Exit status " + str(exc.returncode) + ". Output is available at " + downloadLog)
 
@@ -620,14 +620,14 @@ def installSpecieData(specie, downloadLog, dirName, step, scriptsDir):
         if os.path.isfile(scriptsDir + specie + "_resources/build_database.py"):
             log("       * PROCESSING AND INSTALLING CUSTOM AND KEGG DATA ")
             try:
-                check_call(["python", scriptsDir + specie + "_resources/build_database.py", specie, ROOT_DIRECTORY + "AdminTools/", dirName, downloadLog], stdout=downloadLogFile, stderr=downloadLogFile)
+                check_call(["python", scriptsDir + specie + "_resources/build_database.py", specie, self.ROOT_DIRECTORY + "AdminTools/", dirName, downloadLog], stdout=downloadLogFile, stderr=downloadLogFile)
             except CalledProcessError as exc:
                 errorlog(traceback.extract_stack())
                 raise Exception("Error while calling " + scriptsDir + specie + "_resources/build_database.py" +": Exit status " + str(exc.returncode) + ". Output is available at " + downloadLog)
         else:
             log("       * PROCESSING AND INSTALLING DEFAULT KEGG DATA ")
             try:
-                check_call(["python", scriptsDir  +  "default/build_database.py", specie, ROOT_DIRECTORY + "AdminTools/", dirName, downloadLog], stdout=downloadLogFile, stderr=downloadLogFile)
+                check_call(["python", scriptsDir  +  "default/build_database.py", specie, self.ROOT_DIRECTORY + "AdminTools/", dirName, downloadLog], stdout=downloadLogFile, stderr=downloadLogFile)
             except CalledProcessError as exc:
                 errorlog(traceback.extract_stack())
                 raise Exception("Error while calling " + scriptsDir + "default/build_database.py" +": Exit status " + str(exc.returncode) + ". Output is available at " + downloadLog)
@@ -645,7 +645,7 @@ def installCommonData(dirName, scriptsDir):
     try:
         import imp
         COMMON_BUILD_DB_TOOLS = imp.load_source('common_build_database', scriptsDir + "common_build_database.py")
-        COMMON_BUILD_DB_TOOLS.processKEGGCommonData(dirName, ROOT_DIRECTORY)
+        COMMON_BUILD_DB_TOOLS.processKEGGCommonData(dirName, self.ROOT_DIRECTORY)
     except Exception as ex:
         raise ex
     return True
@@ -725,8 +725,15 @@ def generateThumbnail(imagePath):
     thumb.save(destination)
 
 def readConfigurationFile():
+    self.ROOT_DIRECTORY = ROOT_DIRECTORY
+    import os
+    if self.ROOT_DIRECTORY == "":
+        self.ROOT_DIRECTORY = os.path.abspath(os.path.dirname(os.path.realpath(__file__)) + "/../") + "/"
+    else:
+        self.ROOT_DIRECTORY = os.path.abspath(self.ROOT_DIRECTORY) + "/"
+
     #PREPARE LOGGING
-    logging.config.fileConfig(ROOT_DIRECTORY + 'conf/logging.cfg')
+    logging.config.fileConfig(self.ROOT_DIRECTORY + 'conf/logging.cfg')
 
 def readFile(path, options=None):
     data = {}

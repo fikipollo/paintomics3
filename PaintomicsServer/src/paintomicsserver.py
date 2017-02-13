@@ -70,7 +70,7 @@ class Application(object):
         #*******************************************************************************************
         @self.app.route(SERVER_SUBDOMAIN + '/')
         def main():
-            return send_from_directory(ROOT_DIRECTORY + 'public_html','index.html')
+            return send_from_directory(self.ROOT_DIRECTORY + 'public_html','index.html')
         ##*******************************************************************************************
         ##* GET THUMBNAILS, PATHWAY IMAGE, etc
         ##*******************************************************************************************
@@ -95,7 +95,7 @@ class Application(object):
         def get_client_file(filename):
             #TODO: CHECK CREDENTIALS?
             UserSessionManager().isValidUser(request.cookies.get('userID'), request.cookies.get('sessionToken'))
-            return send_from_directory(ROOT_DIRECTORY + 'CLIENT_TMP', filename)
+            return send_from_directory(self.ROOT_DIRECTORY + 'CLIENT_TMP', filename)
 
         @self.app.route(SERVER_SUBDOMAIN + '/get_cluster_image/<path:filename>')
         def get_cluster_image(filename):
@@ -106,7 +106,7 @@ class Application(object):
         ##*******************************************************************************************
         @self.app.route(SERVER_SUBDOMAIN + '/<path:filename>')
         def get_static(filename):
-            return send_from_directory(ROOT_DIRECTORY + 'public_html', filename)
+            return send_from_directory(self.ROOT_DIRECTORY + 'public_html', filename)
 
 
         #******************************************************************************************
@@ -135,7 +135,7 @@ class Application(object):
         #*******************************************************************************************
         @self.app.route(SERVER_SUBDOMAIN + '/um_signup', methods=['OPTIONS', 'POST'])
         def signUpHandler():
-            return userManagementSignUp(request, Response()).getResponse()
+            return userManagementSignUp(request, Response(), self.ROOT_DIRECTORY).getResponse()
         #*******************************************************************************************
         ##* LOGOUT
         #*******************************************************************************************
@@ -199,7 +199,7 @@ class Application(object):
         #*******************************************************************************************
         @self.app.route(SERVER_SUBDOMAIN + '/dm_get_gtffiles', methods=['OPTIONS', 'POST'])
         def getGTFFilesHandler():
-            return dataManagementGetMyFiles(request, Response(), EXAMPLE_FILES_DIR, MAX_CLIENT_SPACE, isGFT=True).getResponse()
+            return dataManagementGetMyFiles(request, Response(), self.EXAMPLE_FILES_DIR, MAX_CLIENT_SPACE, isGFT=True).getResponse()
         #*******************************************************************************************
         ##* DATA MANIPULATION SERVLETS HANDLERS - END
         #*******************************************************************************************
@@ -243,13 +243,13 @@ class Application(object):
         @self.app.route(SERVER_SUBDOMAIN + '/pa_step1/<path:exampleMode>', methods=['OPTIONS', 'POST'])
         @self.app.route(SERVER_SUBDOMAIN + '/pa_step1', methods=['OPTIONS', 'POST'])
         def pathwayAcquisitionStep1Handler(exampleMode=False):
-            return pathwayAcquisitionStep1_PART1(request, Response(), self.queue, self.generateRandomID(), exampleMode).getResponse()
+            return pathwayAcquisitionStep1_PART1(request, Response(), self.queue, self.generateRandomID(), self.EXAMPLE_FILES_DIR, exampleMode).getResponse()
         #*******************************************************************************************
         # STEP 2 HANDLERS
         #*******************************************************************************************
         @self.app.route(SERVER_SUBDOMAIN + '/pa_step2', methods=['OPTIONS', 'POST'])
         def pathwayAcquisitionStep2Handler():
-            return pathwayAcquisitionStep2_PART1(request, Response(), self.queue).getResponse()
+            return pathwayAcquisitionStep2_PART1(request, Response(), self.queue, self.ROOT_DIRECTORY).getResponse()
         #*******************************************************************************************
         # STEP 3 HANDLERS
         #*******************************************************************************************
@@ -286,7 +286,7 @@ class Application(object):
         @self.app.route(SERVER_SUBDOMAIN + '/dm_fromBEDtoGenes/<path:exampleMode>', methods=['OPTIONS', 'POST'])
         @self.app.route(SERVER_SUBDOMAIN + '/dm_fromBEDtoGenes', methods=['OPTIONS', 'POST'])
         def fromBEDtoGenesHandler(exampleMode=False):
-            result = fromBEDtoGenes_STEP1(request, Response(), self.queue, self.generateRandomID(), exampleMode).getResponse()
+            result = fromBEDtoGenes_STEP1(request, Response(), self.queue, self.generateRandomID(), self.EXAMPLE_FILES_DIR, exampleMode).getResponse()
             return result
         #*******************************************************************************************
         # fromMiRNAtoGenes HANDLERS
@@ -294,7 +294,7 @@ class Application(object):
         @self.app.route(SERVER_SUBDOMAIN + '/dm_fromMiRNAtoGenes/<path:exampleMode>', methods=['OPTIONS', 'POST'])
         @self.app.route(SERVER_SUBDOMAIN + '/dm_fromMiRNAtoGenes', methods=['OPTIONS', 'POST'])
         def fromMiRNAtoGenesHandler(exampleMode=False):
-            result = fromMiRNAtoGenes_STEP1(request, Response(), self.queue, self.generateRandomID(), exampleMode).getResponse()
+            result = fromMiRNAtoGenes_STEP1(request, Response(), self.queue, self.generateRandomID(), self.EXAMPLE_FILES_DIR, exampleMode).getResponse()
             return result
         #*******************************************************************************************
         ##* ALTERNATIVE PIPELINES SERVLETS HANDLERS - END
@@ -314,41 +314,76 @@ class Application(object):
         ##* GET ADMIN SITE FILES HANDLERS
         ##*******************************************************************************************
         ##*******************************************************************************************
-        @self.app.route(SERVER_SUBDOMAIN + '/admin/<path:filename>')
-        def get_admin_static(filename):
+        @self.app.route(SERVER_SUBDOMAIN + '/admin/')
+        def get_admin_static():
             try :
                 userID = request.cookies.get('userID')
-                if(userID != "0"):
-                    raise Exception
                 sessionToken = request.cookies.get('sessionToken')
-                UserSessionManager().isValidUser(userID, sessionToken)
-                return send_from_directory(ROOT_DIRECTORY + 'public_html/admin', filename)
+                userName = request.cookies.get('userName')
+                UserSessionManager().isValidAdminUser(userID, userName, sessionToken)
+                return send_from_directory(self.ROOT_DIRECTORY + 'public_html/admin', "index.html")
             except Exception as ex:
-                return send_from_directory(ROOT_DIRECTORY + 'public_html/admin', "404.html")
+                return send_from_directory(self.ROOT_DIRECTORY + 'public_html/admin', "404.html")
+        ##*******************************************************************************************
+        ##* GET LIST OF INSTALLED SPECIES
+        ##*******************************************************************************************
+        @self.app.route(SERVER_SUBDOMAIN + '/api/admin/databases/', methods=['OPTIONS', 'GET'])
+        def getInstalledDatabasesInfo():
+            return adminServletGetInstalledOrganisms(request, Response()).getResponse()
+        ##*******************************************************************************************
+        ##* GET AVAILABLE SPECIES
+        ##*******************************************************************************************
+        @self.app.route(SERVER_SUBDOMAIN + '/api/admin/databases/available', methods=['OPTIONS', 'GET'])
+        def getAvailableDatabasesInfo():
+            return adminServletGetAvailableOrganisms(request, Response()).getResponse()
+        ##*******************************************************************************************
+        ##* INSTALL SELECTED SPECIE
+        ##*******************************************************************************************
+        @self.app.route(SERVER_SUBDOMAIN + '/api/admin/databases/<path:organism_code>', methods=['OPTIONS', 'POST'])
+        def installOrganismDatabaseData(organism_code):
+            return adminServletUpdateOrganism(request, Response(), organism_code, self.ROOT_DIRECTORY).getResponse()
+        ##*******************************************************************************************
+        ##* UPDATE SELECTED SPECIE
+        ##*******************************************************************************************
+        @self.app.route(SERVER_SUBDOMAIN + '/api/admin/databases/<path:organism_code>', methods=['OPTIONS', 'PUT'])
+        def updateOrganismDatabaseData(organism_code):
+            return adminServletUpdateOrganism(request, Response(), organism_code, self.ROOT_DIRECTORY).getResponse()
+
+
+        ##*******************************************************************************************
+        ##* GET ALL USERS AND DISK USAGE
+        ##*******************************************************************************************
+        @self.app.route(SERVER_SUBDOMAIN + '/api/admin/users/', methods=['OPTIONS', 'GET'])
+        def getAllUsers():
+            return adminServletGetAllUsers(request, Response()).getResponse()
+        ##*******************************************************************************************
+        ##* REMOVE OLD USERS AND CLEAN OLD DATA
+        ##*******************************************************************************************
+        @self.app.route(SERVER_SUBDOMAIN + '/api/admin/users/<path:userID>', methods=['OPTIONS', 'DELETE'])
+        def deleteUser(userID):
+            return adminServletDeleteUser(request, Response(), userID).getResponse()
+
+
+
         ##*******************************************************************************************
         ##* ADD FILES HANDLERS
         ##*******************************************************************************************
         @self.app.route(SERVER_SUBDOMAIN + '/dm_add_gtffiles', methods=['OPTIONS', 'POST'])
         def addGTFFilesHandler():
-            return dataManagementUploadFile(request, Response(), EXAMPLE_FILES_DIR, isGFT=True).getResponse()
+            return dataManagementUploadFile(request, Response(), self.EXAMPLE_FILES_DIR, isGFT=True).getResponse()
         ##*******************************************************************************************
         ##* GFT FILE DELETION HANDLERS
         ##*******************************************************************************************
         @self.app.route(SERVER_SUBDOMAIN + '/dm_delete_gtffile', methods=['OPTIONS', 'POST'])
         def deleteGTFFileHandler():
-            return dataManagementDeleteFile(request, Response(), EXAMPLE_FILES_DIR, MAX_CLIENT_SPACE, isGFT=True).getResponse()
+            return dataManagementDeleteFile(request, Response(), self.EXAMPLE_FILES_DIR, MAX_CLIENT_SPACE, isGFT=True).getResponse()
         ##*******************************************************************************************
         ##* GET LIST OF INSTALLED SPECIES
         ##*******************************************************************************************
         @self.app.route(SERVER_SUBDOMAIN + '/dm_get_installed_organism', methods=['OPTIONS', 'POST'])
         def getOrganismDatabasesInfo():
             return adminServletGetInstalledOrganisms(request, Response()).getResponse()
-        ##*******************************************************************************************
-        ##* UPDATE SELECTED SPECIE
-        ##*******************************************************************************************
-        @self.app.route(SERVER_SUBDOMAIN + '/dm_update_organism_db_data', methods=['OPTIONS', 'POST'])
-        def updateOrganismDatabaseData():
-            return adminServletUpdateOrganism(request, Response()).getResponse()
+
         ##*******************************************************************************************
         ##* UPDATE SELECTED SPECIE
         ##*******************************************************************************************
@@ -360,13 +395,7 @@ class Application(object):
         ##*******************************************************************************************
         @self.app.route(SERVER_SUBDOMAIN + '/dm_sendReport', methods=['OPTIONS', 'POST'])
         def sendReportHandler():
-            return adminServletSendReport(request, Response()).getResponse()
-        ##*******************************************************************************************
-        ##* GET ALL USERS AND DISK USAGE
-        ##*******************************************************************************************
-        @self.app.route(SERVER_SUBDOMAIN + '/um_get_all_users', methods=['OPTIONS', 'POST'])
-        def getAllUsers():
-            return adminServletGetAllUsers(request, Response()).getResponse()
+            return adminServletSendReport(request, Response(), self.ROOT_DIRECTORY).getResponse()
         ##*******************************************************************************************
         ##* REMOVE OLD USERS AND CLEAN OLD DATA
         ##*******************************************************************************************
@@ -421,8 +450,19 @@ class Application(object):
         return jobID
 
     def readConfigurationFile(self):
+        self.ROOT_DIRECTORY = ROOT_DIRECTORY
+        import os
+        if self.ROOT_DIRECTORY == "":
+            self.ROOT_DIRECTORY = os.path.abspath(os.path.dirname(os.path.realpath(__file__))) + "/"
+        else:
+            self.ROOT_DIRECTORY = os.path.abspath(self.ROOT_DIRECTORY) + "/"
+
+        self.EXAMPLE_FILES_DIR = self.ROOT_DIRECTORY + "examplefiles/"
+
         #PREPARE LOGGING
-        logging.config.fileConfig(ROOT_DIRECTORY + 'conf/logging.cfg')
+        logging.config.fileConfig(self.ROOT_DIRECTORY + 'conf/logging.cfg')
+
+        #self.app.config['MAX_CONTENT_LENGTH'] = SERVER_MAX_CONTENT_LENGTH * pow(1024, 2)
 
 #################################################################################################################
 #################################################################################################################

@@ -112,7 +112,7 @@ def userManagementSignOut(request, response):
             daoInstance.closeConnection()
         return response
 
-def userManagementSignUp(request, response):
+def userManagementSignUp(request, response, ROOT_DIRECTORY):
     #VARIABLE DECLARATION
     userInstance = None
     daoInstance = None
@@ -173,7 +173,7 @@ def userManagementSignUp(request, response):
             message += "<p>Problems? E-mail <a href='mailto:" + "paintomics@cipf.es" + "'>" + "paintomics@cipf.es" + "</a></p>"
             message += '</body></html>'
 
-            sendEmail(userInstance.getEmail(), userInstance.getUserName(), "Welcome to Paintomics 3", message, isHTML=True)
+            sendEmail(ROOT_DIRECTORY, userInstance.getEmail(), userInstance.getUserName(), "Welcome to Paintomics 3", message, isHTML=True)
         except Exception:
             logging.error("Failed to send the email.")
 

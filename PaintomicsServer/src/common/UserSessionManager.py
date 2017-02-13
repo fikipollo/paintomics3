@@ -18,6 +18,8 @@
 #  Technical contact paintomics@cipf.es
 #**************************************************************
 from src.common.ServerErrorManager import CredentialException
+from src.conf.serverconf import ADMIN_ACCOUNTS
+from src.common.DAO.UserDAO import UserDAO
 
 class UserSessionManager(object):
 
@@ -47,6 +49,12 @@ class UserSessionManager(object):
                 return True
             if (user_id == 'None' or sessionToken == None or sessionToken != self.logged_users.get(user_id)):
                 raise CredentialException("[b]User not valid[/b]. It looks like your session is not valid, please log-in again.")
+
+        def isValidAdminUser(self, user_id, user_name, sessionToken):
+            self.isValidUser(user_id,sessionToken)
+            _user = UserDAO().findByID(user_id)
+            if _user.userName != user_name or not (user_name in ADMIN_ACCOUNTS.split(",")):
+                raise Exception("User not allowed")
 
         def getLoggedUsersCount(self):
             return len(self.logged_users)

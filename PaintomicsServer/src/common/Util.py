@@ -74,12 +74,12 @@ def unifyAndSort(seq, criteria=None):
     return result
 
 
-def sendEmail(toEmail, toName, subject, _message, fromEmail=None, fromName=None, isHTML=False):
+def sendEmail(ROOT_DIRECTORY, toEmail, toName, subject, _message, fromEmail=None, fromName=None, isHTML=False):
     import smtplib
     from email.mime.multipart import MIMEMultipart
     from email.mime.text import MIMEText
     from email.mime.image import MIMEImage
-    from src.conf.serverconf import smtp_host, smtp_port, use_smtp_auth, smpt_username, smpt_pass,use_smtp_ssl, smtp_secure, smpt_sender, smpt_sender_name, ROOT_DIRECTORY
+    from src.conf.serverconf import smtp_host, smtp_port, use_smtp_auth, smpt_username, smpt_pass,use_smtp_ssl, smtp_secure, smpt_sender, smpt_sender_name
 
     if fromEmail == None:
         fromEmail = smpt_sender

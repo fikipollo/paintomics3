@@ -27,14 +27,17 @@
 
 	app.factory("DatabaseList", ['$rootScope', function($rootScope) {
 		var databases = [];
+		var categories = [];
+		var commonData = null;
 		var filters = [];
 		var old = new Date(0);
 		return {
 			getDatabases: function() {
 				return databases;
 			},
-			setDatabases: function(_databases) {
-				databases = this.adaptDatabasesInformation(_databases);
+			setDatabases: function(_databases, status) {
+				commonData = _databases.common_info_date;
+				databases = this.adaptDatabasesInformation(_databases.databaseList, status);
 				old = new Date();
 				return this;
 			},
@@ -43,11 +46,10 @@
 				for(var i in newDatabases){
 					found= false;
 					for(var j=0; j < nElems; j++){
-						if(newDatabases[i].name === databases[j].name){
+						if(newDatabases[i].organism_code === databases[j].organism_code){
 							found= true;
 							if(soft === true){
-								databases[j].last_version = newDatabases[i].version;
-								databases[j].secondary_website = newDatabases[i].website;
+								databases[j].categories = newDatabases[i].categories;
 							}else{
 								databases[j] = this.adaptDatabaseInformation(newDatabases[i]);
 							}
@@ -55,12 +57,6 @@
 						}
 					}
 					if(!found){
-						if(soft === true){
-							newDatabases[i].last_version = newDatabases[i].version;
-							newDatabases[i].secondary_website = newDatabases[i].website;
-							delete newDatabases[i].version;
-							delete newDatabases[i].website;
-						}
 						databases.push(this.adaptDatabaseInformation(newDatabases[i]));
 					}
 				}
@@ -87,15 +83,15 @@
 				}
 				return null;
 			},
-			adaptDatabasesInformation: function(databases) {
+			adaptDatabasesInformation: function(databases, status) {
 				for(var i in databases){
-					this.adaptDatabaseInformation(databases[i]);
+					this.adaptDatabaseInformation(databases[i], status);
 				}
 				return databases;
 			},
-			adaptDatabaseInformation: function(database){
-				if(database.website !== undefined && database.website.indexOf("<HOST_NAME>") !== -1){
-					database.website = database.website.replace("<HOST_NAME>", window.location.protocol + "//" + window.location.hostname);
+			adaptDatabaseInformation: function(database, status){
+				if (database.status !== "installed"){
+					database.status = status;
 				}
 				return database;
 			},
@@ -111,6 +107,39 @@
 				if(pos !== -1){
 					filters.splice(pos,1);
 				}
+				return this;
+			},
+			getCategories: function() {
+				return categories;
+			},
+			getCategory: function(_category) {
+				for(var i in categories){
+					if(categories[i].name === _category){
+						return categories[i];
+					}
+				}
+				return null;
+			},
+			setCategories: function(_categories) {
+				categories = _categories;
+				return this;
+			},
+			updateCategories: function() {
+				var categoriesAux = {}, _categories;
+
+				for(var i in databases){
+					_categories = databases[i].categories;
+					for(var j in _categories){
+						categoriesAux[_categories[j]] = {
+							name: _categories[j],
+							times: ((categoriesAux[_categories[j]] === undefined)?1:categoriesAux[_categories[j]].times + 1)
+						}
+					}
+				}
+				categories = Object.keys(categoriesAux).map(function(k) { return categoriesAux[k] });
+
+				categories.push({name: "All", times: databases.length})
+
 				return this;
 			},
 			getOld: function(){

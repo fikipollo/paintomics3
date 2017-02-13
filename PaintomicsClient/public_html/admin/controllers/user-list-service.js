@@ -27,6 +27,7 @@
 
 	app.factory("UserList", ['$rootScope', function($rootScope) {
 		var users = [];
+		var availableSpace = 0;
 		var filters = [];
 		var old = new Date(0);
 		return {
@@ -34,36 +35,12 @@
 				return users;
 			},
 			setUsers: function(_users) {
-				users = this.adaptUsersInformation(_users);
+				users = this.adaptUsersInformation(_users.userList);
+				availableSpace = _users.availableSpace;
 				old = new Date();
 				return this;
 			},
 			updateUsers: function(newUsers, soft) {
-				var found, nElems = users.length;
-				for(var i in newUsers){
-					found= false;
-					for(var j=0; j < nElems; j++){
-						if(newUsers[i].name === users[j].name){
-							found= true;
-							if(soft === true){
-								users[j].last_version = newUsers[i].version;
-								users[j].secondary_website = newUsers[i].website;
-							}else{
-								users[j] = this.adaptUserInformation(newUsers[i]);
-							}
-							break;
-						}
-					}
-					if(!found){
-						if(soft === true){
-							newUsers[i].last_version = newUsers[i].version;
-							newUsers[i].secondary_website = newUsers[i].website;
-							delete newUsers[i].version;
-							delete newUsers[i].website;
-						}
-						users.push(this.adaptUserInformation(newUsers[i]));
-					}
-				}
 				return this;
 			},
 			getUser: function(user_id) {
@@ -94,9 +71,6 @@
 				return users;
 			},
 			adaptUserInformation: function(user){
-				if(user.website !== undefined && user.website.indexOf("<HOST_NAME>") !== -1){
-					user.website = user.website.replace("<HOST_NAME>", window.location.protocol + "//" + window.location.hostname);
-				}
 				return user;
 			},
 			getFilters: function() {

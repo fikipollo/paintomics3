@@ -1,18 +1,18 @@
-<tr ng-class="(user.is_guest)?'guestUserRow':''" >
-	<td width="210px;">{{ user.userName }}</td>
+<tr>
+	<td ng-class="(user.is_guest)?'guestUserRow':'normalUserRow'" width="210px;">{{ user.userName }}</td>
 	<td width="210px;">{{ user.userID }}</td>
 	<td width="210px;">{{ user.email }}</td>
 	<td width="210px;">{{ user.affiliation }}</td>
-	<td width="210px;">{{ user.creation_date }}</td>
-	<td width="210px;">{{ user.last_login }}</td>
+	<td width="210px;">{{ formatDate(user.creation_date) }}</td>
+	<td width="210px;">{{ formatDate(user.last_login) }}</td>
 	<td width="210px;">{{ user.usedSpace }}</td>
 	<td width="210px;">
 		<span>
-			<a class="clickable" style="margin-right: 10px;" ng-click="controller.removeUserHandler(user)">
-				<i class="fa fa-stop text-danger"></i> Stop
-			</a>
 			<a class="clickable" style="margin-right: 10px;" ng-click="controller.editUserHandler(user)">
-				<i class="fa fa-stop text-danger"></i> Stop
+				<i class="fa fa-pencil-square-o text-warning"></i> Edit
+			</a>
+			<a class="clickable" style="margin-right: 10px;" ng-click="controller.deleteUserHandler(user)">
+				<i class="fa fa-trash text-danger"></i> Delete
 			</a>
 		</span>
 	</td>

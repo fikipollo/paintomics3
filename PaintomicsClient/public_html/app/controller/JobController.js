@@ -60,7 +60,7 @@ function JobController() {
 			url: SERVER_URL_JOB_STATUS + "/" + jobID,
 			success: function (response) {
 				if (response.success === false) {
-					if (response.status === "JobStatus.STARTED") {
+					if (response.status === "JobStatus.STARTED" || response.status === "started") {
 						showInfoMessage("Running job " + jobID + "...", {logMessage: "Job " + jobID + " still running.", showSpin: true, append: other.multipleJobs, itemId: jobID, icon: "play"});
 					}
 					//Check again in N seconds

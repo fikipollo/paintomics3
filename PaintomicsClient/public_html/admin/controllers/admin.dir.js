@@ -25,25 +25,19 @@
 
 	app.directive("userRow", function() {
 		return {
-			controller: "UserController",
-			controllerAs: "controller",
-			templateUrl: 'static/app/admin/templates/user-row.tpl.html'
+			templateUrl: 'templates/user-row.tpl.html'
 		};
 	});
 
 	app.directive("filesRow", function() {
 		return {
-			controller: "FilesController",
-			controllerAs: "controller",
-			templateUrl: 'static/app/admin/templates/file-row.tpl.html'
+			templateUrl: 'templates/file-row.tpl.html'
 		};
 	});
 
 	app.directive("databaseRow", function() {
 		return {
-			controller: "DatabasesController",
-			controllerAs: "controller",
-			templateUrl: 'static/app/admin/templates/database-row.tpl.html'
+			templateUrl: 'templates/database-row.tpl.html'
 		};
 	});
 })();

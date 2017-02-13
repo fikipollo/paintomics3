@@ -37,9 +37,12 @@ from src.classes.Message import Message
 
 from src.common.Util import sendEmail
 
-from src.conf.serverconf import MONGODB_HOST, MONGODB_PORT, ROOT_DIRECTORY, KEGG_DATA_DIR, CLIENT_TMP_DIR, smpt_sender, smpt_sender_name, MAX_CLIENT_SPACE
+from src.conf.serverconf import MONGODB_HOST, MONGODB_PORT, KEGG_DATA_DIR, CLIENT_TMP_DIR, smpt_sender, smpt_sender_name, MAX_CLIENT_SPACE
 from src.servlets.DataManagementServlet import dir_total_size
 
+#----------------------------------------------------------------
+# DATABASES
+#----------------------------------------------------------------
 def adminServletGetInstalledOrganisms(request, response):
     """
     This function...
@@ -48,13 +51,14 @@ def adminServletGetInstalledOrganisms(request, response):
     @param {Response} response, the response object
     """
     try :
-        logging.info("STEP0 - CHECK IF VALID USER....")
         #****************************************************************
         # Step 0.CHECK IF VALID USER SESSION
         #****************************************************************
-        userID  = request.cookies.get('userID')
-        sessionToken  = request.cookies.get('sessionToken')
-        UserSessionManager().isValidUser(userID, sessionToken)
+        logging.info("STEP0 - CHECK IF VALID USER....")
+        userID = request.cookies.get('userID')
+        sessionToken = request.cookies.get('sessionToken')
+        userName = request.cookies.get('userName')
+        UserSessionManager().isValidAdminUser(userID, userName, sessionToken)
 
         #****************************************************************
         # Step 1.GET THE LIST OF INSTALLED SPECIES (DATABASES and SPECIES.JSON)
@@ -123,7 +127,48 @@ def adminServletGetInstalledOrganisms(request, response):
     finally:
         return response
 
-def adminServletUpdateOrganism(request, response):
+def adminServletGetAvailableOrganisms(request, response):
+    """
+    This function...
+
+    @param {Request} request, the request object
+    @param {Response} response, the response object
+    """
+    try :
+        #****************************************************************
+        # Step 0.CHECK IF VALID USER SESSION
+        #****************************************************************
+        logging.info("STEP0 - CHECK IF VALID USER....")
+        userID = request.cookies.get('userID')
+        sessionToken = request.cookies.get('sessionToken')
+        userName = request.cookies.get('userName')
+        UserSessionManager().isValidAdminUser(userID, userName, sessionToken)
+
+        #****************************************************************
+        # Step 1.GET THE LIST OF INSTALLED SPECIES (DATABASES and SPECIES.JSON)
+        #****************************************************************
+        import csv
+        databaseList = []
+        with open(KEGG_DATA_DIR + 'last/organisms_all.list') as availableSpeciesFile:
+            reader = csv.reader(availableSpeciesFile,  delimiter='\t')
+            for row in reader:
+                databaseList.append({
+                    "organism_name": row[2],
+                    "organism_code": row[1],
+                    "categories": row[3].split(";"),
+                    "organism_id" : row[0]
+                })
+        availableSpeciesFile.close()
+
+        response.setContent({"databaseList": databaseList})
+
+    except Exception as ex:
+        handleException(response, ex, __file__ , "adminServletGetInstalledOrganisms")
+
+    finally:
+        return response
+
+def adminServletUpdateOrganism(request, response, ROOT_DIRECTORY):
     """
     This function manages an 'Update Organism' request by calling to the
     DBManager tool.
@@ -132,13 +177,14 @@ def adminServletUpdateOrganism(request, response):
     @param {Response} response, the response object
     """
     try :
-        logging.info("STEP0 - CHECK IF VALID USER....")
         #****************************************************************
         # Step 0.CHECK IF VALID USER SESSION
         #****************************************************************
-        userID  = request.cookies.get('userID')
-        sessionToken  = request.cookies.get('sessionToken')
-        UserSessionManager().isValidUser(userID, sessionToken)
+        logging.info("STEP0 - CHECK IF VALID USER....")
+        userID = request.cookies.get('userID')
+        sessionToken = request.cookies.get('sessionToken')
+        userName = request.cookies.get('userName')
+        UserSessionManager().isValidAdminUser(userID, userName, sessionToken)
 
         #****************************************************************
         # Step 1.GET THE SPECIE CODE AND THE UPDATE OPTION
@@ -196,13 +242,14 @@ def adminServletRestoreData(request, response):
     @param {Response} response, the response object
     """
     try :
-        logging.info("STEP0 - CHECK IF VALID USER....")
         #****************************************************************
         # Step 0.CHECK IF VALID USER SESSION
         #****************************************************************
-        userID  = request.cookies.get('userID')
-        sessionToken  = request.cookies.get('sessionToken')
-        UserSessionManager().isValidUser(userID, sessionToken)
+        logging.info("STEP0 - CHECK IF VALID USER....")
+        userID = request.cookies.get('userID')
+        sessionToken = request.cookies.get('sessionToken')
+        userName = request.cookies.get('userName')
+        UserSessionManager().isValidAdminUser(userID, userName, sessionToken)
 
         #****************************************************************
         # Step 1.GET THE SPECIE CODE AND THE UPDATE OPTION
@@ -227,7 +274,317 @@ def adminServletRestoreData(request, response):
     finally:
         return response
 
-def adminServletSendReport(request, response):
+#----------------------------------------------------------------
+# USERS
+#----------------------------------------------------------------
+def adminServletGetAllUsers(request, response):
+    """
+    This function obtains a list of all the users registered in the system including different details
+    such as the used space, the registration date, etc.
+
+    @param {Request} request, the request object
+    @param {Response} response, the response object
+    """
+    try :
+        #****************************************************************
+        # Step 0.CHECK IF VALID USER SESSION
+        #****************************************************************
+        logging.info("STEP0 - CHECK IF VALID USER....")
+        userID = request.cookies.get('userID')
+        sessionToken = request.cookies.get('sessionToken')
+        userName = request.cookies.get('userName')
+        UserSessionManager().isValidAdminUser(userID, userName, sessionToken)
+
+        #****************************************************************
+        # Step 1. GET THE LIST OF ALL USERS
+        #****************************************************************
+        logging.info("STEP1 - GET THE LIST OF ALL USERS...")
+        userList = UserDAO().findAll()
+        for userInstance in userList:
+            userInstance.usedSpace = 0
+            if os_path.isdir(CLIENT_TMP_DIR + str(userInstance.getUserId())):
+                userInstance.usedSpace = dir_total_size(CLIENT_TMP_DIR + str(userInstance.getUserId()))
+
+        response.setContent({"success": True, "userList": userList,  "availableSpace": MAX_CLIENT_SPACE})
+
+    except Exception as ex:
+        handleException(response, ex, __file__ , "adminServletGetAllUsers")
+
+    finally:
+        return response
+
+def adminServletDeleteUser(request, response, toDeleteUserID):
+    """
+    This function...
+
+    @param {Request} request, the request object
+    @param {Response} response, the response object
+    """
+    try :
+        #****************************************************************
+        # Step 0.CHECK IF VALID USER SESSION
+        #****************************************************************
+        logging.info("STEP0 - CHECK IF VALID USER....")
+        userID = request.cookies.get('userID')
+        sessionToken = request.cookies.get('sessionToken')
+        userName = request.cookies.get('userName')
+        UserSessionManager().isValidAdminUser(userID, userName, sessionToken)
+
+        if toDeleteUserID == "0":
+            response.setContent({"success": False})
+        else:
+            jobDAOInstance = JobDAO()
+            filesDAOInstance = FileDAO()
+            userDAOInstance = UserDAO()
+
+            logging.info("STEP1 - CLEANING DATA FOR " + toDeleteUserID + "...")
+            #****************************************************************
+            # Step 1. DELETE ALL JOBS FOR THE USER
+            #****************************************************************
+            allJobs = jobDAOInstance.findAll(otherParams={"userID":toDeleteUserID})
+            jobID = ""
+            for jobInstance in allJobs:
+                jobID = jobInstance.getJobID()
+                logging.info("STEP2 - REMOVING " + jobID + " FROM DATABASE...")
+                jobDAOInstance.remove(jobInstance.getJobID(), otherParams={"userID":toDeleteUserID})
+
+            #****************************************************************
+            # Step 3. DELETE ALL FILES FOR THE USER
+            #****************************************************************
+            logging.info("STEP3 - REMOVING ALL FILES FROM DATABASE...")
+            filesDAOInstance.removeAll(otherParams={"userID":toDeleteUserID})
+            logging.info("STEP3 - REMOVING ALL FILES FROM USER DIRECTORY...")
+            if os_path.isdir(CLIENT_TMP_DIR + toDeleteUserID):
+                shutil_rmtree(CLIENT_TMP_DIR + toDeleteUserID)
+
+            #****************************************************************
+            # Step 4. DELETE THE USER INSTANCE FROM DATABASE
+            #****************************************************************
+            logging.info("STEP6 - REMOVING ALL FILES FROM DATABASE...")
+            userDAOInstance.remove(int(toDeleteUserID))
+
+            response.setContent({"success": True})
+    except Exception as ex:
+        handleException(response, ex, __file__ , "adminServletDeleteUser")
+    finally:
+        return response
+
+def adminServletCleanOldData(request, response):
+    """
+    This function...
+
+    @param {Request} request, the request object
+    @param {Response} response, the response object
+    """
+    try :
+        #****************************************************************
+        # Step 0.CHECK IF VALID USER SESSION
+        #****************************************************************
+        logging.info("STEP0 - CHECK IF VALID USER....")
+        userID = request.cookies.get('userID')
+        sessionToken = request.cookies.get('sessionToken')
+        userName = request.cookies.get('userName')
+        UserSessionManager().isValidAdminUser(userID, userName, sessionToken)
+
+        #****************************************************************
+        # Step 1. GET THE LIST OF ALL USERS
+        #****************************************************************
+        formFields = request.form
+        user_ids  = formFields.get("user_ids").split(",")
+
+        allJobs = None
+        jobDAOInstance = JobDAO()
+        filesDAOInstance = FileDAO()
+        userDAOInstance = UserDAO()
+
+        for userID in user_ids:
+            if userID == "0":
+                continue
+
+            logging.info("STEP1 - CLEANING DATA FOR " + userID + "...")
+
+            #****************************************************************
+            # Step 2. DELETE ALL JOBS FOR THE USER
+            #****************************************************************
+            allJobs = jobDAOInstance.findAll(otherParams={"userID":userID})
+            jobID = ""
+            for jobInstance in allJobs:
+                jobID = jobInstance.getJobID()
+                logging.info("STEP2 - REMOVING " + jobID + " FROM DATABASE...")
+                jobDAOInstance.remove(jobInstance.getJobID(), otherParams={"userID":userID})
+
+            #****************************************************************
+            # Step 3. DELETE ALL FILES FOR THE USER
+            #****************************************************************
+            logging.info("STEP3 - REMOVING ALL FILES FROM DATABASE...")
+            filesDAOInstance.removeAll(otherParams={"userID":userID})
+            logging.info("STEP3 - REMOVING ALL FILES FROM USER DIRECTORY...")
+            if os_path.isdir(CLIENT_TMP_DIR + userID):
+                shutil_rmtree(CLIENT_TMP_DIR + userID)
+
+            #****************************************************************
+            # Step 4. DELETE THE USER INSTANCE FROM DATABASE
+            #****************************************************************
+            logging.info("STEP6 - REMOVING ALL FILES FROM DATABASE...")
+            userDAOInstance.remove(int(userID))
+
+        response.setContent({"success": True})
+
+    except Exception as ex:
+        handleException(response, ex, __file__ , "adminServletCleanOldData")
+
+    finally:
+        return response
+
+#----------------------------------------------------------------
+# MESSAGES
+#----------------------------------------------------------------
+def adminServletSaveMessage(request, response):
+    try:
+        #****************************************************************
+        # Step 0.CHECK IF VALID USER SESSION
+        #****************************************************************
+        logging.info("STEP0 - CHECK IF VALID USER....")
+        userID = request.cookies.get('userID')
+        sessionToken = request.cookies.get('sessionToken')
+        userName = request.cookies.get('userName')
+        UserSessionManager().isValidAdminUser(userID, userName, sessionToken)
+
+        #****************************************************************
+        # Step 1.SAVE THE MESSAGE IN THE DATABASE
+        #****************************************************************
+        messageInstance = Message(request.form.get("message_type"))
+        messageInstance.message_content = request.form.get("message_content")
+
+        #****************************************************************
+        # Step 2. SAVE THE MESSAGE
+        #****************************************************************
+        daoInstance = MessageDAO()
+        daoInstance.removeAll(otherParams={"message_type" : messageInstance.message_type})
+        daoInstance.insert(messageInstance)
+        daoInstance.closeConnection()
+        response.setContent({"success": True })
+
+    except Exception as ex:
+        handleException(response, ex, __file__ , "adminServletSaveMessage")
+    finally:
+        return response
+
+def adminServletGetMessage(request, response):
+    try:
+        #****************************************************************
+        # Step 0.CHECK IF VALID USER SESSION
+        #****************************************************************
+        message_type = request.form.get("message_type")
+
+        if(message_type != "starting_message"):
+            logging.info("STEP0 - CHECK IF VALID USER....")
+            userID  = request.cookies.get('userID')
+            sessionToken  = request.cookies.get('sessionToken')
+
+            UserSessionManager().isValidUser(userID, sessionToken)
+
+        #****************************************************************
+        # Step 1.GET THE MESSAGES FROM THE DATABASE
+        #****************************************************************
+        daoInstance = MessageDAO()
+        matchedMessages = daoInstance.findAll(otherParams={"message_type" : message_type})
+        daoInstance.closeConnection()
+        response.setContent({"success": True, "messageList" : matchedMessages})
+
+    except Exception as ex:
+        handleException(response, ex, __file__ , "adminServletGetMessage")
+    finally:
+        return response
+
+def adminServletDeleteMessage(request, response):
+    try:
+        #****************************************************************
+        # Step 0.CHECK IF VALID USER SESSION
+        #****************************************************************
+        logging.info("STEP0 - CHECK IF VALID USER....")
+        userID = request.cookies.get('userID')
+        sessionToken = request.cookies.get('sessionToken')
+        userName = request.cookies.get('userName')
+        UserSessionManager().isValidAdminUser(userID, userName, sessionToken)
+
+        #****************************************************************
+        # Step 1.GET THE MESSAGES FROM THE DATABASE
+        #****************************************************************
+        message_type = request.form.get("message_type")
+        daoInstance = MessageDAO()
+        daoInstance.removeAll(otherParams={"message_type" : message_type})
+        daoInstance.closeConnection()
+
+        response.setContent({"success": True})
+
+    except Exception as ex:
+        handleException(response, ex, __file__ , "adminServletDeleteMessage")
+    finally:
+        return response
+
+#----------------------------------------------------------------
+# SYSTEM
+#----------------------------------------------------------------
+def adminServletMonitorCPU(request, response):
+    """
+    This function...
+
+    @param {Request} request, the request object
+    @param {Response} response, the response object
+    """
+    try:
+        #****************************************************************
+        # Step 0.CHECK IF VALID USER SESSION
+        #****************************************************************
+        logging.info("STEP0 - CHECK IF VALID USER....")
+        userID = request.cookies.get('userID')
+        sessionToken = request.cookies.get('sessionToken')
+        userName = request.cookies.get('userName')
+        UserSessionManager().isValidAdminUser(userID, userName, sessionToken)
+
+        cpu_usage = []
+        for x in range(5):
+            cpu_usage.append(psutil.cpu_percent(interval=1, percpu=True))
+        return response.setContent({"success": True, "cpu_usage" : cpu_usage}).getResponse()
+
+    except Exception as ex:
+        handleException(response, ex, __file__ , "monitorCPU")
+    finally:
+        return response
+
+def adminServletMonitorRAM(request, response):
+    """
+    This function...
+
+    @param {Request} request, the request object
+    @param {Response} response, the response object
+    """
+    try:
+        #****************************************************************
+        # Step 0.CHECK IF VALID USER SESSION
+        #****************************************************************
+        logging.info("STEP0 - CHECK IF VALID USER....")
+        userID = request.cookies.get('userID')
+        sessionToken = request.cookies.get('sessionToken')
+        userName = request.cookies.get('userName')
+        UserSessionManager().isValidAdminUser(userID, userName, sessionToken)
+        UserSessionManager().isValidUser(userID, sessionToken)
+
+        ram_usage = []
+        swap_usage = []
+        for x in range(5):
+            ram_usage.append(adapt_values(psutil.virtual_memory()))
+            swap_usage.append(adapt_values(psutil.swap_memory()))
+            sleep(1)
+        return response.setContent({"success": True, "ram_usage" : ram_usage, "swap_usage":swap_usage}).getResponse()
+
+    except Exception as ex:
+        handleException(response, ex, __file__ , "monitorCPU")
+    finally:
+        return response
+
+def adminServletSendReport(request, response, ROOT_DIRECTORY):
     """
     This function...
 
@@ -285,7 +642,7 @@ def adminServletSendReport(request, response):
         message += "<p>Problems? E-mail <a href='mailto:" + "paintomics@cipf.es" + "'>" + "paintomics@cipf.es" + "</a></p>"
         message += '</body></html>'
 
-        sendEmail(smpt_sender, smpt_sender_name, type, message, fromEmail=userEmail, fromName=userName, isHTML=True)
+        sendEmail(ROOT_DIRECTORY, smpt_sender, smpt_sender_name, type, message, fromEmail=userEmail, fromName=userName, isHTML=True)
 
         response.setContent({"success": True})
 
@@ -295,262 +652,6 @@ def adminServletSendReport(request, response):
     finally:
         return response
 
-def adminServletGetAllUsers(request, response):
-    """
-    This function obtains a list of all the users registered in the system including different details
-    such as the used space, the registration date, etc.
-
-    @param {Request} request, the request object
-    @param {Response} response, the response object
-    """
-    try :
-        logging.info("STEP0 - CHECK IF VALID USER....")
-        #****************************************************************
-        # Step 0.CHECK IF VALID USER SESSION
-        #****************************************************************
-        userID  = request.cookies.get('userID')
-        sessionToken  = request.cookies.get('sessionToken')
-        UserSessionManager().isValidUser(userID, sessionToken)
-
-        #****************************************************************
-        # Step 1. GET THE LIST OF ALL USERS
-        #****************************************************************
-        logging.info("STEP1 - GET THE LIST OF ALL USERS...")
-        userList = UserDAO().findAll()
-        for userInstance in userList:
-            userInstance.usedSpace = 0
-            if os_path.isdir(CLIENT_TMP_DIR + str(userInstance.getUserId())):
-                userInstance.usedSpace = dir_total_size(CLIENT_TMP_DIR + str(userInstance.getUserId()))
-
-        response.setContent({"success": True, "userList": userList,  "availableSpace": MAX_CLIENT_SPACE})
-
-    except Exception as ex:
-        handleException(response, ex, __file__ , "adminServletGetAllUsers")
-
-    finally:
-        return response
-
-def adminServletCleanOldData(request, response):
-    """
-    This function...
-
-    @param {Request} request, the request object
-    @param {Response} response, the response object
-    """
-    try :
-        logging.info("STEP0 - CHECK IF VALID USER....")
-        #****************************************************************
-        # Step 0.CHECK IF VALID USER SESSION
-        #****************************************************************
-        userID  = request.cookies.get('userID')
-        sessionToken  = request.cookies.get('sessionToken')
-        UserSessionManager().isValidUser(userID, sessionToken)
-
-        #****************************************************************
-        # Step 1. GET THE LIST OF ALL USERS
-        #****************************************************************
-        formFields = request.form
-        user_ids  = formFields.get("user_ids").split(",")
-
-        allJobs = None
-        jobDAOInstance = JobDAO()
-        filesDAOInstance = FileDAO()
-        userDAOInstance = UserDAO()
-
-        for userID in user_ids:
-            if userID == "0":
-                continue
-
-            logging.info("STEP1 - CLEANING DATA FOR " + userID + "...")
-
-            #****************************************************************
-            # Step 2. DELETE ALL JOBS FOR THE USER
-            #****************************************************************
-            allJobs = jobDAOInstance.findAll(otherParams={"userID":userID})
-            jobID = ""
-            for jobInstance in allJobs:
-                jobID = jobInstance.getJobID()
-                logging.info("STEP2 - REMOVING " + jobID + " FROM DATABASE...")
-                jobDAOInstance.remove(jobInstance.getJobID(), otherParams={"userID":userID})
-
-            #****************************************************************
-            # Step 3. DELETE ALL FILES FOR THE USER
-            #****************************************************************
-            logging.info("STEP3 - REMOVING ALL FILES FROM DATABASE...")
-            filesDAOInstance.removeAll(otherParams={"userID":userID})
-            logging.info("STEP3 - REMOVING ALL FILES FROM USER DIRECTORY...")
-            if os_path.isdir(CLIENT_TMP_DIR + userID):
-                shutil_rmtree(CLIENT_TMP_DIR + userID)
-
-            #****************************************************************
-            # Step 4. DELETE THE USER INSTANCE FROM DATABASE
-            #****************************************************************
-            logging.info("STEP6 - REMOVING ALL FILES FROM DATABASE...")
-            userDAOInstance.remove(int(userID))
-
-        response.setContent({"success": True})
-
-    except Exception as ex:
-        handleException(response, ex, __file__ , "adminServletCleanOldData")
-
-    finally:
-        return response
-
-def adminServletSaveMessage(request, response):
-    try:
-        #****************************************************************
-        # Step 0.CHECK IF VALID USER SESSION
-        #****************************************************************
-        logging.info("STEP0 - CHECK IF VALID USER....")
-        userID  = request.cookies.get('userID')
-        sessionToken  = request.cookies.get('sessionToken')
-
-        #ONLY ADMIN USER (id=0) CAN ADD MESSAGES
-        if(userID != "0"):
-            userID="-1"
-
-        UserSessionManager().isValidUser(userID, sessionToken)
-        #****************************************************************
-        # Step 1.SAVE THE MESSAGE IN THE DATABASE
-        #****************************************************************
-        messageInstance = Message(request.form.get("message_type"))
-        messageInstance.message_content = request.form.get("message_content")
-
-        #****************************************************************
-        # Step 2. SAVE THE MESSAGE
-        #****************************************************************
-        daoInstance = MessageDAO()
-        daoInstance.removeAll(otherParams={"message_type" : messageInstance.message_type})
-        daoInstance.insert(messageInstance)
-        daoInstance.closeConnection()
-        response.setContent({"success": True })
-
-    except Exception as ex:
-        handleException(response, ex, __file__ , "adminServletSaveMessage")
-    finally:
-        return response
-
-def adminServletGetMessage(request, response):
-    try:
-        #****************************************************************
-        # Step 0.CHECK IF VALID USER SESSION
-        #****************************************************************
-        message_type = request.form.get("message_type")
-
-        if(message_type != "starting_message"):
-            logging.info("STEP0 - CHECK IF VALID USER....")
-            userID  = request.cookies.get('userID')
-            sessionToken  = request.cookies.get('sessionToken')
-
-            UserSessionManager().isValidUser(userID, sessionToken)
-
-        #****************************************************************
-        # Step 1.GET THE MESSAGES FROM THE DATABASE
-        #****************************************************************
-        daoInstance = MessageDAO()
-        matchedMessages = daoInstance.findAll(otherParams={"message_type" : message_type})
-        daoInstance.closeConnection()
-        response.setContent({"success": True, "messageList" : matchedMessages})
-
-    except Exception as ex:
-        handleException(response, ex, __file__ , "adminServletGetMessage")
-    finally:
-        return response
-
-def adminServletDeleteMessage(request, response):
-    try:
-        #****************************************************************
-        # Step 0.CHECK IF VALID USER SESSION
-        #****************************************************************
-        logging.info("STEP0 - CHECK IF VALID USER....")
-        userID  = request.cookies.get('userID')
-        sessionToken  = request.cookies.get('sessionToken')
-
-        #ONLY ADMIN USER (id=0) CAN REMOVE MESSAGES
-        if(userID != "0"):
-            userID="-1"
-
-        UserSessionManager().isValidUser(userID, sessionToken)
-
-        #****************************************************************
-        # Step 1.GET THE MESSAGES FROM THE DATABASE
-        #****************************************************************
-        message_type = request.form.get("message_type")
-        daoInstance = MessageDAO()
-        daoInstance.removeAll(otherParams={"message_type" : message_type})
-        daoInstance.closeConnection()
-
-        response.setContent({"success": True})
-
-    except Exception as ex:
-        handleException(response, ex, __file__ , "adminServletDeleteMessage")
-    finally:
-        return response
-
-def adminServletMonitorCPU(request, response):
-    """
-    This function...
-
-    @param {Request} request, the request object
-    @param {Response} response, the response object
-    """
-    try:
-        #****************************************************************
-        # Step 0.CHECK IF VALID USER SESSION
-        #****************************************************************
-        logging.info("STEP0 - CHECK IF VALID USER....")
-        userID  = request.cookies.get('userID')
-        sessionToken  = request.cookies.get('sessionToken')
-
-        #ONLY ADMIN USER (id=0) CAN UPLOAD NEW INBUILT GTF FILES
-        if(userID != "0"):
-            userID="-1"
-
-        UserSessionManager().isValidUser(userID, sessionToken)
-
-        cpu_usage = []
-        for x in range(5):
-            cpu_usage.append(psutil.cpu_percent(interval=1, percpu=True))
-        return response.setContent({"success": True, "cpu_usage" : cpu_usage}).getResponse()
-
-    except Exception as ex:
-        handleException(response, ex, __file__ , "monitorCPU")
-    finally:
-        return response
-
-def adminServletMonitorRAM(request, response):
-    """
-    This function...
-
-    @param {Request} request, the request object
-    @param {Response} response, the response object
-    """
-    try:
-        #****************************************************************
-        # Step 0.CHECK IF VALID USER SESSION
-        #****************************************************************
-        logging.info("STEP0 - CHECK IF VALID USER....")
-        userID  = request.cookies.get('userID')
-        sessionToken  = request.cookies.get('sessionToken')
-
-        #ONLY ADMIN USER (id=0) CAN UPLOAD NEW INBUILT GTF FILES
-        if(userID != "0"):
-            userID="-1"
-
-        UserSessionManager().isValidUser(userID, sessionToken)
-
-        ram_usage = []
-        swap_usage = []
-        for x in range(5):
-            ram_usage.append(adapt_values(psutil.virtual_memory()))
-            swap_usage.append(adapt_values(psutil.swap_memory()))
-            sleep(1)
-        return response.setContent({"success": True, "ram_usage" : ram_usage, "swap_usage":swap_usage}).getResponse()
-
-    except Exception as ex:
-        handleException(response, ex, __file__ , "monitorCPU")
-    finally:
-        return response
 
 def bytes2human(n):
     symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
