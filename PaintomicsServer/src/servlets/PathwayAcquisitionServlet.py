@@ -109,13 +109,13 @@ def pathwayAcquisitionStep1_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, exa
                 dataFileName = omicName.replace(" ", "_").replace("-seq", "").lower() + "_values.tab"
                 logging.info("STEP1 - USING ALREADY SUBMITTED FILE (data file) " + EXAMPLE_FILES_DIR + dataFileName + " FOR  " + omicName)
 
-                relevantFileName =omicName.replace(" ", "_").lower() + "_relevant.tab"
+                relevantFileName = omicName.replace(" ", "_").replace("-seq", "").lower() + "_relevant.tab"
                 logging.info("STEP1 - USING ALREADY SUBMITTED FILE (relevant features file) " + EXAMPLE_FILES_DIR + relevantFileName + " FOR  " + omicName)
 
                 if(["Metabolomics"].count(omicName)):
                     jobInstance.addCompoundBasedInputOmic({"omicName": omicName, "inputDataFile": EXAMPLE_FILES_DIR + dataFileName, "relevantFeaturesFile": EXAMPLE_FILES_DIR + relevantFileName, "isExample" : True})
                 else:
-                    jobInstance.addGeneBasedInputOmic({"omicName": omicName, "inputDataFile": EXAMPLE_FILES_DIR + dataFileName, "relevantFeaturesFile": EXAMPLE_FILES_DIR + relevantFileName,  "isExample" : True})
+                    jobInstance.addGeneBasedInputOmic(omicName, {"omicName": omicName, "inputDataFile": EXAMPLE_FILES_DIR + dataFileName, "relevantFeaturesFile": EXAMPLE_FILES_DIR + relevantFileName,  "isExample" : True})
 
             specie = "mmu"
             jobInstance.setOrganism(specie)

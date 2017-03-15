@@ -126,7 +126,7 @@ class Bed2GeneJob(Job):
             error +=  " -  Overlapped region area must be a numeric value between 0 and 100"
 
         logging.info("VALIDATING REGION BASED FILES..." )
-        nConditions, error = self.validateFile(self.geneBasedInputOmics[0], -1, error)
+        nConditions, error = self.validateFile(self.geneBasedInputOmics["file"], -1, error)
 
         if error != "":
             raise Exception("Errors detected in input files, please fix the following issues and try again:" + error)
@@ -271,7 +271,7 @@ class Bed2GeneJob(Job):
         if not os_path.isfile(gtfFile): #CHECK IF THE FILE IS AN INPUT FILE OR AN INBUILT GTF FILE
             raise Exception("Reference file not found.")
 
-        inputOmic= self.getGeneBasedInputOmics()[0]
+        inputeOmic = self.getCompoundBasedInputOmics()["file"]
         dataFile = inputOmic.get("inputDataFile")
         relevantFile = inputOmic.get("relevantFeaturesFile")
 
@@ -406,14 +406,14 @@ class Bed2GeneJob(Job):
                 logging.info("COMPRESSING RESULTS...DONE")
 
                 fields = {
-                    "omicType" : self.getGeneBasedInputOmics()[0].get("omicName"),
-                    "dataType" : self.getGeneBasedInputOmics()[0].get("omicName").replace("data","quantification"),
+                    "omicType" : self.getGeneBasedInputOmics()["file"].get("omicName"),
+                    "dataType" : self.getGeneBasedInputOmics()["file"].get("omicName").replace("data","quantification"),
                     "description" : "File generated using RGMatch tool (Bed2Genes);" + self.getJobDescription(True, dataFile, relevantFile, gtfFile)
                 }
                 mainOutputFileName = copyFile(self.getUserID(), os_path.split(bed2genesOutput.name)[1], fields,self.getTemporalDir() +  "/", self.getInputDir())
 
                 fields = {
-                    "omicType" : self.getGeneBasedInputOmics()[0].get("omicName"),
+                    "omicType" : self.getGeneBasedInputOmics()["file"].get("omicName"),
                     "dataType" : "Relevant Genes list",
                     "description" : "File generated using RGMatch tool (Bed2Genes);"  + self.getJobDescription()
                 }

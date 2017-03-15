@@ -81,7 +81,7 @@ class PathwayAcquisitionJob(Job):
 
             self.description+= "Input data:;"
 
-            for omicAux in self.geneBasedInputOmics:
+            for omicAux in self.geneBasedInputOmics.values():
                 self.description+=omicAux.get("omicName") + " [" + basename(omicAux.get("inputDataFile")) + "]; "
             for omicAux in self.compoundBasedInputOmics:
                 self.description+=omicAux.get("omicName") + " [" + basename(omicAux.get("inputDataFile")) + "]; "
@@ -104,7 +104,7 @@ class PathwayAcquisitionJob(Job):
         nConditions = -1
 
         logging.info("VALIDATING GENE BASED FILES..." )
-        for inputOmic in self.geneBasedInputOmics:
+        for inputOmic in self.geneBasedInputOmics.values():
             nConditions, error = self.validateFile(inputOmic, nConditions, error)
 
         logging.info("VALIDATING COMPOUND BASED FILES..." )
@@ -230,7 +230,7 @@ class PathwayAcquisitionJob(Job):
 
         try:
             logging.info("PROCESSING GENE BASED FILES..." )
-            for inputOmic in self.geneBasedInputOmics:
+            for inputOmic in self.geneBasedInputOmics.values():
                 [omicName, omicSummary] = self.parseGeneBasedFiles(inputOmic)
                 logging.info("   * PROCESSED " + omicName + "..." )
                 inputOmic["omicSummary"] = omicSummary
@@ -555,7 +555,7 @@ class PathwayAcquisitionJob(Job):
             pass
         else:
             #By default try to show 3 genes based omics and 1 Compound based omic
-            visibleOmics = [inputData.get("omicName") + "#genebased" for inputData in self.getGeneBasedInputOmics()[0:3] ]
+            visibleOmics = [inputData.get("omicName") + "#genebased" for inputData in self.getGeneBasedInputOmics().values()[0:3] ]
             visibleOmics.extend([inputData.get("omicName") + "#compoundbased" for inputData in self.getCompoundBasedInputOmics()[0:1] ])
 
         #************************************************************************
@@ -626,7 +626,7 @@ class PathwayAcquisitionJob(Job):
 
         # STEP 2. GENERATE THE DATA FOR EACH OMIC DATA TYPE
 
-        for inputOmic in self.geneBasedInputOmics:
+        for inputOmic in self.geneBasedInputOmics.values():
             try:
                 # STEP 2.1 EXECUTE THE R SCRIPT
                 logging.info("GENERATING METAGENES INFORMATION...DONE")

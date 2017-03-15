@@ -5,6 +5,7 @@
 import getopt
 import sys
 import os.path
+import gzip
 
 # Global variables
 rules       = ["TSS","1st_EXON","PROMOTER","INTRON","GENE_BODY","UPSTREAM","DOWNSTREAM"]
@@ -598,14 +599,19 @@ def run(gtf, dhs, outputfile, options):
     ############################
 
     # 1. First, we save all the genes with their positions
-    inputGTF = open(gtf, 'r')
+    inputGTF = None
+    if gtf[-2:] == "gz":
+        aux = gzip.open(gtf, 'rU').read().decode()
+        inputGTF = aux.split("\n")
+    else:
+        inputGTF = open(gtf, 'rU')
     genes = {}
     allTranscripts = {}
 
     for line in inputGTF:
 
         # Avoid comments
-        if line[0] != "#":
+        if line and line[0] != "#":
             linea_split = line.split("\t")
             chrom = linea_split[0]
             start = int(linea_split[3])
@@ -630,7 +636,10 @@ def run(gtf, dhs, outputfile, options):
                     allTranscripts[transcript_id] = Mytranscripts()
                 allTranscripts[transcript_id].addGene(mygen)
 
-    inputGTF.close()
+    if gtf[-2:] == "gz":
+        inputGTF = None
+    else:
+        inputGTF.close()
 
     # Check exon number in transcripts
     for transcript in allTranscripts:

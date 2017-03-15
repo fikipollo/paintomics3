@@ -79,11 +79,11 @@ class MiRNA2GeneJob(Job):
             error +=  " -  Cutoff must be a numeric value"
 
         logging.info("VALIDATING miRNA-seq BASED FILES..." )
-        nConditions, error = self.validateFile(self.geneBasedInputOmics[0], -1, error)
+        nConditions, error = self.validateFile(self.geneBasedInputOmics["file"], -1, error)
 
         if len(self.geneBasedInputOmics) > 1:
             logging.info("VALIDATING RNA-seq BASED FILES..." )
-            nConditions, error = self.validateFile(self.geneBasedInputOmics[1], -1, error)
+            nConditions, error = self.validateFile(self.geneBasedInputOmics["rnaseqaux_file"], -1, error)
 
         if error != "":
             raise Exception("Errors detected in input files, please fix the following issues and try again:" + error)
@@ -198,17 +198,21 @@ class MiRNA2GeneJob(Job):
         #STEP 1. GET THE FILES PATH AND PREPRARE THE OPTIONS
         logging.info("READING FILES...")
 
-        referenceFile = self.getInputDir()+ self.getReferenceInputs()[0].get("inputDataFile")
+        inputRef = self.getReferenceInputs()[0]
+        referenceFile = self.getReferenceInputs()[0].get("inputDataFile")
+        if (inputRef.get("isExample", False) == False):
+            referenceFile = self.getInputDir() + referenceFile
+
         if not os_path.isfile(referenceFile):
             raise Exception("Reference file not found.")
 
-        inputOmic= self.getGeneBasedInputOmics()[0]
+        inputOmic= self.getGeneBasedInputOmics()["file"]
         dataFile = inputOmic.get("inputDataFile")
         relevantFile = inputOmic.get("relevantFeaturesFile")
 
         geneExpressionFile =  None
         if len(self.getGeneBasedInputOmics()) > 1:
-            inputOmic= self.getGeneBasedInputOmics()[1]
+            inputOmic= self.getGeneBasedInputOmics()["rnaseqaux_file"]
             geneExpressionFile = inputOmic.get("inputDataFile")
 
         if(inputOmic.get("isExample", False) == False):
@@ -275,7 +279,6 @@ class MiRNA2GeneJob(Job):
                     #FILTER BY SELECTION METHODS, IF CORRELATION OR FC IS LOWER THAN THE CUTOFF, IGNORE ENTRY
                     #if score < self.cutoff:
                     #    continue
-
                     if geneID == "ENSMUSG00000028986" and mirnaID == "mmu-miR-3074-1-3p":
                         pass
 
@@ -358,14 +361,14 @@ class MiRNA2GeneJob(Job):
                 logging.info("COMPRESSING RESULTS...DONE")
 
                 fields = {
-                    "omicType" : self.getGeneBasedInputOmics()[0].get("omicName"),
-                    "dataType" : self.getGeneBasedInputOmics()[0].get("omicName").replace("data","quantification"),
+                    "omicType" : self.getGeneBasedInputOmics()["file"].get("omicName"),
+                    "dataType" : self.getGeneBasedInputOmics()["file"].get("omicName").replace("data","quantification"),
                     "description" : "File generated using miRNA2Target tool (miRNA2Target);" + self.getJobDescription(True, dataFile, relevantFile, referenceFile, geneExpressionFile)
                 }
                 mainOutputFileName = copyFile(self.getUserID(), os_path.split(mirna2genesOutput.name)[1], fields,self.getTemporalDir() +  "/", self.getInputDir())
 
                 fields = {
-                    "omicType" : self.getGeneBasedInputOmics()[0].get("omicName"),
+                    "omicType" : self.getGeneBasedInputOmics()["file"].get("omicName"),
                     "dataType" : "Relevant Genes list",
                     "description" : "File generated using miRNA2Target tool (miRNA2Target);"  + self.getJobDescription()
                 }

@@ -78,14 +78,14 @@ function JobController() {
 	};
 
 	/**
-	* This function gets a list of of RegionBasedOmicViews and send each item to
+	* This function gets a list of of RegionBasedOmicViews/miRNABasedOmicView and send each item to
 	* server for processing.
 	*
 	* @param {JobView} jobView
-	* @param {Array} regionBasedOmics
+	* @param {Array} specialOmics
 	* @returns {String} error message in case of invalid form.
 	*/
-	this.step1SubmitRegionBasedOmics = function (jobView, regionBasedOmics) {
+	this.step1ComplexFormSubmitHandler = function (jobView, specialOmics) {
 		//STEP 1. INITIALIZE THE COUNTERS
 		jobView.pendingRequests = 0;
 		jobView.runningRequests = 0;
@@ -95,9 +95,13 @@ function JobController() {
 
 		//CHECK FORM VALIDITY
 		if (jobView.checkForm() === true) {
-			var URL = SERVER_URL_DM_FROMBED2GENES;
+			
+			var regionURL = SERVER_URL_DM_FROMBED2GENES;
+			var miRNAURL = SERVER_URL_DM_FROMMIRNA2GENES;
+
 			if (jobView.isExampleMode() === true) {
-				URL = SERVER_URL_DM_EXAMPLE_FROMBED2GENES;
+				regionURL = SERVER_URL_DM_EXAMPLE_FROMBED2GENES;
+				miRNAURL = SERVER_URL_DM_EXAMPLE_FROMMIRNA2GENES;
 			}
 
 			/**
@@ -116,11 +120,11 @@ function JobController() {
 			* call to the normal submission function step1OnFormSubmitHandler.
 			*
 			* @param jobView
-			* @param regionBasedOmics list of RegionBasedOmicViews elements.
+			* @param genericBasedOmic list of RegionBasedOmicViews/miRNABasedOmicView elements.
 			*/
-			var sendRequest = function (jobView, regionBasedOmics) {
+			var sendRequest = function (jobView, genericBasedOmic) {
 				//STEP1. TAKE THE ITEM THAT WILL BE SENT TO SERVER
-				var subview = regionBasedOmics.shift();
+				var subview = genericBasedOmic.shift();
 
 				//STEP2. SHOW WAITING MESSAGE INSIDE THE PANEL
 				subview.remove(subview.queryById("errorMessage"));
@@ -129,11 +133,14 @@ function JobController() {
 				var itemsContainer = subview.queryById("itemsContainer");
 				var temporalForm = Ext.widget({xtype: "form", items: [itemsContainer]});
 
+				// DEFINE THE URL BASED ON THE TYPE OF OMIC
+				var formURL = subview.cls.search("regionBasedOmic") != -1 ? regionURL : miRNAURL;
+
 				jobView.pendingRequests++;
 
 				temporalForm.getForm().submit({
 					method: 'POST',
-					url: URL,
+					url: formURL,
 					success: function (form, action) {
 						var response = JSON.parse(action.response.responseText);
 
@@ -162,7 +169,7 @@ function JobController() {
 								if (jobView.failedRequests === 0) {
 									me.step1OnFormSubmitHandler(jobView);
 								} else {
-									showErrorMessage("Ops!... Something went wrong during BED files processing.", {message: "One or more BED files were not succesfully processed.</br>Please check the form for more info."});
+									showErrorMessage("Ops!... Something went wrong during the request files processing.", {message: "One or more files were not succesfully processed.</br>Please check the form for more info."});
 								}
 							}
 						};
@@ -176,29 +183,29 @@ function JobController() {
 
 							var response = JSON.parse(action.response.responseText);
 
-							other.subview.add(Ext.widget({xtype: "box", itemId: "errorMessage", html: '<h3 style="color: #EC696E;  font-size: 20px;"><i class="fa fa-cog fa-spin"></i> Error when processing the BED file.<br><span style="font-size:14px;">' + response.message + '</span></h3>'}));
+							other.subview.add(Ext.widget({xtype: "box", itemId: "errorMessage", html: '<h3 style="color: #EC696E;  font-size: 20px;"><i class="fa fa-cog fa-spin"></i> Error when processing the request file.<br><span style="font-size:14px;">' + response.message + '</span></h3>'}));
 
 							if (jobView.pendingRequests === 0) {
-								showErrorMessage("Ops!... Something went wrong during BED files processing.", {
-									message: "One or more BED files were not succesfully processed.</br>Please check the form for more information."
+								showErrorMessage("Ops!... Something went wrong during the request files processing.", {
+									message: "One or more files were not succesfully processed.</br>Please check the form for more information."
 								});
 							}
 						};
 
 						me.checkJobStatus(response.jobID, jobView, callback, {subview: subview, errorHandler: errorHandler, multipleJobs: true});
 
-						if (regionBasedOmics.length > 0) {
-							sendRequest(jobView, regionBasedOmics);
+						if (genericBasedOmic.length > 0) {
+							sendRequest(jobView, genericBasedOmic);
 						}
-
 					},
 					failure: extJSErrorHandler
 				});
 			};
-			showInfoMessage("Uploading BED files... (" + jobView.pendingRequests + " pending)", {logMessage: "New Job created, submitting files...", showSpin: true});
+
+			showInfoMessage("Uploading BED/miRNA files... (" + jobView.pendingRequests + " pending)", {logMessage: "New Job created, submitting files...", showSpin: true});
 
 			//SEND ALL FORM TO THE QUEUE
-			sendRequest(jobView, regionBasedOmics);
+			sendRequest(jobView, specialOmics);
 		} else {
 			showErrorMessage("Invalid form. Please check form errors.", {height: 150, width: 400});
 			return false;

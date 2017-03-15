@@ -32,6 +32,7 @@ SERVER_URL_DM_DELETE_JOB = SERVER_URL + "dm_delete_job";
 SERVER_URL_DM_FROMBED2GENES = SERVER_URL + "dm_fromBEDtoGenes";
 SERVER_URL_DM_FROMMIRNA2GENES = SERVER_URL + "dm_fromMiRNAtoGenes";
 SERVER_URL_DM_EXAMPLE_FROMBED2GENES = SERVER_URL + "dm_fromBEDtoGenes/example";
+SERVER_URL_DM_EXAMPLE_FROMMIRNA2GENES = SERVER_URL + "dm_fromMiRNAtoGenes/example";
 SERVER_URL_DM_SEND_REPORT = SERVER_URL + "dm_sendReport";
 /*********************************************************************
  * KEGG DATA URLS                          ***************************
