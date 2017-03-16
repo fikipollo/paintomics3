@@ -126,9 +126,19 @@
 			},
 			updateCategories: function() {
 				var categoriesAux = {}, _categories;
+				var installed = 0, downloaded = 0, downloading = 0;
 
 				for(var i in databases){
 					_categories = databases[i].categories;
+					if(databases[i].downloaded === "downloaded"){
+						downloaded++;
+					}else if (databases[i].downloaded === "downloading"){
+						downloading++;
+					}
+					if (databases[i].status === "installed"){
+						installed++;
+					}
+
 					for(var j in _categories){
 						categoriesAux[_categories[j]] = {
 							name: _categories[j],
@@ -139,6 +149,9 @@
 				categories = Object.keys(categoriesAux).map(function(k) { return categoriesAux[k] });
 
 				categories.push({name: "All", times: databases.length})
+				categories.push({name: "Installed", times: installed})
+				categories.push({name: "Locally available", times: downloaded})
+				categories.push({name: "Downloading", times: downloading})
 
 				return this;
 			},

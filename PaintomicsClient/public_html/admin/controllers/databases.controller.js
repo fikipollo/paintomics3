@@ -26,7 +26,7 @@
 (function(){
 	var app = angular.module('admin.controllers.database-controllers', [
 		'ui.bootstrap',
-		'common.dialogs',
+		'ang-dialogs',
 		'chart.js',
 		'databases.databases.database-list',
 		'admin.directives.admin-directives'
@@ -120,6 +120,33 @@
 			};
 		};
 
+		this.addCategoryFilter = function(category) {
+			if(category.selected === true){
+				var pos = $scope.filters.indexOf(category.name);
+				if (pos > -1) {
+					$scope.filters.splice(pos, 1);
+				}
+			}else{
+				$scope.filters.push(category.name);
+			}
+			category.selected = !(category.selected === true);
+			this.applySearchHandler();
+		};
+
+		this.removeFilter = function(filter){
+			var pos = $scope.filters.indexOf(filter);
+			if (pos > -1) {
+				$scope.filters.splice(pos, 1);
+				for(var i in $scope.categories){
+					if($scope.categories[i].name === filter){
+						$scope.categories[i].selected = false;
+						break;
+					}
+				}
+				this.applySearchHandler();
+			}
+		};
+
 		this.showMoreDatabasesHandler = function() {
 			if(window.innerWidth > 1500){
 				$scope.visibleDatabases += 10;
@@ -131,10 +158,23 @@
 			$scope.visibleDatabases = Math.min($scope.filteredDatabases, $scope.visibleDatabases);
 		};
 
-
 		$scope.formatDate= function(date){
 			return (date?date.substring(6,8) + "/" + date.substring(4,6) + "/"  + date.substring(0,4) + " "  + date.substring(9,11) + ":"  + date.substring(11,13):"");
 		}
+
+		$scope.categorySorter = function(category){
+			if(category.name==="All"){
+				return -999999999;
+			}else if(category.name==="Installed"){
+				return -999999998;
+			}else if(category.name==="Locally available"){
+				return -999999997;
+			}else if(category.name==="Downloading"){
+				return -999999996;
+			}else{
+				return -category.times;
+			}
+		};
 		//--------------------------------------------------------------------
 		// EVENT HANDLERS
 		//--------------------------------------------------------------------
@@ -142,7 +182,13 @@
 		* This function applies the filters when the user clicks on "Search"
 		*/
 		this.applySearchHandler = function() {
-			var filters = arrayUnique($scope.filters.concat($scope.searchFor.split(" ")));
+			var filters;
+			if($scope.searchFor !== undefined && $scope.searchFor !== ""){
+				filters = arrayUnique($scope.filters.concat($scope.searchFor.split(" ")));
+				$scope.searchFor = "";
+			}else{
+				filters = arrayUnique($scope.filters);
+			}
 			$scope.filters = DatabaseList.setFilters(filters).getFilters();
 		};
 
@@ -178,48 +224,38 @@
 			$dialogs.showConfirmationDialog("Are you sure?", {title: "Uninstall the selected organism?", callback : sendRemoveRequest});
 		};
 
-		this.updateDatabaseHandler = function (database){
-			var sendUpdateRequest = function(option){
-				if(option === "ok"){
-					$http($rootScope.getHttpRequestConfig("PUT", "databases", {
-						extra: database.organism_code
-					})).then(
-						function successCallback(response){
-							debugger;
-							if(response.data.success){
-								me.retrieveDatabasesListData(true, me, "retrieveAvailableDatabases");
-							}
-						},
-						function errorCallback(response){
-							$scope.isLoading = false;
+		this.installDatabaseHandler = function (database, download){
 
-							debugger;
-							var message = "Failed while updating the organism.";
-							$dialogs.showErrorDialog(message, {
-								logMessage : message + " at DatabaseListController:updateDatabaseHandler."
-							});
-							console.error(response.data);
-						}
-					);
-				}
+
+			if(download && this.checkDownloadingDatabases() > 1){
+				$dialogs.showInfoDialog("Please wait until some of the download finishes.", {
+					title : "Too many databases are being downloaded."
+				});
+				me.retrieveDatabasesListData(true, me, "retrieveAvailableDatabases");
+				return;
 			}
-			$dialogs.showConfirmationDialog("Are you sure?", {title: "Update the selected organism?", callback : sendUpdateRequest});
-		};
 
-		this.installDatabaseHandler = function (database){
 			var sendInstallRequest = function(option){
 				if(option === "ok"){
+					if(download){
+						database.downloaded = "downloading";
+					}else{
+						$dialogs.showWaitDialog("This process may take few seconds, be patient!");
+					}
 					$http($rootScope.getHttpRequestConfig("POST", "databases", {
-						extra: database.organism_code
+						extra: database.organism_code,
+						data : {download : (download===true)}
 					})).then(
 						function successCallback(response){
-							debugger;
 							if(response.data.success){
+								$dialogs.closeDialog();
+								$dialogs.showSuccessDialog("The database for" + database.organism_name + " have been succesfully " + (download?"downloaded.":"installed."));
 								me.retrieveDatabasesListData(true, me, "retrieveAvailableDatabases");
 							}
 						},
 						function errorCallback(response){
 							$scope.isLoading = false;
+							me.retrieveDatabasesListData(true, me, "retrieveAvailableDatabases");
 
 							debugger;
 							var message = "Failed while installing the organism.";
@@ -234,6 +270,15 @@
 			$dialogs.showConfirmationDialog("Are you sure?", {title: "Install the selected organism?", callback : sendInstallRequest});
 		};
 
+		this.checkDownloadingDatabases = function(){
+			var n = 0;
+			for(var i in $scope.databases){
+				if($scope.databases[i].downloaded==="downloading"){
+					n++;
+				}
+			}
+			return n;
+		}
 		//--------------------------------------------------------------------
 		// INITIALIZATION
 		//--------------------------------------------------------------------
@@ -246,6 +291,10 @@
 		$scope.visibleDatabases = 20;
 
 		this.retrieveDatabasesListData(true, this, "retrieveAvailableDatabases");
+
+		$rootScope.interval.push($interval(function() {
+			me.retrieveDatabasesListData(true, me, "retrieveAvailableDatabases");
+		}, 60000));
 
 	});
 

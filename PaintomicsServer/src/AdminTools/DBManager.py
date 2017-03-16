@@ -11,9 +11,9 @@ from textwrap import wrap
 from time import strftime, sleep, time
 from subprocess import check_call, CalledProcessError
 
-from conf.serverconf import ROOT_DIRECTORY, KEGG_DATA_DIR, CLIENT_TMP_DIR, DOWNLOAD_DELAY_1, DOWNLOAD_DELAY_2, MAX_TRIES_1, MAX_TRIES_2
+from conf.serverconf import KEGG_DATA_DIR, CLIENT_TMP_DIR, DOWNLOAD_DELAY_1, DOWNLOAD_DELAY_2, MAX_TRIES_1, MAX_TRIES_2
 
-VERSION=0.11
+VERSION=0.12
 
 
 #------------------------------------------------------------------------------------------
@@ -55,10 +55,12 @@ def download_command(inputfile=None, specie=None, kegg=0, mapping=0, common=0, r
     #**************************************************************************
     readConfigurationFile()
 
-    rootName = KEGG_DATA_DIR + strftime("%Y%m%d_%H%M") + "/"
-    speciesDirName = rootName + "species/"
+    rootName = KEGG_DATA_DIR + "download/"
     downloadLog= rootName + "download.log"
-    currentStep = 0;
+    if not os.path.exists(downloadLog):
+        os.system("touch " + downloadLog)
+
+    currentStep = 0
 
     log("######################################################################" )
     log("### PAINTOMICS 3.0 - DATABASE KEGG DOWNLOADER ")
@@ -69,10 +71,9 @@ def download_command(inputfile=None, specie=None, kegg=0, mapping=0, common=0, r
     log("")
     log("STEP " + str(currentStep) + ". READ CONFIGURATION AND PARSE INPUT FILES..." )
 
-    COPIED_SPECIES = []
-    UPDATED_SPECIES = []
-    ERRONEOUS_SPECIES = []
     SPECIES_UPDATE = None
+    DOWNLOADED_SPECIES = []
+    FAILED_SPECIES = []
 
     if inputfile != None:
         SPECIES_UPDATE= readFile(inputfile) #THE IDS FOR THE SPECIES TO UPDATE
@@ -80,133 +81,82 @@ def download_command(inputfile=None, specie=None, kegg=0, mapping=0, common=0, r
         n=3
         if mapping == 0:
             n-=1
-
         if kegg == 0:
             n-=2
-
         SPECIES_UPDATE= {specie : n} #THE IDS FOR THE SPECIES TO UPDATE
 
-    DOWNLOADED_PREVIOUS, ERRONEOUS_PREVIOUS, INSTALLED_PREVIOUS = getPreviousSpecies(KEGG_DATA_DIR + "/last/summary.log") #THE PREVIOUSLY INSTALLED SPECIES
 
     sleep(2)
     log("       - " + str(len(SPECIES_UPDATE.keys())) + " new organisms will be downloaded." )
-    log("       - " + str(len(DOWNLOADED_PREVIOUS)) + " organisms were downloaded on previous executions." )
-    log("       - " + str(len(INSTALLED_PREVIOUS)) + " organisms were installed on previous executions." )
-    log("       - " + str(len(ERRONEOUS_PREVIOUS)) + " organisms failed during the installation on previous executions." )
     log("")
-
-    #TODO: TEST
-    if((retry==None and len(ERRONEOUS_PREVIOUS) > 0 and confirm(prompt='Do you want to download the failed organisms?', resp=False)) or (retry== "1")):
-        for i in ERRONEOUS_PREVIOUS:
-            SPECIES_UPDATE[i] = 3
 
     if((common==None and confirm(prompt='Download common KEGG information (pathway names, classifications, PNG images,...)?', resp=False)) or (common== "1")):
         common = True
 
-    #INITIALIZE THE NEW DIRECTORY
-    log("New data will be stored at " + rootName )
-    os.mkdir(rootName)
-    os.mkdir(rootName + "error/")
-    os.mkdir(speciesDirName)
-    os.system("touch " + downloadLog)
-    os.symlink(rootName, KEGG_DATA_DIR + "/tmp")
-
-    summary = open(rootName + 'summary.log','w')
-
     currentStep+=1
 
     #********************************************************************************
-    #STEP 2. IF WE CHOOSED TO DOWNLOAD THE GENERAL DATA (PATHWAYS CLASSIFICATION, ETC.) -> GO TO 2.A
-    #        OTHERWISE, JUST COPY --> GO TO 2.B
+    #STEP 2. IF WE CHOSE TO DOWNLOAD THE GENERAL DATA (PATHWAYS CLASSIFICATION, ETC.) -> GO TO 2.A
+    #        OTHERWISE --> GO TO 2.B
     #********************************************************************************
-    try:
-        #********************************************************************************
-        #STEP 2.A
-        #********************************************************************************
-        if common == True:
+    summary = open(rootName + 'summary.log', 'w')
+
+    #********************************************************************************
+    #STEP 2.A
+    #********************************************************************************
+    if common == True:
+        try:
+            # INITIALIZE THE NEW DIRECTORY
+            datadir = rootName + "common/"
+            log("New data will be stored at " + datadir)
+            if os.path.isdir(datadir):
+                shutil.rmtree(datadir)
+            os.mkdir(datadir)
+
+            version = open(datadir + "DOWNLOADING",'w')
+            version.write("# DOWNLOAD STARTS:" + strftime("%Y%m%d %H%M"))
+            version.close()
+
             log('')
             log("STEP " + str(currentStep) + ". DOWNLOAD THE COMMON KEGG INFORMATION")
 
             #STEP 2.A.1 DOWNLOAD THE DATA FILES
-            downloadKEGGFile("              * LIST OF ORGANISMS", downloadLog, "http://rest.kegg.jp/list/organism", rootName, "organisms_all.list",  DOWNLOAD_DELAY_1, MAX_TRIES_1)
-            downloadKEGGFile("              * PATHWAYS CLASSIFICATION", downloadLog,  "http://rest.kegg.jp/get/br:br08901", rootName, "pathways_classification.list",  DOWNLOAD_DELAY_1, MAX_TRIES_1)
-            downloadKEGGFile("              * LIST OF REFERENCE PATHWAYS", downloadLog,  "http://rest.kegg.jp/list/pathway", rootName, "pathways_all.list",  DOWNLOAD_DELAY_1, MAX_TRIES_1)
-            downloadKEGGFile("              * LIST OF COMPOUND NAMES", downloadLog,  "http://rest.kegg.jp/list/compound", rootName, "compounds_all.list",  DOWNLOAD_DELAY_1, MAX_TRIES_1)
-            #downloadKEGGFile("              * PATHWAY to COMPOUND TABLE", downloadLog,  "http://rest.kegg.jp/link/pathway/compound", rootName, "pathway2compound.list",  DOWNLOAD_DELAY_1, MAX_TRIES_1)
+            downloadKEGGFile("              * LIST OF ORGANISMS", downloadLog, "http://rest.kegg.jp/list/organism", datadir, "organisms_all.list",  DOWNLOAD_DELAY_1, MAX_TRIES_1)
+            downloadKEGGFile("              * PATHWAYS CLASSIFICATION", downloadLog,  "http://rest.kegg.jp/get/br:br08901", datadir, "pathways_classification.list",  DOWNLOAD_DELAY_1, MAX_TRIES_1)
+            downloadKEGGFile("              * LIST OF REFERENCE PATHWAYS", downloadLog,  "http://rest.kegg.jp/list/pathway", datadir, "pathways_all.list",  DOWNLOAD_DELAY_1, MAX_TRIES_1)
+            downloadKEGGFile("              * LIST OF COMPOUND NAMES", downloadLog,  "http://rest.kegg.jp/list/compound", datadir, "compounds_all.list",  DOWNLOAD_DELAY_1, MAX_TRIES_1)
+            #downloadKEGGFile("              * PATHWAY to COMPOUND TABLE", downloadLog,  "http://rest.kegg.jp/link/pathway/compound", datadir, "pathway2compound.list",  DOWNLOAD_DELAY_1, MAX_TRIES_1)
 
-            pathways=readFile(rootName + "pathways_all.list", {"forced":True, "forcedColumn": 0})
+            pathways=readFile(datadir + "pathways_all.list", {"forced":True, "forcedColumn": 0})
             total=len(pathways.keys())
             log("             DETECTED " + str(total) + " REFERENCE PATHWAYS " + calculateAproxTime(total, DOWNLOAD_DELAY_2 +3))
 
             #STEP 2.A.2 DOWNLOAD THE PNG IMAGES
-            os.mkdir(rootName + "png/")
-            os.mkdir(rootName + "png/thumbnails")
-            version = open(rootName + "png/" + 'VERSION','w')
-            version.write("# CREATION DATE:" + strftime("%Y%m%d %H%M"))
-            version.close()
-
+            os.mkdir(datadir + "png/")
+            os.mkdir(datadir + "png/thumbnails")
             i=1
             for pathway in pathways.keys():
                 pathway = pathway.replace("path:","")
-                downloadKEGGFile("                     - " + pathway + " [" + str(i) + "/" + str(total) + "]", downloadLog,  "http://rest.kegg.jp/get/"+ pathway+"/image", rootName + "png/", pathway + ".png",  DOWNLOAD_DELAY_2, MAX_TRIES_1)
-                generateThumbnail(rootName + "png/" +  pathway + ".png")
+                downloadKEGGFile("                     - " + pathway + " [" + str(i) + "/" + str(total) + "]", downloadLog,  "http://rest.kegg.jp/get/"+ pathway+"/image", datadir + "png/", pathway + ".png",  DOWNLOAD_DELAY_2, MAX_TRIES_1)
+                generateThumbnail(datadir + "png/" +  pathway + ".png")
                 i+=1
-        else:
-            #********************************************************************************
-            #STEP 2.B
-            #********************************************************************************
-            log("STEP " + str(currentStep) + ". COPYING THE PREVIOUS COMMON KEGG INFORMATION")
-            shutil.copyfile(KEGG_DATA_DIR + "/last/organisms_all.list", rootName + "organisms_all.list")
-            shutil.copyfile(KEGG_DATA_DIR + "/last/pathways_classification.list", rootName + "pathways_classification.list")
-            shutil.copyfile(KEGG_DATA_DIR + "/last/pathways_all.list", rootName + "pathways_all.list")
-            shutil.copyfile(KEGG_DATA_DIR + "/last/compounds_all.list", rootName + "compounds_all.list")
-            shutil.copytree(KEGG_DATA_DIR + "/last/png/", rootName + "/png/", symlinks=True)# COPY THE ENTIRE DIRECTORY
-            #shutil.copyfile(KEGG_DATA_DIR + "/last/pathway2compound.list", rootName + "pathway2compound.list")
 
-    except Exception as e:
-        log("        FAILED WHILE DOWNLOADING/COPYING PATHWAYS INFORMATION. UNABLE TO CONTINUE. ABORTING!!")
-        summary.write('FAILED WHILE DOWNLOADING/COPYING THE PATHWAYS INFORMATION. UNABLE TO CONTINUE')
-        errorlog(e)
-        summary.close()
-        exit(1)
+            os.remove(datadir + "DOWNLOADING")
+            version = open(datadir + "VERSION",'w')
+            version.write("# DOWNLOAD DATE:" + strftime("%Y%m%d %H%M"))
+            version.close()
 
-    currentStep+=1
-
-    #**************************************************************************
-    #STEP 3. COPY PREVIOUS SPECIES (NOT CHECKED FOR INSTALLING/UPDATING)
-    #**************************************************************************
-    log('')
-    log("STEP " + str(currentStep) + ". COPY THE PREVIOUS INFORMATION FOR ORGANISMS")
-
-    DOWNLOADED_PREVIOUS= diff(DOWNLOADED_PREVIOUS, SPECIES_UPDATE.keys())    #REMOVE FROM THE SPECIES_PREVIOUS LIST THE TO_UPDATE SPECIES
-    log("       - " + str(len(DOWNLOADED_PREVIOUS)) + " organisms were downloaded on previous executions." )
-
-    step=0;
-    total =  str(len(DOWNLOADED_PREVIOUS))
-
-    for specie in DOWNLOADED_PREVIOUS:
-        step+=1
-        try:
-            log("              * COPYING  " + specie + " (" + str(step) + "/" + total + ")...")
-            shutil.copytree(KEGG_DATA_DIR + "/last/species/" + specie, speciesDirName + specie, symlinks=True)# COPYT THE ENTIRE DIRECTORY
-            COPIED_SPECIES.append(specie)
-            summary.write(specie + '\tCOPY\tSUCCESS\n')
-            log("              * COPYING  " + specie  + " (" + str(step) + "/" + total + ")...SUCCESS\n")
         except Exception as e:
-            summary.write(specie + '\tCOPY\tERROR\n')
-            log("              * COPYING  " + specie  + " (" + str(step) + "/" + total + ")...ERROR\n")
+            log("        FAILED WHILE DOWNLOADING/COPYING PATHWAYS INFORMATION. UNABLE TO CONTINUE. ABORTING!!")
+            summary.write('FAILED WHILE DOWNLOADING/COPYING THE PATHWAYS INFORMATION. UNABLE TO CONTINUE')
             errorlog(e)
-            errorlog(traceback.extract_stack())
-            ERRONEOUS_SPECIES.append(specie)
-            if os.path.isdir(speciesDirName + specie):
-                shutil.move(speciesDirName + specie, rootName + "error/")
-
-    shutil.copy(KEGG_DATA_DIR + "/last/species/species.json", speciesDirName + "species.json")
+            summary.close()
+            exit(1)
 
     currentStep+=1
 
     #**************************************************************************
-    #STEP 5. GET DATA FOR "TO UPDATE" SPECIES
+    #STEP 2B. GET DATA FOR "TO UPDATE" SPECIES
     #**************************************************************************
     log('')
     log("STEP " + str(currentStep) + ". DOWNLOADING THE INFORMATION FOR THE SELECTED ORGANISMS")
@@ -220,54 +170,69 @@ def download_command(inputfile=None, specie=None, kegg=0, mapping=0, common=0, r
             log("    IGNORING " + specie[1:] + "...")
             continue
 
-        step+=1
-        dirNameAux = speciesDirName + specie + "/"
-        log("        DOWLOADING  " + specie + "...")
-
+        datadir = rootName + specie + "/"
         try:
+            # INITIALIZE THE NEW DIRECTORY
+            log("New data will be stored at " + datadir)
+            if os.path.isdir(datadir):
+                shutil.rmtree(datadir)
+            os.mkdir(datadir)
+
+            version = open(datadir + "DOWNLOADING",'w')
+            version.write("# DOWNLOAD STARTS:" + strftime("%Y%m%d %H%M"))
+            version.close()
+
+            step+=1
+            log("        DOWLOADING  " + specie + "...")
+
             kegg_errors = "";
             mapping_errors = "";
 
-            #GET THE KEGG DATA
-            if(SPECIES_UPDATE[specie] > 1): #2 = updateKegg, 3 = updateKegg && updateMapping
-                os.mkdir(dirNameAux)
-                os.mkdir(dirNameAux + "kgml")
-                kegg_errors = getSpecieKeggData(specie, downloadLog, dirNameAux, str(step)+ "/" + total)
-
-            else: #COPY PREVIOUS DATA
+            #IF SELECTED, GET THE KEGG DATA, OTHERWISE COPY PREVIOUS DATA
+            if(SPECIES_UPDATE[specie] > 1 or not os.path.exists(KEGG_DATA_DIR + "species/" + specie)): #2 = updateKegg, 3 = updateKegg && updateMapping
+                os.mkdir(datadir + "kgml")
+                kegg_errors = getSpecieKeggData(specie, downloadLog, datadir, str(step)+ "/" + total)
+            else:
                 log("COPYING PREVIOUS KEGG DATA FOR " + specie + "...")
-                shutil.copytree(KEGG_DATA_DIR + "last/species/" + specie, dirNameAux, symlinks=True)# COPYT THE ENTIRE DIRECTORY
-                shutil.rmtree(dirNameAux + "mapping")
+                shutil.rmtree(datadir)
+                shutil.copytree(KEGG_DATA_DIR + "species/" + specie, datadir, symlinks=True)# COPYT THE ENTIRE DIRECTORY
+                shutil.rmtree(datadir + "mapping")
 
-            #GET THE MAPPING DATA
-            if(SPECIES_UPDATE[specie] == 1 or SPECIES_UPDATE[specie] == 3): #1=updateMapping, 3 = updateKegg && updateMapping
-                os.mkdir(dirNameAux + "mapping")
-                mapping_errors = getSpecieMappingData(specie, downloadLog, dirNameAux + "mapping/", str(step)+ "/" + total, self.ROOT_DIRECTORY + "AdminTools/scripts/")
-
-            else: #COPY PREVIOUS DATA
+            #IF SELECTED, GET THE MAPPING DATA, OTHERWISE COPY PREVIOUS DATA
+            if(SPECIES_UPDATE[specie] == 1 or SPECIES_UPDATE[specie] == 3 or not os.path.exists(KEGG_DATA_DIR + "species/" + specie + "/mapping/")): #1=updateMapping, 3 = updateKegg && updateMapping
+                os.mkdir(datadir + "mapping")
+                mapping_errors = getSpecieMappingData(specie, downloadLog, datadir + "mapping/", str(step)+ "/" + total, ROOT_DIRECTORY + "AdminTools/scripts/")
+            else:
                 log("COPYING PREVIOUS MAPPING DATA...")
-                shutil.copytree(KEGG_DATA_DIR + "last/species/" + specie + "/mapping", dirNameAux + "mapping", symlinks=True)# COPYT THE ENTIRE DIRECTORY
+                shutil.copytree(KEGG_DATA_DIR + "species/" + specie + "/mapping", datadir + "mapping", symlinks=True)# COPYT THE ENTIRE DIRECTORY
 
-            #IF THE SOME WENT WRONG DURING THE DOWNLOAD BUT THE PROCESS CONTINUED (TOLERANCE)
+            #IF SOMETHING WENT WRONG DURING THE DOWNLOAD BUT THE PROCESS CONTINUED (TOLERANCE)
             if kegg_errors != "" or mapping_errors != "":
                 log("Errors detected during the download for organism " + specie)
                 log("  - Errors during KEGG data download: " + kegg_errors)
                 log("  - Errors during MAPPING data download: " + mapping_errors)
                 log("The organism will be moved to the erroneous directory but could be valid for installation.")
-                #TODO: ask if keep as valid
                 raise Exception("Errors detected during the download for organism " + specie + ". Aborting.")
 
-            UPDATED_SPECIES.append(specie)
+
+            os.remove(datadir + "DOWNLOADING")
+            version = open(datadir + "VERSION",'w')
+            version.write("# DOWNLOAD DATE:" + strftime("%Y%m%d %H%M"))
+            version.close()
+
+            DOWNLOADED_SPECIES.append(specie)
             summary.write(specie + '\tDOWNLOAD\tSUCCESS\t' + str(SPECIES_UPDATE[specie]) + '\n')
-            log("UPDATE  "+ str(SPECIES_UPDATE[specie]) + " " + specie + "...SUCCESS\n")
+            log("DOWNLOAD  "+ str(SPECIES_UPDATE[specie]) + " " + specie + "...SUCCESS\n")
 
         except Exception as e:
             summary.write(specie + '\tDOWNLOAD\tERROR\t' + str(SPECIES_UPDATE[specie]) + '\n')
-            log("UPDATE  "+ str(SPECIES_UPDATE[specie]) + " " + specie + "...ERROR\n")
+            log("DOWNLOAD  "+ str(SPECIES_UPDATE[specie]) + " " + specie + "...ERROR\n")
             errorlog(e)
-            ERRONEOUS_SPECIES.append(specie)
-            if os.path.isdir(dirNameAux):
-                shutil.move(dirNameAux, rootName + "error/")
+            FAILED_SPECIES.append(specie)
+            if os.path.isdir(rootName + "error/" + specie):
+                shutil.rmtree(rootName + "error/" + specie)
+            if os.path.isdir(datadir):
+                shutil.move(datadir, rootName + "error/")
 
     currentStep+=1
 
@@ -286,25 +251,14 @@ def download_command(inputfile=None, specie=None, kegg=0, mapping=0, common=0, r
     version.write("######################################################################\n\n")
     version.write("----------------------------------------------------------------------\n\n")
     version.write("# DOWNLOADED SPECIES\n\n")
-    version.write("\n".join(wrap("\t".join(UPDATED_SPECIES), 40)))
-    version.write("\n\n")
-    version.write("----------------------------------------------------------------------\n\n")
-    version.write("# COPIED SPECIES\n\n")
-    version.write("\n".join(wrap("\t".join(COPIED_SPECIES), 40)))
+    version.write("\n".join(wrap("\t".join(DOWNLOADED_SPECIES), 40)))
     version.write("\n\n")
     version.write("----------------------------------------------------------------------\n\n")
     version.write("# ERRONEOUS SPECIES\n\n")
-    version.write("\n".join(wrap("\t".join(ERRONEOUS_SPECIES), 40)))
+    version.write("\n".join(wrap("\t".join(FAILED_SPECIES), 40)))
     version.write("\n\n")
     version.write("----------------------------------------------------------------------\n\n")
     version.close()
-
-    if os.path.exists(KEGG_DATA_DIR + "/tmp"):
-        os.remove(KEGG_DATA_DIR + "/tmp")
-
-    if os.path.exists(KEGG_DATA_DIR + "/last"):
-        os.remove(KEGG_DATA_DIR + "/last")
-    os.symlink(rootName, KEGG_DATA_DIR + "/last")
 
 def install_command(inputfile=None, specie=None, common=0):
     """
@@ -373,7 +327,7 @@ def install_command(inputfile=None, specie=None, common=0):
         #********************************************************************************
         if common == True:
             log("STEP " + str(currentStep) + ". INSTALLING COMMON KEGG INFORMATION")
-            installCommonData(rootName, self.ROOT_DIRECTORY + "AdminTools/scripts/")
+            installCommonData(rootName, ROOT_DIRECTORY + "AdminTools/scripts/")
             currentStep+=1
 
     except Exception as e:
@@ -403,7 +357,7 @@ def install_command(inputfile=None, specie=None, common=0):
         log("        INSTALLING  " + specie + "...")
 
         try:
-            installSpecieData(specie, installLog, dirNameAux, str(step)+ "/" + total, self.ROOT_DIRECTORY + "AdminTools/scripts/")
+            installSpecieData(specie, installLog, dirNameAux, str(step)+ "/" + total, ROOT_DIRECTORY + "AdminTools/scripts/")
             INSTALLED_SPECIES.append(specie)
             summary.write(specie + '\tINSTALL\tSUCCESS\t' + str(SPECIES_INSTALL[specie]) + '\n')
             log("INSTALL  "+ str(SPECIES_INSTALL[specie]) + " " + specie + "...SUCCESS\n")
@@ -569,7 +523,7 @@ def getSpecieMappingData(specie, downloadLog, dirName, step, scriptsDir):
         if os.path.isfile(scriptsDir + specie + "_resources/download_others.py"):
             log("     * RETRIEVING EXTERNAL MAPPING DATA")
             try:
-                check_call(["python", scriptsDir + specie + "_resources/download_others.py", specie, self.ROOT_DIRECTORY + "AdminTools/", dirName], stdout=downloadLogFile, stderr=downloadLogFile)
+                check_call(["python", scriptsDir + specie + "_resources/download_others.py", specie, ROOT_DIRECTORY + "AdminTools/", dirName], stdout=downloadLogFile, stderr=downloadLogFile)
             except CalledProcessError as exc:
                 raise Exception("Error while calling " + scriptsDir + specie + "_resources/download_others.py" +": Exit status " + str(exc.returncode) + ". Output is available at " + downloadLog)
 
@@ -620,14 +574,14 @@ def installSpecieData(specie, downloadLog, dirName, step, scriptsDir):
         if os.path.isfile(scriptsDir + specie + "_resources/build_database.py"):
             log("       * PROCESSING AND INSTALLING CUSTOM AND KEGG DATA ")
             try:
-                check_call(["python", scriptsDir + specie + "_resources/build_database.py", specie, self.ROOT_DIRECTORY + "AdminTools/", dirName, downloadLog], stdout=downloadLogFile, stderr=downloadLogFile)
+                check_call(["python", scriptsDir + specie + "_resources/build_database.py", specie, ROOT_DIRECTORY + "AdminTools/", dirName, downloadLog], stdout=downloadLogFile, stderr=downloadLogFile)
             except CalledProcessError as exc:
                 errorlog(traceback.extract_stack())
                 raise Exception("Error while calling " + scriptsDir + specie + "_resources/build_database.py" +": Exit status " + str(exc.returncode) + ". Output is available at " + downloadLog)
         else:
             log("       * PROCESSING AND INSTALLING DEFAULT KEGG DATA ")
             try:
-                check_call(["python", scriptsDir  +  "default/build_database.py", specie, self.ROOT_DIRECTORY + "AdminTools/", dirName, downloadLog], stdout=downloadLogFile, stderr=downloadLogFile)
+                check_call(["python", scriptsDir  +  "default/build_database.py", specie, ROOT_DIRECTORY + "AdminTools/", dirName, downloadLog], stdout=downloadLogFile, stderr=downloadLogFile)
             except CalledProcessError as exc:
                 errorlog(traceback.extract_stack())
                 raise Exception("Error while calling " + scriptsDir + "default/build_database.py" +": Exit status " + str(exc.returncode) + ". Output is available at " + downloadLog)
@@ -645,7 +599,7 @@ def installCommonData(dirName, scriptsDir):
     try:
         import imp
         COMMON_BUILD_DB_TOOLS = imp.load_source('common_build_database', scriptsDir + "common_build_database.py")
-        COMMON_BUILD_DB_TOOLS.processKEGGCommonData(dirName, self.ROOT_DIRECTORY)
+        COMMON_BUILD_DB_TOOLS.processKEGGCommonData(dirName, ROOT_DIRECTORY)
     except Exception as ex:
         raise ex
     return True
@@ -659,6 +613,8 @@ def getPreviousSpecies(path, options=None):
         with open(path, 'rU') as inputDataFile:
             import csv
             for line in csv.reader(inputDataFile, delimiter="\t"):
+                if len(line) == 0:
+                    continue
                 if line[2] == "SUCCESS": #IF WAS INSTALLED/COPIED/UPDATED SUCCESSFULLY
                     if line[1] == "INSTALL":
                         INSTALLED.add(line[0])
@@ -725,15 +681,10 @@ def generateThumbnail(imagePath):
     thumb.save(destination)
 
 def readConfigurationFile():
-    self.ROOT_DIRECTORY = ROOT_DIRECTORY
-    import os
-    if self.ROOT_DIRECTORY == "":
-        self.ROOT_DIRECTORY = os.path.abspath(os.path.dirname(os.path.realpath(__file__)) + "/../") + "/"
-    else:
-        self.ROOT_DIRECTORY = os.path.abspath(self.ROOT_DIRECTORY) + "/"
-
+    global ROOT_DIRECTORY
+    ROOT_DIRECTORY = os.path.abspath(os.path.dirname(os.path.realpath(__file__)) + "/../") + "/"
     #PREPARE LOGGING
-    logging.config.fileConfig(self.ROOT_DIRECTORY + 'conf/logging.cfg')
+    logging.config.fileConfig(ROOT_DIRECTORY + 'conf/logging.cfg')
 
 def readFile(path, options=None):
     data = {}

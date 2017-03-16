@@ -1,7 +1,7 @@
 (function() {
 
 	var app = angular.module('PaintomicsAdminSiteApp', [
-		'common.dialogs',
+		'ang-dialogs',
 		'ui.router',
 		'ngSanitize',
 		'admin.controllers.database-controllers',
@@ -148,9 +148,10 @@
 					$scope.visible_services.shift();
 				}
 				$scope.visible_services.push(service);
-				while($scope.interval.length > 0){
-					$interval.cancel($scope.interval[0]);
-					$scope.interval.shift();
+				while($rootScope.interval.length > 0){
+					$interval.cancel($rootScope.interval[0]);
+					$rootScope.interval.shift();
+					console.log("Cleaning interval");
 				}
 				$state.transitionTo(service.name);
 			}
@@ -175,6 +176,6 @@
 
 		$scope.visible_services = [$scope.open_services[0]];
 		$scope.max_visible_services = 1;
-		$scope.interval = [];
+		$rootScope.interval = [];
 	});
 })();

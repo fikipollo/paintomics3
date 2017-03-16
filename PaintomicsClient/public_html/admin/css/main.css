@@ -4,6 +4,8 @@ body,html{
 	font-family: 'Open Sans', sans-serif;
 }
 
+.btn{    font-family: sans-serif;}
+
 .clickable{cursor: pointer;}
 .clickable:hover{text-decoration: none;}
 

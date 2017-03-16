@@ -13157,3 +13157,674 @@
 
 2016-07-18 18:52:19,985 - INFO - DBManager.py : log -      
 2016-07-18 18:52:19,986 - INFO - DBManager.py : log -      STEP 4. CLOSING LOG FILES, GENERATING VERSION FILE
+2017-03-15 20:23:10,933 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 20:23:11,417 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE KEGG DOWNLOADER 
+2017-03-15 20:23:11,658 - INFO - DBManager.py : log -      ### v.0.11
+2017-03-15 20:23:12,093 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 20:23:15,917 - INFO - DBManager.py : log -      
+2017-03-15 20:23:16,823 - INFO - DBManager.py : log -      Download log is at: /data/KEGG_DATA/20170315_2023/download.log
+2017-03-15 20:23:21,656 - INFO - DBManager.py : log -      
+2017-03-15 20:23:22,509 - INFO - DBManager.py : log -      STEP 0. READ CONFIGURATION AND PARSE INPUT FILES...
+2017-03-15 20:29:48,580 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 20:29:48,679 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE KEGG DOWNLOADER 
+2017-03-15 20:29:48,951 - INFO - DBManager.py : log -      ### v.0.12
+2017-03-15 20:29:49,184 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 20:29:49,406 - INFO - DBManager.py : log -      
+2017-03-15 20:29:49,710 - INFO - DBManager.py : log -      Download log is at: /data/KEGG_DATA/20170315_2029/download.log
+2017-03-15 20:29:49,941 - INFO - DBManager.py : log -      
+2017-03-15 20:29:50,180 - INFO - DBManager.py : log -      STEP 0. READ CONFIGURATION AND PARSE INPUT FILES...
+2017-03-15 20:30:08,935 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 20:30:09,431 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE KEGG DOWNLOADER 
+2017-03-15 20:30:09,683 - INFO - DBManager.py : log -      ### v.0.12
+2017-03-15 20:30:09,955 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 20:30:10,208 - INFO - DBManager.py : log -      
+2017-03-15 20:30:10,510 - INFO - DBManager.py : log -      Download log is at: /data/KEGG_DATA/20170315_2030/download.log
+2017-03-15 20:30:11,037 - INFO - DBManager.py : log -      
+2017-03-15 20:30:11,258 - INFO - DBManager.py : log -      STEP 0. READ CONFIGURATION AND PARSE INPUT FILES...
+2017-03-15 20:30:53,564 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 20:30:53,567 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE KEGG DOWNLOADER 
+2017-03-15 20:30:53,570 - INFO - DBManager.py : log -      ### v.0.12
+2017-03-15 20:30:53,574 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 20:30:53,577 - INFO - DBManager.py : log -      
+2017-03-15 20:30:53,580 - INFO - DBManager.py : log -      Download log is at: /data/KEGG_DATA/20170315_2030/download.log
+2017-03-15 20:30:53,583 - INFO - DBManager.py : log -      
+2017-03-15 20:30:53,587 - INFO - DBManager.py : log -      STEP 0. READ CONFIGURATION AND PARSE INPUT FILES...
+2017-03-15 20:30:59,041 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 20:30:59,045 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE KEGG DOWNLOADER 
+2017-03-15 20:30:59,048 - INFO - DBManager.py : log -      ### v.0.12
+2017-03-15 20:30:59,051 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 20:30:59,054 - INFO - DBManager.py : log -      
+2017-03-15 20:30:59,058 - INFO - DBManager.py : log -      Download log is at: /data/KEGG_DATA/20170315_2030/download.log
+2017-03-15 20:30:59,061 - INFO - DBManager.py : log -      
+2017-03-15 20:30:59,064 - INFO - DBManager.py : log -      STEP 0. READ CONFIGURATION AND PARSE INPUT FILES...
+2017-03-15 20:31:50,684 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 20:31:50,688 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE KEGG DOWNLOADER 
+2017-03-15 20:31:50,691 - INFO - DBManager.py : log -      ### v.0.12
+2017-03-15 20:31:50,694 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 20:31:50,698 - INFO - DBManager.py : log -      
+2017-03-15 20:31:50,701 - INFO - DBManager.py : log -      Download log is at: /data/KEGG_DATA/20170315_2031/download.log
+2017-03-15 20:31:50,704 - INFO - DBManager.py : log -      
+2017-03-15 20:31:50,707 - INFO - DBManager.py : log -      STEP 0. READ CONFIGURATION AND PARSE INPUT FILES...
+2017-03-15 20:32:04,477 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2017-03-15 20:32:05,594 - INFO - DBManager.py : log -             - 1 organisms were downloaded on previous executions.
+2017-03-15 20:32:05,846 - INFO - DBManager.py : log -             - 1 organisms were installed on previous executions.
+2017-03-15 20:32:06,169 - INFO - DBManager.py : log -             - 0 organisms failed during the installation on previous executions.
+2017-03-15 20:32:06,563 - INFO - DBManager.py : log -      
+2017-03-15 20:32:29,506 - INFO - DBManager.py : log -      New data will be stored at /data/KEGG_DATA/20170315_2031/
+2017-03-15 20:32:48,981 - INFO - DBManager.py : log -              STEP 1. COPYING THE PREVIOUS COMMON KEGG INFORMATION
+2017-03-15 20:33:06,900 - INFO - DBManager.py : log -      
+2017-03-15 20:33:08,582 - INFO - DBManager.py : log -      STEP 2. COPY THE PREVIOUS INFORMATION FOR ORGANISMS
+2017-03-15 20:33:10,824 - INFO - DBManager.py : log -             - 0 organisms were downloaded on previous executions.
+2017-03-15 20:33:17,275 - INFO - DBManager.py : log -      
+2017-03-15 20:33:17,548 - INFO - DBManager.py : log -      STEP 3. DOWNLOADING THE INFORMATION FOR THE SELECTED ORGANISMS
+2017-03-15 20:33:18,469 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2017-03-15 20:33:22,514 - INFO - DBManager.py : log -                  DOWLOADING  mmu...
+2017-03-15 20:33:32,692 - INFO - DBManager.py : log -                  COPYING PREVIOUS KEGG DATA FOR mmu...
+2017-03-15 20:33:41,908 - INFO - DBManager.py : log -                  COPYING PREVIOUS MAPPING DATA...
+2017-03-15 20:33:56,899 - INFO - DBManager.py : log -              UPDATE  0 mmu...SUCCESS
+
+2017-03-15 20:33:59,175 - INFO - DBManager.py : log -      
+2017-03-15 20:33:59,863 - INFO - DBManager.py : log -      STEP 4. CLOSING LOG FILES, GENERATING VERSION FILE
+2017-03-15 21:04:01,756 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 21:04:01,762 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE KEGG DOWNLOADER 
+2017-03-15 21:04:01,766 - INFO - DBManager.py : log -      ### v.0.12
+2017-03-15 21:04:01,769 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 21:04:01,772 - INFO - DBManager.py : log -      
+2017-03-15 21:04:01,776 - INFO - DBManager.py : log -      Download log is at: /data/KEGG_DATA/download/download.log
+2017-03-15 21:04:01,779 - INFO - DBManager.py : log -      
+2017-03-15 21:04:01,783 - INFO - DBManager.py : log -      STEP 0. READ CONFIGURATION AND PARSE INPUT FILES...
+2017-03-15 21:04:03,790 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2017-03-15 21:04:03,795 - INFO - DBManager.py : log -      
+2017-03-15 21:04:03,798 - INFO - DBManager.py : log -      
+2017-03-15 21:04:03,801 - INFO - DBManager.py : log -      STEP 2. DOWNLOADING THE INFORMATION FOR THE SELECTED ORGANISMS
+2017-03-15 21:04:03,804 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2017-03-15 21:04:03,808 - INFO - DBManager.py : log -              New data will be stored at /data/KEGG_DATA/download/mmu/
+2017-03-15 21:04:03,811 - INFO - DBManager.py : log -                      DOWLOADING  mmu...
+2017-03-15 21:04:03,815 - INFO - DBManager.py : log -                  COPYING PREVIOUS KEGG DATA FOR mmu...
+2017-03-15 21:04:03,818 - INFO - DBManager.py : log -              DOWNLOAD  0 mmu...ERROR
+
+2017-03-15 21:04:03,821 - ERROR - DBManager.py : errorlog -              [Errno 17] File exists: '/data/KEGG_DATA/download/mmu/'
+2017-03-15 21:04:03,825 - INFO - DBManager.py : log -      
+2017-03-15 21:04:03,828 - INFO - DBManager.py : log -      STEP 3. CLOSING LOG FILES, GENERATING VERSION FILE
+2017-03-15 21:04:47,611 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 21:04:47,975 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE KEGG DOWNLOADER 
+2017-03-15 21:04:48,217 - INFO - DBManager.py : log -      ### v.0.12
+2017-03-15 21:04:48,407 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 21:04:48,700 - INFO - DBManager.py : log -      
+2017-03-15 21:04:49,013 - INFO - DBManager.py : log -      Download log is at: /data/KEGG_DATA/download/download.log
+2017-03-15 21:04:52,556 - INFO - DBManager.py : log -      
+2017-03-15 21:04:52,839 - INFO - DBManager.py : log -      STEP 0. READ CONFIGURATION AND PARSE INPUT FILES...
+2017-03-15 21:05:05,812 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2017-03-15 21:05:06,176 - INFO - DBManager.py : log -      
+2017-03-15 21:05:19,106 - INFO - DBManager.py : log -      
+2017-03-15 21:05:19,663 - INFO - DBManager.py : log -      STEP 2. DOWNLOADING THE INFORMATION FOR THE SELECTED ORGANISMS
+2017-03-15 21:05:27,927 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2017-03-15 21:05:38,673 - INFO - DBManager.py : log -              New data will be stored at /data/KEGG_DATA/download/mmu/
+2017-03-15 21:05:58,805 - INFO - DBManager.py : log -                      DOWLOADING  mmu...
+2017-03-15 21:06:21,619 - INFO - DBManager.py : log -                  COPYING PREVIOUS KEGG DATA FOR mmu...
+2017-03-15 21:06:33,595 - INFO - DBManager.py : log -              DOWNLOAD  0 mmu...ERROR
+
+2017-03-15 21:06:33,601 - ERROR - DBManager.py : errorlog -              [Errno 17] File exists: '/data/KEGG_DATA/download/mmu/'
+2017-03-15 21:06:33,608 - INFO - DBManager.py : log -      
+2017-03-15 21:06:33,613 - INFO - DBManager.py : log -      STEP 3. CLOSING LOG FILES, GENERATING VERSION FILE
+2017-03-15 21:07:13,292 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 21:07:13,296 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE KEGG DOWNLOADER 
+2017-03-15 21:07:13,299 - INFO - DBManager.py : log -      ### v.0.12
+2017-03-15 21:07:13,302 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 21:07:13,306 - INFO - DBManager.py : log -      
+2017-03-15 21:07:13,309 - INFO - DBManager.py : log -      Download log is at: /data/KEGG_DATA/download/download.log
+2017-03-15 21:07:13,312 - INFO - DBManager.py : log -      
+2017-03-15 21:07:13,316 - INFO - DBManager.py : log -      STEP 0. READ CONFIGURATION AND PARSE INPUT FILES...
+2017-03-15 21:07:15,323 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2017-03-15 21:07:15,327 - INFO - DBManager.py : log -      
+2017-03-15 21:07:15,331 - INFO - DBManager.py : log -      
+2017-03-15 21:07:15,334 - INFO - DBManager.py : log -      STEP 2. DOWNLOADING THE INFORMATION FOR THE SELECTED ORGANISMS
+2017-03-15 21:07:15,337 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2017-03-15 21:07:15,341 - INFO - DBManager.py : log -              New data will be stored at /data/KEGG_DATA/download/mmu/
+2017-03-15 21:07:15,344 - INFO - DBManager.py : log -                      DOWLOADING  mmu...
+2017-03-15 21:07:18,736 - INFO - DBManager.py : log -                  COPYING PREVIOUS KEGG DATA FOR mmu...
+2017-03-15 21:07:25,451 - INFO - DBManager.py : log -              DOWNLOAD  0 mmu...ERROR
+
+2017-03-15 21:07:25,455 - ERROR - DBManager.py : errorlog -              [Errno 2] No such file or directory: '/data/KEGG_DATA/species/mmu/*'
+2017-03-15 21:09:28,244 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 21:09:28,247 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE KEGG DOWNLOADER 
+2017-03-15 21:09:28,251 - INFO - DBManager.py : log -      ### v.0.12
+2017-03-15 21:09:28,255 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 21:09:28,259 - INFO - DBManager.py : log -      
+2017-03-15 21:09:28,264 - INFO - DBManager.py : log -      Download log is at: /data/KEGG_DATA/download/download.log
+2017-03-15 21:09:28,268 - INFO - DBManager.py : log -      
+2017-03-15 21:09:28,272 - INFO - DBManager.py : log -      STEP 0. READ CONFIGURATION AND PARSE INPUT FILES...
+2017-03-15 21:09:30,279 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2017-03-15 21:09:30,286 - INFO - DBManager.py : log -      
+2017-03-15 21:09:30,290 - INFO - DBManager.py : log -      
+2017-03-15 21:09:30,294 - INFO - DBManager.py : log -      STEP 2. DOWNLOADING THE INFORMATION FOR THE SELECTED ORGANISMS
+2017-03-15 21:09:30,298 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2017-03-15 21:09:30,301 - INFO - DBManager.py : log -              New data will be stored at /data/KEGG_DATA/download/mmu/
+2017-03-15 21:09:30,305 - INFO - DBManager.py : log -                      DOWLOADING  mmu...
+2017-03-15 21:09:32,711 - INFO - DBManager.py : log -                  COPYING PREVIOUS KEGG DATA FOR mmu...
+2017-03-15 21:09:36,787 - INFO - DBManager.py : log -              DOWNLOAD  0 mmu...ERROR
+
+2017-03-15 21:09:36,793 - ERROR - DBManager.py : errorlog -              [Errno 2] No such file or directory: '/data/KEGG_DATA/species/mmu/*'
+2017-03-15 21:09:36,796 - INFO - DBManager.py : log -      
+2017-03-15 21:09:36,800 - INFO - DBManager.py : log -      STEP 3. CLOSING LOG FILES, GENERATING VERSION FILE
+2017-03-15 21:10:21,595 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 21:10:21,599 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE KEGG DOWNLOADER 
+2017-03-15 21:10:21,603 - INFO - DBManager.py : log -      ### v.0.12
+2017-03-15 21:10:21,606 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 21:10:21,610 - INFO - DBManager.py : log -      
+2017-03-15 21:10:21,613 - INFO - DBManager.py : log -      Download log is at: /data/KEGG_DATA/download/download.log
+2017-03-15 21:10:21,617 - INFO - DBManager.py : log -      
+2017-03-15 21:10:21,621 - INFO - DBManager.py : log -      STEP 0. READ CONFIGURATION AND PARSE INPUT FILES...
+2017-03-15 21:10:23,627 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2017-03-15 21:10:23,631 - INFO - DBManager.py : log -      
+2017-03-15 21:10:23,635 - INFO - DBManager.py : log -      
+2017-03-15 21:10:23,639 - INFO - DBManager.py : log -      STEP 2. DOWNLOADING THE INFORMATION FOR THE SELECTED ORGANISMS
+2017-03-15 21:10:23,643 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2017-03-15 21:10:23,647 - INFO - DBManager.py : log -              New data will be stored at /data/KEGG_DATA/download/mmu/
+2017-03-15 21:10:23,651 - INFO - DBManager.py : log -                      DOWLOADING  mmu...
+2017-03-15 21:10:24,740 - INFO - DBManager.py : log -                  COPYING PREVIOUS KEGG DATA FOR mmu...
+2017-03-15 21:11:04,703 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 21:11:04,706 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE KEGG DOWNLOADER 
+2017-03-15 21:11:04,710 - INFO - DBManager.py : log -      ### v.0.12
+2017-03-15 21:11:04,713 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 21:11:04,716 - INFO - DBManager.py : log -      
+2017-03-15 21:11:04,719 - INFO - DBManager.py : log -      Download log is at: /data/KEGG_DATA/download/download.log
+2017-03-15 21:11:04,723 - INFO - DBManager.py : log -      
+2017-03-15 21:11:04,726 - INFO - DBManager.py : log -      STEP 0. READ CONFIGURATION AND PARSE INPUT FILES...
+2017-03-15 21:11:06,733 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2017-03-15 21:11:06,737 - INFO - DBManager.py : log -      
+2017-03-15 21:11:06,741 - INFO - DBManager.py : log -      
+2017-03-15 21:11:06,745 - INFO - DBManager.py : log -      STEP 2. DOWNLOADING THE INFORMATION FOR THE SELECTED ORGANISMS
+2017-03-15 21:11:06,750 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2017-03-15 21:11:06,754 - INFO - DBManager.py : log -              New data will be stored at /data/KEGG_DATA/download/mmu/
+2017-03-15 21:11:06,777 - INFO - DBManager.py : log -                      DOWLOADING  mmu...
+2017-03-15 21:11:15,009 - INFO - DBManager.py : log -                  COPYING PREVIOUS KEGG DATA FOR mmu...
+2017-03-15 21:11:17,743 - INFO - DBManager.py : log -                  COPYING PREVIOUS MAPPING DATA...
+2017-03-15 21:11:45,120 - INFO - DBManager.py : log -              DOWNLOAD  0 mmu...SUCCESS
+
+2017-03-15 21:11:46,508 - INFO - DBManager.py : log -      
+2017-03-15 21:11:46,822 - INFO - DBManager.py : log -      STEP 3. CLOSING LOG FILES, GENERATING VERSION FILE
+2017-03-15 21:13:39,865 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 21:13:39,869 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE KEGG DOWNLOADER 
+2017-03-15 21:13:39,872 - INFO - DBManager.py : log -      ### v.0.12
+2017-03-15 21:13:39,876 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 21:13:39,879 - INFO - DBManager.py : log -      
+2017-03-15 21:13:39,883 - INFO - DBManager.py : log -      Download log is at: /data/KEGG_DATA/download/download.log
+2017-03-15 21:13:39,887 - INFO - DBManager.py : log -      
+2017-03-15 21:13:39,890 - INFO - DBManager.py : log -      STEP 0. READ CONFIGURATION AND PARSE INPUT FILES...
+2017-03-15 21:13:41,898 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2017-03-15 21:13:41,904 - INFO - DBManager.py : log -      
+2017-03-15 21:13:41,908 - INFO - DBManager.py : log -      
+2017-03-15 21:13:41,911 - INFO - DBManager.py : log -      STEP 2. DOWNLOADING THE INFORMATION FOR THE SELECTED ORGANISMS
+2017-03-15 21:13:41,915 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2017-03-15 21:13:41,919 - INFO - DBManager.py : log -              New data will be stored at /data/KEGG_DATA/download/mmu/
+2017-03-15 21:13:41,943 - INFO - DBManager.py : log -                      DOWLOADING  mmu...
+2017-03-15 21:13:43,889 - INFO - DBManager.py : log -                  COPYING PREVIOUS KEGG DATA FOR mmu...
+2017-03-15 21:14:10,061 - INFO - DBManager.py : log -                  COPYING PREVIOUS MAPPING DATA...
+2017-03-15 21:14:10,081 - INFO - DBManager.py : log -              DOWNLOAD  0 mmu...SUCCESS
+
+2017-03-15 21:14:10,085 - INFO - DBManager.py : log -      
+2017-03-15 21:14:10,088 - INFO - DBManager.py : log -      STEP 3. CLOSING LOG FILES, GENERATING VERSION FILE
+2017-03-15 21:14:19,018 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 21:14:19,022 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE KEGG DOWNLOADER 
+2017-03-15 21:14:19,026 - INFO - DBManager.py : log -      ### v.0.12
+2017-03-15 21:14:19,030 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 21:14:19,034 - INFO - DBManager.py : log -      
+2017-03-15 21:14:19,039 - INFO - DBManager.py : log -      Download log is at: /data/KEGG_DATA/download/download.log
+2017-03-15 21:14:19,043 - INFO - DBManager.py : log -      
+2017-03-15 21:14:19,047 - INFO - DBManager.py : log -      STEP 0. READ CONFIGURATION AND PARSE INPUT FILES...
+2017-03-15 21:14:21,054 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2017-03-15 21:14:21,059 - INFO - DBManager.py : log -      
+2017-03-15 21:14:21,063 - INFO - DBManager.py : log -      
+2017-03-15 21:14:21,066 - INFO - DBManager.py : log -      STEP 2. DOWNLOADING THE INFORMATION FOR THE SELECTED ORGANISMS
+2017-03-15 21:14:21,070 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2017-03-15 21:14:21,073 - INFO - DBManager.py : log -              New data will be stored at /data/KEGG_DATA/download/mmu/
+2017-03-15 21:14:21,095 - INFO - DBManager.py : log -                      DOWLOADING  mmu...
+2017-03-15 21:14:24,735 - INFO - DBManager.py : log -                  COPYING PREVIOUS KEGG DATA FOR mmu...
+2017-03-15 21:14:41,185 - INFO - DBManager.py : log -                  COPYING PREVIOUS MAPPING DATA...
+2017-03-15 21:14:50,440 - INFO - DBManager.py : log -              DOWNLOAD  0 mmu...SUCCESS
+
+2017-03-15 21:14:52,021 - INFO - DBManager.py : log -      
+2017-03-15 21:14:52,394 - INFO - DBManager.py : log -      STEP 3. CLOSING LOG FILES, GENERATING VERSION FILE
+2017-03-15 21:15:12,720 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 21:15:12,724 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE KEGG DOWNLOADER 
+2017-03-15 21:15:12,727 - INFO - DBManager.py : log -      ### v.0.12
+2017-03-15 21:15:12,730 - INFO - DBManager.py : log -      ######################################################################
+2017-03-15 21:15:12,734 - INFO - DBManager.py : log -      
+2017-03-15 21:15:12,737 - INFO - DBManager.py : log -      Download log is at: /data/KEGG_DATA/download/download.log
+2017-03-15 21:15:12,740 - INFO - DBManager.py : log -      
+2017-03-15 21:15:12,743 - INFO - DBManager.py : log -      STEP 0. READ CONFIGURATION AND PARSE INPUT FILES...
+2017-03-15 21:15:14,749 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2017-03-15 21:15:14,754 - INFO - DBManager.py : log -      
+2017-03-15 21:15:14,759 - INFO - DBManager.py : log -      
+2017-03-15 21:15:14,762 - INFO - DBManager.py : log -      STEP 2. DOWNLOADING THE INFORMATION FOR THE SELECTED ORGANISMS
+2017-03-15 21:15:14,766 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2017-03-15 21:15:14,769 - INFO - DBManager.py : log -              New data will be stored at /data/KEGG_DATA/download/mmu/
+2017-03-15 21:15:14,792 - INFO - DBManager.py : log -                      DOWLOADING  mmu...
+2017-03-15 21:15:17,478 - INFO - DBManager.py : log -                  FETCHING KEGG DATA FOR mmu (1/1)...
+2017-03-15 21:15:17,482 - INFO - DBManager.py : log -                    * GENE to PATHWAY TABLE
+2017-03-15 21:15:30,659 - INFO - DBManager.py : log -                    * PATHWAYS LIST
+2017-03-15 21:15:35,918 - INFO - DBManager.py : log -                          DETECTED 311 PATHWAYS FOR mmu [25 min aprox.]
+2017-03-15 21:15:35,922 - INFO - DBManager.py : log -                           - mmu03008 [1/311]
+2017-03-15 21:15:39,542 - INFO - DBManager.py : log -                           - mmu04650 [2/311]
+2017-03-15 21:15:42,836 - INFO - DBManager.py : log -                           - mmu04623 [3/311]
+2017-03-15 21:15:46,081 - INFO - DBManager.py : log -                           - mmu04640 [4/311]
+2017-03-15 21:15:50,590 - INFO - DBManager.py : log -                           - mmu04657 [5/311]
+2017-03-15 21:15:54,227 - INFO - DBManager.py : log -                           - mmu04658 [6/311]
+2017-03-15 21:15:57,493 - INFO - DBManager.py : log -                           - mmu04659 [7/311]
+2017-03-15 21:16:04,572 - INFO - DBManager.py : log -                           - mmu04713 [8/311]
+2017-03-15 21:16:08,204 - INFO - DBManager.py : log -                           - mmu04622 [9/311]
+2017-03-15 21:16:11,478 - INFO - DBManager.py : log -                           - mmu04066 [10/311]
+2017-03-15 21:16:15,105 - INFO - DBManager.py : log -                           - mmu03410 [11/311]
+2017-03-15 21:16:19,129 - INFO - DBManager.py : log -                           - mmu05205 [12/311]
+2017-03-15 21:16:23,945 - INFO - DBManager.py : log -                           - mmu04062 [13/311]
+2017-03-15 21:16:27,199 - INFO - DBManager.py : log -                           - mmu04914 [14/311]
+2017-03-15 21:16:30,056 - INFO - DBManager.py : log -                           - mmu04060 [15/311]
+2017-03-15 21:16:34,819 - INFO - DBManager.py : log -                           - mmu00750 [16/311]
+2017-03-15 21:16:38,059 - INFO - DBManager.py : log -                           - mmu05206 [17/311]
+2017-03-15 21:16:42,864 - INFO - DBManager.py : log -                           - mmu00240 [18/311]
+2017-03-15 21:16:46,895 - INFO - DBManager.py : log -                           - mmu05213 [19/311]
+2017-03-15 21:16:50,137 - INFO - DBManager.py : log -                           - mmu00592 [20/311]
+2017-03-15 21:16:53,384 - INFO - DBManager.py : log -                           - mmu00591 [21/311]
+2017-03-15 21:16:56,615 - INFO - DBManager.py : log -                           - mmu00590 [22/311]
+2017-03-15 21:17:00,298 - INFO - DBManager.py : log -                           - mmu00052 [23/311]
+2017-03-15 21:17:03,546 - INFO - DBManager.py : log -                           - mmu00053 [24/311]
+2017-03-15 21:17:07,815 - INFO - DBManager.py : log -                           - mmu05215 [25/311]
+2017-03-15 21:17:13,154 - INFO - DBManager.py : log -                           - mmu00051 [26/311]
+2017-03-15 21:17:16,415 - INFO - DBManager.py : log -                           - mmu05219 [27/311]
+2017-03-15 21:17:19,643 - INFO - DBManager.py : log -                           - mmu04550 [28/311]
+2017-03-15 21:17:23,314 - INFO - DBManager.py : log -                           - mmu00982 [29/311]
+2017-03-15 21:17:27,291 - INFO - DBManager.py : log -                           - mmu00190 [30/311]
+2017-03-15 21:17:31,346 - INFO - DBManager.py : log -                           - mmu00450 [31/311]
+2017-03-15 21:17:34,495 - INFO - DBManager.py : log -                           - mmu01522 [32/311]
+2017-03-15 21:17:38,146 - INFO - DBManager.py : log -                           - mmu04710 [33/311]
+2017-03-15 21:17:41,000 - INFO - DBManager.py : log -                           - mmu00512 [34/311]
+2017-03-15 21:17:44,274 - INFO - DBManager.py : log -                           - mmu00511 [35/311]
+2017-03-15 21:17:47,125 - INFO - DBManager.py : log -                           - mmu00510 [36/311]
+2017-03-15 21:17:51,140 - INFO - DBManager.py : log -                           - mmu00515 [37/311]
+2017-03-15 21:17:54,757 - INFO - DBManager.py : log -                           - mmu00514 [38/311]
+2017-03-15 21:17:58,620 - INFO - DBManager.py : log -                           - mmu04971 [39/311]
+2017-03-15 21:18:01,872 - INFO - DBManager.py : log -                           - mmu04970 [40/311]
+2017-03-15 21:18:05,101 - INFO - DBManager.py : log -                           - mmu04973 [41/311]
+2017-03-15 21:18:08,378 - INFO - DBManager.py : log -                           - mmu04972 [42/311]
+2017-03-15 21:18:19,039 - INFO - DBManager.py : log -                           - mmu04975 [43/311]
+2017-03-15 21:18:23,292 - INFO - DBManager.py : log -                           - mmu04974 [44/311]
+2017-03-15 21:18:29,521 - INFO - DBManager.py : log -                           - mmu04977 [45/311]
+2017-03-15 21:18:33,160 - INFO - DBManager.py : log -                           - mmu00062 [46/311]
+2017-03-15 21:18:36,807 - INFO - DBManager.py : log -                           - mmu04978 [47/311]
+2017-03-15 21:18:40,081 - INFO - DBManager.py : log -                           - mmu05412 [48/311]
+2017-03-15 21:18:43,306 - INFO - DBManager.py : log -                           - mmu04340 [49/311]
+2017-03-15 21:18:46,552 - INFO - DBManager.py : log -                           - mmu05416 [50/311]
+2017-03-15 21:18:49,816 - INFO - DBManager.py : log -                           - mmu00100 [51/311]
+2017-03-15 21:18:54,467 - INFO - DBManager.py : log -                           - mmu04071 [52/311]
+2017-03-15 21:18:57,729 - INFO - DBManager.py : log -                           - mmu04072 [53/311]
+2017-03-15 21:19:01,339 - INFO - DBManager.py : log -                           - mmu04621 [54/311]
+2017-03-15 21:19:05,400 - INFO - DBManager.py : log -                           - mmu01212 [55/311]
+2017-03-15 21:19:10,780 - INFO - DBManager.py : log -                           - mmu04380 [56/311]
+2017-03-15 21:19:14,391 - INFO - DBManager.py : log -                           - mmu01210 [57/311]
+2017-03-15 21:19:19,428 - INFO - DBManager.py : log -                           - mmu00250 [58/311]
+2017-03-15 21:19:23,417 - INFO - DBManager.py : log -                           - mmu05161 [59/311]
+2017-03-15 21:19:27,819 - INFO - DBManager.py : log -                           - mmu00740 [60/311]
+2017-03-15 21:19:31,088 - INFO - DBManager.py : log -                           - mmu05200 [61/311]
+2017-03-15 21:19:35,906 - INFO - DBManager.py : log -                           - mmu05202 [62/311]
+2017-03-15 21:19:42,930 - INFO - DBManager.py : log -                           - mmu05203 [63/311]
+2017-03-15 21:19:46,965 - INFO - DBManager.py : log -                           - mmu00310 [64/311]
+2017-03-15 21:19:50,182 - INFO - DBManager.py : log -                           - mmu00061 [65/311]
+2017-03-15 21:19:54,221 - INFO - DBManager.py : log -                           - mmu05166 [66/311]
+2017-03-15 21:19:57,841 - INFO - DBManager.py : log -                           - mmu04540 [67/311]
+2017-03-15 21:20:01,097 - INFO - DBManager.py : log -                           - mmu05160 [68/311]
+2017-03-15 21:20:05,761 - INFO - DBManager.py : log -                           - mmu04270 [69/311]
+2017-03-15 21:20:09,002 - INFO - DBManager.py : log -                           - mmu05162 [70/311]
+2017-03-15 21:20:13,608 - INFO - DBManager.py : log -                           - mmu05014 [71/311]
+2017-03-15 21:20:19,855 - INFO - DBManager.py : log -                           - mmu05016 [72/311]
+2017-03-15 21:20:23,111 - INFO - DBManager.py : log -                           - mmu05169 [73/311]
+2017-03-15 21:20:27,736 - INFO - DBManager.py : log -                           - mmu05010 [74/311]
+2017-03-15 21:20:31,980 - INFO - DBManager.py : log -                           - mmu05012 [75/311]
+2017-03-15 21:20:35,218 - INFO - DBManager.py : log -                           - mmu01521 [76/311]
+2017-03-15 21:20:40,637 - INFO - DBManager.py : log -                           - mmu00500 [77/311]
+2017-03-15 21:20:44,276 - INFO - DBManager.py : log -                           - mmu05212 [78/311]
+2017-03-15 21:20:53,208 - INFO - DBManager.py : log -                           - mmu05332 [79/311]
+2017-03-15 21:20:56,085 - INFO - DBManager.py : log -                           - mmu04144 [80/311]
+2017-03-15 21:21:00,094 - INFO - DBManager.py : log -                           - mmu04390 [81/311]
+2017-03-15 21:21:03,752 - INFO - DBManager.py : log -                           - mmu04962 [82/311]
+2017-03-15 21:21:06,977 - INFO - DBManager.py : log -                           - mmu04720 [83/311]
+2017-03-15 21:21:10,602 - INFO - DBManager.py : log -                           - mmu04960 [84/311]
+2017-03-15 21:21:13,476 - INFO - DBManager.py : log -                           - mmu04961 [85/311]
+2017-03-15 21:21:16,714 - INFO - DBManager.py : log -                           - mmu04966 [86/311]
+2017-03-15 21:21:19,592 - INFO - DBManager.py : log -                           - mmu04964 [87/311]
+2017-03-15 21:21:22,849 - INFO - DBManager.py : log -                           - mmu03060 [88/311]
+2017-03-15 21:21:26,122 - INFO - DBManager.py : log -                           - mmu00830 [89/311]
+2017-03-15 21:21:29,779 - INFO - DBManager.py : log -                           - mmu00380 [90/311]
+2017-03-15 21:21:34,233 - INFO - DBManager.py : log -                           - mmu04392 [91/311]
+2017-03-15 21:21:37,454 - INFO - DBManager.py : log -                           - mmu05164 [92/311]
+2017-03-15 21:21:41,472 - INFO - DBManager.py : log -                           - mmu05168 [93/311]
+2017-03-15 21:21:45,077 - INFO - DBManager.py : log -                           - mmu01200 [94/311]
+2017-03-15 21:21:49,095 - INFO - DBManager.py : log -                           - mmu04924 [95/311]
+2017-03-15 21:21:52,372 - INFO - DBManager.py : log -                           - mmu04630 [96/311]
+2017-03-15 21:21:55,627 - INFO - DBManager.py : log -                           - mmu00770 [97/311]
+2017-03-15 21:21:58,879 - INFO - DBManager.py : log -                           - mmu04931 [98/311]
+2017-03-15 21:22:02,876 - INFO - DBManager.py : log -                           - mmu00071 [99/311]
+2017-03-15 21:22:11,076 - INFO - DBManager.py : log -                           - mmu00072 [100/311]
+2017-03-15 21:22:14,616 - INFO - DBManager.py : log -                           - mmu04530 [101/311]
+2017-03-15 21:22:18,250 - INFO - DBManager.py : log -                           - mmu00300 [102/311]
+2017-03-15 21:22:43,505 - INFO - DBManager.py : log -                           - mmu00471 [103/311]
+2017-03-15 21:22:47,118 - INFO - DBManager.py : log -                           - mmu00472 [104/311]
+2017-03-15 21:22:49,993 - INFO - DBManager.py : log -                           - mmu04330 [105/311]
+2017-03-15 21:22:52,862 - INFO - DBManager.py : log -                           - mmu00220 [106/311]
+2017-03-15 21:22:56,521 - INFO - DBManager.py : log -                           - mmu01523 [107/311]
+2017-03-15 21:22:59,773 - INFO - DBManager.py : log -                           - mmu04930 [108/311]
+2017-03-15 21:23:03,039 - INFO - DBManager.py : log -                           - mmu04068 [109/311]
+2017-03-15 21:23:07,440 - INFO - DBManager.py : log -                           - mmu04080 [110/311]
+2017-03-15 21:23:11,424 - INFO - DBManager.py : log -                           - mmu00670 [111/311]
+2017-03-15 21:23:15,092 - INFO - DBManager.py : log -                           - mmu04064 [112/311]
+2017-03-15 21:23:19,098 - INFO - DBManager.py : log -                           - mmu04721 [113/311]
+2017-03-15 21:23:21,950 - INFO - DBManager.py : log -                           - mmu04722 [114/311]
+2017-03-15 21:23:25,620 - INFO - DBManager.py : log -                           - mmu04723 [115/311]
+2017-03-15 21:23:30,276 - INFO - DBManager.py : log -                           - mmu04724 [116/311]
+2017-03-15 21:23:33,515 - INFO - DBManager.py : log -                           - mmu04725 [117/311]
+2017-03-15 21:23:37,531 - INFO - DBManager.py : log -                           - mmu04726 [118/311]
+2017-03-15 21:23:40,761 - INFO - DBManager.py : log -                           - mmu04350 [119/311]
+2017-03-15 21:23:44,044 - INFO - DBManager.py : log -                           - mmu04728 [120/311]
+2017-03-15 21:23:48,695 - INFO - DBManager.py : log -                           - mmu04917 [121/311]
+2017-03-15 21:23:51,913 - INFO - DBManager.py : log -                           - mmu03460 [122/311]
+2017-03-15 21:23:55,194 - INFO - DBManager.py : log -                           - mmu05211 [123/311]
+2017-03-15 21:23:59,233 - INFO - DBManager.py : log -                           - mmu04727 [124/311]
+2017-03-15 21:24:03,471 - INFO - DBManager.py : log -                           - mmu05217 [125/311]
+2017-03-15 21:24:06,333 - INFO - DBManager.py : log -                           - mmu00760 [126/311]
+2017-03-15 21:24:11,328 - INFO - DBManager.py : log -                           - mmu00920 [127/311]
+2017-03-15 21:24:14,988 - INFO - DBManager.py : log -                           - mmu05210 [128/311]
+2017-03-15 21:24:18,635 - INFO - DBManager.py : log -                           - mmu04152 [129/311]
+2017-03-15 21:24:22,277 - INFO - DBManager.py : log -                           - mmu04151 [130/311]
+2017-03-15 21:24:25,924 - INFO - DBManager.py : log -                           - mmu04150 [131/311]
+2017-03-15 21:24:29,177 - INFO - DBManager.py : log -                           - mmu00360 [132/311]
+2017-03-15 21:24:32,836 - INFO - DBManager.py : log -                           - mmu03050 [133/311]
+2017-03-15 21:24:36,102 - INFO - DBManager.py : log -                           - mmu05221 [134/311]
+2017-03-15 21:24:39,353 - INFO - DBManager.py : log -                           - mmu04310 [135/311]
+2017-03-15 21:24:42,613 - INFO - DBManager.py : log -                           - mmu00330 [136/311]
+2017-03-15 21:24:50,734 - INFO - DBManager.py : log -                           - mmu05143 [137/311]
+2017-03-15 21:24:53,978 - INFO - DBManager.py : log -                           - mmu05142 [138/311]
+2017-03-16 17:57:12,051 - INFO - DBManager.py : log -      ######################################################################
+2017-03-16 17:57:12,052 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE KEGG DOWNLOADER 
+2017-03-16 17:57:12,052 - INFO - DBManager.py : log -      ### v.0.12
+2017-03-16 17:57:12,053 - INFO - DBManager.py : log -      ######################################################################
+2017-03-16 17:57:12,053 - INFO - DBManager.py : log -      
+2017-03-16 17:57:12,053 - INFO - DBManager.py : log -      Download log is at: /data/KEGG_DATA/download/download.log
+2017-03-16 17:57:12,054 - INFO - DBManager.py : log -      
+2017-03-16 17:57:12,054 - INFO - DBManager.py : log -      STEP 0. READ CONFIGURATION AND PARSE INPUT FILES...
+2017-03-16 17:57:14,057 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2017-03-16 17:57:14,058 - INFO - DBManager.py : log -      
+2017-03-16 17:57:14,058 - INFO - DBManager.py : log -      
+2017-03-16 17:57:14,059 - INFO - DBManager.py : log -      STEP 2. DOWNLOADING THE INFORMATION FOR THE SELECTED ORGANISMS
+2017-03-16 17:57:14,060 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2017-03-16 17:57:14,060 - INFO - DBManager.py : log -              New data will be stored at /data/KEGG_DATA/download/acan/
+2017-03-16 17:57:14,061 - INFO - DBManager.py : log -                      DOWLOADING  acan...
+2017-03-16 17:57:14,062 - INFO - DBManager.py : log -                  FETCHING KEGG DATA FOR acan (1/1)...
+2017-03-16 17:57:14,062 - INFO - DBManager.py : log -                    * GENE to PATHWAY TABLE
+2017-03-16 17:57:19,575 - INFO - DBManager.py : log -                    * PATHWAYS LIST
+2017-03-16 17:57:23,711 - INFO - DBManager.py : log -                          DETECTED 105 PATHWAYS FOR acan [8 min aprox.]
+2017-03-16 17:57:23,712 - INFO - DBManager.py : log -                           - acan03060 [1/105]
+2017-03-16 17:57:26,684 - INFO - DBManager.py : log -                           - acan00500 [2/105]
+2017-03-16 17:57:30,498 - INFO - DBManager.py : log -                           - acan00970 [3/105]
+2017-03-16 17:57:34,079 - INFO - DBManager.py : log -                           - acan00640 [4/105]
+2017-03-16 17:57:37,615 - INFO - DBManager.py : log -                           - acan00480 [5/105]
+2017-03-16 17:57:40,605 - INFO - DBManager.py : log -                           - acan00760 [6/105]
+2017-03-16 17:57:44,149 - INFO - DBManager.py : log -                           - acan00072 [7/105]
+2017-03-16 17:57:46,790 - INFO - DBManager.py : log -                           - acan00071 [8/105]
+2017-03-16 17:57:50,082 - INFO - DBManager.py : log -                           - acan00360 [9/105]
+2017-03-16 17:57:53,354 - INFO - DBManager.py : log -                           - acan01200 [10/105]
+2017-03-16 17:57:56,944 - INFO - DBManager.py : log -                           - acan00190 [11/105]
+2017-03-16 17:58:00,480 - INFO - DBManager.py : log -                           - acan00400 [12/105]
+2017-03-16 17:58:03,731 - INFO - DBManager.py : log -                           - acan00270 [13/105]
+2017-03-16 17:58:06,986 - INFO - DBManager.py : log -                           - acan00565 [14/105]
+2017-03-16 17:58:09,960 - INFO - DBManager.py : log -                           - acan00564 [15/105]
+2017-03-16 17:58:13,484 - INFO - DBManager.py : log -                           - acan00561 [16/105]
+2017-03-16 17:58:16,461 - INFO - DBManager.py : log -                           - acan00563 [17/105]
+2017-03-16 17:58:19,455 - INFO - DBManager.py : log -                           - acan00562 [18/105]
+2017-03-16 17:58:22,680 - INFO - DBManager.py : log -                           - acan00650 [19/105]
+2017-03-16 17:58:25,638 - INFO - DBManager.py : log -                           - acan04122 [20/105]
+2017-03-16 17:58:28,648 - INFO - DBManager.py : log -                           - acan04933 [21/105]
+2017-03-16 17:58:31,884 - INFO - DBManager.py : log -                           - acan04070 [22/105]
+2017-03-16 17:58:34,867 - INFO - DBManager.py : log -                           - acan00240 [23/105]
+2017-03-16 17:58:38,409 - INFO - DBManager.py : log -                           - acan00410 [24/105]
+2017-03-16 17:58:41,383 - INFO - DBManager.py : log -                           - acan00790 [25/105]
+2017-03-16 17:58:44,384 - INFO - DBManager.py : log -                           - acan01130 [26/105]
+2017-03-16 17:58:50,623 - INFO - DBManager.py : log -                           - acan04130 [27/105]
+2017-03-16 17:58:53,331 - INFO - DBManager.py : log -                           - acan00310 [28/105]
+2017-03-16 17:58:56,307 - INFO - DBManager.py : log -                           - acan00380 [29/105]
+2017-03-16 17:58:59,530 - INFO - DBManager.py : log -                           - acan00620 [30/105]
+2017-03-16 17:59:02,804 - INFO - DBManager.py : log -                           - acan00250 [31/105]
+2017-03-16 17:59:05,834 - INFO - DBManager.py : log -                           - acan03450 [32/105]
+2017-03-16 17:59:08,513 - INFO - DBManager.py : log -                           - acan00780 [33/105]
+2017-03-16 17:59:11,195 - INFO - DBManager.py : log -                           - acan00785 [34/105]
+2017-03-16 17:59:13,879 - INFO - DBManager.py : log -                           - acan00010 [35/105]
+2017-03-16 17:59:17,178 - INFO - DBManager.py : log -                           - acan03050 [36/105]
+2017-03-16 17:59:20,187 - INFO - DBManager.py : log -                           - acan00300 [37/105]
+2017-03-16 17:59:23,176 - INFO - DBManager.py : log -                           - acan03030 [38/105]
+2017-03-16 17:59:26,195 - INFO - DBManager.py : log -                           - acan00730 [39/105]
+2017-03-16 17:59:29,166 - INFO - DBManager.py : log -                           - acan00630 [40/105]
+2017-03-16 17:59:32,471 - INFO - DBManager.py : log -                           - acan00220 [41/105]
+2017-03-16 17:59:35,427 - INFO - DBManager.py : log -                           - acan00430 [42/105]
+2017-03-16 17:59:38,126 - INFO - DBManager.py : log -                           - acan03440 [43/105]
+2017-03-16 17:59:41,081 - INFO - DBManager.py : log -                           - acan00020 [44/105]
+2017-03-16 17:59:44,339 - INFO - DBManager.py : log -                           - acan00531 [45/105]
+2017-03-16 17:59:47,307 - INFO - DBManager.py : log -                           - acan04146 [46/105]
+2017-03-16 17:59:50,285 - INFO - DBManager.py : log -                           - acan00330 [47/105]
+2017-03-16 17:59:53,532 - INFO - DBManager.py : log -                           - acan03040 [48/105]
+2017-03-16 17:59:56,529 - INFO - DBManager.py : log -                           - acan04145 [49/105]
+2017-03-16 17:59:59,777 - INFO - DBManager.py : log -                           - acan03420 [50/105]
+2017-03-16 18:00:02,896 - INFO - DBManager.py : log -                           - acan04144 [51/105]
+2017-03-16 18:00:06,517 - INFO - DBManager.py : log -                           - acan03020 [52/105]
+2017-03-16 18:00:09,767 - INFO - DBManager.py : log -                           - acan03022 [53/105]
+2017-03-16 18:00:12,660 - INFO - DBManager.py : log -                           - acan00600 [54/105]
+2017-03-16 18:00:15,916 - INFO - DBManager.py : log -                           - acan00603 [55/105]
+2017-03-16 18:00:19,163 - INFO - DBManager.py : log -                           - acan00230 [56/105]
+2017-03-16 18:00:23,650 - INFO - DBManager.py : log -                           - acan03430 [57/105]
+2017-03-16 18:00:26,500 - INFO - DBManager.py : log -                           - acan00232 [58/105]
+2017-03-16 18:00:29,753 - INFO - DBManager.py : log -                           - acan04141 [59/105]
+2017-03-16 18:00:32,962 - INFO - DBManager.py : log -                           - acan00030 [60/105]
+2017-03-16 18:00:36,454 - INFO - DBManager.py : log -                           - acan00520 [61/105]
+2017-03-16 18:00:40,194 - INFO - DBManager.py : log -                           - acan00130 [62/105]
+2017-03-16 18:00:43,340 - INFO - DBManager.py : log -                           - acan00440 [63/105]
+2017-03-16 18:00:46,667 - INFO - DBManager.py : log -                           - acan03018 [64/105]
+2017-03-16 18:00:49,679 - INFO - DBManager.py : log -                           - acan03010 [65/105]
+2017-03-16 18:00:52,999 - INFO - DBManager.py : log -                           - acan03013 [66/105]
+2017-03-16 18:00:56,278 - INFO - DBManager.py : log -                           - acan03015 [67/105]
+2017-03-16 18:00:59,278 - INFO - DBManager.py : log -                           - acan00590 [68/105]
+2017-03-16 18:01:02,589 - INFO - DBManager.py : log -                           - acan00592 [69/105]
+2017-03-16 18:01:05,627 - INFO - DBManager.py : log -                           - acan00920 [70/105]
+2017-03-16 18:01:08,980 - INFO - DBManager.py : log -                           - acan00750 [71/105]
+2017-03-16 18:01:12,001 - INFO - DBManager.py : log -                           - acan00515 [72/105]
+2017-03-16 18:01:15,058 - INFO - DBManager.py : log -                           - acan00040 [73/105]
+2017-03-16 18:01:18,373 - INFO - DBManager.py : log -                           - acan00510 [74/105]
+2017-03-16 18:01:21,714 - INFO - DBManager.py : log -                           - acan00511 [75/105]
+2017-03-16 18:01:24,403 - INFO - DBManager.py : log -                           - acan00350 [76/105]
+2017-03-16 18:01:27,747 - INFO - DBManager.py : log -                           - acan01230 [77/105]
+2017-03-16 18:01:32,404 - INFO - DBManager.py : log -                           - acan00280 [78/105]
+2017-03-16 18:01:35,727 - INFO - DBManager.py : log -                           - acan00450 [79/105]
+2017-03-16 18:01:38,395 - INFO - DBManager.py : log -                           - acan03008 [80/105]
+2017-03-16 18:01:41,390 - INFO - DBManager.py : log -                           - acan00910 [81/105]
+2017-03-16 18:01:44,402 - INFO - DBManager.py : log -                           - acan01100 [82/105]
+2017-03-16 18:01:54,997 - INFO - DBManager.py : log -                           - acan00740 [83/105]
+2017-03-16 18:01:57,990 - INFO - DBManager.py : log -                           - acan00051 [84/105]
+2017-03-16 18:02:01,320 - INFO - DBManager.py : log -                           - acan04120 [85/105]
+2017-03-16 18:02:04,535 - INFO - DBManager.py : log -                           - acan00053 [86/105]
+2017-03-16 18:02:07,781 - INFO - DBManager.py : log -                           - acan00052 [87/105]
+2017-03-16 18:02:11,074 - INFO - DBManager.py : log -                           - acan00340 [88/105]
+2017-03-16 18:02:15,138 - INFO - DBManager.py : log -                           - acan00460 [89/105]
+2017-03-16 18:02:18,401 - INFO - DBManager.py : log -                           - acan00290 [90/105]
+2017-03-16 18:02:21,654 - INFO - DBManager.py : log -                           - acan00260 [91/105]
+2017-03-16 18:02:25,309 - INFO - DBManager.py : log -                           - acan00860 [92/105]
+2017-03-16 18:02:28,998 - INFO - DBManager.py : log -                           - acan00900 [93/105]
+2017-03-16 18:02:32,629 - INFO - DBManager.py : log -                           - acan00670 [94/105]
+2017-03-16 18:02:35,766 - INFO - DBManager.py : log -                           - acan02010 [95/105]
+2017-03-16 18:02:40,029 - INFO - DBManager.py : log -                           - acan00770 [96/105]
+2017-03-16 18:02:43,212 - INFO - DBManager.py : log -                           - acan01110 [97/105]
+2017-03-16 18:02:49,853 - INFO - DBManager.py : log -                           - acan00061 [98/105]
+2017-03-16 18:02:53,723 - INFO - DBManager.py : log -                           - acan00062 [99/105]
+2017-03-16 18:02:56,716 - INFO - DBManager.py : log -                           - acan00100 [100/105]
+2017-03-16 18:02:59,723 - INFO - DBManager.py : log -                           - acan01210 [101/105]
+2017-03-16 18:03:03,465 - INFO - DBManager.py : log -                           - acan01040 [102/105]
+2017-03-16 18:03:06,785 - INFO - DBManager.py : log -                           - acan01212 [103/105]
+2017-03-16 18:03:10,156 - INFO - DBManager.py : log -                           - acan00471 [104/105]
+2017-03-16 18:03:12,914 - INFO - DBManager.py : log -                           - acan03410 [105/105]
+2017-03-16 18:03:17,959 - INFO - DBManager.py : log -              DOWNLOADED IN 363.897326946 seconds ---
+2017-03-16 18:03:17,960 - INFO - DBManager.py : log -                  FETCHING MAPPING DATA FOR acan (1/1)...
+2017-03-16 18:03:17,961 - INFO - DBManager.py : log -                   * KEGG TO NCBI GeneID
+2017-03-16 18:03:23,979 - INFO - DBManager.py : log -                   * KEGG TO Uniprot
+2017-03-16 18:03:29,844 - INFO - DBManager.py : log -                   * KEGG TO Gene Symbol
+2017-03-16 18:03:39,449 - INFO - DBManager.py : log -                      DOWNLOADED IN 0 minutes ---
+2017-03-16 18:03:39,450 - INFO - DBManager.py : log -              DOWNLOAD  3 acan...SUCCESS
+
+2017-03-16 18:03:39,451 - INFO - DBManager.py : log -      
+2017-03-16 18:03:39,451 - INFO - DBManager.py : log -      STEP 3. CLOSING LOG FILES, GENERATING VERSION FILE
+2017-03-16 18:20:44,393 - INFO - DBManager.py : log -      ######################################################################
+2017-03-16 18:20:44,394 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE KEGG DOWNLOADER 
+2017-03-16 18:20:44,394 - INFO - DBManager.py : log -      ### v.0.12
+2017-03-16 18:20:44,395 - INFO - DBManager.py : log -      ######################################################################
+2017-03-16 18:20:44,395 - INFO - DBManager.py : log -      
+2017-03-16 18:20:44,396 - INFO - DBManager.py : log -      Download log is at: /data/KEGG_DATA/download/download.log
+2017-03-16 18:20:44,396 - INFO - DBManager.py : log -      
+2017-03-16 18:20:44,396 - INFO - DBManager.py : log -      STEP 0. READ CONFIGURATION AND PARSE INPUT FILES...
+2017-03-16 18:20:46,400 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2017-03-16 18:20:46,400 - INFO - DBManager.py : log -      
+2017-03-16 18:20:46,401 - INFO - DBManager.py : log -      
+2017-03-16 18:20:46,402 - INFO - DBManager.py : log -      STEP 2. DOWNLOADING THE INFORMATION FOR THE SELECTED ORGANISMS
+2017-03-16 18:20:46,402 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2017-03-16 18:20:46,403 - INFO - DBManager.py : log -              New data will be stored at /data/KEGG_DATA/download/app/
+2017-03-16 18:20:46,404 - INFO - DBManager.py : log -                      DOWLOADING  app...
+2017-03-16 18:20:46,404 - INFO - DBManager.py : log -                  FETCHING KEGG DATA FOR app (1/1)...
+2017-03-16 18:20:46,405 - INFO - DBManager.py : log -                    * GENE to PATHWAY TABLE
+2017-03-16 18:20:52,011 - INFO - DBManager.py : log -                    * PATHWAYS LIST
+2017-03-16 18:20:56,341 - INFO - DBManager.py : log -                          DETECTED 113 PATHWAYS FOR app [9 min aprox.]
+2017-03-16 18:20:56,342 - INFO - DBManager.py : log -                           - app00072 [1/113]
+2017-03-16 18:20:59,484 - INFO - DBManager.py : log -                           - app00071 [2/113]
+2017-03-16 18:21:04,208 - INFO - DBManager.py : log -                           - app00906 [3/113]
+2017-03-16 18:21:08,618 - INFO - DBManager.py : log -                           - app00380 [4/113]
+2017-03-16 18:21:12,641 - INFO - DBManager.py : log -                           - app00903 [5/113]
+2017-03-16 18:21:16,273 - INFO - DBManager.py : log -                           - app00900 [6/113]
+2017-03-16 18:21:19,560 - INFO - DBManager.py : log -                           - app00473 [7/113]
+2017-03-16 18:21:22,425 - INFO - DBManager.py : log -                           - app00471 [8/113]
+2017-03-16 18:21:25,253 - INFO - DBManager.py : log -                           - app00780 [9/113]
+2017-03-16 18:21:28,519 - INFO - DBManager.py : log -                           - app02060 [10/113]
+2017-03-16 18:21:32,135 - INFO - DBManager.py : log -                           - app00785 [11/113]
+2017-03-16 18:21:34,953 - INFO - DBManager.py : log -                           - app00261 [12/113]
+2017-03-16 18:21:38,117 - INFO - DBManager.py : log -                           - app00260 [13/113]
+2017-03-16 18:21:41,707 - INFO - DBManager.py : log -                           - app00362 [14/113]
+2017-03-16 18:21:45,275 - INFO - DBManager.py : log -                           - app00680 [15/113]
+2017-03-16 18:21:49,684 - INFO - DBManager.py : log -                           - app00360 [16/113]
+2017-03-16 18:21:53,152 - INFO - DBManager.py : log -                           - app00361 [17/113]
+2017-03-16 18:21:56,665 - INFO - DBManager.py : log -                           - app00364 [18/113]
+2017-03-16 18:21:59,789 - INFO - DBManager.py : log -                           - app00040 [19/113]
+2017-03-16 18:22:03,416 - INFO - DBManager.py : log -                           - app00480 [20/113]
+2017-03-16 18:22:06,705 - INFO - DBManager.py : log -                           - app00930 [21/113]
+2017-03-16 18:22:09,566 - INFO - DBManager.py : log -                           - app00670 [22/113]
+2017-03-16 18:22:12,841 - INFO - DBManager.py : log -                           - app02040 [23/113]
+2017-03-16 18:22:15,702 - INFO - DBManager.py : log -                           - app00564 [24/113]
+2017-03-16 18:22:19,372 - INFO - DBManager.py : log -                           - app02030 [25/113]
+2017-03-16 18:22:22,245 - INFO - DBManager.py : log -                           - app03440 [26/113]
+2017-03-16 18:22:26,133 - INFO - DBManager.py : log -                           - app00561 [27/113]
+2017-03-16 18:22:29,383 - INFO - DBManager.py : log -                           - app00562 [28/113]
+2017-03-16 18:22:32,636 - INFO - DBManager.py : log -                           - app00730 [29/113]
+2017-03-16 18:22:35,939 - INFO - DBManager.py : log -                           - app00270 [30/113]
+2017-03-16 18:22:39,590 - INFO - DBManager.py : log -                           - app00051 [31/113]
+2017-03-16 18:22:43,219 - INFO - DBManager.py : log -                           - app00052 [32/113]
+2017-03-16 18:22:46,454 - INFO - DBManager.py : log -                           - app00053 [33/113]
+2017-03-16 18:22:49,630 - INFO - DBManager.py : log -                           - app01501 [34/113]
+2017-03-16 18:22:52,759 - INFO - DBManager.py : log -                           - app00190 [35/113]
+2017-03-16 18:22:56,206 - INFO - DBManager.py : log -                           - app01503 [36/113]
+2017-03-16 18:22:59,308 - INFO - DBManager.py : log -                           - app01502 [37/113]
+2017-03-16 18:23:02,444 - INFO - DBManager.py : log -                           - app00590 [38/113]
+2017-03-16 18:23:05,616 - INFO - DBManager.py : log -                           - app00592 [39/113]
+2017-03-16 18:23:08,736 - INFO - DBManager.py : log -                           - app03070 [40/113]
+2017-03-16 18:23:11,909 - INFO - DBManager.py : log -                           - app00920 [41/113]
+2017-03-16 18:23:15,446 - INFO - DBManager.py : log -                           - app00450 [42/113]
+2017-03-16 18:23:18,565 - INFO - DBManager.py : log -                           - app00281 [43/113]
+2017-03-16 18:23:21,709 - INFO - DBManager.py : log -                           - app00280 [44/113]
+2017-03-16 18:23:25,188 - INFO - DBManager.py : log -                           - app00760 [45/113]
+2017-03-16 18:23:28,739 - INFO - DBManager.py : log -                           - app00770 [46/113]
+2017-03-16 18:23:31,877 - INFO - DBManager.py : log -                           - app00020 [47/113]
+2017-03-16 18:23:34,978 - INFO - DBManager.py : log -                           - app00220 [48/113]
+2017-03-16 18:23:38,021 - INFO - DBManager.py : log -                           - app03060 [49/113]
+2017-03-16 18:23:41,064 - INFO - DBManager.py : log -                           - app04122 [50/113]
+2017-03-16 18:23:44,062 - INFO - DBManager.py : log -                           - app01100 [51/113]
+2017-03-16 18:23:54,772 - INFO - DBManager.py : log -                           - app01210 [52/113]
+2017-03-16 18:23:58,437 - INFO - DBManager.py : log -                           - app00500 [53/113]
+2017-03-16 18:24:01,820 - INFO - DBManager.py : log -                           - app00750 [54/113]
+2017-03-16 18:24:04,962 - INFO - DBManager.py : log -                           - app00290 [55/113]
+2017-03-16 18:24:07,786 - INFO - DBManager.py : log -                           - app00350 [56/113]
+2017-03-16 18:24:11,456 - INFO - DBManager.py : log -                           - app00030 [57/113]
+2017-03-16 18:24:14,688 - INFO - DBManager.py : log -                           - app00230 [58/113]
+2017-03-16 18:24:18,680 - INFO - DBManager.py : log -                           - app00330 [59/113]
+2017-03-16 18:24:22,254 - INFO - DBManager.py : log -                           - app00332 [60/113]
+2017-03-16 18:24:25,055 - INFO - DBManager.py : log -                           - app03018 [61/113]
+2017-03-16 18:24:28,202 - INFO - DBManager.py : log -                           - app03010 [62/113]
+2017-03-16 18:24:31,294 - INFO - DBManager.py : log -                           - app00627 [63/113]
+2017-03-16 18:24:34,300 - INFO - DBManager.py : log -                           - app00626 [64/113]
+2017-03-16 18:24:37,256 - INFO - DBManager.py : log -                           - app00625 [65/113]
+2017-03-16 18:24:40,178 - INFO - DBManager.py : log -                           - app00623 [66/113]
+2017-03-16 18:24:43,123 - INFO - DBManager.py : log -                           - app00620 [67/113]
+2017-03-16 18:24:46,384 - INFO - DBManager.py : log -                           - app01110 [68/113]
+2017-03-16 18:24:52,567 - INFO - DBManager.py : log -                           - app02024 [69/113]
+2017-03-16 18:24:55,826 - INFO - DBManager.py : log -                           - app00740 [70/113]
+2017-03-16 18:24:58,766 - INFO - DBManager.py : log -                           - app02020 [71/113]
+2017-03-16 18:25:02,884 - INFO - DBManager.py : log -                           - app01200 [72/113]
+2017-03-16 18:25:06,475 - INFO - DBManager.py : log -                           - app00660 [73/113]
+2017-03-16 18:25:09,124 - INFO - DBManager.py : log -                           - app00340 [74/113]
+2017-03-16 18:25:12,069 - INFO - DBManager.py : log -                           - app03410 [75/113]
+2017-03-16 18:25:15,029 - INFO - DBManager.py : log -                           - app00430 [76/113]
+2017-03-16 18:25:17,978 - INFO - DBManager.py : log -                           - app00240 [77/113]
+2017-03-16 18:25:21,247 - INFO - DBManager.py : log -                           - app00970 [78/113]
+2017-03-16 18:25:24,188 - INFO - DBManager.py : log -                           - app00630 [79/113]
+2017-03-16 18:25:27,427 - INFO - DBManager.py : log -                           - app00633 [80/113]
+2017-03-16 18:25:30,083 - INFO - DBManager.py : log -                           - app01120 [81/113]
+2017-03-16 18:25:35,982 - INFO - DBManager.py : log -                           - app00520 [82/113]
+2017-03-16 18:25:39,269 - INFO - DBManager.py : log -                           - app00521 [83/113]
+2017-03-16 18:25:42,228 - INFO - DBManager.py : log -                           - app00523 [84/113]
+2017-03-16 18:25:45,176 - INFO - DBManager.py : log -                           - app01040 [85/113]
+2017-03-16 18:25:48,159 - INFO - DBManager.py : log -                           - app00525 [86/113]
+2017-03-16 18:25:50,838 - INFO - DBManager.py : log -                           - app01230 [87/113]
+2017-03-16 18:25:54,378 - INFO - DBManager.py : log -                           - app00130 [88/113]
+2017-03-16 18:25:57,345 - INFO - DBManager.py : log -                           - app00401 [89/113]
+2017-03-16 18:26:00,285 - INFO - DBManager.py : log -                           - app00400 [90/113]
+2017-03-16 18:26:03,839 - INFO - DBManager.py : log -                           - app00250 [91/113]
+2017-03-16 18:26:07,130 - INFO - DBManager.py : log -                           - app00310 [92/113]
+2017-03-16 18:26:10,106 - INFO - DBManager.py : log -                           - app03030 [93/113]
+2017-03-16 18:26:13,055 - INFO - DBManager.py : log -                           - app01130 [94/113]
+2017-03-16 18:26:18,586 - INFO - DBManager.py : log -                           - app01220 [95/113]
+2017-03-16 18:26:22,148 - INFO - DBManager.py : log -                           - app02010 [96/113]
+2017-03-16 18:26:26,546 - INFO - DBManager.py : log -                           - app01212 [97/113]
+2017-03-16 18:26:29,831 - INFO - DBManager.py : log -                           - app00410 [98/113]
+2017-03-16 18:26:32,484 - INFO - DBManager.py : log -                           - app00640 [99/113]
+2017-03-16 18:26:35,733 - INFO - DBManager.py : log -                           - app00643 [100/113]
+2017-03-16 18:26:38,382 - INFO - DBManager.py : log -                           - app03430 [101/113]
+2017-03-16 18:26:41,049 - INFO - DBManager.py : log -                           - app00550 [102/113]
+2017-03-16 18:26:44,050 - INFO - DBManager.py : log -                           - app00300 [103/113]
+2017-03-16 18:26:47,578 - INFO - DBManager.py : log -                           - app00061 [104/113]
+2017-03-16 18:26:50,856 - INFO - DBManager.py : log -                           - app03020 [105/113]
+2017-03-16 18:26:53,516 - INFO - DBManager.py : log -                           - app00860 [106/113]
+2017-03-16 18:26:57,104 - INFO - DBManager.py : log -                           - app00910 [107/113]
+2017-03-16 18:27:00,060 - INFO - DBManager.py : log -                           - app00460 [108/113]
+2017-03-16 18:27:03,029 - INFO - DBManager.py : log -                           - app03420 [109/113]
+2017-03-16 18:27:06,011 - INFO - DBManager.py : log -                           - app00650 [110/113]
+2017-03-16 18:27:08,945 - INFO - DBManager.py : log -                           - app00010 [111/113]
+2017-03-16 18:27:12,211 - INFO - DBManager.py : log -                           - app00540 [112/113]
+2017-03-16 18:27:15,195 - INFO - DBManager.py : log -                           - app00790 [113/113]
+2017-03-16 18:27:20,172 - INFO - DBManager.py : log -              DOWNLOADED IN 393.767714977 seconds ---
+2017-03-16 18:27:20,173 - INFO - DBManager.py : log -                  FETCHING MAPPING DATA FOR app (1/1)...
+2017-03-16 18:27:20,174 - INFO - DBManager.py : log -                   * KEGG TO NCBI GeneID
+2017-03-16 18:27:22,868 - ERROR - DBManager.py : errorlog -              FAIL! Trying again... 2 of 3
+2017-03-16 18:27:25,522 - ERROR - DBManager.py : errorlog -              FAIL! Trying again... 3 of 3
+2017-03-16 18:27:28,242 - ERROR - DBManager.py : errorlog -              FAIL! Trying again... 4 of 3
+2017-03-16 18:27:28,242 - INFO - DBManager.py : log -                                     Failed!! The download process will continue...
+2017-03-16 18:27:28,243 - INFO - DBManager.py : log -                   * KEGG TO Uniprot
+2017-03-16 18:27:31,802 - INFO - DBManager.py : log -                   * KEGG TO Gene Symbol
+2017-03-16 18:27:37,252 - INFO - DBManager.py : log -                      DOWNLOADED IN 0 minutes ---
+2017-03-16 18:27:37,252 - INFO - DBManager.py : log -                  Errors detected during the download for organism app
+2017-03-16 18:27:37,253 - INFO - DBManager.py : log -                    - Errors during KEGG data download: 
+2017-03-16 18:27:37,254 - INFO - DBManager.py : log -                    - Errors during MAPPING data download:  ncbi-geneid
+2017-03-16 18:27:37,254 - INFO - DBManager.py : log -                  The organism will be moved to the erroneous directory but could be valid for installation.
+2017-03-16 18:27:37,255 - INFO - DBManager.py : log -              DOWNLOAD  3 app...ERROR
+
+2017-03-16 18:27:37,255 - ERROR - DBManager.py : errorlog -              Errors detected during the download for organism app. Aborting.
+2017-03-16 18:27:37,271 - INFO - DBManager.py : log -      
+2017-03-16 18:27:37,272 - INFO - DBManager.py : log -      STEP 3. CLOSING LOG FILES, GENERATING VERSION FILE

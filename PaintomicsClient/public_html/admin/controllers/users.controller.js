@@ -26,7 +26,7 @@
 (function(){
 	var app = angular.module('admin.controllers.user-controllers', [
 		'ui.bootstrap',
-		'common.dialogs',
+		'ang-dialogs',
 		'chart.js',
 		'users.users.user-list'
 	]);

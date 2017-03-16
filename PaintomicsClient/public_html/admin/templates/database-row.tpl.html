@@ -3,10 +3,11 @@
 		<div>
 			<span ng-show="database.status === 'installed'" class="label label-success" style="float: right;padding: 5px;">Installed</span>
 			<span ng-show="database.status !== 'installed'" class="label label-danger" style="float: right;padding: 5px;">Not installed</span>
+			<span ng-show="database.downloaded === true" class="label label-primary" style="float: right;padding: 5px;">Local data available</span>
 			<h4>{{database.organism_name}}</h4>
 		</div>
 		<div>
-			<p><b>KEGG code:</b>{{database.organism_code}}</p>
+			<p><b>KEGG code:</b> {{database.organism_code}}</p>
 			<hr>
 			<div style="float: left;">
 				<p><b>Accepted IDs:</b> {{database.acceptedIDs}}</p>
@@ -16,9 +17,12 @@
 			</div>
 			<div class="store-database-tools">
 				<b>Options: </b>
-				<a ng-show="database.status === 'installed'" ng-click="controller.updateDatabaseHandler(database)" class="btn btn-info" style="padding: 5px;"><i class="fa fa-refresh" aria-hidden="true"></i> Update</a>
-				<a ng-show="database.status === 'installed'" ng-click="controller.deleteDatabaseHandler(database)" class="btn btn-danger" style="padding: 5px;"><i class="fa fa-trash" aria-hidden="true"></i> Uninstall</a>
-				<a ng-show="database.status !== 'installed'" ng-click="controller.installDatabaseHandler(database)" class="btn btn-primary" style="padding: 5px;"><i class="fa fa-download" aria-hidden="true"></i> Install</a>
+				<span ng-show="database.downloaded === 'downloading'" style="padding: 5px;"><i class="fa fa-spinner fa-spin fa-fw"></i> Downloading...</span>
+				<a ng-show="database.status === 'installed' && database.downloaded === false" ng-click="controller.installDatabaseHandler(database, true)" class="btn btn-info" style="padding: 5px;"><i class="fa fa-download" aria-hidden="true"></i> Download newer version</a>
+				<a ng-show="database.status === 'installed' && database.downloaded === true" ng-click="controller.installDatabaseHandler(database)" class="btn btn-success" style="padding: 5px;"><i class="fa fa-refresh" aria-hidden="true"></i> Install newer version</a>
+				<!-- <a ng-show="database.status === 'installed'" ng-click="controller.deleteDatabaseHandler(database)" class="btn btn-danger" style="padding: 5px;"><i class="fa fa-trash" aria-hidden="true"></i> Uninstall</a> -->
+				<a ng-show="database.status !== 'installed' && database.downloaded === false" ng-click="controller.installDatabaseHandler(database, true)" class="btn btn-primary" style="padding: 5px;"><i class="fa fa-download" aria-hidden="true"></i> Download database</a>
+				<a ng-show="database.status !== 'installed' && database.downloaded === true" ng-click="controller.installDatabaseHandler(database)" class="btn btn-success" style="padding: 5px;"><i class="fa fa-check" aria-hidden="true"></i> Install specie</a>
 			</div>
 		</div>
 	</div>

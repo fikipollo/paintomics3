@@ -22,6 +22,7 @@ import logging.config
 import json
 from os import path as os_path
 from shutil import rmtree as shutil_rmtree
+import csv
 
 #CPU MONITOR
 import psutil
@@ -63,11 +64,14 @@ def adminServletGetInstalledOrganisms(request, response):
         #****************************************************************
         # Step 1.GET THE LIST OF INSTALLED SPECIES (DATABASES and SPECIES.JSON)
         #****************************************************************
-        with open(KEGG_DATA_DIR + 'last/species/species.json') as installedSpeciesFile:
-            installedSpecies = json.load(installedSpeciesFile)
-        installedSpeciesFile.close()
+        organisms_names = {}
+        with open(KEGG_DATA_DIR + 'common/organisms_all.list') as organisms_all:
+            reader = csv.reader(organisms_all, delimiter='\t')
+            for row in reader:
+                organisms_names[row[1]] = row[2]
+        organisms_all.close()
 
-        installedSpecies = installedSpecies.get("species")
+        installedSpecies = []
         from pymongo import MongoClient
 
         client = MongoClient(MONGODB_HOST, MONGODB_PORT)
@@ -88,16 +92,8 @@ def adminServletGetInstalledOrganisms(request, response):
             else:
                 # Step 2.1 GET THE SPECIE CODE
                 organism_code=database.replace("-paintomics", "")
-                organism_name=""
-
                 # Step 2.2 GET THE SPECIE NAME
-                for installedSpecie in installedSpecies:
-                    if installedSpecie["value"] == organism_code:
-                        organism_name= installedSpecie["name"]
-                        break
-
-                if organism_name == "":
-                    organism_name = "Erroneous organism, not at SPECIES.JSON"
+                organism_name= organisms_names.get(organism_code, "Unknown specie")
 
                 # Step 2.3 GET THE SPECIE VERSIONS
                 db = client[database]
@@ -109,12 +105,25 @@ def adminServletGetInstalledOrganisms(request, response):
                     acceptedIDs = acceptedIDs[0].get("ids")
                 else:
                     acceptedIDs = ""
+
+                # Step 2.4 Check if the organism has non installed data available
+                if os_path.isfile(KEGG_DATA_DIR + 'download/' + organism_code + '/VERSION'):
+                    downloaded = True
+                elif os_path.isfile(KEGG_DATA_DIR + 'download/' + organism_code + '/DOWNLOADING'):
+                    downloaded = "downloading"
+                else:
+                    downloaded = False
+                    #Erroneous download not removed --> remove
+                    if os_path.isdir(KEGG_DATA_DIR + 'download/' + organism_code):
+                        shutil_rmtree(KEGG_DATA_DIR + 'download/' + organism_code)
+
                 databaseList.append({
                     "organism_name" : organism_name,
                     "organism_code" : organism_code,
                     "kegg_date"     : kegg_date,
                     "mapping_date"  : mapping_date,
-                    "acceptedIDs"   : acceptedIDs
+                    "acceptedIDs"   : acceptedIDs,
+                    "downloaded": downloaded
                 })
 
         client.close()
@@ -149,14 +158,27 @@ def adminServletGetAvailableOrganisms(request, response):
         #****************************************************************
         import csv
         databaseList = []
-        with open(KEGG_DATA_DIR + 'last/organisms_all.list') as availableSpeciesFile:
+        with open(KEGG_DATA_DIR + 'common/organisms_all.list') as availableSpeciesFile:
             reader = csv.reader(availableSpeciesFile,  delimiter='\t')
             for row in reader:
+                organism_code = row[1]
+                # Step 2.4 Check if the organism has non installed data available
+                if os_path.isfile(KEGG_DATA_DIR + 'download/' + organism_code + '/VERSION'):
+                    downloaded = True
+                elif os_path.isfile(KEGG_DATA_DIR + 'download/' + organism_code + '/DOWNLOADING'):
+                    downloaded = "downloading"
+                else:
+                    downloaded = False
+                    #Erroneous download not removed --> remove
+                    if os_path.isdir(KEGG_DATA_DIR + 'download/' + organism_code):
+                        shutil_rmtree(KEGG_DATA_DIR + 'download/' + organism_code)
+
                 databaseList.append({
                     "organism_name": row[2],
-                    "organism_code": row[1],
+                    "organism_code": organism_code,
                     "categories": row[3].split(";"),
-                    "organism_id" : row[0]
+                    "organism_id" : row[0],
+                    "downloaded": downloaded
                 })
         availableSpeciesFile.close()
 
@@ -168,13 +190,15 @@ def adminServletGetAvailableOrganisms(request, response):
     finally:
         return response
 
-def adminServletUpdateOrganism(request, response, ROOT_DIRECTORY):
+def adminServletInstallOrganism(request, response, organism_code, ROOT_DIRECTORY):
     """
-    This function manages an 'Update Organism' request by calling to the
+    This function manages an 'Install/Update Organism' request by calling to the
     DBManager tool.
 
     @param {Request} request, the request object
     @param {Response} response, the response object
+    @param {String} organism_code,
+    @param {String} ROOT_DIRECTORY,
     """
     try :
         #****************************************************************
@@ -189,19 +213,10 @@ def adminServletUpdateOrganism(request, response, ROOT_DIRECTORY):
         #****************************************************************
         # Step 1.GET THE SPECIE CODE AND THE UPDATE OPTION
         #****************************************************************
-        formFields = request.form
-        organism_code  = formFields.get("organism_code")
-        just_install  = formFields.get("just_install") == "true"
-        option = formFields.get("option")
-
-        update_kegg=0
-        update_mapping=0
+        download  = json.loads(request.data).get("download")
+        update_kegg=1
+        update_mapping=1
         common = 0
-
-        if (organism_code != "common" and option == "updateKegg") or option == "all":
-            update_kegg=1
-        if (organism_code != "common" and option == "updateMapping") or option == "all":
-            update_mapping=1
 
         if organism_code == "common":
             common = 1
@@ -209,22 +224,33 @@ def adminServletUpdateOrganism(request, response, ROOT_DIRECTORY):
 
         from subprocess import check_output, CalledProcessError, STDOUT
 
-        if option != "reinstallData" and just_install != True:
-            logging.info("STARTING DBManager Download PROCESS.")
+
+        #****************************************************************
+        # Step 2a. IF THE SELECTED OPTION IS DOWNLOAD
+        #****************************************************************
+        if download:
+            logging.info("STARTING DBManager download PROCESS.")
             scriptArgs = [ROOT_DIRECTORY + "AdminTools/DBManager.py", "download", "--specie=" + organism_code, "--kegg=" + str(update_kegg), "--mapping=" + str(update_mapping), "--common=" + str(common)]
             try:
                 check_output(scriptArgs, stderr=STDOUT)
             except CalledProcessError as exc:
-                raise Exception("Error while calling DBManager Download: Exit status " + str(exc.returncode) + ". Error message: " + exc.output)
+                raise Exception("Error while calling DBManager download: Exit status " + str(exc.returncode) + ". Error message: " + exc.output)
             logging.info("FINISHED DBManager Download PROCESS.")
 
-        logging.info("STARTING DBManager Install PROCESS.")
-        scriptArgs = [ROOT_DIRECTORY + "AdminTools/DBManager.py", "install", "--specie=" + organism_code, "--common=" + str(common)]
-        try:
-            check_output(scriptArgs, stderr=STDOUT)
-        except CalledProcessError as exc:
-            raise Exception("Error while calling DBManager Install: Exit status " + str(exc.returncode) + ". Error message: " + exc.output)
-        logging.info("FINISHED DBManager Install PROCESS.")
+        # ****************************************************************
+        # Step 2B. IF THE SELECTED OPTION IS INSTALL
+        # ****************************************************************
+        else:
+            from time import sleep
+            sleep(10)
+
+            # logging.info("STARTING DBManager Install PROCESS.")
+            # scriptArgs = [ROOT_DIRECTORY + "AdminTools/DBManager.py", "install", "--specie=" + organism_code, "--common=" + str(common)]
+            # try:
+            #     check_output(scriptArgs, stderr=STDOUT)
+            # except CalledProcessError as exc:
+            #     raise Exception("Error while calling DBManager Install: Exit status " + str(exc.returncode) + ". Error message: " + exc.output)
+            # logging.info("FINISHED DBManager Install PROCESS.")
 
         response.setContent({"success": True})
 

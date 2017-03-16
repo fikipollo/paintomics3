@@ -10,10 +10,10 @@
 			<div class="col-sm-4">
 				<h4>Categories</h4>
 				<div>
-					<div class="category-chooser clickable" ng-repeat="category in categories | orderBy:'-times'">
+					<div class="category-chooser clickable" ng-repeat="category in categories | orderBy:categorySorter" ng-click="controller.addCategoryFilter(category)">
 						<i ng-show="!category.selected" class="fa fa-square-o" aria-hidden="true"></i>
 						<i ng-show="category.selected" class="fa fa-check-square-o" aria-hidden="true"></i>
-						<span ng-click="category.selected = !(category.selected === true)">{{category.name}} <span class="badge">{{category.times}}</span></span>
+						<span>{{category.name}} <span class="badge">{{category.times}}</span></span>
 					</div>
 				</div>
 			</div>
@@ -30,7 +30,9 @@
 					</span>
 				</div>
 				<div style="margin: 10px 5px;">
-					<span class="label label-default" ng-repeat="item in filters">{{item}}</span>
+					<span class="label label-default" style="margin-left:5px;" ng-repeat="item in filters">
+						<span class="clickable" ng-click="controller.removeFilter(item)"> x </span>{{item}}
+						</span>
 				</div>
 				<database-row ng-repeat="database in databases | filter:filterDatabases() | orderBy: ['status','organism_name'] | limitTo : visibleDatabases"></database-row>
 				<div class="row" style="text-align: center;">

@@ -337,17 +337,19 @@ class Application(object):
         def getAvailableDatabasesInfo():
             return adminServletGetAvailableOrganisms(request, Response()).getResponse()
         ##*******************************************************************************************
-        ##* INSTALL SELECTED SPECIE
+        ##* INSTALL OR UPDATE SELECTED SPECIE
         ##*******************************************************************************************
         @self.app.route(SERVER_SUBDOMAIN + '/api/admin/databases/<path:organism_code>', methods=['OPTIONS', 'POST'])
         def installOrganismDatabaseData(organism_code):
-            return adminServletUpdateOrganism(request, Response(), organism_code, self.ROOT_DIRECTORY).getResponse()
+            return adminServletInstallOrganism(request, Response(), organism_code, self.ROOT_DIRECTORY).getResponse()
+        ##* DELETE SELECTED SPECIE
         ##*******************************************************************************************
-        ##* UPDATE SELECTED SPECIE
-        ##*******************************************************************************************
-        @self.app.route(SERVER_SUBDOMAIN + '/api/admin/databases/<path:organism_code>', methods=['OPTIONS', 'PUT'])
-        def updateOrganismDatabaseData(organism_code):
-            return adminServletUpdateOrganism(request, Response(), organism_code, self.ROOT_DIRECTORY).getResponse()
+        @self.app.route(SERVER_SUBDOMAIN + '/api/admin/databases/<path:organism_code>', methods=['OPTIONS', 'DELETE'])
+        def deleteOrganismDatabaseData(organism_code):
+            response = Response()
+            response.setContent({"success": False})
+            return response.getResponse()
+            #return adminServletDeleteOrganism(request, Response(), organism_code, self.ROOT_DIRECTORY).getResponse()
 
 
         ##*******************************************************************************************
@@ -435,7 +437,7 @@ class Application(object):
         ##*******************************************************************************************
         ##* LAUNCH APPLICATION
         ##*******************************************************************************************
-        self.app.run(host=SERVER_HOST_NAME, port=SERVER_PORT_NUMBER,  debug=SERVER_ALLOW_DEBUG )
+        self.app.run(host=SERVER_HOST_NAME, port=SERVER_PORT_NUMBER,  debug=SERVER_ALLOW_DEBUG, threaded=True)
 
     ##*************************************************************************************************************
     # This function returns a new random job id
