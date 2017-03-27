@@ -48,7 +48,7 @@
 	</script>
 </head>
 <body ng-controller="AdminController as controller">
-	<nav class="navbar navbar-inverse sidebar expanded" role="navigation" ng-mouseenter="controller.uncollapseMenuHandler()" ng-mouseleave="controller.collapseMenuHandler()">
+	<nav class="navbar navbar-inverse sidebar" role="navigation" ng-mouseenter="controller.uncollapseMenuHandler()" ng-mouseleave="controller.collapseMenuHandler()">
 		<div class="container-fluid">
 			<!-- Brand and toggle get grouped for better mobile display -->
 			<div class="navbar-header">
@@ -60,16 +60,17 @@
 				</button>
 				<a class="navbar-brand" href="#" style="padding:0;">
 					<span class="navbar-brand-collapsed-icon">
-						<span class="glyphicon glyphicon-heart"></span><br>ebiokit
+						<img src="resources/paintomics_150x150.png" alt="Paintomics logo" style=" width: 40px; padding-top: 20px; ">
 					</span>
 				</a>
 			</div>
 			<!-- Collect the nav links, forms, and other content for toggling -->
 			<div class="collapse navbar-collapse" id="bs-sidebar-navbar-collapse-1">
 				<ul class="nav navbar-nav" style="width: 100%;">
-					<li ng-repeat="service in open_services" ng-class="(visible_services.indexOf(service) !== -1 )?'active':''"  uib-tooltip="{{service.title}}" tooltip-placement="right"  >
-						<a class="clickable" ng-click="controller.changeCurrentServiceHandler(service)">{{ service.title }}
-							<span style="font-size:16px;" class="pull-right hidden-xs showopacity fa" ng-class="service.icon"></span>
+					<li ng-repeat="service in open_services" ng-class="(visible_services.indexOf(service) !== -1 )?'active':''"  uib-tooltip="{{service.description}}" tooltip-placement="right"  >
+						<a class="clickable" ng-click="controller.changeCurrentServiceHandler(service)" style=" padding: 10px 0px; text-align: center; ">
+							<span class="fa " style="display:block; font-size:22px;" ng-class="service.icon"></span>
+							<span style="text-align:center; font-size:10px;">{{service.title}}</span>
 						</a>
 					</li>
 				</ul>
@@ -81,10 +82,13 @@
 	</div>
 </body>
 <script type="text/javascript" src="admin_app.js"></script>
+<script type="text/javascript" src="controllers/systeminfo.controller.js"></script>
 <script type="text/javascript" src="controllers/databases.controller.js"></script>
 <script type="text/javascript" src="controllers/database-list-service.js"></script>
 <script type="text/javascript" src="controllers/users.controller.js"></script>
 <script type="text/javascript" src="controllers/user-list-service.js"></script>
+<script type="text/javascript" src="controllers/files.controller.js"></script>
+<script type="text/javascript" src="controllers/file-list-service.js"></script>
 <script type="text/javascript" src="controllers/admin.dir.js"></script>
 <script type="text/javascript" src="resources/common.js"></script>
 <script type="text/javascript" src="lib/angular-dialogs/angular-dialogs.min.js"></script>

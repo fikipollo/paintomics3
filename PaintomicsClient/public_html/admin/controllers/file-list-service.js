@@ -19,61 +19,61 @@
 *     aconesa@cipf.es
 *
 * THIS FILE CONTAINS THE FOLLOWING MODULE DECLARATION
-* - users.users.user-list
+* - files.files.file-list
 *
 */
 (function(){
-	var app = angular.module('users.users.user-list', []);
+	var app = angular.module('files.files.file-list', []);
 
-	app.factory("UserList", ['$rootScope', function($rootScope) {
-		var users = [];
+	app.factory("FileList", ['$rootScope', function($rootScope) {
+		var files = [];
 		var availableSpace = 0;
 		var filters = [];
 		var old = new Date(0);
 		return {
-			getUsers: function() {
-				return users;
+			getFiles: function() {
+				return files;
 			},
-			setUsers: function(userList) {
-				users = this.adaptUsersInformation(userList);
+			setFiles: function(fileList) {
+				files = this.adaptFilesInformation(fileList);
 				old = new Date();
 				return this;
 			},
 			setAvailableSpace: function(_availableSpace){
 				availableSpace = _availableSpace;
 			},
-			updateUsers: function(newUsers, soft) {
+			updateFiles: function(newFiles, soft) {
 				return this;
 			},
-			getUser: function(user_id) {
-				for(var i in users){
-					if(users[i].id === user_id){
-						return users[i];
+			getFile: function(file_id) {
+				for(var i in files){
+					if(files[i].id === file_id){
+						return files[i];
 					}
 				}
 				return null;
 			},
-			addUser: function(user) {
-				users.push(this.adaptUserInformation(user));
+			addFile: function(file) {
+				files.push(this.adaptFileInformation(file));
 				return this;
 			},
-			deleteUser: function(user_id) {
-				for(var i in users){
-					if(users[i].id === user_id){
-						users.splice(i,1);
-						return users;
+			deleteFile: function(file_id) {
+				for(var i in files){
+					if(files[i].id === file_id){
+						files.splice(i,1);
+						return files;
 					}
 				}
 				return null;
 			},
-			adaptUsersInformation: function(users) {
-				for(var i in users){
-					this.adaptUserInformation(users[i]);
+			adaptFilesInformation: function(files) {
+				for(var i in files){
+					this.adaptFileInformation(files[i]);
 				}
-				return users;
+				return files;
 			},
-			adaptUserInformation: function(user){
-				return user;
+			adaptFileInformation: function(file){
+				return file;
 			},
 			getFilters: function() {
 				return filters;

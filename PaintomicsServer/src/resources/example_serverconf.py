@@ -11,6 +11,8 @@ ROOT_DIRECTORY            = "" ##THE LOCATION FOR THE PAINTOMICS FILES, LEAVE BL
 CLIENT_TMP_DIR            = "/data/CLIENT_TMP/"
 KEGG_DATA_DIR             = "/data/KEGG_DATA/"
 MAX_CLIENT_SPACE          = 20 * pow(1024,2) #MAX_CLIENT_SPACE IN MB
+MAX_GUEST_DAYS            = 7
+MAX_JOB_DAYS              = 60
 
 #MONGO DB SETTINGS
 MONGODB_HOST      = "localhost"

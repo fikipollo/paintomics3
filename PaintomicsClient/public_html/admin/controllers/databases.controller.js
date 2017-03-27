@@ -76,6 +76,9 @@
 			then(
 				function successCallback(response){
 					$scope.isLoading = false;
+					$scope.download_log = response.data.download_log;
+					$scope.install_log = response.data.install_log;
+
 					$scope.databases = DatabaseList.updateDatabases(response.data.databaseList, true).getDatabases();
 					$scope.categories = DatabaseList.updateCategories().getCategories();
 				},
@@ -110,7 +113,7 @@
 				var filterAux, item_tags;
 				for(var i in $scope.filters){
 					filterAux = $scope.filters[i].toLowerCase();
-					item_tags = item.categories.join("");
+					item_tags = item.categories ? item.categories.join("") : "";
 					if(!((item.organism_name.toLowerCase().indexOf(filterAux)) !== -1 || (item.organism_code.toLowerCase().indexOf(filterAux)) !== -1 || (item_tags.toLowerCase().indexOf(filterAux)) !== -1)){
 						return false;
 					}
@@ -225,8 +228,6 @@
 		};
 
 		this.installDatabaseHandler = function (database, download){
-
-
 			if(download && this.checkDownloadingDatabases() > 1){
 				$dialogs.showInfoDialog("Please wait until some of the download finishes.", {
 					title : "Too many databases are being downloaded."

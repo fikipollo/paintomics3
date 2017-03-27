@@ -5,7 +5,9 @@
 		'ui.router',
 		'ngSanitize',
 		'admin.controllers.database-controllers',
-		'admin.controllers.user-controllers'
+		'admin.controllers.systeminfo-controllers',
+		'admin.controllers.user-controllers',
+		'admin.controllers.file-controllers'
 	]);
 
 	app.constant('myAppConfig', {
@@ -91,6 +93,8 @@
 				return myAppConfig.SERVER_URL + "api/admin/messages/" + extra;
 				case "databases":
 				return myAppConfig.SERVER_URL + "api/admin/databases/" + extra;
+				case "clean-databases":
+				return myAppConfig.SERVER_URL + "api/admin/clean-databases/";
 				default:
 				return "";
 			}
@@ -169,9 +173,9 @@
 
 		$scope.open_services = [
 			{name:"control-panel", title: 'Control panel', description: 'The main Paintomics admin page', icon : 'fa-tachometer'},
-			{name:"users-management", title: 'Users management', description: 'Manage the users in the applications', icon : 'fa-users'},
-			{name:"databases-management", title: 'Database management', description: 'Manage the installed organisms', icon : 'fa-database'},
-			{name:"files-management", title: 'Files management', description: 'Manage available reference files', icon : 'fa-files-o'}
+			{name:"users-management", title: 'Users', description: 'Manage the users in the applications', icon : 'fa-users'},
+			{name:"databases-management", title: 'Organisms', description: 'Manage the installed organisms', icon : 'fa-database'},
+			{name:"files-management", title: 'Files', description: 'Manage available reference files', icon : 'fa-files-o'}
 		];
 
 		$scope.visible_services = [$scope.open_services[0]];

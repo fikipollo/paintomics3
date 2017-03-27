@@ -18,7 +18,6 @@
 #  Technical contact paintomics@cipf.es
 #**************************************************************
 
-import logging
 import logging.config
 
 from flask import Flask, request, send_from_directory, jsonify
@@ -55,6 +54,8 @@ class Application(object):
         KeggInformationManager(KEGG_DATA_DIR) #INITIALIZE THE SINGLETON
         JobInformationManager()#INITIALIZE THE SINGLETON
 
+        self.startScheludeTasks() #CLEAN DATA EVERY N HOURS
+
         self.queue = Queue()
         self.queue.start_worker(N_WORKERS)
 
@@ -77,17 +78,17 @@ class Application(object):
         @self.app.route(SERVER_SUBDOMAIN + '/kegg_data/<path:filename>')
         def get_kegg_data(filename):
             if str(filename) == "species.json":
-                return send_from_directory(KEGG_DATA_DIR + 'last/species/', 'species.json')
+                return send_from_directory(KEGG_DATA_DIR + 'current/', 'species.json')
             elif str(filename).endswith("_thumb"):
-                return send_from_directory(KEGG_DATA_DIR + 'last/png/thumbnails/', 'map' + sub("[^0-9]", "", filename ) + '_thumb.png')
+                return send_from_directory(KEGG_DATA_DIR + 'current/common/png/thumbnails/', 'map' + sub("[^0-9]", "", filename ) + '_thumb.png')
             else:
-                return send_from_directory(KEGG_DATA_DIR + 'last/png/', 'map' + filename + '.png')
+                return send_from_directory(KEGG_DATA_DIR + 'current/common/png/', 'map' + filename + '.png')
         ##*******************************************************************************************
         ##* GET PATHWAY IMAGE
         ##*******************************************************************************************
         @self.app.route(SERVER_SUBDOMAIN + '/kegg_data/pathway_network/<path:specie>')
         def get_pathway_network(specie):
-            return send_from_directory(KEGG_DATA_DIR + 'last/species/' + specie, 'pathways_network.json')
+            return send_from_directory(KEGG_DATA_DIR + 'current/' + specie, 'pathways_network.json')
         ##*******************************************************************************************
         ##* GET DATA FROM CLIENT TMP DIR
         ##*******************************************************************************************
@@ -199,7 +200,7 @@ class Application(object):
         #*******************************************************************************************
         @self.app.route(SERVER_SUBDOMAIN + '/dm_get_gtffiles', methods=['OPTIONS', 'POST'])
         def getGTFFilesHandler():
-            return dataManagementGetMyFiles(request, Response(), self.EXAMPLE_FILES_DIR, MAX_CLIENT_SPACE, isGFT=True).getResponse()
+            return dataManagementGetMyFiles(request, Response(), self.EXAMPLE_FILES_DIR, MAX_CLIENT_SPACE, isReference=True).getResponse()
         #*******************************************************************************************
         ##* DATA MANIPULATION SERVLETS HANDLERS - END
         #*******************************************************************************************
@@ -351,6 +352,12 @@ class Application(object):
             return response.getResponse()
             #return adminServletDeleteOrganism(request, Response(), organism_code, self.ROOT_DIRECTORY).getResponse()
 
+        ##*******************************************************************************************
+        ##* MONITOR THE USAGE OF RAM AND CPU
+        ##*******************************************************************************************
+        @self.app.route(SERVER_SUBDOMAIN + '/api/admin/system-info/', methods=['OPTIONS', 'GET'])
+        def systemInformation():
+            return adminServletSystemInformation(request, Response()).getResponse()
 
         ##*******************************************************************************************
         ##* GET ALL USERS AND DISK USAGE
@@ -359,51 +366,42 @@ class Application(object):
         def getAllUsers():
             return adminServletGetAllUsers(request, Response()).getResponse()
         ##*******************************************************************************************
-        ##* REMOVE OLD USERS AND CLEAN OLD DATA
+        ##* REMOVE USERS
         ##*******************************************************************************************
         @self.app.route(SERVER_SUBDOMAIN + '/api/admin/users/<path:userID>', methods=['OPTIONS', 'DELETE'])
         def deleteUser(userID):
             return adminServletDeleteUser(request, Response(), userID).getResponse()
-
-
+        ##*******************************************************************************************
+        ##* REMOVE OLD USERS AND CLEAN OLD DATA
+        ##*******************************************************************************************
+        @self.app.route(SERVER_SUBDOMAIN + '/api/admin/clean-databases/', methods=['OPTIONS', 'DELETE'])
+        def cleanDatabases():
+            return adminCleanDatabases(request, Response()).getResponse()
 
         ##*******************************************************************************************
         ##* ADD FILES HANDLERS
         ##*******************************************************************************************
-        @self.app.route(SERVER_SUBDOMAIN + '/dm_add_gtffiles', methods=['OPTIONS', 'POST'])
-        def addGTFFilesHandler():
-            return dataManagementUploadFile(request, Response(), self.EXAMPLE_FILES_DIR, isGFT=True).getResponse()
+        @self.app.route(SERVER_SUBDOMAIN + '/api/admin/files/', methods=['OPTIONS', 'POST'])
+        def addReferenceFileHandler():
+            return dataManagementUploadFile(request, Response(), self.EXAMPLE_FILES_DIR, isReference=True).getResponse()
+        #*******************************************************************************************
+        ##* FILE LIST HANDLERS
+        #*******************************************************************************************
+        @self.app.route(SERVER_SUBDOMAIN + '/api/admin/files/', methods=['OPTIONS', 'GET'])
+        def getReferenceFilesHandler():
+            return dataManagementGetMyFiles(request, Response(), self.EXAMPLE_FILES_DIR, MAX_CLIENT_SPACE, isReference=True).getResponse()
         ##*******************************************************************************************
         ##* GFT FILE DELETION HANDLERS
         ##*******************************************************************************************
-        @self.app.route(SERVER_SUBDOMAIN + '/dm_delete_gtffile', methods=['OPTIONS', 'POST'])
-        def deleteGTFFileHandler():
-            return dataManagementDeleteFile(request, Response(), self.EXAMPLE_FILES_DIR, MAX_CLIENT_SPACE, isGFT=True).getResponse()
-        ##*******************************************************************************************
-        ##* GET LIST OF INSTALLED SPECIES
-        ##*******************************************************************************************
-        @self.app.route(SERVER_SUBDOMAIN + '/dm_get_installed_organism', methods=['OPTIONS', 'POST'])
-        def getOrganismDatabasesInfo():
-            return adminServletGetInstalledOrganisms(request, Response()).getResponse()
-
-        ##*******************************************************************************************
-        ##* UPDATE SELECTED SPECIE
-        ##*******************************************************************************************
-        @self.app.route(SERVER_SUBDOMAIN + '/dm_restore_organism_db_data', methods=['OPTIONS', 'POST'])
-        def restoreOrganismDatabaseData():
-            return adminServletRestoreData(request, Response()).getResponse()
+        @self.app.route(SERVER_SUBDOMAIN + '/api/admin/files/', methods=['OPTIONS', 'DELETE'])
+        def deleteReferenceFileHandler():
+            return dataManagementDeleteFile(request, Response(), self.EXAMPLE_FILES_DIR, MAX_CLIENT_SPACE, isReference=True).getResponse()
         ##*******************************************************************************************
         ##* UPDATE SELECTED SPECIE
         ##*******************************************************************************************
         @self.app.route(SERVER_SUBDOMAIN + '/dm_sendReport', methods=['OPTIONS', 'POST'])
         def sendReportHandler():
             return adminServletSendReport(request, Response(), self.ROOT_DIRECTORY).getResponse()
-        ##*******************************************************************************************
-        ##* REMOVE OLD USERS AND CLEAN OLD DATA
-        ##*******************************************************************************************
-        @self.app.route(SERVER_SUBDOMAIN + '/um_clean_old_data', methods=['OPTIONS', 'POST'])
-        def cleanOldData():
-            return adminServletCleanOldData(request, Response()).getResponse()
         ##*******************************************************************************************
         ##* SAVE/RETRIEVE THE INITIAL MESSAGE
         ##*******************************************************************************************
@@ -418,16 +416,6 @@ class Application(object):
         @self.app.route(SERVER_SUBDOMAIN + '/um_delete_message', methods=['OPTIONS', 'POST'])
         def deleteMessage():
             return adminServletDeleteMessage(request, Response()).getResponse()
-
-        ##*******************************************************************************************
-        ##* MONITOR THE USAGE OF RAM AND CPU
-        ##*******************************************************************************************
-        @self.app.route(SERVER_SUBDOMAIN + '/um_cpu_monitor', methods=['OPTIONS', 'POST'])
-        def cpuMonitor():
-            return adminServletMonitorCPU(request, Response()).getResponse()
-        @self.app.route(SERVER_SUBDOMAIN + '/um_ram_monitor', methods=['OPTIONS', 'POST'])
-        def ramMonitor():
-            return adminServletMonitorRAM(request, Response()).getResponse()
 
         ##*******************************************************************************************
         ##* ADMIN SERVLETS HANDLERS - END
@@ -465,6 +453,24 @@ class Application(object):
         logging.config.fileConfig(self.ROOT_DIRECTORY + 'conf/logging.cfg')
 
         #self.app.config['MAX_CONTENT_LENGTH'] = SERVER_MAX_CONTENT_LENGTH * pow(1024, 2)
+
+    def startScheludeTasks(self):
+        from apscheduler.schedulers.background import BackgroundScheduler
+        import atexit
+        from src.AdminTools.scripts.clean_databases import cleanDatabases
+
+        cron = BackgroundScheduler(daemon=True)
+        # Explicitly kick off the background thread
+        cron.start()
+
+        #@cron.interval_schedule(seconds=1)
+        def scheludeTask():
+            cleanDatabases(force=True)
+            clearFailedData()
+
+        cron.add_job(scheludeTask, 'interval', hours=24, id='my_job_id')
+        # Shutdown your cron thread if the web process is stopped
+        atexit.register(lambda: cron.shutdown(wait=False))
 
 #################################################################################################################
 #################################################################################################################

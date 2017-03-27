@@ -26,7 +26,7 @@ import csv
 
 #CPU MONITOR
 import psutil
-from time import sleep
+import subprocess
 
 from src.common.UserSessionManager import UserSessionManager
 from src.common.ServerErrorManager import handleException
@@ -38,7 +38,7 @@ from src.classes.Message import Message
 
 from src.common.Util import sendEmail
 
-from src.conf.serverconf import MONGODB_HOST, MONGODB_PORT, KEGG_DATA_DIR, CLIENT_TMP_DIR, smpt_sender, smpt_sender_name, MAX_CLIENT_SPACE
+from src.conf.serverconf import MONGODB_HOST, MONGODB_PORT, KEGG_DATA_DIR, CLIENT_TMP_DIR, smpt_sender, smpt_sender_name, MAX_CLIENT_SPACE, MAX_JOB_DAYS, MAX_GUEST_DAYS
 from src.servlets.DataManagementServlet import dir_total_size
 
 #----------------------------------------------------------------
@@ -65,7 +65,7 @@ def adminServletGetInstalledOrganisms(request, response):
         # Step 1.GET THE LIST OF INSTALLED SPECIES (DATABASES and SPECIES.JSON)
         #****************************************************************
         organisms_names = {}
-        with open(KEGG_DATA_DIR + 'common/organisms_all.list') as organisms_all:
+        with open(KEGG_DATA_DIR + 'current/common/organisms_all.list') as organisms_all:
             reader = csv.reader(organisms_all, delimiter='\t')
             for row in reader:
                 organisms_names[row[1]] = row[2]
@@ -89,6 +89,25 @@ def adminServletGetInstalledOrganisms(request, response):
             elif "global-paintomics" == database:
                 db = client[database]
                 common_info_date = db.versions.find({"name": "COMMON"})[0].get("date")
+
+                # Step 2.4 Check if the organism has non installed data available
+                if os_path.isfile(KEGG_DATA_DIR + 'download/common/VERSION'):
+                    downloaded = True
+                elif os_path.isfile(KEGG_DATA_DIR + 'download/common/DOWNLOADING'):
+                    downloaded = "downloading"
+                else:
+                    downloaded = False
+                    #Erroneous download not removed --> remove
+                    if os_path.isdir(KEGG_DATA_DIR + 'download/common/'):
+                        shutil_rmtree(KEGG_DATA_DIR + 'download/common/')
+
+                databaseList.append({
+                    "organism_name" : "Common KEGG data",
+                    "organism_code" : "common",
+                    "kegg_date"     : common_info_date,
+                    "downloaded": downloaded
+                })
+
             else:
                 # Step 2.1 GET THE SPECIE CODE
                 organism_code=database.replace("-paintomics", "")
@@ -158,7 +177,7 @@ def adminServletGetAvailableOrganisms(request, response):
         #****************************************************************
         import csv
         databaseList = []
-        with open(KEGG_DATA_DIR + 'common/organisms_all.list') as availableSpeciesFile:
+        with open(KEGG_DATA_DIR + 'current/common/organisms_all.list') as availableSpeciesFile:
             reader = csv.reader(availableSpeciesFile,  delimiter='\t')
             for row in reader:
                 organism_code = row[1]
@@ -182,7 +201,7 @@ def adminServletGetAvailableOrganisms(request, response):
                 })
         availableSpeciesFile.close()
 
-        response.setContent({"databaseList": databaseList})
+        response.setContent({"databaseList": databaseList, "download_log" : KEGG_DATA_DIR + "download/download.log", "install_log" : KEGG_DATA_DIR + "current/install.log"})
 
     except Exception as ex:
         handleException(response, ex, __file__ , "adminServletGetInstalledOrganisms")
@@ -241,16 +260,13 @@ def adminServletInstallOrganism(request, response, organism_code, ROOT_DIRECTORY
         # Step 2B. IF THE SELECTED OPTION IS INSTALL
         # ****************************************************************
         else:
-            from time import sleep
-            sleep(10)
-
-            # logging.info("STARTING DBManager Install PROCESS.")
-            # scriptArgs = [ROOT_DIRECTORY + "AdminTools/DBManager.py", "install", "--specie=" + organism_code, "--common=" + str(common)]
-            # try:
-            #     check_output(scriptArgs, stderr=STDOUT)
-            # except CalledProcessError as exc:
-            #     raise Exception("Error while calling DBManager Install: Exit status " + str(exc.returncode) + ". Error message: " + exc.output)
-            # logging.info("FINISHED DBManager Install PROCESS.")
+            logging.info("STARTING DBManager Install PROCESS.")
+            scriptArgs = [ROOT_DIRECTORY + "AdminTools/DBManager.py", "install", "--specie=" + organism_code, "--common=" + str(common)]
+            try:
+                check_output(scriptArgs, stderr=STDOUT)
+            except CalledProcessError as exc:
+                raise Exception("Error while calling DBManager Install: Exit status " + str(exc.returncode) + ". Error message: " + exc.output)
+            logging.info("FINISHED DBManager Install PROCESS.")
 
         response.setContent({"success": True})
 
@@ -300,6 +316,14 @@ def adminServletRestoreData(request, response):
     finally:
         return response
 
+def clearFailedData():
+    import shutil, os
+    dirname = KEGG_DATA_DIR + 'download/'
+    for subdirname in os.listdir(dirname):
+        # print path to all subdirectories first.
+        if os.path.isdir(os.path.join(dirname, subdirname)) and os.path.isfile(os.path.join(dirname, subdirname) + "/DOWNLOADING"):
+                print "Removing " + os.path.join(dirname, subdirname)
+                shutil.rmtree(os.path.join(dirname, subdirname))
 #----------------------------------------------------------------
 # USERS
 #----------------------------------------------------------------
@@ -331,7 +355,7 @@ def adminServletGetAllUsers(request, response):
             if os_path.isdir(CLIENT_TMP_DIR + str(userInstance.getUserId())):
                 userInstance.usedSpace = dir_total_size(CLIENT_TMP_DIR + str(userInstance.getUserId()))
 
-        response.setContent({"success": True, "userList": userList,  "availableSpace": MAX_CLIENT_SPACE})
+        response.setContent({"success": True, "userList": userList,  "availableSpace": MAX_CLIENT_SPACE, "max_jobs_days": MAX_JOB_DAYS, "max_guest_days" : MAX_GUEST_DAYS})
 
     except Exception as ex:
         handleException(response, ex, __file__ , "adminServletGetAllUsers")
@@ -395,7 +419,7 @@ def adminServletDeleteUser(request, response, toDeleteUserID):
     finally:
         return response
 
-def adminServletCleanOldData(request, response):
+def adminCleanDatabases(request, response):
     """
     This function...
 
@@ -413,51 +437,15 @@ def adminServletCleanOldData(request, response):
         UserSessionManager().isValidAdminUser(userID, userName, sessionToken)
 
         #****************************************************************
-        # Step 1. GET THE LIST OF ALL USERS
+        # Step 1. RUN THE SCRIPT
         #****************************************************************
-        formFields = request.form
-        user_ids  = formFields.get("user_ids").split(",")
-
-        allJobs = None
-        jobDAOInstance = JobDAO()
-        filesDAOInstance = FileDAO()
-        userDAOInstance = UserDAO()
-
-        for userID in user_ids:
-            if userID == "0":
-                continue
-
-            logging.info("STEP1 - CLEANING DATA FOR " + userID + "...")
-
-            #****************************************************************
-            # Step 2. DELETE ALL JOBS FOR THE USER
-            #****************************************************************
-            allJobs = jobDAOInstance.findAll(otherParams={"userID":userID})
-            jobID = ""
-            for jobInstance in allJobs:
-                jobID = jobInstance.getJobID()
-                logging.info("STEP2 - REMOVING " + jobID + " FROM DATABASE...")
-                jobDAOInstance.remove(jobInstance.getJobID(), otherParams={"userID":userID})
-
-            #****************************************************************
-            # Step 3. DELETE ALL FILES FOR THE USER
-            #****************************************************************
-            logging.info("STEP3 - REMOVING ALL FILES FROM DATABASE...")
-            filesDAOInstance.removeAll(otherParams={"userID":userID})
-            logging.info("STEP3 - REMOVING ALL FILES FROM USER DIRECTORY...")
-            if os_path.isdir(CLIENT_TMP_DIR + userID):
-                shutil_rmtree(CLIENT_TMP_DIR + userID)
-
-            #****************************************************************
-            # Step 4. DELETE THE USER INSTANCE FROM DATABASE
-            #****************************************************************
-            logging.info("STEP6 - REMOVING ALL FILES FROM DATABASE...")
-            userDAOInstance.remove(int(userID))
+        from src.AdminTools.scripts.clean_databases import cleanDatabases as clean_databases_routine
+        clean_databases_routine(force=True)
 
         response.setContent({"success": True})
 
     except Exception as ex:
-        handleException(response, ex, __file__ , "adminServletCleanOldData")
+        handleException(response, ex, __file__ , "cleanDatabases")
 
     finally:
         return response
@@ -552,7 +540,7 @@ def adminServletDeleteMessage(request, response):
 #----------------------------------------------------------------
 # SYSTEM
 #----------------------------------------------------------------
-def adminServletMonitorCPU(request, response):
+def adminServletSystemInformation(request, response):
     """
     This function...
 
@@ -568,42 +556,26 @@ def adminServletMonitorCPU(request, response):
         sessionToken = request.cookies.get('sessionToken')
         userName = request.cookies.get('userName')
         UserSessionManager().isValidAdminUser(userID, userName, sessionToken)
+        disk_use = []
+        try:
+            df = subprocess.Popen(["df", "-h"], stdout=subprocess.PIPE)
+            output = df.communicate()[0]
+            output = output.split("\n")
+            output.pop(0)
+            for line in output:
+                disk_use.append(line.split())
+        except Exception as e:
+            pass
 
-        cpu_usage = []
-        for x in range(5):
-            cpu_usage.append(psutil.cpu_percent(interval=1, percpu=True))
-        return response.setContent({"success": True, "cpu_usage" : cpu_usage}).getResponse()
-
-    except Exception as ex:
-        handleException(response, ex, __file__ , "monitorCPU")
-    finally:
-        return response
-
-def adminServletMonitorRAM(request, response):
-    """
-    This function...
-
-    @param {Request} request, the request object
-    @param {Response} response, the response object
-    """
-    try:
-        #****************************************************************
-        # Step 0.CHECK IF VALID USER SESSION
-        #****************************************************************
-        logging.info("STEP0 - CHECK IF VALID USER....")
-        userID = request.cookies.get('userID')
-        sessionToken = request.cookies.get('sessionToken')
-        userName = request.cookies.get('userName')
-        UserSessionManager().isValidAdminUser(userID, userName, sessionToken)
-        UserSessionManager().isValidUser(userID, sessionToken)
-
-        ram_usage = []
-        swap_usage = []
-        for x in range(5):
-            ram_usage.append(adapt_values(psutil.virtual_memory()))
-            swap_usage.append(adapt_values(psutil.swap_memory()))
-            sleep(1)
-        return response.setContent({"success": True, "ram_usage" : ram_usage, "swap_usage":swap_usage}).getResponse()
+        return response.setContent({
+            'cpu_count' : psutil.cpu_count(),
+            "cpu_use" : psutil.cpu_percent(),
+            "mem_total" : psutil.virtual_memory().total/(1024.0**3),
+            "mem_use" : psutil.virtual_memory().percent,
+            "swap_total": psutil.swap_memory().total/(1024.0**3),
+            "swap_use" : psutil.swap_memory().percent,
+            "disk_use": disk_use
+        }).getResponse()
 
     except Exception as ex:
         handleException(response, ex, __file__ , "monitorCPU")
@@ -678,23 +650,3 @@ def adminServletSendReport(request, response, ROOT_DIRECTORY):
     finally:
         return response
 
-
-def bytes2human(n):
-    symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
-    prefix = {}
-    for i, s in enumerate(symbols):
-        prefix[s] = 1 << (i + 1) * 10
-    for s in reversed(symbols):
-        if n >= prefix[s]:
-            value = float(n) / prefix[s]
-            return '%.1f%s' % (value, s)
-    return "%sB" % n
-
-def adapt_values(nt):
-    values=[]
-    for name in nt._fields:
-        value = getattr(nt, name)
-        if name != 'percent':
-            value = bytes2human(value)
-        values.append(value)
-    return values

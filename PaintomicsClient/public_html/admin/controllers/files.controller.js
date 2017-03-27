@@ -19,34 +19,31 @@
 *     aconesa@cipf.es
 *
 * THIS FILE CONTAINS THE FOLLOWING MODULE DECLARATION
-* - UserListController
+* - FileListController
 * -
 *
 */
 (function(){
-	var app = angular.module('admin.controllers.user-controllers', [
+	var app = angular.module('admin.controllers.file-controllers', [
 		'ui.bootstrap',
 		'ang-dialogs',
 		'chart.js',
-		'users.users.user-list'
+		'files.files.file-list'
 	]);
 
-	app.controller('UserListController', function($rootScope, $scope, $http, $dialogs, $state, $interval, APP_EVENTS, UserList) {
+	app.controller('FileListController', function($rootScope, $scope, $http, $dialogs, $state, $interval, $uibModal, APP_EVENTS, FileList) {
 		//--------------------------------------------------------------------
 		// CONTROLLER FUNCTIONS
 		//--------------------------------------------------------------------
-		this.retrieveUsersListData = function(force, callback_caller, callback_function){
+		this.retrieveFilesListData = function(force, callback_caller, callback_function){
 			$scope.isLoading = true;
 
-			if(UserList.getOld() > 1 || force){ //Max age for data 5min.
-				$http($rootScope.getHttpRequestConfig("GET", "users", {})).
+			if(FileList.getOld() > 1 || force){ //Max age for data 5min.
+				$http($rootScope.getHttpRequestConfig("GET", "files", {})).
 				then(
 					function successCallback(response){
 						$scope.isLoading = false;
-						$scope.users = UserList.setUsers(response.data.userList).getUsers();
-						UserList.setAvailableSpace(response.data.availableSpace);
-						$scope.max_guest_days = response.data.max_guest_days;
-						$scope.max_jobs_days = response.data.max_jobs_days;
+						$scope.files = FileList.setFiles(response.data.fileList).getFiles();
 
 						if(callback_function !== undefined){
 							callback_caller[callback_function]();
@@ -56,34 +53,34 @@
 						$scope.isLoading = false;
 
 						debugger;
-						var message = "Failed while retrieving the users list.";
+						var message = "Failed while retrieving the files list.";
 						$dialogs.showErrorDialog(message, {
-							logMessage : message + " at UserListController:retrieveUsersListData."
+							logMessage : message + " at FileListController:retrieveFilesListData."
 						});
 						console.error(response.data);
 					}
 				);
 			}else{
-				$scope.users = UserList.getUsers();
+				$scope.files = FileList.getFiles();
 				$scope.isLoading = false;
 			}
 		};
 
 		/**
 		* This function defines the behaviour for the "filterWorkflows" function.
-		* Given a item (user) and a set of filters, the function evaluates if
+		* Given a item (file) and a set of filters, the function evaluates if
 		* the current item contains the set of filters within the different attributes
 		* of the model.
 		*
 		* @returns {Boolean} true if the model passes all the filters.
 		*/
-		$scope.filterUsers = function(propertyName) {
-			$scope.foundUsers = $scope.foundUsers || {};
-			$scope.foundUsers[propertyName] = 0;
+		$scope.filterFiles = function(propertyName) {
+			$scope.foundFiles = $scope.foundFiles || {};
+			$scope.foundFiles[propertyName] = 0;
 			return function( item ) {
 				var filterAux, item_categories;
 				var valid = ($scope.searchFor !== undefined) && ($scope.searchFor.length > $scope.minSearchLength) && (item[propertyName].toLowerCase().indexOf( $scope.searchFor.toLowerCase()) !== -1);
-				if(valid){$scope.foundUsers[propertyName]++;}
+				if(valid){$scope.foundFiles[propertyName]++;}
 				return valid;
 			};
 		};
@@ -94,91 +91,89 @@
 		//--------------------------------------------------------------------
 		// EVENT HANDLERS
 		//--------------------------------------------------------------------
+		this.addNewFileHandler = function(){
+			//TODO: AQUIIIIII
+			var modalInstance = $uibModal.open({
+				ariaLabelledBy: 'modal-title',
+				ariaDescribedBy: 'modal-body',
+				templateUrl: 'myModalContent.html',
+				controller: 'ModalInstanceCtrl',
+				controllerAs: '$ctrl',
+				size: size,
+				appendTo: parentElem,
+				resolve: {
+					items: function () {
+						return $ctrl.items;
+					}
+				}
+			});
+
+			modalInstance.result.then(function (selectedItem) {
+				$ctrl.selected = selectedItem;
+			}, function () {
+				$log.info('Modal dismissed at: ' + new Date());
+			});
+		};
+
+
+
 		/**
-		* This function applies the filters when the user clicks on "Search"
+		* This function applies the filters when the file clicks on "Search"
 		*/
 		this.applySearchHandler = function() {
 			var filters = arrayUnique($scope.filters.concat($scope.searchFor.split(" ")));
 			$scope.filters = WorkflowList.setFilters(filters).getFilters();
 		};
 
-		this.launchUserHandler = function(user){
-			$rootScope.$broadcast(APP_EVENTS.launchUser, user);
-		};
-
-		this.deleteUserHandler = function (user){
+		this.deleteFileHandler = function (file){
 			var sendRemoveRequest = function(option){
 				if(option === "ok"){
-					$http($rootScope.getHttpRequestConfig("DELETE", "users", {
-						extra: user.userID
+					$http($rootScope.getHttpRequestConfig("DELETE", "files", {
+						extra: file.fileName
 					})).then(
 						function successCallback(response){
 							debugger;
 							if(response.data.success){
-								me.retrieveUsersListData(true);
+								me.retrieveFilesListData(true);
 							}
 						},
 						function errorCallback(response){
 							$scope.isLoading = false;
 
 							debugger;
-							var message = "Failed while deleting the user.";
+							var message = "Failed while deleting the file.";
 							$dialogs.showErrorDialog(message, {
-								logMessage : message + " at UserListController:deleteUserHandler."
+								logMessage : message + " at FileListController:deleteFileHandler."
 							});
 							console.error(response.data);
 						}
 					);
 				}
 			}
-			$dialogs.showConfirmationDialog("Are you sure?", {title: "Remove the selected user?", callback : sendRemoveRequest});
-		};
-
-
-		this.sendCleanDatabasesRequest = function(){
-			$dialogs.showWaitDialog("This process may take few seconds, be patient!");
-			$http($rootScope.getHttpRequestConfig("DELETE", "clean-databases", {})).
-			then(
-				function successCallback(response){
-					$dialogs.closeDialog();
-					$dialogs.showSuccessDialog("Databases have been succesfully cleaned.");
-				},
-				function errorCallback(response){
-					$dialogs.closeDialog();
-
-					debugger;
-					var message = "Failed while cleaning databases.";
-					$dialogs.showErrorDialog(message, {
-						logMessage : message + " at UserListController:sendCleanDatabasesRequest."
-					});
-					console.error(response.data);
-				}
-			);
+			$dialogs.showConfirmationDialog("Are you sure?", {title: "Remove the selected file?", callback : sendRemoveRequest});
 		};
 
 		//--------------------------------------------------------------------
 		// INITIALIZATION
 		//--------------------------------------------------------------------
 		var me = this;
-		$scope.users = UserList.getUsers();
+		$scope.files = FileList.getFiles();
 		$scope.minSearchLength = 2;
-		$scope.filters =  UserList.getFilters();
-		$scope.filteredUsers = $scope.users.length;
+		$scope.filters =  FileList.getFilters();
+		$scope.filteredFiles = $scope.files.length;
 
-		this.retrieveUsersListData(true);
+		this.retrieveFilesListData(true);
 
 	});
 
-	app.controller('UserController', function($rootScope, $scope, $http, $dialogs, APP_EVENTS, UserList) {
+	app.controller('FileController', function($rootScope, $scope, $http, $dialogs, APP_EVENTS, FileList) {
 		//--------------------------------------------------------------------
 		// CONTROLLER FUNCTIONS
 		//--------------------------------------------------------------------
-		this.checkUserStatus = function(user){
-			delete user.status;
-			delete user.status_msg;
+		this.checkFileStatus = function(file){
+			delete file.status;
+			delete file.status_msg;
 			$scope.current_action = "Checking status";
-
-
 		};
 
 		//--------------------------------------------------------------------
@@ -191,8 +186,8 @@
 		//--------------------------------------------------------------------
 		var me = this;
 
-		if($scope.user.enabled && $scope.user.status === undefined){
-			this.checkUserStatus($scope.user);
+		if($scope.file.enabled && $scope.file.status === undefined){
+			this.checkFileStatus($scope.file);
 		}
 	});
 })();

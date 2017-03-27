@@ -52,7 +52,7 @@ if(is.null(args$cluster)) {
   args$cluster <- "hierarchical"
 }
 
-args$kegg_dir <- paste(args$kegg_dir, "last/species/", args$specie, "/gene2pathway.list", sep="")
+args$kegg_dir <- paste(args$kegg_dir, "current/", args$specie, "/gene2pathway.list", sep="")
 
 
 # LOAD DEPENDENCIES   --------------------------------------------------------------------------------------------

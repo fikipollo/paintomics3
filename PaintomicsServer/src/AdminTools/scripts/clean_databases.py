@@ -5,14 +5,11 @@ import logging.config
 
 import datetime
 from pymongo import MongoClient
-from conf.serverconf import MONGODB_HOST, MONGODB_PORT, MONGODB_DATABASE, CLIENT_TMP_DIR, ADMIN_ACCOUNTS
-
-
-MAX_GUEST_DAYS = 1
-MAX_JOB_DAYS = 1
-
+from conf.serverconf import MONGODB_HOST, MONGODB_PORT, MONGODB_DATABASE, CLIENT_TMP_DIR, ADMIN_ACCOUNTS, MAX_GUEST_DAYS, MAX_JOB_DAYS
 
 def cleanDatabases(force=False):
+    log("Starting Clean Databases routine")
+
     connection = MongoClient(MONGODB_HOST, MONGODB_PORT)
 
     # STEP 1. GET ALL USERS BY DIRECTORY
@@ -59,10 +56,9 @@ def cleanDatabases(force=False):
     log("")
 
     if not force:
-        response = str(input("Proceed?[y|n]"))
-        if response != "y":
+        if not confirm(prompt='"Proceed?', resp=False):
             log("Bye.")
-            return;
+            return
 
     # STEP 4. REMOVE ALL OUTDATED JOBS (+ FEATURES AND FILES)
     for user_id, jobs_to_remove in jobs_to_remove.iteritems():
@@ -87,8 +83,8 @@ def cleanDatabases(force=False):
     for user_id in user_dirs:
         removeDirectoryByUserID(user_id)
 
-
-
+    # STEP 8. REBUILD INDEXES
+    rebuildIndexes(connection)
 
 def checkRemoveGuestUser(user, user_id):
     last_login = datetime.datetime.strptime(user['last_login'], "%Y%m%d").date()
@@ -97,8 +93,6 @@ def checkRemoveGuestUser(user, user_id):
     if remove:
         log("User " + str(user_id) + " marked to be removed.")
     return remove
-
-
 
 def checkRemoveJobsForUser(connection, user_id, force_remove=False):
     #Get all jobs for user
@@ -115,9 +109,6 @@ def checkRemoveJobsForUser(connection, user_id, force_remove=False):
     return jobs_remove
 
 
-
-
-
 def removeJobByJobID(connection, user_id, job_id):
     log("Removing job " + job_id)
     #STEP 1. REMOVE ALL THE FEATURES ASSOCIATED TO JOB
@@ -130,8 +121,6 @@ def removeJobByJobID(connection, user_id, job_id):
     removeDirectoryByUserID(user_id, job_id)
 
 
-
-
 def removeAllFilesByUserID(connection, user_id, only_db=False):
     log("Removing files for user " + str(user_id) + " from database")
     #STEP 1. REMOVE ALL THE FEATURES ASSOCIATED TO JOB
@@ -139,8 +128,6 @@ def removeAllFilesByUserID(connection, user_id, only_db=False):
     #STEP 2. REMOVE THE DIRECTORIES FOR USER
     if not only_db:
         removeDirectoryByUserID(user_id)
-
-
 
 def removeDirectoryByUserID(user_id, job_id=None):
     #STEP 1. BUILD THE PATH
@@ -155,8 +142,6 @@ def removeDirectoryByUserID(user_id, job_id=None):
         log("Directory " + dir + " not found!")
 
 
-
-
 def removeUserByUserID(connection, user_id):
     #STEP 1. REMOVE THE USER ENTRY
     user = connection[MONGODB_DATABASE]['userCollection'].find_one({"userID": user_id})
@@ -165,8 +150,6 @@ def removeUserByUserID(connection, user_id):
         connection[MONGODB_DATABASE]['userCollection'].remove({"userID": user_id})
     else:
         log("User " + user["userName"] + " cannot be removed.")
-
-
 
 
 def fixUserDataByUserID(connection, user_id):
@@ -185,8 +168,11 @@ def fixUserDataByUserID(connection, user_id):
     os.mkdir(dir + "/jobsData/")
     os.mkdir(dir + "/tmp/")
 
-
-
+def rebuildIndexes(connection):
+    dbs = ['userCollection', 'jobInstanceCollection', 'featuresCollection', 'pathwaysCollection', 'visualOptionsCollection', 'fileCollection', 'messageCollection']
+    for db in dbs:
+        log("Rebuilding indexes for database " + db)
+        connection[MONGODB_DATABASE][db].reindex()
 
 def log(msg):
     print msg
@@ -196,7 +182,6 @@ def log(msg):
     logging.info('{i} {m}'.format(i=' '*indentation_level,m=msg))
 
 
-
 def readConfigurationFile():
     import os
     ROOT_DIRECTORY = os.path.abspath(os.path.dirname(os.path.realpath(__file__)) + "/../") + "/"
@@ -204,4 +189,43 @@ def readConfigurationFile():
     logging.config.fileConfig(ROOT_DIRECTORY + 'conf/logging.cfg')
 
 
-cleanDatabases(force=False)
+def confirm(prompt=None, resp=False):
+    """prompts for yes or no response from the user. Returns True for yes and
+    False for no.
+
+    'resp' should be set to the default value assumed by the caller when
+    user simply types ENTER.
+
+    >>> confirm(prompt='Create Directory?', resp=True)
+    Create Directory? [y]|n:
+    True
+    >>> confirm(prompt='Create Directory?', resp=False)
+    Create Directory? [n]|y:
+    False
+    >>>
+    Create Directory? [n]|y: y
+    True
+
+    """
+
+    if prompt is None:
+        prompt = 'Confirm'
+
+    if resp:
+        prompt = '%s [%s]|%s: ' % (prompt, 'y', 'n')
+    else:
+        prompt = '%s [%s]|%s: ' % (prompt, 'n', 'y')
+
+    while True:
+        ans = raw_input(prompt)
+        if not ans:
+            return resp
+        if ans not in ['y', 'Y', 'n', 'N']:
+            print 'please enter y or n.'
+            continue
+        if ans == 'y' or ans == 'Y':
+            return True
+        if ans == 'n' or ans == 'N':
+            return False
+
+#cleanDatabases(force=False)

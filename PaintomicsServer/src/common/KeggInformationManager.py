@@ -17,7 +17,7 @@ class KeggInformationManager():
         self.translationCache = {}
 
         #TODO: READ FROM CONF
-        self.KEGG_DATA_DIR = KEGG_DATA_DIR + "/last/"
+        self.KEGG_DATA_DIR = KEGG_DATA_DIR + "current/common/"
 
     #*************************************************************************************
     #   _______  _____             _   _   _____  _              _______  ______

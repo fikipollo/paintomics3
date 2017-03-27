@@ -32,7 +32,7 @@ nav.sidebar, .main{
 .main{
 	height: 100%;
 	overflow: hidden;
-	padding: 0
+	padding-left: 10px;
 }
 
 .text-danger{color: #ff5959;}
@@ -46,13 +46,13 @@ nav.sidebar, .main{
 	.main{
 		position: absolute;
 		width: calc(100% - 40px); /*keeps 100% minus nav size*/
-		margin-left: 40px;
+		margin-left: 55px;
 		float: right;
 	}
 
 	/*lets nav bar to be showed on mouseover*/
 	nav.sidebar.expanded + .main{
-		    padding-left: 160px;
+		    padding-left: 135px;
 	}
 
 	/*Center Brand*/
@@ -66,10 +66,6 @@ nav.sidebar, .main{
 		margin-left: 0px;
 	}
 
-	/*Center Icons*/
-	nav.sidebar a{
-		padding-right: 13px;
-	}
 
 	/*adds border top to first nav box */
 	nav.sidebar .navbar-nav > li:first-child{
@@ -105,9 +101,8 @@ nav.sidebar, .main{
 
 	/*gives sidebar width/height*/
 	nav.sidebar{
-		width: 200px;
+		width: 65px;
 		height: 100%;
-		margin-left: -160px;
 		float: left;
 		z-index: 8000;
 		margin-bottom: 0px;
@@ -142,22 +137,12 @@ section{
 
 .navbar-brand{
 	height: 80px;
-	background-image: url(/static/img/ebiokit_logo_150x150.png);
 	background-repeat: no-repeat;
 	background-position: center;
 	background-size: contain;
 	padding: 0;
 }
 
-.navbar-brand-collapsed-icon{
-	float: right;
-	line-height: 15px;
-	color: white;
-	font-size: 11px;
-	margin-top: 18px;
-	margin-right: 4px;
-}
-.navbar-brand-collapsed-icon > .glyphicon{color: #c00;font-size: 24px;}
 
 nav.sidebar.expanded .navbar-brand-collapsed-icon{display: none;}
 
@@ -219,11 +204,10 @@ nav.sidebar.expanded .navbar-brand-collapsed-icon{display: none;}
 
 /*ADMIN STYLES*/
 .admin-section-title-div{
-	text-align: center;
-	background-color: #323232;
+	background-color: #3c3c3c;
 	color: white;
 }
-.store-content-div{background: #F7F8F9;}
+
 .store-content-div  h4{font-weight: bold;}
 
 .store-database-div {

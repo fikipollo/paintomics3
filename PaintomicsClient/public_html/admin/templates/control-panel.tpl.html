@@ -1,11 +1,10 @@
-<div ng-controller="ServiceListController as controller">
+<div ng-controller="SystemInfoController as controller">
 	<div class=" admin-section-title-div">
 		<div class="panel-body">
-			<h1>PaintOmics 3 control panel</h1>
-			<h3>Manage your system easily</h3>
+			<div style="margin: -9px;"><h1>PaintOmics 3 Administration</h1></div>
 		</div>
 	</div>
-	<div class="panel panel-default">
+	<div class="panel panel-default col-md-12">
 		<div class="panel-body" style="height:350px;">
 			<h2>System information</h2>
 			<div style="margin:auto; width: 800px;">
@@ -21,23 +20,48 @@
 			</div>
 		</div>
 	</div>
-	<div class="panel panel-default">
+	<div class="panel panel-default col-md-12">
+		<div class="panel-body" style="min-height:350px;">
+			<div col-md-6>
+				<h2>File system</h2>
+				<table class="table" style=" max-width: 1020px; margin: auto; ">
+					<thead>
+						<tr style="text-align:center;">
+							<th>Filesystem</th>
+							<th>Size</th>
+							<th>Used</th>
+							<th>Avail</th>
+							<th>Use%</th>
+							<th>Mounted on</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr ng-repeat="disk in disk_use" >
+							<td>{{disk[0]}}</td>
+							<td>{{disk[1]}}</td>
+							<td>{{disk[2]}}</td>
+							<td>{{disk[3]}}</td>
+							<td>{{disk[4]}}</td>
+							<td>{{disk[5]}}</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="col-md-6">
+				<h2>Main tools</h2>
+				<div class="well">
+					<h4>Databases auto-clean</h4>
+					<p>By default PaintOmics periodically cleans the data for users in the databases.</p>
+					<a class="clickable btn btn-lg btn-info" ng-click="controller.sendCleanDatabasesRequest();">
+						<i class="fa fa-trash-o" aria-hidden="true"></i> Clean databases now
+					</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="panel panel-default col-md-12">
 		<div class="panel-body">
-			<h2>Services management</h2>
-			<table class="table" style=" max-width: 1020px; margin: auto; ">
-				<thead>
-					<tr style="text-align:center;">
-						<th>Service name</th>
-						<th>Status</th>
-						<th>Tools</th>
-						<th>Enable</th>
-						<th>Message</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr service-row ng-repeat="service in services | filter:{installed : '!!'}" ></tr>
-				</tbody>
-			</table>
+			<h2>Messages</h2>
 		</div>
 	</div>
 </div>

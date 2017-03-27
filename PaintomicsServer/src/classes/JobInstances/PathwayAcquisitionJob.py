@@ -22,8 +22,8 @@ import logging
 from os import path as os_path, system as os_system, makedirs as os_makedirs
 from csv import reader as csv_reader
 from zipfile import ZipFile as zipFile
+
 from subprocess import check_call, STDOUT, CalledProcessError
-from shutil import make_archive as shutil_make_archive
 from src.common.Util import unifyAndSort
 
 
@@ -255,7 +255,8 @@ class PathwayAcquisitionJob(Job):
             logging.info("OUTPUT FILES IS " + self.getOutputDir() + fileName)
             logging.info("TEMPORAL DIR IS " + self.getTemporalDir() + "/")
 
-            shutil_make_archive(self.getOutputDir() + fileName, "zip", self.getTemporalDir() + "/")
+            self.compressDirectory(self.getOutputDir() + fileName, "zip", self.getTemporalDir() + "/")
+
             logging.info("COMPRESSING RESULTS...DONE")
 
             return checkBoxesData
