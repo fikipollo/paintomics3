@@ -63,19 +63,21 @@ def dataManagementUploadFile(request, response, DESTINATION_DIR, isReference=Fal
             DESTINATION_DIR = DESTINATION_DIR + "GTF/"
 
         logging.info("STEP1 - READING FILES....")
-        for uploadedFileName in uploadedFiles.keys():
-            if (uploadedFileName is not None):
-                #GET THE FILE OBJECT
-                uploadedFile = request.files.get(uploadedFileName)
-                uploadedFileName = uploadedFile.filename
+        fields = {}
+        for field in formFields.keys():
+            if formFields[field] == "undefined":
+                continue
+            fields[field] = formFields[field]
 
-                fields = {}
-                for field in formFields.keys():
-                    if formFields[field] == "undefined":
-                        continue
-                    fields[field] = formFields[field]
-
-                saveFile(userID, uploadedFileName, fields, uploadedFile, DESTINATION_DIR)
+        if isReference and formFields.get("fileName", None) != None:
+            registerFile(userID, formFields.get("fileName"), fields, DESTINATION_DIR)
+        else:
+            for uploadedFileName in uploadedFiles.keys():
+                if (uploadedFileName is not None):
+                    #GET THE FILE OBJECT
+                    uploadedFile = request.files.get(uploadedFileName)
+                    uploadedFileName = uploadedFile.filename
+                    saveFile(userID, uploadedFileName, fields, uploadedFile, DESTINATION_DIR)
 
         response.setContent({"success": True})
 
@@ -130,7 +132,7 @@ def dataManagementGetMyFiles(request, response, DESTINATION_DIR, MAX_CLIENT_SPAC
             daoInstance.closeConnection()
         return response
 
-def dataManagementDeleteFile(request, response, DESTINATION_DIR, MAX_CLIENT_SPACE, isReference=False):
+def dataManagementDeleteFile(request, response, DESTINATION_DIR, MAX_CLIENT_SPACE, isReference=False, fileName=None):
     #VARIABLE DECLARATION
     daoInstance = None
     try:
@@ -155,8 +157,9 @@ def dataManagementDeleteFile(request, response, DESTINATION_DIR, MAX_CLIENT_SPAC
 
         #****************************************************************
         # Step 1. GET THE LIST OF JOB IDs
-        #****************************************************************.
-        fileName = request.form.get("fileName")
+        #****************************************************************
+        if fileName == None:
+            fileName = request.form.get("fileName")
         files = fileName.split(",")
 
         #****************************************************************
@@ -424,6 +427,7 @@ def registerFile(userID, fileName, options, location):
     import time
     fileInstance.setSubmissionDate(time.strftime("%d/%m/%Y %H:%M"))
     daoInstance = FileDAO()
+    daoInstance.remove(fileName, otherParams={"userID": userID})
     daoInstance.insert(fileInstance, otherParams={"userID":userID})
     logging.info("\tREGISTERING " + fileName + " INTO DATABASE...DONE")
     if(daoInstance != None):

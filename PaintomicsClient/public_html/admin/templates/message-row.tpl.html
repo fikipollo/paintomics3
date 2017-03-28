@@ -1,0 +1,14 @@
+<tr>
+	<td width="210px;">{{ message.message_type }}</td>
+	<td>{{ message.message_content }}</td>
+	<td width="210px;">
+		<span>
+			<a class="clickable" style="margin-right: 10px;" ng-click="controller.editMessageHandler(message)">
+				<i class="fa fa-pencil-square-o text-warning"></i> Edit
+			</a>
+			<a class="clickable" style="margin-right: 10px;" ng-click="controller.deleteMessageHandler(message)">
+				<i class="fa fa-trash text-danger"></i> Delete
+			</a>
+		</span>
+	</td>
+</tr>

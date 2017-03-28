@@ -12,6 +12,9 @@
 				<p>By default PaintOmics offers some reference files to users for tools such as Bed2Genes or miRNA2Genes.</p>
 				<p>You can use this panel to upload new reference files and change their metadata.</p>
 				<p>Heavy files should be uploaded using other methods (e.g. using command line) and registered using these tools.</p>
+				<a class="clickable btn btn-sm btn-info" ng-click="controller.addNewFileHandler();">
+					<i class="fa fa-plus" aria-hidden="true"></i> Register a new reference file
+				</a>
 			</div>
 			<h2 ng-show="isLoading === true">
 				<i class="fa fa-circle-o-notch fa-spin fa-fw"></i> Loading...
@@ -20,16 +23,17 @@
 				<thead>
 					<tr style="text-align:center;">
 						<th>File name</th>
+						<th>Data type</th>
 						<th>Organism</th>
-						<th>Version</th>
 						<th>Source</th>
+						<th>Version</th>
 						<th>Size</th>
-						<th>Last login</th>
 						<th>Description</th>
-						<th>Options</th>
+						<th>Tools</th>
 					</tr>
 				</thead>
 				<tbody>
+					<tr ng-show="files === undefined || files.length === 0" style="text-align:center;"><td colspan=8 >No reference files</td></tr>
 					<tr file-row ng-repeat="file in files" ></tr>
 				</tbody>
 			</table>

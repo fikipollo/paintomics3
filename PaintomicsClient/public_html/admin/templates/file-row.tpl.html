@@ -1,17 +1,17 @@
 <tr>
 	<td width="210px;">{{ file.fileName }}</td>
-	<td width="210px;">{{ file.dataType }}</td>
-	<td width="210px;">{{ file.email }}</td>
-	<td width="210px;">{{ file.affiliation }}</td>
-	<td width="210px;">{{ formatDate(file.creation_date) }}</td>
-	<td width="210px;">{{ formatDate(file.last_login) }}</td>
-	<td width="210px;">{{ file.usedSpace }}</td>
+	<td width="210px;">{{ file.omicType }}</td>
+	<td width="210px;">{{ file.otherFields.specie }}</td>
+	<td width="210px;">{{ file.otherFields.source }}</td>
+	<td width="210px;">{{ file.otherFields.version }}</td>
+	<td width="210px;">{{ formatSize(file.size) }}</td>
+	<td width="210px;">{{ file.description }}</td>
 	<td width="210px;">
 		<span>
-			<!-- <a class="clickable" style="margin-right: 10px;" ng-click="controller.editfileHandler(file)">
+			<a class="clickable" style="margin-right: 10px;" ng-click="controller.editFileHandler(file)">
 				<i class="fa fa-pencil-square-o text-warning"></i> Edit
-			</a> -->
-			<a class="clickable" style="margin-right: 10px;" ng-click="controller.deletefileHandler(file)">
+			</a>
+			<a class="clickable" style="margin-right: 10px;" ng-click="controller.deleteFileHandler(file)">
 				<i class="fa fa-trash text-danger"></i> Delete
 			</a>
 		</span>

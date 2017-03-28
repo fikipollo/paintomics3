@@ -19,31 +19,31 @@
 *     aconesa@cipf.es
 *
 * THIS FILE CONTAINS THE FOLLOWING MODULE DECLARATION
-* - FileListController
+* - MessageListController
 * -
 *
 */
 (function(){
-	var app = angular.module('admin.controllers.file-controllers', [
+	var app = angular.module('admin.controllers.message-controllers', [
 		'ui.bootstrap',
 		'ang-dialogs',
 		'chart.js',
-		'files.files.file-list'
+		'messages.messages.message-list'
 	]);
 
-	app.controller('FileListController', function($rootScope, $scope, $http, $dialogs, $state, $interval, $uibModal, APP_EVENTS, FileList) {
+	app.controller('MessageListController', function($rootScope, $scope, $http, $dialogs, $state, $interval, $uibModal, APP_EVENTS, MessageList) {
 		//--------------------------------------------------------------------
 		// CONTROLLER FUNCTIONS
 		//--------------------------------------------------------------------
-		this.retrieveFilesListData = function(force, callback_caller, callback_function){
+		this.retrieveMessagesListData = function(force, callback_caller, callback_function){
 			$scope.isLoading = true;
 
-			if(FileList.getOld() > 1 || force){ //Max age for data 5min.
-				$http($rootScope.getHttpRequestConfig("GET", "files", {})).
+			if(MessageList.getOld() > 1 || force){ //Max age for data 5min.
+				$http($rootScope.getHttpRequestConfig("GET", "messages", {})).
 				then(
 					function successCallback(response){
 						$scope.isLoading = false;
-						$scope.files = FileList.setFiles(response.data.fileList).getFiles();
+						$scope.messages = MessageList.setMessages(response.data.messageList).getMessages();
 
 						if(callback_function !== undefined){
 							callback_caller[callback_function]();
@@ -53,122 +53,114 @@
 						$scope.isLoading = false;
 
 						debugger;
-						var message = "Failed while retrieving the files list.";
+						var message = "Failed while retrieving the messages list.";
 						$dialogs.showErrorDialog(message, {
-							logMessage : message + " at FileListController:retrieveFilesListData."
+							logMessage : message + " at MessageListController:retrieveMessagesListData."
 						});
 						console.error(response.data);
 					}
 				);
 			}else{
-				$scope.files = FileList.getFiles();
+				$scope.messages = MessageList.getMessages();
 				$scope.isLoading = false;
 			}
 		};
 
 		/**
 		* This function defines the behaviour for the "filterWorkflows" function.
-		* Given a item (file) and a set of filters, the function evaluates if
+		* Given a item (message) and a set of filters, the function evaluates if
 		* the current item contains the set of filters within the different attributes
 		* of the model.
 		*
 		* @returns {Boolean} true if the model passes all the filters.
 		*/
-		$scope.filterFiles = function(propertyName) {
-			$scope.foundFiles = $scope.foundFiles || {};
-			$scope.foundFiles[propertyName] = 0;
+		$scope.filterMessages = function(propertyName) {
+			$scope.foundMessages = $scope.foundMessages || {};
+			$scope.foundMessages[propertyName] = 0;
 			return function( item ) {
 				var filterAux, item_categories;
 				var valid = ($scope.searchFor !== undefined) && ($scope.searchFor.length > $scope.minSearchLength) && (item[propertyName].toLowerCase().indexOf( $scope.searchFor.toLowerCase()) !== -1);
-				if(valid){$scope.foundFiles[propertyName]++;}
+				if(valid){$scope.foundMessages[propertyName]++;}
 				return valid;
 			};
 		};
 
-		$scope.formatSize= function(bytes){
-			if(bytes == 0) return '0 Bytes';
-			var decimals = 1, k = 1000,
-			dm = decimals + 1 || 3,
-			sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
-			i = Math.floor(Math.log(bytes) / Math.log(k));
-			return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-		}
 		//--------------------------------------------------------------------
 		// EVENT HANDLERS
 		//--------------------------------------------------------------------
-		this.editFileHandler = function(file){
-			$scope.model = file;
-			this.addNewFileHandler();
+		this.editMessageHandler = function(message){
+			$scope.model = message;
+			this.addNewMessageHandler();
 		}
 
-		this.addNewFileHandler = function(){
+		this.addNewMessageHandler = function(){
 			var modalInstance = $uibModal.open({
-				controller: 'FileController',
+				controller: 'MessageController',
 				controllerAs: 'controller',
 				size: 'md',
 				scope: $scope,
-				templateUrl: "templates/file-details.tpl.html"
+				templateUrl: "templates/message-details.tpl.html"
 			});
 
 			modalInstance.result.then(function (selectedItem) {
 				delete $scope.model;
-				me.retrieveFilesListData(true);
+				me.retrieveMessagesListData(true);
 			}, function () {
 				delete $scope.model;
-				me.retrieveFilesListData(true);
+				me.retrieveMessagesListData(true);
 			});
 		};
 
 		/**
-		* This function applies the filters when the file clicks on "Search"
+		* This function applies the filters when the message clicks on "Search"
 		*/
 		this.applySearchHandler = function() {
 			var filters = arrayUnique($scope.filters.concat($scope.searchFor.split(" ")));
 			$scope.filters = WorkflowList.setFilters(filters).getFilters();
 		};
 
-		this.deleteFileHandler = function (file){
+		this.deleteMessageHandler = function (message){
 			var sendRemoveRequest = function(option){
 				if(option === "ok"){
-					$http($rootScope.getHttpRequestConfig("DELETE", "files", {
-						extra: file.fileName,
-						data : {fileName : file.fileName}
+					$http($rootScope.getHttpRequestConfig("DELETE", "messages", {
+						extra: message.message_type,
+						data : {message_type : message.message_type}
 					})).then(
 						function successCallback(response){
 							if(response.data.success){
-								me.retrieveFilesListData(true);
+								me.retrieveMessagesListData(true);
 							}
 						},
 						function errorCallback(response){
 							$scope.isLoading = false;
 
 							debugger;
-							var message = "Failed while deleting the file.";
+							var message = "Failed while deleting the message.";
 							$dialogs.showErrorDialog(message, {
-								logMessage : message + " at FileListController:deleteFileHandler."
+								logMessage : message + " at MessageListController:deleteMessageHandler."
 							});
 							console.error(response.data);
 						}
 					);
 				}
 			}
-			$dialogs.showConfirmationDialog("Are you sure?", {title: "Remove the selected file?", callback : sendRemoveRequest});
+			$dialogs.showConfirmationDialog("Are you sure?", {title: "Remove the selected message?", callback : sendRemoveRequest});
 		};
 
 		//--------------------------------------------------------------------
 		// INITIALIZATION
 		//--------------------------------------------------------------------
 		var me = this;
-		$scope.files = FileList.getFiles();
+		$scope.messages = MessageList.getMessages();
 		$scope.minSearchLength = 2;
-		$scope.filters =  FileList.getFilters();
-		$scope.filteredFiles = $scope.files.length;
+		$scope.filters =  MessageList.getFilters();
+		$scope.filteredMessages = $scope.messages.length;
 
-		this.retrieveFilesListData(true);
+		this.retrieveMessagesListData(true);
 
 	});
 
-	app.controller('FileController', function($rootScope, $scope, $http, $dialogs, $uibModalInstance, APP_EVENTS, FileList) {
+	app.controller('MessageController', function($rootScope, $scope, $http, $dialogs, $uibModalInstance, APP_EVENTS, MessageList) {
 		//--------------------------------------------------------------------
 		// CONTROLLER FUNCTIONS
 		//--------------------------------------------------------------------
@@ -176,42 +168,31 @@
 		//--------------------------------------------------------------------
 		// EVENT HANDLERS
 		//--------------------------------------------------------------------
-		this.saveFileDetailsHandler = function () {
-			var formData = new FormData();
-
-			if($scope.hideUpload){
-				formData.append('fileName', $scope.model.fileName);
-			}else{
-				formData.append('files', $scope.file);
-			}
-			formData.append('specie', $scope.model.otherFields.specie);
-			formData.append('version', $scope.model.otherFields.version);
-			formData.append('source', $scope.model.otherFields.source);
-			formData.append('dataType', $scope.model.dataType);
-			formData.append('omicType', $scope.model.omicType);
-			formData.append('description', $scope.model.description);
-
-			$http.post(
-				$rootScope.getRequestPath("files"), formData, {
-					transformRequest: angular.identity,
-					headers: {'Content-Type': undefined}
+		this.saveMessageDetailsHandler = function () {
+			$http($rootScope.getHttpRequestConfig("POST", "messages", {
+				data : {
+					message_type : $scope.model.message_type,
+					message_content : $scope.model.message_content
 				}
-			).then(
+			})).then(
 				function successCallback(response){
 					$dialogs.showSuccessDialog("File succesfully saved.");
 					$uibModalInstance.dismiss('cancel');
 				},
 				function errorCallback(response){
+					$scope.isLoading = false;
+
 					debugger;
-					var message = "Failed while saving the file. " + response.data.message;
+					var message = "Failed while saving the message.";
 					$dialogs.showErrorDialog(message, {
-						logMessage : message + " at FileController:saveFileDetailsHandler."
+						logMessage : message + " at MessageController:saveMessageDetailsHandler."
 					});
+					console.error(response.data);
 				}
 			);
 		};
 
-		this.closeFileDetailsHandler = function () {
+		this.closeMessageDetailsHandler = function () {
 			$uibModalInstance.dismiss('cancel');
 		};
 
@@ -224,7 +205,7 @@
 
 		if(!$scope.model){
 			$scope.model = {
-				dataType : "Reference file",
+				dataType : "Reference message",
 				otherFields : {}
 			};
 		}

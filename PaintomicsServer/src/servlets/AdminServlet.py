@@ -467,8 +467,8 @@ def adminServletSaveMessage(request, response):
         #****************************************************************
         # Step 1.SAVE THE MESSAGE IN THE DATABASE
         #****************************************************************
-        messageInstance = Message(request.form.get("message_type"))
-        messageInstance.message_content = request.form.get("message_content")
+        messageInstance = Message(request.json.get("message_type"))
+        messageInstance.message_content = request.json.get("message_content")
 
         #****************************************************************
         # Step 2. SAVE THE MESSAGE
@@ -511,7 +511,7 @@ def adminServletGetMessage(request, response):
     finally:
         return response
 
-def adminServletDeleteMessage(request, response):
+def adminServletDeleteMessage(request, response, message_type=None):
     try:
         #****************************************************************
         # Step 0.CHECK IF VALID USER SESSION
@@ -525,7 +525,8 @@ def adminServletDeleteMessage(request, response):
         #****************************************************************
         # Step 1.GET THE MESSAGES FROM THE DATABASE
         #****************************************************************
-        message_type = request.form.get("message_type")
+        if message_type == None:
+            message_type = request.form.get("message_type")
         daoInstance = MessageDAO()
         daoInstance.removeAll(otherParams={"message_type" : message_type})
         daoInstance.closeConnection()

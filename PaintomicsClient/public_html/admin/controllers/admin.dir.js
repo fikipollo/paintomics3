@@ -29,9 +29,15 @@
 		};
 	});
 
-	app.directive("filesRow", function() {
+	app.directive("fileRow", function() {
 		return {
 			templateUrl: 'templates/file-row.tpl.html'
+		};
+	});
+
+	app.directive("messageRow", function() {
+		return {
+			templateUrl: 'templates/message-row.tpl.html'
 		};
 	});
 
@@ -40,4 +46,17 @@
 			templateUrl: 'templates/database-row.tpl.html'
 		};
 	});
+
+	app.directive('fileModel', ['$parse', function ($parse) {
+		return {
+			restrict: 'A',
+			link: function($scope, element, attrs) {
+				element.bind('change', function(){
+					$scope.$apply(function(){
+						$scope.file = element[0].files[0];
+					});
+				});
+			}
+		};
+	}]);
 })();

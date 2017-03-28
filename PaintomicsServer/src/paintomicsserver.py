@@ -393,30 +393,36 @@ class Application(object):
         ##*******************************************************************************************
         ##* GFT FILE DELETION HANDLERS
         ##*******************************************************************************************
-        @self.app.route(SERVER_SUBDOMAIN + '/api/admin/files/', methods=['OPTIONS', 'DELETE'])
-        def deleteReferenceFileHandler():
-            return dataManagementDeleteFile(request, Response(), self.EXAMPLE_FILES_DIR, MAX_CLIENT_SPACE, isReference=True).getResponse()
+        @self.app.route(SERVER_SUBDOMAIN + '/api/admin/files/<path:fileName>', methods=['OPTIONS', 'DELETE'])
+        def deleteReferenceFileHandler(fileName):
+            return dataManagementDeleteFile(request, Response(), self.EXAMPLE_FILES_DIR, MAX_CLIENT_SPACE, isReference=True, fileName=fileName).getResponse()
+
         ##*******************************************************************************************
-        ##* UPDATE SELECTED SPECIE
+        ##* SAVE THE  MESSAGE
+        ##*******************************************************************************************
+        @self.app.route(SERVER_SUBDOMAIN + '/api/admin/messages/', methods=['OPTIONS', 'POST'])
+        def saveMessage():
+            return adminServletSaveMessage(request, Response()).getResponse()
+        ##*******************************************************************************************
+        ##* RETRIEVE THE MESSAGES
+        ##*******************************************************************************************
+        @self.app.route(SERVER_SUBDOMAIN + '/um_get_message', methods=['OPTIONS', 'POST'])
+        @self.app.route(SERVER_SUBDOMAIN + '/api/admin/messages/', methods=['OPTIONS', 'GET'])
+        def getMessage():
+            return adminServletGetMessage(request, Response()).getResponse()
+        ##*******************************************************************************************
+        ##* DELETE MESSAGE
+        ##*******************************************************************************************
+        @self.app.route(SERVER_SUBDOMAIN + '/api/admin/messages/<path:message_type>', methods=['OPTIONS', 'DELETE'])
+        def deleteMessage(message_type):
+            return adminServletDeleteMessage(request, Response(), message_type).getResponse()
+
+        ##*******************************************************************************************
+        ##* SEND A REPORT MESSAGE
         ##*******************************************************************************************
         @self.app.route(SERVER_SUBDOMAIN + '/dm_sendReport', methods=['OPTIONS', 'POST'])
         def sendReportHandler():
             return adminServletSendReport(request, Response(), self.ROOT_DIRECTORY).getResponse()
-        ##*******************************************************************************************
-        ##* SAVE/RETRIEVE THE INITIAL MESSAGE
-        ##*******************************************************************************************
-        @self.app.route(SERVER_SUBDOMAIN + '/um_save_message', methods=['OPTIONS', 'POST'])
-        def saveMessage():
-            return adminServletSaveMessage(request, Response()).getResponse()
-
-        @self.app.route(SERVER_SUBDOMAIN + '/um_get_message', methods=['OPTIONS', 'POST'])
-        def getMessage():
-            return adminServletGetMessage(request, Response()).getResponse()
-
-        @self.app.route(SERVER_SUBDOMAIN + '/um_delete_message', methods=['OPTIONS', 'POST'])
-        def deleteMessage():
-            return adminServletDeleteMessage(request, Response()).getResponse()
-
         ##*******************************************************************************************
         ##* ADMIN SERVLETS HANDLERS - END
         #############################################################################################

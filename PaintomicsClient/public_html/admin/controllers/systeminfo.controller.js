@@ -8,20 +8,16 @@
 	app.controller('SystemInfoController', function($rootScope, $scope, $http, $dialogs, $state, $interval, APP_EVENTS) {
 
 		this.retrieveSystemInfo = function(){
-			$scope.isLoading = true;
 			$http($rootScope.getHttpRequestConfig("GET", "system-info", {})).
 			then(
 				function successCallback(response){
-					$scope.isLoading = false;
 					$scope.cpu_load = [response.data.cpu_use, 100 - response.data.cpu_use];
 					$scope.mem_load = [response.data.mem_use, 100 - response.data.mem_use];
 					$scope.swap_use = [response.data.swap_use, 100 - response.data.swap_use];
 					$scope.disk_use = response.data.disk_use;
 				},
 				function errorCallback(response){
-					$scope.isLoading = false;
 					$dialogs.closeDialog();
-
 					debugger;
 					var message = "Failed while retrieving the system information.";
 					$dialogs.showErrorDialog(message, {

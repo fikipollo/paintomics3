@@ -7,7 +7,8 @@
 		'admin.controllers.database-controllers',
 		'admin.controllers.systeminfo-controllers',
 		'admin.controllers.user-controllers',
-		'admin.controllers.file-controllers'
+		'admin.controllers.file-controllers',
+		'admin.controllers.message-controllers'
 	]);
 
 	app.constant('myAppConfig', {
