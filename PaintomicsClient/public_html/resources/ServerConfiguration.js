@@ -44,6 +44,7 @@ SERVER_URL_GET_AVAILABLE_SPECIES = SERVER_URL + "kegg_data/species.json";
 SERVER_URL_UM_SIGNIN = SERVER_URL + "um_signin";
 SERVER_URL_UM_SIGNOUT = SERVER_URL + "um_signout";
 SERVER_URL_UM_SIGNUP = SERVER_URL + "um_signup";
+SERVER_URL_UM_CHANGEPASS = SERVER_URL + "um_changepassword";
 SERVER_URL_UM_NEWGUESTSESSION = SERVER_URL + "um_guestsession";
 /*********************************************************************
  * OTHER SETTINGS            *****************************************

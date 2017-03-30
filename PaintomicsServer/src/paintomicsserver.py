@@ -144,6 +144,12 @@ class Application(object):
         def newGuestSessionHandler():
             return userManagementNewGuestSession(request, Response()).getResponse()
         #*******************************************************************************************
+        ##* CHANGE PASS
+        #*******************************************************************************************
+        @self.app.route(SERVER_SUBDOMAIN + '/um_changepassword', methods=['OPTIONS', 'POST'])
+        def changePasswordHandler():
+            return userManagementChangePassword(request, Response()).getResponse()
+        #*******************************************************************************************
         ##* USER MANAGEMENT SERVLETS HANDLERS - END
         #******************************************************************************************
 

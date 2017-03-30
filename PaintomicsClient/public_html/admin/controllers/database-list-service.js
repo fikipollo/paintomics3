@@ -129,16 +129,17 @@
 				var installed = 0, downloaded = 0, downloading = 0;
 
 				for(var i in databases){
-					_categories = databases[i].categories;
+					databases[i].categories = (databases[i].categories || []);
 					if(databases[i].downloaded === "downloaded"){
-						downloaded++;
+						databases[i].categories.push("Locally available");
 					}else if (databases[i].downloaded === "downloading"){
-						downloading++;
+						databases[i].categories.push("Downloading");
 					}
 					if (databases[i].status === "installed"){
-						installed++;
+						databases[i].categories.push("Installed");
 					}
 
+					_categories = databases[i].categories;
 					for(var j in _categories){
 						categoriesAux[_categories[j]] = {
 							name: _categories[j],
@@ -147,11 +148,7 @@
 					}
 				}
 				categories = Object.keys(categoriesAux).map(function(k) { return categoriesAux[k] });
-
 				categories.push({name: "All", times: databases.length})
-				categories.push({name: "Installed", times: installed})
-				categories.push({name: "Locally available", times: downloaded})
-				categories.push({name: "Downloading", times: downloading})
 
 				return this;
 			},

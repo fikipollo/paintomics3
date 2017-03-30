@@ -3,7 +3,7 @@
 		<div>
 			<span ng-show="database.status === 'installed'" class="label label-success" style="float: right;padding: 5px;">Installed</span>
 			<span ng-show="database.status !== 'installed'" class="label label-danger" style="float: right;padding: 5px;">Not installed</span>
-			<span ng-show="database.downloaded === true" class="label label-primary" style="float: right;padding: 5px;">Local data available</span>
+			<span ng-show="database.downloaded === 'downloaded'" class="label label-primary" style="float: right;padding: 5px;">Local data available</span>
 			<h4>{{database.organism_name}}</h4>
 		</div>
 		<div>

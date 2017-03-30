@@ -253,6 +253,51 @@ def userManagementNewGuestSession(request, response):
             daoInstance.closeConnection()
         return response
 
+def userManagementChangePassword(request, response):
+    # VARIABLE DECLARATION
+    userInstance = None
+    daoInstance = None
+
+    try:
+        #****************************************************************
+        # Step 1. CHECK IF VALID USER SESSION
+        #****************************************************************
+        logging.info("STEP0 - CHECK IF VALID USER....")
+        userID  = request.cookies.get('userID')
+        sessionToken  = request.cookies.get('sessionToken')
+        UserSessionManager().isValidUser(userID, sessionToken)
+
+        # ****************************************************************
+        # Step 2.READ THE NEW PASS
+        # ****************************************************************
+        logging.info("STEP1 - READ PARAMS AND CHECK IF USER ALREADY EXISTS...")
+        password= request.form.get("password")
+        from hashlib import sha1
+        password = sha1(password.encode('ascii')).hexdigest()
+
+        daoInstance = UserDAO()
+        userInstance = daoInstance.findByID(userID)
+        if userInstance == None:
+            raise CredentialException("The email or password you entered is incorrect.")
+
+        # ****************************************************************
+        # Step 3. UPDATE THE MODEL
+        # ****************************************************************
+        userInstance.setPassword(password)
+        daoInstance.update(userInstance, {})
+
+        response.setContent({"success": True})
+
+    except CredentialException as ex:
+        handleException(response, ex, __file__, "userManagementChangePassword", 200)
+    except Exception as ex:
+        handleException(response, ex, __file__, "userManagementChangePassword")
+    finally:
+        if (daoInstance != None):
+            daoInstance.closeConnection()
+    return response
+
+
 def getRandowWord(minLength):
     import os.path
     from random import randrange
