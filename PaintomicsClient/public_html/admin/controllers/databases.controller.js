@@ -257,7 +257,7 @@
 						function errorCallback(response){
 							$scope.isLoading = false;
 							me.retrieveDatabasesListData(true, me, "retrieveAvailableDatabases");
-
+							$dialogs.closeDialog();
 							debugger;
 							var message = "Failed while installing the organism.";
 							$dialogs.showErrorDialog(message, {

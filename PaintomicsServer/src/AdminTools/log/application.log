@@ -20819,3 +20819,416 @@
 
 2017-03-30 11:18:54,533 - INFO - DBManager.py : log -      
 2017-03-30 11:18:54,533 - INFO - DBManager.py : log -      STEP 3. CLOSING LOG FILES, GENERATING VERSION FILE
+2017-03-30 12:07:02,910 - INFO - DBManager.py : log -      ######################################################################
+2017-03-30 12:07:02,911 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE INSTALLER 
+2017-03-30 12:07:02,911 - INFO - DBManager.py : log -      ### v.0.12
+2017-03-30 12:07:02,912 - INFO - DBManager.py : log -      ######################################################################
+2017-03-30 12:07:02,912 - INFO - DBManager.py : log -      
+2017-03-30 12:07:02,913 - INFO - DBManager.py : log -      Installation log is at: /data/paintomics3/KEGG_DATA/current/install.log
+2017-03-30 12:07:02,913 - INFO - DBManager.py : log -      
+2017-03-30 12:07:02,913 - INFO - DBManager.py : log -      STEP 1. READ CONFIGURATION AND PARSE INPUT FILES...
+2017-03-30 12:07:04,957 - INFO - DBManager.py : log -             - 1 new organisms will be installed.
+2017-03-30 12:07:04,958 - INFO - DBManager.py : log -             - 1 organisms were installed on previous executions.
+2017-03-30 12:07:04,959 - INFO - DBManager.py : log -      
+2017-03-30 12:07:04,960 - INFO - DBManager.py : log -      
+2017-03-30 12:07:04,960 - INFO - DBManager.py : log -      STEP 2. INSTALLING NEW ORGANISMS
+2017-03-30 12:07:04,961 - INFO - DBManager.py : log -             1 new organisms will be installed.
+2017-03-30 12:07:04,962 - INFO - DBManager.py : log -                  INSTALLING  mmu...
+2017-03-30 12:07:04,964 - INFO - DBManager.py : log -                       INSTALLING MAPPING DATA FOR mmu (1/1)...
+2017-03-30 12:07:04,965 - INFO - DBManager.py : log -                     * PROCESSING AND INSTALLING CUSTOM AND KEGG DATA 
+2017-03-30 12:07:43,398 - ERROR - DBManager.py : errorlog -                  [('/home/rhernandez/Desktop/workspace/paintomics3/PaintomicsServer/src/AdminTools/DBManager.py', 901, '<module>', 'scriptine.run()'), ('/usr/local/lib/python2.7/dist-packages/scriptine/command.py', 196, 'autocmds', 'add_verbosity_option=add_verbosity_option)'), ('/usr/local/lib/python2.7/dist-packages/scriptine/command.py', 105, 'parse_and_run_function', 'return function(*args[:len(required_args)], **kw)'), ('/home/rhernandez/Desktop/workspace/paintomics3/PaintomicsServer/src/AdminTools/DBManager.py', 386, 'install_command', 'installSpecieData(specie, installLog, dirNameAux, str(step)+ "/" + total, ROOT_DIRECTORY + "AdminTools/scripts/")'), ('/home/rhernandez/Desktop/workspace/paintomics3/PaintomicsServer/src/AdminTools/DBManager.py', 626, 'installSpecieData', 'errorlog(traceback.extract_stack())')]
+2017-03-30 12:07:43,399 - INFO - DBManager.py : log -                       INSTALLING MAPPING DATA FOR mmu (1/1)...
+2017-03-30 12:07:43,399 - INFO - DBManager.py : log -                     * PROCESSING AND INSTALLING CUSTOM AND KEGG DATA 
+2017-03-30 12:08:19,558 - ERROR - DBManager.py : errorlog -                  [('/home/rhernandez/Desktop/workspace/paintomics3/PaintomicsServer/src/AdminTools/DBManager.py', 901, '<module>', 'scriptine.run()'), ('/usr/local/lib/python2.7/dist-packages/scriptine/command.py', 196, 'autocmds', 'add_verbosity_option=add_verbosity_option)'), ('/usr/local/lib/python2.7/dist-packages/scriptine/command.py', 105, 'parse_and_run_function', 'return function(*args[:len(required_args)], **kw)'), ('/home/rhernandez/Desktop/workspace/paintomics3/PaintomicsServer/src/AdminTools/DBManager.py', 392, 'install_command', 'installSpecieData(specie, installLog, dirNameAux, str(step)+ "/" + total, ROOT_DIRECTORY + "AdminTools/scripts/")'), ('/home/rhernandez/Desktop/workspace/paintomics3/PaintomicsServer/src/AdminTools/DBManager.py', 626, 'installSpecieData', 'errorlog(traceback.extract_stack())')]
+2017-03-30 12:38:36,309 - INFO - DBManager.py : log -      ######################################################################
+2017-03-30 12:38:36,309 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE INSTALLER 
+2017-03-30 12:38:36,310 - INFO - DBManager.py : log -      ### v.0.12
+2017-03-30 12:38:36,310 - INFO - DBManager.py : log -      ######################################################################
+2017-03-30 12:38:36,310 - INFO - DBManager.py : log -      
+2017-03-30 12:38:36,310 - INFO - DBManager.py : log -      Installation log is at: /data/paintomics3/KEGG_DATA/current/install.log
+2017-03-30 12:38:36,311 - INFO - DBManager.py : log -      
+2017-03-30 12:38:36,311 - INFO - DBManager.py : log -      STEP 1. READ CONFIGURATION AND PARSE INPUT FILES...
+2017-03-30 12:38:38,349 - INFO - DBManager.py : log -             - 1 new organisms will be installed.
+2017-03-30 12:38:38,351 - INFO - DBManager.py : log -             - 1 organisms were installed on previous executions.
+2017-03-30 12:38:38,352 - INFO - DBManager.py : log -      
+2017-03-30 12:38:38,353 - INFO - DBManager.py : log -      
+2017-03-30 12:38:38,354 - INFO - DBManager.py : log -      STEP 2. INSTALLING NEW ORGANISMS
+2017-03-30 12:38:38,355 - INFO - DBManager.py : log -             1 new organisms will be installed.
+2017-03-30 12:38:38,356 - INFO - DBManager.py : log -                  INSTALLING  mmu...
+2017-03-30 12:38:38,357 - INFO - DBManager.py : log -                       INSTALLING MAPPING DATA FOR mmu (1/1)...
+2017-03-30 12:38:38,359 - INFO - DBManager.py : log -                     * PROCESSING AND INSTALLING CUSTOM AND KEGG DATA 
+2017-03-30 12:40:43,047 - INFO - DBManager.py : log -                  INSTALLED IN 124 seconds ---
+2017-03-30 12:40:43,048 - INFO - DBManager.py : log -              INSTALL  1 mmu...SUCCESS
+
+2017-03-30 12:40:43,048 - INFO - DBManager.py : log -      
+2017-03-30 12:40:43,048 - INFO - DBManager.py : log -      STEP 3. CREATING THE species.json FILE
+2017-03-30 12:40:43,053 - INFO - DBManager.py : log -      
+2017-03-30 12:40:43,053 - INFO - DBManager.py : log -      STEP 4. CLOSING LOG FILES, GENERATING VERSION FILE
+2017-03-30 12:42:31,085 - INFO - DBManager.py : log -      ######################################################################
+2017-03-30 12:42:31,085 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE KEGG DOWNLOADER 
+2017-03-30 12:42:31,086 - INFO - DBManager.py : log -      ### v.0.12
+2017-03-30 12:42:31,086 - INFO - DBManager.py : log -      ######################################################################
+2017-03-30 12:42:31,086 - INFO - DBManager.py : log -      
+2017-03-30 12:42:31,087 - INFO - DBManager.py : log -      Download log is at: /data/paintomics3/KEGG_DATA/download/download.log
+2017-03-30 12:42:31,087 - INFO - DBManager.py : log -      
+2017-03-30 12:42:31,088 - INFO - DBManager.py : log -      STEP 0. READ CONFIGURATION AND PARSE INPUT FILES...
+2017-03-30 12:42:31,088 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2017-03-30 12:42:31,089 - INFO - DBManager.py : log -      
+2017-03-30 12:42:31,089 - INFO - DBManager.py : log -      
+2017-03-30 12:42:31,090 - INFO - DBManager.py : log -      STEP 2. DOWNLOADING THE INFORMATION FOR THE SELECTED ORGANISMS
+2017-03-30 12:42:31,090 - INFO - DBManager.py : log -             - 1 new organisms will be downloaded.
+2017-03-30 12:42:31,091 - INFO - DBManager.py : log -              
+2017-03-30 12:42:31,091 - INFO - DBManager.py : log -              New data will be stored at /data/paintomics3/KEGG_DATA/download/mmu/
+2017-03-30 12:42:31,092 - INFO - DBManager.py : log -                      DOWLOADING  mmu...
+2017-03-30 12:42:31,092 - INFO - DBManager.py : log -                  FETCHING KEGG DATA FOR mmu (1/1)...
+2017-03-30 12:42:31,093 - INFO - DBManager.py : log -                    * GENE to PATHWAY TABLE
+2017-03-30 12:42:39,553 - INFO - DBManager.py : log -                    * PATHWAYS LIST
+2017-03-30 12:42:44,148 - INFO - DBManager.py : log -                          DETECTED 313 PATHWAYS FOR mmu [26 min aprox.]
+2017-03-30 12:42:44,149 - INFO - DBManager.py : log -                           - mmu03008 [1/313]
+2017-03-30 12:42:47,733 - INFO - DBManager.py : log -                           - mmu04650 [2/313]
+2017-03-30 12:42:51,418 - INFO - DBManager.py : log -                           - mmu04623 [3/313]
+2017-03-30 12:42:54,593 - INFO - DBManager.py : log -                           - mmu04640 [4/313]
+2017-03-30 12:42:58,997 - INFO - DBManager.py : log -                           - mmu04657 [5/313]
+2017-03-30 12:43:02,170 - INFO - DBManager.py : log -                           - mmu04658 [6/313]
+2017-03-30 12:43:05,244 - INFO - DBManager.py : log -                           - mmu04659 [7/313]
+2017-03-30 12:43:09,032 - INFO - DBManager.py : log -                           - mmu04713 [8/313]
+2017-03-30 12:43:12,728 - INFO - DBManager.py : log -                           - mmu04622 [9/313]
+2017-03-30 12:43:15,589 - INFO - DBManager.py : log -                           - mmu04066 [10/313]
+2017-03-30 12:43:18,760 - INFO - DBManager.py : log -                           - mmu03410 [11/313]
+2017-03-30 12:43:21,488 - INFO - DBManager.py : log -                           - mmu05205 [12/313]
+2017-03-30 12:43:24,958 - INFO - DBManager.py : log -                           - mmu04062 [13/313]
+2017-03-30 12:43:28,081 - INFO - DBManager.py : log -                           - mmu04914 [14/313]
+2017-03-30 12:43:30,949 - INFO - DBManager.py : log -                           - mmu04060 [15/313]
+2017-03-30 12:43:34,531 - INFO - DBManager.py : log -                           - mmu00750 [16/313]
+2017-03-30 12:43:37,298 - INFO - DBManager.py : log -                           - mmu05206 [17/313]
+2017-03-30 12:43:41,212 - INFO - DBManager.py : log -                           - mmu00240 [18/313]
+2017-03-30 12:43:44,667 - INFO - DBManager.py : log -                           - mmu05213 [19/313]
+2017-03-30 12:43:47,433 - INFO - DBManager.py : log -                           - mmu00592 [20/313]
+2017-03-30 12:43:50,172 - INFO - DBManager.py : log -                           - mmu00591 [21/313]
+2017-03-30 12:43:52,968 - INFO - DBManager.py : log -                           - mmu00590 [22/313]
+2017-03-30 12:43:56,550 - INFO - DBManager.py : log -                           - mmu00052 [23/313]
+2017-03-30 12:43:59,723 - INFO - DBManager.py : log -                           - mmu00053 [24/313]
+2017-03-30 12:44:02,895 - INFO - DBManager.py : log -                           - mmu05215 [25/313]
+2017-03-30 12:44:06,171 - INFO - DBManager.py : log -                           - mmu00051 [26/313]
+2017-03-30 12:44:09,859 - INFO - DBManager.py : log -                           - mmu05219 [27/313]
+2017-03-30 12:44:12,728 - INFO - DBManager.py : log -                           - mmu04550 [28/313]
+2017-03-30 12:44:15,902 - INFO - DBManager.py : log -                           - mmu00982 [29/313]
+2017-03-30 12:44:19,076 - INFO - DBManager.py : log -                           - mmu00190 [30/313]
+2017-03-30 12:44:22,256 - INFO - DBManager.py : log -                           - mmu00450 [31/313]
+2017-03-30 12:44:25,079 - INFO - DBManager.py : log -                           - mmu01522 [32/313]
+2017-03-30 12:44:28,393 - INFO - DBManager.py : log -                           - mmu04710 [33/313]
+2017-03-30 12:44:31,260 - INFO - DBManager.py : log -                           - mmu00512 [34/313]
+2017-03-30 12:44:34,434 - INFO - DBManager.py : log -                           - mmu00511 [35/313]
+2017-03-30 12:44:37,257 - INFO - DBManager.py : log -                           - mmu00510 [36/313]
+2017-03-30 12:44:40,375 - INFO - DBManager.py : log -                           - mmu00515 [37/313]
+2017-03-30 12:44:48,672 - INFO - DBManager.py : log -                           - mmu00514 [38/313]
+2017-03-30 12:44:51,740 - INFO - DBManager.py : log -                           - mmu04971 [39/313]
+2017-03-30 12:44:55,027 - INFO - DBManager.py : log -                           - mmu04970 [40/313]
+2017-03-30 12:44:58,293 - INFO - DBManager.py : log -                           - mmu04973 [41/313]
+2017-03-30 12:45:01,571 - INFO - DBManager.py : log -                           - mmu04972 [42/313]
+2017-03-30 12:45:04,847 - INFO - DBManager.py : log -                           - mmu04975 [43/313]
+2017-03-30 12:45:07,716 - INFO - DBManager.py : log -                           - mmu04974 [44/313]
+2017-03-30 12:45:11,121 - INFO - DBManager.py : log -                           - mmu04977 [45/313]
+2017-03-30 12:45:14,361 - INFO - DBManager.py : log -                           - mmu00062 [46/313]
+2017-03-30 12:45:17,546 - INFO - DBManager.py : log -                           - mmu04978 [47/313]
+2017-03-30 12:45:20,620 - INFO - DBManager.py : log -                           - mmu05412 [48/313]
+2017-03-30 12:45:23,440 - INFO - DBManager.py : log -                           - mmu04340 [49/313]
+2017-03-30 12:45:26,259 - INFO - DBManager.py : log -                           - mmu05416 [50/313]
+2017-03-30 12:45:29,119 - INFO - DBManager.py : log -                           - mmu00100 [51/313]
+2017-03-30 12:45:32,176 - INFO - DBManager.py : log -                           - mmu04071 [52/313]
+2017-03-30 12:45:35,364 - INFO - DBManager.py : log -                           - mmu04072 [53/313]
+2017-03-30 12:45:38,556 - INFO - DBManager.py : log -                           - mmu05320 [54/313]
+2017-03-30 12:45:41,407 - INFO - DBManager.py : log -                           - mmu04621 [55/313]
+2017-03-30 12:45:44,587 - INFO - DBManager.py : log -                           - mmu01212 [56/313]
+2017-03-30 12:45:48,266 - INFO - DBManager.py : log -                           - mmu04380 [57/313]
+2017-03-30 12:45:51,543 - INFO - DBManager.py : log -                           - mmu01210 [58/313]
+2017-03-30 12:45:55,032 - INFO - DBManager.py : log -                           - mmu00250 [59/313]
+2017-03-30 12:45:58,309 - INFO - DBManager.py : log -                           - mmu05161 [60/313]
+2017-03-30 12:46:01,502 - INFO - DBManager.py : log -                           - mmu00740 [61/313]
+2017-03-30 12:46:04,307 - INFO - DBManager.py : log -                           - mmu05200 [62/313]
+2017-03-30 12:46:07,828 - INFO - DBManager.py : log -                           - mmu05202 [63/313]
+2017-03-30 12:46:11,003 - INFO - DBManager.py : log -                           - mmu05203 [64/313]
+2017-03-30 12:46:14,194 - INFO - DBManager.py : log -                           - mmu00310 [65/313]
+2017-03-30 12:46:17,348 - INFO - DBManager.py : log -                           - mmu00061 [66/313]
+2017-03-30 12:46:20,932 - INFO - DBManager.py : log -                           - mmu05166 [67/313]
+2017-03-30 12:46:24,214 - INFO - DBManager.py : log -                           - mmu04540 [68/313]
+2017-03-30 12:46:27,079 - INFO - DBManager.py : log -                           - mmu05160 [69/313]
+2017-03-30 12:46:30,456 - INFO - DBManager.py : log -                           - mmu04270 [70/313]
+2017-03-30 12:46:33,635 - INFO - DBManager.py : log -                           - mmu05162 [71/313]
+2017-03-30 12:46:36,806 - INFO - DBManager.py : log -                           - mmu05014 [72/313]
+2017-03-30 12:46:39,672 - INFO - DBManager.py : log -                           - mmu05016 [73/313]
+2017-03-30 12:46:42,451 - INFO - DBManager.py : log -                           - mmu05169 [74/313]
+2017-03-30 12:46:45,599 - INFO - DBManager.py : log -                           - mmu05010 [75/313]
+2017-03-30 12:46:48,481 - INFO - DBManager.py : log -                           - mmu05012 [76/313]
+2017-03-30 12:46:51,348 - INFO - DBManager.py : log -                           - mmu01521 [77/313]
+2017-03-30 12:46:54,519 - INFO - DBManager.py : log -                           - mmu00500 [78/313]
+2017-03-30 12:46:57,798 - INFO - DBManager.py : log -                           - mmu05212 [79/313]
+2017-03-30 12:47:00,572 - INFO - DBManager.py : log -                           - mmu05332 [80/313]
+2017-03-30 12:47:03,429 - INFO - DBManager.py : log -                           - mmu04144 [81/313]
+2017-03-30 12:47:06,638 - INFO - DBManager.py : log -                           - mmu04390 [82/313]
+2017-03-30 12:47:09,883 - INFO - DBManager.py : log -                           - mmu04962 [83/313]
+2017-03-30 12:47:12,747 - INFO - DBManager.py : log -                           - mmu04720 [84/313]
+2017-03-30 12:47:15,559 - INFO - DBManager.py : log -                           - mmu04960 [85/313]
+2017-03-30 12:47:19,096 - INFO - DBManager.py : log -                           - mmu04961 [86/313]
+2017-03-30 12:47:22,267 - INFO - DBManager.py : log -                           - mmu04966 [87/313]
+2017-03-30 12:47:25,137 - INFO - DBManager.py : log -                           - mmu04964 [88/313]
+2017-03-30 12:47:28,005 - INFO - DBManager.py : log -                           - mmu03060 [89/313]
+2017-03-30 12:47:30,770 - INFO - DBManager.py : log -                           - mmu00830 [90/313]
+2017-03-30 12:47:33,946 - INFO - DBManager.py : log -                           - mmu00380 [91/313]
+2017-03-30 12:47:37,437 - INFO - DBManager.py : log -                           - mmu04392 [92/313]
+2017-03-30 12:47:40,702 - INFO - DBManager.py : log -                           - mmu05164 [93/313]
+2017-03-30 12:47:43,791 - INFO - DBManager.py : log -                           - mmu05168 [94/313]
+2017-03-30 12:47:46,846 - INFO - DBManager.py : log -                           - mmu01200 [95/313]
+2017-03-30 12:47:50,419 - INFO - DBManager.py : log -                           - mmu04924 [96/313]
+2017-03-30 12:47:53,300 - INFO - DBManager.py : log -                           - mmu04630 [97/313]
+2017-03-30 12:47:56,169 - INFO - DBManager.py : log -                           - mmu00770 [98/313]
+2017-03-30 12:47:59,252 - INFO - DBManager.py : log -                           - mmu04931 [99/313]
+2017-03-30 12:48:02,432 - INFO - DBManager.py : log -                           - mmu00071 [100/313]
+2017-03-30 12:48:05,693 - INFO - DBManager.py : log -                           - mmu00072 [101/313]
+2017-03-30 12:48:08,555 - INFO - DBManager.py : log -                           - mmu04530 [102/313]
+2017-03-30 12:48:11,837 - INFO - DBManager.py : log -                           - mmu00300 [103/313]
+2017-03-30 12:48:14,624 - INFO - DBManager.py : log -                           - mmu00471 [104/313]
+2017-03-30 12:48:17,434 - INFO - DBManager.py : log -                           - mmu00472 [105/313]
+2017-03-30 12:48:20,332 - INFO - DBManager.py : log -                           - mmu04330 [106/313]
+2017-03-30 12:48:23,199 - INFO - DBManager.py : log -                           - mmu00220 [107/313]
+2017-03-30 12:48:26,089 - INFO - DBManager.py : log -                           - mmu01523 [108/313]
+2017-03-30 12:48:29,649 - INFO - DBManager.py : log -                           - mmu04930 [109/313]
+2017-03-30 12:48:32,417 - INFO - DBManager.py : log -                           - mmu04068 [110/313]
+2017-03-30 12:48:35,566 - INFO - DBManager.py : log -                           - mmu04080 [111/313]
+2017-03-30 12:48:38,704 - INFO - DBManager.py : log -                           - mmu00670 [112/313]
+2017-03-30 12:48:41,844 - INFO - DBManager.py : log -                           - mmu04064 [113/313]
+2017-03-30 12:48:45,418 - INFO - DBManager.py : log -                           - mmu04721 [114/313]
+2017-03-30 12:48:48,259 - INFO - DBManager.py : log -                           - mmu04722 [115/313]
+2017-03-30 12:48:51,462 - INFO - DBManager.py : log -                           - mmu04723 [116/313]
+2017-03-30 12:48:54,533 - INFO - DBManager.py : log -                           - mmu04724 [117/313]
+2017-03-30 12:48:57,709 - INFO - DBManager.py : log -                           - mmu04725 [118/313]
+2017-03-30 12:49:00,555 - INFO - DBManager.py : log -                           - mmu04726 [119/313]
+2017-03-30 12:49:03,865 - INFO - DBManager.py : log -                           - mmu04350 [120/313]
+2017-03-30 12:49:06,737 - INFO - DBManager.py : log -                           - mmu04728 [121/313]
+2017-03-30 12:49:09,997 - INFO - DBManager.py : log -                           - mmu04917 [122/313]
+2017-03-30 12:49:13,272 - INFO - DBManager.py : log -                           - mmu03460 [123/313]
+2017-03-30 12:49:16,028 - INFO - DBManager.py : log -                           - mmu05211 [124/313]
+2017-03-30 12:49:18,807 - INFO - DBManager.py : log -                           - mmu04727 [125/313]
+2017-03-30 12:49:21,645 - INFO - DBManager.py : log -                           - mmu05217 [126/313]
+2017-03-30 12:49:24,438 - INFO - DBManager.py : log -                           - mmu00760 [127/313]
+2017-03-30 12:49:27,504 - INFO - DBManager.py : log -                           - mmu00920 [128/313]
+2017-03-30 12:49:30,773 - INFO - DBManager.py : log -                           - mmu05210 [129/313]
+2017-03-30 12:49:33,654 - INFO - DBManager.py : log -                           - mmu04152 [130/313]
+2017-03-30 12:49:36,827 - INFO - DBManager.py : log -                           - mmu04151 [131/313]
+2017-03-30 12:49:40,105 - INFO - DBManager.py : log -                           - mmu04150 [132/313]
+2017-03-30 12:49:43,379 - INFO - DBManager.py : log -                           - mmu00360 [133/313]
+2017-03-30 12:49:46,584 - INFO - DBManager.py : log -                           - mmu03050 [134/313]
+2017-03-30 12:49:49,422 - INFO - DBManager.py : log -                           - mmu05221 [135/313]
+2017-03-30 12:49:52,227 - INFO - DBManager.py : log -                           - mmu04310 [136/313]
+2017-03-30 12:49:55,462 - INFO - DBManager.py : log -                           - mmu00330 [137/313]
+2017-03-30 12:49:58,747 - INFO - DBManager.py : log -                           - mmu05143 [138/313]
+2017-03-30 12:50:01,572 - INFO - DBManager.py : log -                           - mmu05142 [139/313]
+2017-03-30 12:50:04,884 - INFO - DBManager.py : log -                           - mmu04014 [140/313]
+2017-03-30 12:50:08,163 - INFO - DBManager.py : log -                           - mmu04015 [141/313]
+2017-03-30 12:50:11,361 - INFO - DBManager.py : log -                           - mmu04012 [142/313]
+2017-03-30 12:50:14,681 - INFO - DBManager.py : log -                           - mmu00480 [143/313]
+2017-03-30 12:50:17,991 - INFO - DBManager.py : log -                           - mmu04010 [144/313]
+2017-03-30 12:50:21,856 - INFO - DBManager.py : log -                           - mmu05144 [145/313]
+2017-03-30 12:50:24,751 - INFO - DBManager.py : log -                           - mmu05033 [146/313]
+2017-03-30 12:50:27,722 - INFO - DBManager.py : log -                           - mmu05032 [147/313]
+2017-03-30 12:50:31,099 - INFO - DBManager.py : log -                           - mmu05031 [148/313]
+2017-03-30 12:50:34,303 - INFO - DBManager.py : log -                           - mmu05030 [149/313]
+2017-03-30 12:50:37,547 - INFO - DBManager.py : log -                           - mmu00232 [150/313]
+2017-03-30 12:50:40,418 - INFO - DBManager.py : log -                           - mmu05216 [151/313]
+2017-03-30 12:50:43,285 - INFO - DBManager.py : log -                           - mmu00230 [152/313]
+2017-03-30 12:50:47,106 - INFO - DBManager.py : log -                           - mmu05034 [153/313]
+2017-03-30 12:50:50,350 - INFO - DBManager.py : log -                           - mmu00562 [154/313]
+2017-03-30 12:50:53,434 - INFO - DBManager.py : log -                           - mmu00563 [155/313]
+2017-03-30 12:50:56,262 - INFO - DBManager.py : log -                           - mmu00561 [156/313]
+2017-03-30 12:50:59,393 - INFO - DBManager.py : log -                           - mmu00564 [157/313]
+2017-03-30 12:51:02,643 - INFO - DBManager.py : log -                           - mmu00565 [158/313]
+2017-03-30 12:51:05,913 - INFO - DBManager.py : log -                           - mmu05204 [159/313]
+2017-03-30 12:51:09,139 - INFO - DBManager.py : log -                           - mmu00640 [160/313]
+2017-03-30 12:51:13,197 - INFO - DBManager.py : log -                           - mmu00400 [161/313]
+2017-03-30 12:51:16,361 - INFO - DBManager.py : log -                           - mmu05322 [162/313]
+2017-03-30 12:51:19,229 - INFO - DBManager.py : log -                           - mmu05223 [163/313]
+2017-03-30 12:51:22,199 - INFO - DBManager.py : log -                           - mmu05224 [164/313]
+2017-03-30 12:51:25,372 - INFO - DBManager.py : log -                           - mmu05218 [165/313]
+2017-03-30 12:51:28,238 - INFO - DBManager.py : log -                           - mmu03320 [166/313]
+2017-03-30 12:51:31,411 - INFO - DBManager.py : log -                           - mmu03450 [167/313]
+2017-03-30 12:51:34,133 - INFO - DBManager.py : log -                           - mmu04614 [168/313]
+2017-03-30 12:51:36,868 - INFO - DBManager.py : log -                           - mmu04610 [169/313]
+2017-03-30 12:51:40,116 - INFO - DBManager.py : log -                           - mmu04611 [170/313]
+2017-03-30 12:51:43,330 - INFO - DBManager.py : log -                           - mmu04612 [171/313]
+2017-03-30 12:51:46,140 - INFO - DBManager.py : log -                           - mmu00910 [172/313]
+2017-03-30 12:51:49,332 - INFO - DBManager.py : log -                           - mmu04140 [173/313]
+2017-03-30 12:51:52,612 - INFO - DBManager.py : log -                           - mmu04141 [174/313]
+2017-03-30 12:51:55,888 - INFO - DBManager.py : log -                           - mmu04142 [175/313]
+2017-03-30 12:51:58,756 - INFO - DBManager.py : log -                           - mmu00280 [176/313]
+2017-03-30 12:52:01,972 - INFO - DBManager.py : log -                           - mmu03040 [177/313]
+2017-03-30 12:52:05,306 - INFO - DBManager.py : log -                           - mmu04145 [178/313]
+2017-03-30 12:52:08,583 - INFO - DBManager.py : log -                           - mmu04146 [179/313]
+2017-03-30 12:52:11,490 - INFO - DBManager.py : log -                           - mmu05340 [180/313]
+2017-03-30 12:52:14,449 - INFO - DBManager.py : log -                           - mmu04216 [181/313]
+2017-03-30 12:52:17,430 - INFO - DBManager.py : log -                           - mmu00010 [182/313]
+2017-03-30 12:52:20,976 - INFO - DBManager.py : log -                           - mmu04514 [183/313]
+2017-03-30 12:52:24,874 - INFO - DBManager.py : log -                           - mmu05150 [184/313]
+2017-03-30 12:52:27,862 - INFO - DBManager.py : log -                           - mmu04512 [185/313]
+2017-03-30 12:52:31,169 - INFO - DBManager.py : log -                           - mmu05152 [186/313]
+2017-03-30 12:52:34,261 - INFO - DBManager.py : log -                           - mmu04510 [187/313]
+2017-03-30 12:52:37,357 - INFO - DBManager.py : log -                           - mmu04022 [188/313]
+2017-03-30 12:52:40,553 - INFO - DBManager.py : log -                           - mmu04020 [189/313]
+2017-03-30 12:52:43,333 - INFO - DBManager.py : log -                           - mmu05020 [190/313]
+2017-03-30 12:52:46,083 - INFO - DBManager.py : log -                           - mmu05310 [191/313]
+2017-03-30 12:52:48,843 - INFO - DBManager.py : log -                           - mmu04024 [192/313]
+2017-03-30 12:52:52,043 - INFO - DBManager.py : log -                           - mmu05214 [193/313]
+2017-03-30 12:52:55,175 - INFO - DBManager.py : log -                           - mmu04730 [194/313]
+2017-03-30 12:52:58,435 - INFO - DBManager.py : log -                           - mmu04810 [195/313]
+2017-03-30 12:53:01,510 - INFO - DBManager.py : log -                           - mmu00650 [196/313]
+2017-03-30 12:53:04,596 - INFO - DBManager.py : log -                           - mmu00790 [197/313]
+2017-03-30 12:53:07,719 - INFO - DBManager.py : log -                           - mmu00410 [198/313]
+2017-03-30 12:53:11,129 - INFO - DBManager.py : log -                           - mmu04950 [199/313]
+2017-03-30 12:53:13,915 - INFO - DBManager.py : log -                           - mmu03440 [200/313]
+2017-03-30 12:53:17,099 - INFO - DBManager.py : log -                           - mmu04668 [201/313]
+2017-03-30 12:53:20,365 - INFO - DBManager.py : log -                           - mmu00900 [202/313]
+2017-03-30 12:53:23,643 - INFO - DBManager.py : log -                           - mmu04660 [203/313]
+2017-03-30 12:53:26,817 - INFO - DBManager.py : log -                           - mmu04662 [204/313]
+2017-03-30 12:53:29,655 - INFO - DBManager.py : log -                           - mmu00290 [205/313]
+2017-03-30 12:53:32,386 - INFO - DBManager.py : log -                           - mmu04520 [206/313]
+2017-03-30 12:53:35,626 - INFO - DBManager.py : log -                           - mmu04933 [207/313]
+2017-03-30 12:53:38,821 - INFO - DBManager.py : log -                           - mmu04666 [208/313]
+2017-03-30 12:53:41,884 - INFO - DBManager.py : log -                           - mmu03030 [209/313]
+2017-03-30 12:53:44,644 - INFO - DBManager.py : log -                           - mmu04744 [210/313]
+2017-03-30 12:53:47,506 - INFO - DBManager.py : log -                           - mmu05140 [211/313]
+2017-03-30 12:53:50,677 - INFO - DBManager.py : log -                           - mmu04742 [212/313]
+2017-03-30 12:53:53,548 - INFO - DBManager.py : log -                           - mmu05231 [213/313]
+2017-03-30 12:53:56,375 - INFO - DBManager.py : log -                           - mmu04740 [214/313]
+2017-03-30 12:53:59,593 - INFO - DBManager.py : log -                           - mmu00020 [215/313]
+2017-03-30 12:54:02,768 - INFO - DBManager.py : log -                           - mmu04320 [216/313]
+2017-03-30 12:54:05,628 - INFO - DBManager.py : log -                           - mmu00860 [217/313]
+2017-03-30 12:54:08,868 - INFO - DBManager.py : log -                           - mmu00140 [218/313]
+2017-03-30 12:54:12,797 - INFO - DBManager.py : log -                           - mmu05321 [219/313]
+2017-03-30 12:54:15,668 - INFO - DBManager.py : log -                           - mmu05146 [220/313]
+2017-03-30 12:54:18,540 - INFO - DBManager.py : log -                           - mmu05323 [221/313]
+2017-03-30 12:54:21,368 - INFO - DBManager.py : log -                           - mmu03022 [222/313]
+2017-03-30 12:54:24,240 - INFO - DBManager.py : log -                           - mmu04137 [223/313]
+2017-03-30 12:54:27,032 - INFO - DBManager.py : log -                           - mmu04136 [224/313]
+2017-03-30 12:54:29,898 - INFO - DBManager.py : log -                           - mmu04130 [225/313]
+2017-03-30 12:54:32,765 - INFO - DBManager.py : log -                           - mmu01100 [226/313]
+2017-03-30 12:54:44,850 - INFO - DBManager.py : log -                           - mmu00350 [227/313]
+2017-03-30 12:54:48,128 - INFO - DBManager.py : log -                           - mmu00620 [228/313]
+2017-03-30 12:54:51,330 - INFO - DBManager.py : log -                           - mmu04750 [229/313]
+2017-03-30 12:54:54,459 - INFO - DBManager.py : log -                           - mmu05410 [230/313]
+2017-03-30 12:54:57,343 - INFO - DBManager.py : log -                           - mmu04940 [231/313]
+2017-03-30 12:55:00,107 - INFO - DBManager.py : log -                           - mmu05220 [232/313]
+2017-03-30 12:55:02,873 - INFO - DBManager.py : log -                           - mmu00785 [233/313]
+2017-03-30 12:55:05,737 - INFO - DBManager.py : log -                           - mmu00780 [234/313]
+2017-03-30 12:55:08,809 - INFO - DBManager.py : log -                           - mmu03430 [235/313]
+2017-03-30 12:55:11,779 - INFO - DBManager.py : log -                           - mmu04911 [236/313]
+2017-03-30 12:55:14,954 - INFO - DBManager.py : log -                           - mmu05418 [237/313]
+2017-03-30 12:55:18,233 - INFO - DBManager.py : log -                           - mmu04672 [238/313]
+2017-03-30 12:55:21,413 - INFO - DBManager.py : log -                           - mmu04670 [239/313]
+2017-03-30 12:55:24,526 - INFO - DBManager.py : log -                           - mmu04925 [240/313]
+2017-03-30 12:55:27,450 - INFO - DBManager.py : log -                           - mmu04922 [241/313]
+2017-03-30 12:55:30,725 - INFO - DBManager.py : log -                           - mmu04923 [242/313]
+2017-03-30 12:55:33,594 - INFO - DBManager.py : log -                           - mmu04920 [243/313]
+2017-03-30 12:55:36,441 - INFO - DBManager.py : log -                           - mmu04921 [244/313]
+2017-03-30 12:55:39,735 - INFO - DBManager.py : log -                           - mmu00030 [245/313]
+2017-03-30 12:55:42,876 - INFO - DBManager.py : log -                           - mmu03020 [246/313]
+2017-03-30 12:55:45,675 - INFO - DBManager.py : log -                           - mmu01040 [247/313]
+2017-03-30 12:55:48,788 - INFO - DBManager.py : log -                           - mmu04664 [248/313]
+2017-03-30 12:55:51,596 - INFO - DBManager.py : log -                           - mmu05133 [249/313]
+2017-03-30 12:55:54,788 - INFO - DBManager.py : log -                           - mmu05132 [250/313]
+2017-03-30 12:55:57,967 - INFO - DBManager.py : log -                           - mmu00130 [251/313]
+2017-03-30 12:56:01,215 - INFO - DBManager.py : log -                           - mmu05330 [252/313]
+2017-03-30 12:56:03,960 - INFO - DBManager.py : log -                           - mmu00970 [253/313]
+2017-03-30 12:56:07,179 - INFO - DBManager.py : log -                           - mmu04371 [254/313]
+2017-03-30 12:56:10,361 - INFO - DBManager.py : log -                           - mmu04370 [255/313]
+2017-03-30 12:56:13,221 - INFO - DBManager.py : log -                           - mmu00260 [256/313]
+2017-03-30 12:56:16,804 - INFO - DBManager.py : log -                           - mmu00730 [257/313]
+2017-03-30 12:56:19,672 - INFO - DBManager.py : log -                           - mmu04122 [258/313]
+2017-03-30 12:56:22,520 - INFO - DBManager.py : log -                           - mmu05230 [259/313]
+2017-03-30 12:56:25,817 - INFO - DBManager.py : log -                           - mmu04120 [260/313]
+2017-03-30 12:56:29,093 - INFO - DBManager.py : log -                           - mmu05134 [261/313]
+2017-03-30 12:56:31,964 - INFO - DBManager.py : log -                           - mmu04976 [262/313]
+2017-03-30 12:56:35,137 - INFO - DBManager.py : log -                           - mmu00340 [263/313]
+2017-03-30 12:56:38,306 - INFO - DBManager.py : log -                           - mmu00980 [264/313]
+2017-03-30 12:56:41,893 - INFO - DBManager.py : log -                           - mmu00630 [265/313]
+2017-03-30 12:56:45,181 - INFO - DBManager.py : log -                           - mmu00983 [266/313]
+2017-03-30 12:56:48,446 - INFO - DBManager.py : log -                           - mmu00430 [267/313]
+2017-03-30 12:56:51,316 - INFO - DBManager.py : log -                           - mmu01524 [268/313]
+2017-03-30 12:56:54,186 - INFO - DBManager.py : log -                           - mmu05414 [269/313]
+2017-03-30 12:56:56,947 - INFO - DBManager.py : log -                           - mmu05145 [270/313]
+2017-03-30 12:57:00,221 - INFO - DBManager.py : log -                           - mmu04261 [271/313]
+2017-03-30 12:57:03,397 - INFO - DBManager.py : log -                           - mmu00534 [272/313]
+2017-03-30 12:57:06,264 - INFO - DBManager.py : log -                           - mmu00531 [273/313]
+2017-03-30 12:57:09,439 - INFO - DBManager.py : log -                           - mmu00533 [274/313]
+2017-03-30 12:57:12,306 - INFO - DBManager.py : log -                           - mmu00532 [275/313]
+2017-03-30 12:57:15,174 - INFO - DBManager.py : log -                           - mmu02010 [276/313]
+2017-03-30 12:57:19,173 - INFO - DBManager.py : log -                           - mmu04919 [277/313]
+2017-03-30 12:57:22,348 - INFO - DBManager.py : log -                           - mmu04918 [278/313]
+2017-03-30 12:57:25,617 - INFO - DBManager.py : log -                           - mmu03018 [279/313]
+2017-03-30 12:57:29,424 - INFO - DBManager.py : log -                           - mmu04913 [280/313]
+2017-03-30 12:57:32,595 - INFO - DBManager.py : log -                           - mmu04912 [281/313]
+2017-03-30 12:57:35,780 - INFO - DBManager.py : log -                           - mmu03015 [282/313]
+2017-03-30 12:57:38,623 - INFO - DBManager.py : log -                           - mmu04910 [283/313]
+2017-03-30 12:57:41,899 - INFO - DBManager.py : log -                           - mmu03013 [284/313]
+2017-03-30 12:57:45,090 - INFO - DBManager.py : log -                           - mmu04916 [285/313]
+2017-03-30 12:57:47,944 - INFO - DBManager.py : log -                           - mmu04915 [286/313]
+2017-03-30 12:57:51,117 - INFO - DBManager.py : log -                           - mmu03010 [287/313]
+2017-03-30 12:57:54,292 - INFO - DBManager.py : log -                           - mmu04210 [288/313]
+2017-03-30 12:57:57,811 - INFO - DBManager.py : log -                           - mmu04211 [289/313]
+2017-03-30 12:58:00,643 - INFO - DBManager.py : log -                           - mmu04213 [290/313]
+2017-03-30 12:58:03,916 - INFO - DBManager.py : log -                           - mmu04215 [291/313]
+2017-03-30 12:58:06,792 - INFO - DBManager.py : log -                           - mmu03420 [292/313]
+2017-03-30 12:58:09,614 - INFO - DBManager.py : log -                           - mmu05100 [293/313]
+2017-03-30 12:58:12,849 - INFO - DBManager.py : log -                           - mmu04360 [294/313]
+2017-03-30 12:58:16,107 - INFO - DBManager.py : log -                           - mmu01230 [295/313]
+2017-03-30 12:58:19,624 - INFO - DBManager.py : log -                           - mmu00120 [296/313]
+2017-03-30 12:58:22,739 - INFO - DBManager.py : log -                           - mmu04932 [297/313]
+2017-03-30 12:58:25,817 - INFO - DBManager.py : log -                           - mmu04260 [298/313]
+2017-03-30 12:58:29,012 - INFO - DBManager.py : log -                           - mmu04070 [299/313]
+2017-03-30 12:58:32,248 - INFO - DBManager.py : log -                           - mmu00270 [300/313]
+2017-03-30 12:58:35,359 - INFO - DBManager.py : log -                           - mmu04110 [301/313]
+2017-03-30 12:58:38,629 - INFO - DBManager.py : log -                           - mmu05222 [302/313]
+2017-03-30 12:58:41,394 - INFO - DBManager.py : log -                           - mmu00040 [303/313]
+2017-03-30 12:58:44,542 - INFO - DBManager.py : log -                           - mmu04115 [304/313]
+2017-03-30 12:58:47,440 - INFO - DBManager.py : log -                           - mmu04114 [305/313]
+2017-03-30 12:58:50,715 - INFO - DBManager.py : log -                           - mmu00604 [306/313]
+2017-03-30 12:58:53,989 - INFO - DBManager.py : log -                           - mmu00603 [307/313]
+2017-03-30 12:58:56,733 - INFO - DBManager.py : log -                           - mmu00601 [308/313]
+2017-03-30 12:59:00,044 - INFO - DBManager.py : log -                           - mmu00600 [309/313]
+2017-03-30 12:59:03,206 - INFO - DBManager.py : log -                           - mmu00440 [310/313]
+2017-03-30 12:59:06,077 - INFO - DBManager.py : log -                           - mmu00524 [311/313]
+2017-03-30 12:59:09,351 - INFO - DBManager.py : log -                           - mmu00520 [312/313]
+2017-03-30 12:59:12,834 - INFO - DBManager.py : log -                           - mmu04620 [313/313]
+2017-03-30 12:59:18,009 - INFO - DBManager.py : log -              DOWNLOADED IN 1006.91543698 seconds ---
+2017-03-30 12:59:18,011 - INFO - DBManager.py : log -                  FETCHING MAPPING DATA FOR mmu (1/1)...
+2017-03-30 12:59:18,013 - INFO - DBManager.py : log -                   * RETRIEVING EXTERNAL MAPPING DATA
+2017-03-30 13:11:20,194 - INFO - DBManager.py : log -                   * KEGG TO NCBI GeneID
+2017-03-30 13:11:31,171 - INFO - DBManager.py : log -                   * KEGG TO Uniprot
+2017-03-30 13:11:38,747 - INFO - DBManager.py : log -                   * KEGG TO Gene Symbol
+2017-03-30 13:12:06,062 - INFO - DBManager.py : log -                      DOWNLOADED IN 12 minutes ---
+2017-03-30 13:12:06,064 - INFO - DBManager.py : log -              DOWNLOAD  3 mmu...SUCCESS
+
+2017-03-30 13:12:06,065 - INFO - DBManager.py : log -      
+2017-03-30 13:12:06,066 - INFO - DBManager.py : log -      STEP 3. CLOSING LOG FILES, GENERATING VERSION FILE
+2017-03-30 13:13:39,471 - INFO - DBManager.py : log -      ######################################################################
+2017-03-30 13:13:39,472 - INFO - DBManager.py : log -      ### PAINTOMICS 3.0 - DATABASE INSTALLER 
+2017-03-30 13:13:39,472 - INFO - DBManager.py : log -      ### v.0.12
+2017-03-30 13:13:39,472 - INFO - DBManager.py : log -      ######################################################################
+2017-03-30 13:13:39,472 - INFO - DBManager.py : log -      
+2017-03-30 13:13:39,473 - INFO - DBManager.py : log -      Installation log is at: /data/paintomics3/KEGG_DATA/current/install.log
+2017-03-30 13:13:39,473 - INFO - DBManager.py : log -      
+2017-03-30 13:13:39,473 - INFO - DBManager.py : log -      STEP 1. READ CONFIGURATION AND PARSE INPUT FILES...
+2017-03-30 13:13:41,511 - INFO - DBManager.py : log -             - 1 new organisms will be installed.
+2017-03-30 13:13:41,512 - INFO - DBManager.py : log -             - 1 organisms were installed on previous executions.
+2017-03-30 13:13:41,513 - INFO - DBManager.py : log -      
+2017-03-30 13:13:41,513 - INFO - DBManager.py : log -      
+2017-03-30 13:13:41,514 - INFO - DBManager.py : log -      STEP 2. INSTALLING NEW ORGANISMS
+2017-03-30 13:13:41,516 - INFO - DBManager.py : log -             1 new organisms will be installed.
+2017-03-30 13:13:41,517 - INFO - DBManager.py : log -                  INSTALLING  mmu...
+2017-03-30 13:13:41,519 - INFO - DBManager.py : log -                       INSTALLING MAPPING DATA FOR mmu (1/1)...
+2017-03-30 13:13:41,521 - INFO - DBManager.py : log -                     * PROCESSING AND INSTALLING CUSTOM AND KEGG DATA 
+2017-03-30 13:15:36,287 - INFO - DBManager.py : log -                  INSTALLED IN 114 seconds ---
+2017-03-30 13:15:36,288 - INFO - DBManager.py : log -              INSTALL  1 mmu...SUCCESS
+
+2017-03-30 13:15:36,288 - INFO - DBManager.py : log -      
+2017-03-30 13:15:36,288 - INFO - DBManager.py : log -      STEP 3. CREATING THE species.json FILE
+2017-03-30 13:15:36,292 - INFO - DBManager.py : log -      
+2017-03-30 13:15:36,293 - INFO - DBManager.py : log -      STEP 4. CLOSING LOG FILES, GENERATING VERSION FILE

@@ -130,7 +130,7 @@
 
 				for(var i in databases){
 					databases[i].categories = (databases[i].categories || []);
-					if(databases[i].downloaded === "downloaded"){
+					if(databases[i].downloaded === true){
 						databases[i].categories.push("Locally available");
 					}else if (databases[i].downloaded === "downloading"){
 						databases[i].categories.push("Downloading");
