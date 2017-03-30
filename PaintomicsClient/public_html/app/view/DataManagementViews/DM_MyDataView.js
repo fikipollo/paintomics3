@@ -801,6 +801,11 @@ Ext.define('Paintomics.view.common.MyFilesSelectorButton', {
 		this.queryById("visiblePathField").setRawValue((origin === "mydata" ? "[MyData]/" : "") + value);
 		this.queryById("originField").setValue(origin);
 	},
+	clearValue: function(){
+		this.queryById("fileField").reset();
+		this.queryById("visiblePathField").setRawValue("");
+		this.queryById("originField").setValue("");
+	},
 	setDisabled: function(disabled) {
 		this.queryById("optionsButton").setDisabled(disabled);
 	},
@@ -858,10 +863,16 @@ Ext.define('Paintomics.view.common.MyFilesSelectorButton', {
 							handler: function() {
 								var _callback = function(selectedItem) {
 									if (selectedItem !== null) {
+										me.clearValue();
 										me.setValue(selectedItem[0].get("fileName"));
 									}
 								};
 								Ext.widget("myFilesSelectorDialog").showDialog(_callback);
+							}
+						}, {
+							text: 'Clear selection',
+							handler: function() {
+								me.clearValue();
 							}
 						}
 					].concat(me.extraButtons)
