@@ -1,0 +1,47 @@
+<div class="modal-header">
+	<h3 class="modal-title" >Reference file details</h3>
+</div>
+<div class="modal-body">
+	<form>
+		<div class="form-group">
+			<label for="dataType">Data type:</label>
+			<input type="text" class="form-control" ng-model="model.omicType">
+		</div>
+		<div class="form-group">
+			<label for="specie">Organism:</label>
+			<input type="text" class="form-control" ng-model="model.otherFields.specie">
+		</div>
+		<div class="form-group">
+			<label for="source">Source:</label>
+			<input type="text" class="form-control" ng-model="model.otherFields.source">
+		</div>
+		<div class="form-group">
+			<label for="version">Version:</label>
+			<input type="text" class="form-control" ng-model="model.otherFields.version">
+		</div>
+		<div class="form-group">
+			<label for="description">Description:</label>
+			<textarea class="form-control" rows="5" ng-model="model.description"></textarea>
+		</div>
+		<div class="checkbox">
+			<label><input type="checkbox" value="" ng-model="hideUpload">My file is already in the server, just register/update the information.</label>
+		</div>
+		<div class="form-group" ng-show="!hideUpload">
+			<label for="file">File:</label>
+			<input type="file" file-model="myFile" class="form-control" ng-model="model.file" name="file" id="file">
+		</div>
+		<div ng-show="hideUpload">
+			<div class="well well-sm">
+				Type the name for the file as it is in the server. Do not include the path to the file.
+			</div>
+			<div class="form-group">
+				<label for="fileName">File name:</label>
+				<input type="text" class="form-control" ng-model="model.fileName">
+			</div>
+		</div>
+		<div style="text-align:right;">
+			<a class="btn btn-success" ng-click="controller.saveFileDetailsHandler();">Save file</a>
+			<a class="btn btn-danger" ng-click="controller.closeFileDetailsHandler();">Cancel</a>
+		</div>
+	</form>
+</div>

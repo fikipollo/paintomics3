@@ -20,15 +20,16 @@
 
 import logging
 from time import strftime as formatDate
-from os import path as os_path, makedirs as os_makedirs
+from os import path as os_path, makedirs as os_makedirs, walk as os_walk
 from shutil import rmtree as shutil_rmtree
 from csv import reader as csv_reader
 from numpy import percentile as numpy_percentile, min as numpy_min, max as numpy_max
 
 from src.common.Util import Model
 from Feature import Gene, Compound, OmicValue
-from src.common.KeggInformationManager import KeggInformationManager
 from src.common.FeatureNamesToKeggIDsMapper import mapFeatureNamesToKeggIDs, mapFeatureNamesToCompoundsIDs
+from zipfile import ZipFile, ZIP_DEFLATED
+from shutil import make_archive as shutil_make_archive
 
 class Job(Model):
     #******************************************************************************************************************
@@ -506,3 +507,19 @@ class Job(Model):
                     value = genes
                 bson[attr] = value
         return bson
+
+    def compressDirectory(self, output, format, target):
+        if format == "zip":
+            try:
+                zipf = ZipFile(output + ".zip", 'w', ZIP_DEFLATED)
+                for root, dirs, files in os_walk(target):
+                    for file in files:
+                        zipf.write(os_path.join(root, file), os_path.basename(os_path.join(root, file)))
+                zipf.close()
+            except Exception as e:
+                try:
+                    shutil_make_archive(output, "zip", target)
+                except Exception as e:
+                    raise Exception("Failed while compressing directory")
+        else:
+            raise Exception("Failed while compressing directory. Format not supported" )

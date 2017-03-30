@@ -58,6 +58,10 @@ function DM_MyDataListView() {
 		this.myDataSummaryPanel.updateContent(dataSummary);
 	};
 
+	this.changePassButtonClickHandler = function(){
+		application.getController("UserController").changePassLinkClickHandler();
+	};
+
 	this.initComponent = function() {
 		var me = this;
 
@@ -88,7 +92,7 @@ function DM_MyDataListView() {
 							'     <tr><td><b>User name:</b></td><td>' + Ext.util.Cookies.get('userName') + '</td></tr>' +
   						'     <tr><td><b>Email:</b></td><td>' + Ext.util.Cookies.get('lastEmail') + '</td></tr>' +
   						'     <tr><td><b>Password:</b></td><td>************</td></tr>' +
-  						'     <tr><td><b></b></td><td><a href="javascript:void(0)">Click here to change password</a></td></tr>' +
+  						'     <tr><td><b></b></td><td><a id="changePassButton" href="javascript:void(0)">Click here to change password</a></td></tr>' +
   						'  </tbody></table>' +
 							'</div>'
 						},
@@ -102,6 +106,9 @@ function DM_MyDataListView() {
 				boxready: function () {
 					$("#uploadNewFilesButton").click(function(){
 						application.getMainView().changeMainView("DM_MyDataUploadFilesPanel");
+					});
+					$("#changePassButton").click(function () {
+						me.changePassButtonClickHandler();
 					});
 				}
 			}

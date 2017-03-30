@@ -45,6 +45,9 @@ sudo pip install scipy
 sudo pip install psutil
 #Tested with hashlib 20081119 |
 #sudo pip install hashlib
+#
+sudo pip install apscheduler
+
 
 
 #*********************************************************

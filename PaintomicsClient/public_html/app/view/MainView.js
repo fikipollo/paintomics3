@@ -89,14 +89,19 @@ function MainView() {
 				aView = new DM_MyDataSubmitJobPanel(aViewName, application.getController("DataManagementController"));
 				this.subviews[aViewName] = aView;
 			}
+		}else{
+			aView = this.subviews[aViewName];
+			if (aViewName === "DM_MyDataListView") {
+				aView.updateContent();
+			}
 		}
 
-		aView = this.subviews[aViewName];
 		if (me.currentView !== null) {
 			me.getComponent().queryById("mainViewCenterPanel").remove(me.currentView.getComponent(), false);
 		}
 
 		me.currentView = aView;
+
 		me.getComponent().queryById("mainViewCenterPanel").add(aView.getComponent());
 	};
 

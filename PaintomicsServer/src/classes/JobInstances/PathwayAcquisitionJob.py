@@ -22,8 +22,8 @@ import logging
 from os import path as os_path, system as os_system, makedirs as os_makedirs
 from csv import reader as csv_reader
 from zipfile import ZipFile as zipFile
+
 from subprocess import check_call, STDOUT, CalledProcessError
-from shutil import make_archive as shutil_make_archive
 from src.common.Util import unifyAndSort
 
 
@@ -37,7 +37,7 @@ from src.classes.Feature import Gene, Compound
 from src.classes.Pathway import Pathway
 from src.classes.PathwayGraphicalData import PathwayGraphicalData
 
-from src.conf.serverconf import ROOT_DIRECTORY, KEGG_DATA_DIR, MAX_THREADS, MAX_WAIT_THREADS
+from src.conf.serverconf import KEGG_DATA_DIR, MAX_THREADS, MAX_WAIT_THREADS
 
 
 class PathwayAcquisitionJob(Job):
@@ -255,7 +255,8 @@ class PathwayAcquisitionJob(Job):
             logging.info("OUTPUT FILES IS " + self.getOutputDir() + fileName)
             logging.info("TEMPORAL DIR IS " + self.getTemporalDir() + "/")
 
-            shutil_make_archive(self.getOutputDir() + fileName, "zip", self.getTemporalDir() + "/")
+            self.compressDirectory(self.getOutputDir() + fileName, "zip", self.getTemporalDir() + "/")
+
             logging.info("COMPRESSING RESULTS...DONE")
 
             return checkBoxesData
@@ -614,7 +615,7 @@ class PathwayAcquisitionJob(Job):
 
 
     #GENERATE METAGENES LIST FUNCTIONS -----------------------------------------------------------------------------------------
-    def generateMetagenesList(self):
+    def generateMetagenesList(self, ROOT_DIRECTORY):
         """
         This function obtains the metagenes for each pathway in KEGG based on the input values.
 

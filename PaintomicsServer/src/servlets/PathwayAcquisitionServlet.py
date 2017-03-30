@@ -25,7 +25,7 @@ from src.common.UserSessionManager import UserSessionManager
 from src.common.JobInformationManager import JobInformationManager
 from src.classes.JobInstances.PathwayAcquisitionJob import PathwayAcquisitionJob
 
-from src.conf.serverconf import CLIENT_TMP_DIR, EXAMPLE_FILES_DIR, KEGG_DATA_DIR
+from src.conf.serverconf import CLIENT_TMP_DIR, KEGG_DATA_DIR
 #************************************************************************
 #     _____ _______ ______ _____    __
 #    / ____|__   __|  ____|  __ \  /_ |
@@ -34,7 +34,7 @@ from src.conf.serverconf import CLIENT_TMP_DIR, EXAMPLE_FILES_DIR, KEGG_DATA_DIR
 #    ____) |  | |  | |____| |       | |
 #   |_____/   |_|  |______|_|       |_|
 #
-def pathwayAcquisitionStep1_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, exampleMode):
+def pathwayAcquisitionStep1_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, EXAMPLE_FILES_DIR, exampleMode):
     """
     This function corresponds to FIRST PART of the FIRST step in the Pathways acquisition process.
     First, it takes a Request object which contains the fields of the form that started the process.
@@ -221,7 +221,7 @@ def pathwayAcquisitionStep1_PART2(jobInstance, userID, exampleMode, RESPONSE):
 #    ____) |  | |  | |____| |       / /_
 #   |_____/   |_|  |______|_|      |____|
 #
-def pathwayAcquisitionStep2_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE):
+def pathwayAcquisitionStep2_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE, ROOT_DIRECTORY):
     """
     This function corresponds to FIRST PART of the SECOND step in the Pathways acquisition process.
     First, it takes a Request object which contains the fields of the form that started the process.
@@ -267,7 +267,7 @@ def pathwayAcquisitionStep2_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE):
         #************************************************************************
         QUEUE_INSTANCE.enqueue(
             fn=pathwayAcquisitionStep2_PART2,
-            args=(jobID, userID, selectedCompounds, RESPONSE, ),
+            args=(jobID, userID, selectedCompounds, RESPONSE, ROOT_DIRECTORY,),
             timeout=600,
             job_id= jobID
         )
@@ -285,7 +285,7 @@ def pathwayAcquisitionStep2_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE):
     finally:
         return RESPONSE
 
-def pathwayAcquisitionStep2_PART2(jobID, userID, selectedCompounds, RESPONSE):
+def pathwayAcquisitionStep2_PART2(jobID, userID, selectedCompounds, RESPONSE, ROOT_DIRECTORY):
     """
     This function corresponds to SECOND PART of the SECOND step in the Pathways acquisition process.
     Given a JOB INSTANCE, first processes the uploaded files (identifiers matching and compound list generation)
@@ -341,7 +341,7 @@ def pathwayAcquisitionStep2_PART2(jobID, userID, selectedCompounds, RESPONSE):
         # Step 3. GENERATING METAGENES INFORMATION
         #****************************************************************
         logging.info("STEP2 - GENERATING METAGENES INFORMATION...")
-        jobInstance.generateMetagenesList()
+        jobInstance.generateMetagenesList(ROOT_DIRECTORY)
         logging.info("STEP2 - GENERATING METAGENES INFORMATION...DONE")
 
         jobInstance.setLastStep(3)

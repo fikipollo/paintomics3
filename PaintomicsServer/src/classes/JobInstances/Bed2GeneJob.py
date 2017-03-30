@@ -343,9 +343,10 @@ class Bed2GeneJob(Job):
                 #STEP 6. FOR EACH GENE, SUMMARIZE THE QUANTIFICATION VALUES IF ASSOCIATED REGIONS > 1
                 regionsToGeneFile = open(self.getTemporalDir() + '/regionsToGene.tab', 'w')
                 genesToRegionsFile = open(self.getTemporalDir() + '/genesToRegions.tab', 'w')
-                fileName = "B2G_output_" + time.strftime("%Y%m%d_%H%M") + ".tab"
+                #TODO: USE JOB DATE
+                fileName = "B2G_output_" + self.date + ".tab"
                 bed2genesOutput = open(self.getTemporalDir() + '/' + fileName, 'w')
-                fileName = "B2G_relevant_" + time.strftime("%Y%m%d_%H%M") + ".tab"
+                fileName = "B2G_relevant_" + self.date + ".tab"
                 bed2genesRelevant = open(self.getTemporalDir() +  '/' + fileName, 'w')
 
                 #PRINT HEADER
@@ -401,7 +402,7 @@ class Bed2GeneJob(Job):
                 #STEP 7. GENERATE THE COMPRESSED FILE WITH RESULTS, COPY THE bed2genesOutput FILE AT INPUT DIR AND CLEAN TEMPORAL FILES
                 #COMPRESS THE RESULTING FILES AND CLEAN TEMPORAL DATA
                 logging.info("COMPRESSING RESULTS...")
-                fileName = "bed2genes_" + time.strftime("%Y%m%d_%H%M")
+                fileName = "bed2genes_" + self.date
                 shutil.make_archive(self.getOutputDir() + fileName, "zip", self.getTemporalDir() + "/")
                 logging.info("COMPRESSING RESULTS...DONE")
 

@@ -848,7 +848,7 @@ def processKEGGPathwaysData():
     file.close()
 
     #STEP 2. PROCESS THE pathways_classification.list FILE
-    file_name= DATA_DIR + "../../pathways_classification.list"
+    file_name= DATA_DIR + "../common/pathways_classification.list"
     file = open(file_name, 'r')
     mainClassification=""; secondClassification="";
     for line in file:
@@ -950,7 +950,7 @@ def generatePathwaysNetwork(ALL_PATHWAYS):
     #          mmu00101 -> [               mmu00102 = 0, mmu00103 = 0,...]
     #          mmu00102 -> [                             mmu00103 = 0,...]
     #***********************************************************************************
-    file_name = DATA_DIR + "../../pathways_all.list"
+    file_name = DATA_DIR + "../common/pathways_all.list"
     with open(file_name, "r") as csvfile:
         rows = csv.reader(csvfile, delimiter='\t')
         for row in rows:
@@ -970,7 +970,7 @@ def generatePathwaysNetwork(ALL_PATHWAYS):
     #* STEP 2. PROCESS THE PATHWAYS CLASSIFICATION FILE AND ADD THE PARENT NODES AND UPDATE
     #          THE PATHWAYS parent FIELD
     #***********************************************************************************
-    file_name= DATA_DIR + "../../pathways_classification.list"
+    file_name= DATA_DIR + "../common/pathways_classification.list"
     csvfile = open(file_name, 'r')
     mainClassification=""; secondClassification=""
     mainClassificationID=0; secondClassificationID=0
