@@ -254,7 +254,6 @@ function SignUpPanel() {
 }
 SignUpPanel.prototype = new View;
 
-
 function GuestSessionPanel(email, p) {
     /*********************************************************************
      * ATTRIBUTES
@@ -267,13 +266,13 @@ function GuestSessionPanel(email, p) {
      ***********************************************************************/
     this.continueButtonClick = function () {
         application.getController("JobController").resetButtonClickHandler(null, true);
-//        this.getController().signUpCloseButtonClickHandler(this);
     };
 
     this.initComponent = function () {
         var me = this;
         this.component = Ext.widget(
-                {xtype: "box", flex: 1, margin: '20px',
+                {
+                    xtype: "box", flex: 1, margin: '20px',
                     html:
                             '<div style="padding-left: 30px; border-left: 1px solid #E7E7E7;">' +
                             '<h2>Guest session</h2>' +
@@ -299,3 +298,77 @@ function GuestSessionPanel(email, p) {
     return this;
 }
 GuestSessionPanel.prototype = new View;
+
+function ChangePasswordPanel() {
+    /*********************************************************************
+     * ATTRIBUTES
+     ***********************************************************************/
+    this.name = "ChangePasswordPanel";
+    /*********************************************************************
+     * OTHER FUNCTIONS
+     ***********************************************************************/
+    this.acceptButtonClick = function () {
+        this.getController().changePasswordAcceptButtonClickHandler(this);
+    };
+    this.cancelButtonClick = function () {
+        this.getController().changePasswordCancelButtonClickHandler(this);
+    };
+
+    this.showSuccessPanel = function () {
+            var changePassForm = this.getComponent().queryById("changePassForm");
+            var successPanel = this.getComponent().queryById("successPanel");
+            changePassForm.setVisible(false);
+            successPanel.setVisible(true);
+        };
+
+    this.initComponent = function () {
+        var me = this;
+        this.component = Ext.widget(
+            {xtype: "container", layout: {type: 'vbox', align: 'stretch'}, flex: 1, maxWidth: 900, margin: '20',
+                items: [
+                    {xtype: 'form', itemId: "changePassForm", border: 0, layout: {type: 'vbox', align: 'stretch'}, defaults: {labelAlign: "top", border: false},
+                        items: [
+                            {xtype: "box", html: '<h2>Change your password</h2>'},
+                            {xtype: "textfield", name: 'password', fieldLabel: 'Choose a new Password', inputType: 'password', allowBlank: false},
+                            {xtype: "textfield", name: 'password2', fieldLabel: 'Confirm Password', inputType: 'password', submitValue: false, allowBlank: false,
+                                validator: function (value) {
+                                    if ($("input[name=password]").val() != value) {
+                                        return "Password do not match!";
+                                    }
+                                    return true;
+                                }
+                            },
+                            {xtype: "box", html: '<a class="button acceptButton" id="acceptNewPassButton" style=" width: 100%; text-align: center; margin: 10px 0px; "><i class="fa fa-check"></i> Accept</a>' +
+                                        '<a id="cancelNewPassButton" href="javascript:void(0)"><i class="fa fa-arrow-circle-o-left"></i> Cancel</a>'
+                            }
+                        ],
+                    },
+                    {xtype: "container", itemId: "successPanel", hidden: true, layout: {type: 'vbox', align: 'stretch'},
+                            items: [
+                                {xtype: "box", html: '<h2>Success!</h2>'},
+                                {xtype: "box", flex: 1, itemId: "messageBox", html: 'Your password has been successfully updated.'},
+                                {xtype: "box", html: '<a class="button acceptButton" style=" width: 100%; text-align: center; margin: 10px 0px; " id="closeNewPassButton" href="javascript:void(0)"><i class="fa fa-arrow-circle-o-left"></i> Close</a>'}
+                            ]
+                    }
+                ],
+                listeners: {
+                    afterrender: function () {
+                        $("#acceptNewPassButton").click(function () {
+                            me.acceptButtonClick();
+                        });
+                        $("#cancelNewPassButton").click(function () {
+                            me.cancelButtonClick();
+                        });
+                        $("#closeNewPassButton").click(function () {
+                            me.cancelButtonClick();
+                        });
+                    }
+                }
+            }
+        );
+        return this.component;
+    };
+
+    return this;
+}
+ChangePasswordPanel.prototype = new View;

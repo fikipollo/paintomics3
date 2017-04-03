@@ -30,7 +30,7 @@ from src.common.DAO.FileDAO import FileDAO
 from src.common.DAO.JobDAO import JobDAO
 from src.common.ServerErrorManager import handleException
 
-def dataManagementUploadFile(request, response, DESTINATION_DIR, isGFT=False):
+def dataManagementUploadFile(request, response, DESTINATION_DIR, isReference=False):
     #VARIABLE DECLARATION
     fileInstance = None
     daoInstance = None
@@ -40,13 +40,14 @@ def dataManagementUploadFile(request, response, DESTINATION_DIR, isGFT=False):
         #****************************************************************
         logging.info("STEP0 - CHECK IF VALID USER....")
         userID  = request.cookies.get('userID')
+        userName = request.cookies.get('userName')
         sessionToken  = request.cookies.get('sessionToken')
 
-        #ONLY ADMIN USER (id=0) CAN UPLOAD NEW INBUILT GTF FILES
-        if(isGFT and userID != "0"):
-            userID="-1"
-
         UserSessionManager().isValidUser(userID, sessionToken)
+
+        #ONLY ADMIN USER (id=0) CAN UPLOAD NEW INBUILT GTF FILES
+        if(isReference and UserSessionManager().isValidAdminUser(userID, userName, sessionToken)):
+            userID="-1"
 
         #****************************************************************
         #1. SAVE THE UPLOADED FILE TO THE USER DIRECTORY AND TO THE DATABASE
@@ -55,26 +56,28 @@ def dataManagementUploadFile(request, response, DESTINATION_DIR, isGFT=False):
         formFields = request.form
         uploadedFiles  = request.files
 
-        if not isGFT:
+        if not isReference:
             DESTINATION_DIR = DESTINATION_DIR + userID + "/inputData/"
         else:
             userID="-1"
             DESTINATION_DIR = DESTINATION_DIR + "GTF/"
 
         logging.info("STEP1 - READING FILES....")
-        for uploadedFileName in uploadedFiles.keys():
-            if (uploadedFileName is not None):
-                #GET THE FILE OBJECT
-                uploadedFile = request.files.get(uploadedFileName)
-                uploadedFileName = uploadedFile.filename
+        fields = {}
+        for field in formFields.keys():
+            if formFields[field] == "undefined":
+                continue
+            fields[field] = formFields[field]
 
-                fields = {}
-                for field in formFields.keys():
-                    if formFields[field] == "undefined":
-                        continue
-                    fields[field] = formFields[field]
-
-                saveFile(userID, uploadedFileName, fields, uploadedFile, DESTINATION_DIR)
+        if isReference and formFields.get("fileName", None) != None:
+            registerFile(userID, formFields.get("fileName"), fields, DESTINATION_DIR)
+        else:
+            for uploadedFileName in uploadedFiles.keys():
+                if (uploadedFileName is not None):
+                    #GET THE FILE OBJECT
+                    uploadedFile = request.files.get(uploadedFileName)
+                    uploadedFileName = uploadedFile.filename
+                    saveFile(userID, uploadedFileName, fields, uploadedFile, DESTINATION_DIR)
 
         response.setContent({"success": True})
 
@@ -85,7 +88,7 @@ def dataManagementUploadFile(request, response, DESTINATION_DIR, isGFT=False):
             daoInstance.closeConnection()
         return response
 
-def dataManagementGetMyFiles(request, response, DESTINATION_DIR, MAX_CLIENT_SPACE, isGFT=False):
+def dataManagementGetMyFiles(request, response, DESTINATION_DIR, MAX_CLIENT_SPACE, isReference=False):
     #VARIABLE DECLARATION
     fileInstance = None
     fileInstances = []
@@ -99,7 +102,7 @@ def dataManagementGetMyFiles(request, response, DESTINATION_DIR, MAX_CLIENT_SPAC
         sessionToken  = request.cookies.get('sessionToken')
         UserSessionManager().isValidUser(userID, sessionToken)
 
-        if not isGFT:
+        if not isReference:
             DESTINATION_DIR += userID
         else:
             userID="-1"
@@ -129,7 +132,7 @@ def dataManagementGetMyFiles(request, response, DESTINATION_DIR, MAX_CLIENT_SPAC
             daoInstance.closeConnection()
         return response
 
-def dataManagementDeleteFile(request, response, DESTINATION_DIR, MAX_CLIENT_SPACE, isGFT=False):
+def dataManagementDeleteFile(request, response, DESTINATION_DIR, MAX_CLIENT_SPACE, isReference=False, fileName=None):
     #VARIABLE DECLARATION
     daoInstance = None
     try:
@@ -138,10 +141,15 @@ def dataManagementDeleteFile(request, response, DESTINATION_DIR, MAX_CLIENT_SPAC
         #****************************************************************
         logging.info("STEP0 - CHECK IF VALID USER....")
         userID  = request.cookies.get('userID')
+        userName = request.cookies.get('userName')
         sessionToken  = request.cookies.get('sessionToken')
         UserSessionManager().isValidUser(userID, sessionToken)
 
-        if not isGFT:
+        #ONLY ADMIN USER (id=0) CAN UPLOAD NEW INBUILT GTF FILES
+        if(isReference and UserSessionManager().isValidAdminUser(userID, userName, sessionToken)):
+            userID="-1"
+
+        if not isReference:
             DESTINATION_DIR += userID + "/inputData/"
         else:
             userID="-1"
@@ -149,8 +157,9 @@ def dataManagementDeleteFile(request, response, DESTINATION_DIR, MAX_CLIENT_SPAC
 
         #****************************************************************
         # Step 1. GET THE LIST OF JOB IDs
-        #****************************************************************.
-        fileName = request.form.get("fileName")
+        #****************************************************************
+        if fileName == None:
+            fileName = request.form.get("fileName")
         files = fileName.split(",")
 
         #****************************************************************
@@ -418,6 +427,7 @@ def registerFile(userID, fileName, options, location):
     import time
     fileInstance.setSubmissionDate(time.strftime("%d/%m/%Y %H:%M"))
     daoInstance = FileDAO()
+    daoInstance.remove(fileName, otherParams={"userID": userID})
     daoInstance.insert(fileInstance, otherParams={"userID":userID})
     logging.info("\tREGISTERING " + fileName + " INTO DATABASE...DONE")
     if(daoInstance != None):

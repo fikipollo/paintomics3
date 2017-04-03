@@ -4,9 +4,9 @@ SPECIE=$1
 KEGG_DATA=$2
 
 rm -r $KEGG_DATA"/TEST_DATA/"$SPECIE
-mkdir $KEGG_DATA"/TEST_DATA/"$SPECIE
+mkdir -p $KEGG_DATA"/TEST_DATA/"$SPECIE
 
-cut -f1 $KEGG_DATA"/last/species/"$SPECIE"/gene2pathway.list" | sed 's/trd://g' | sort | uniq > $KEGG_DATA"/TEST_DATA/"$SPECIE"/gene_ids.list"
+cut -f1 $KEGG_DATA"/current/"$SPECIE"/gene2pathway.list" | sed 's/trd://g' | sort | uniq > $KEGG_DATA"/TEST_DATA/"$SPECIE"/gene_ids.list"
 names=$(cat $KEGG_DATA"/TEST_DATA/"$SPECIE"/gene_ids.list" | cut -f1)
 
 for name in ${names[*]}; do

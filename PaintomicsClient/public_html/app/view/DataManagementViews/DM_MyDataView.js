@@ -58,6 +58,10 @@ function DM_MyDataListView() {
 		this.myDataSummaryPanel.updateContent(dataSummary);
 	};
 
+	this.changePassButtonClickHandler = function(){
+		application.getController("UserController").changePassLinkClickHandler();
+	};
+
 	this.initComponent = function() {
 		var me = this;
 
@@ -88,7 +92,7 @@ function DM_MyDataListView() {
 							'     <tr><td><b>User name:</b></td><td>' + Ext.util.Cookies.get('userName') + '</td></tr>' +
   						'     <tr><td><b>Email:</b></td><td>' + Ext.util.Cookies.get('lastEmail') + '</td></tr>' +
   						'     <tr><td><b>Password:</b></td><td>************</td></tr>' +
-  						'     <tr><td><b></b></td><td><a href="javascript:void(0)">Click here to change password</a></td></tr>' +
+  						'     <tr><td><b></b></td><td><a id="changePassButton" href="javascript:void(0)">Click here to change password</a></td></tr>' +
   						'  </tbody></table>' +
 							'</div>'
 						},
@@ -102,6 +106,9 @@ function DM_MyDataListView() {
 				boxready: function () {
 					$("#uploadNewFilesButton").click(function(){
 						application.getMainView().changeMainView("DM_MyDataUploadFilesPanel");
+					});
+					$("#changePassButton").click(function () {
+						me.changePassButtonClickHandler();
 					});
 				}
 			}
@@ -794,6 +801,11 @@ Ext.define('Paintomics.view.common.MyFilesSelectorButton', {
 		this.queryById("visiblePathField").setRawValue((origin === "mydata" ? "[MyData]/" : "") + value);
 		this.queryById("originField").setValue(origin);
 	},
+	clearValue: function(){
+		this.queryById("fileField").reset();
+		this.queryById("visiblePathField").setRawValue("");
+		this.queryById("originField").setValue("");
+	},
 	setDisabled: function(disabled) {
 		this.queryById("optionsButton").setDisabled(disabled);
 	},
@@ -851,10 +863,16 @@ Ext.define('Paintomics.view.common.MyFilesSelectorButton', {
 							handler: function() {
 								var _callback = function(selectedItem) {
 									if (selectedItem !== null) {
+										me.clearValue();
 										me.setValue(selectedItem[0].get("fileName"));
 									}
 								};
 								Ext.widget("myFilesSelectorDialog").showDialog(_callback);
+							}
+						}, {
+							text: 'Clear selection',
+							handler: function() {
+								me.clearValue();
 							}
 						}
 					].concat(me.extraButtons)

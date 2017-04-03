@@ -260,12 +260,6 @@ class MiRNA2GeneJob(Job):
                     score      = float(line[2])
                     score_type = line[3]
                     values    =  map(float, line[4:])
-                    isRelevant = relevantMiRNAS.has_key(mirnaID.lower())
-
-                    #STEP 5.2 FILTER MIRNAS
-                    #IF THE OPTION "ONLY RELEVANTS" WAS SELECTED, IGNORE ENTRY
-                    if self.report == "DE" and not isRelevant:
-                        continue
 
                     #EVEN WHEN THE USER HAS CHOOSE THE OPTION "FC", if the conditions do no allow to calculate the
                     #correlation, the script will calculate the FC
@@ -275,20 +269,24 @@ class MiRNA2GeneJob(Job):
                         score = abs(score)
                     #TODO: SIMILAR FC SELECTION
 
+                    isRelevant = (relevantMiRNAS.has_key(mirnaID.lower()) and score > self.cutoff)
+
+                    #STEP 5.2 FILTER MIRNAS
+                    #IF THE OPTION "ONLY RELEVANTS" WAS SELECTED, IGNORE ENTRY
+                    if self.report == "DE" and not isRelevant:
+                        continue
+
                     #DEPRECATED: WE REPORT ALL MIRNAS BUT NOW THE RELEVANT DEPEND ON THE DE AND THE SCORE
                     #FILTER BY SELECTION METHODS, IF CORRELATION OR FC IS LOWER THAN THE CUTOFF, IGNORE ENTRY
                     #if score < self.cutoff:
                     #    continue
-                    if geneID == "ENSMUSG00000028986" and mirnaID == "mmu-miR-3074-1-3p":
-                        pass
-
 
                     #STEP 5.3 CREATE A NEW OMIC VALUE WITH ROW DATA
                     omicValueAux = OmicValue(mirnaID)
                     #TODO: set omic name with chipseq, dnase,...?
                     omicValueAux.setOriginalName(mirnaID)
                     omicValueAux.setValues(values)
-                    omicValueAux.setRelevant(isRelevant and score > self.cutoff)
+                    omicValueAux.setRelevant(isRelevant)
 
                     #STEP 5.4 CREATE A NEW TEMPORAL GENE INSTANCE
                     geneAux = Gene(geneID)
@@ -310,8 +308,8 @@ class MiRNA2GeneJob(Job):
 
                 #STEP 6. FOR EACH GENE, ORDER THE MIRNAS BY THE HIGHER CORRELATION OR FC
                 genesToMiRNAFile = open(self.getTemporalDir() + '/genesToMiRNAFile.tab', 'w')
-                mirna2genesOutput = open(self.getTemporalDir() + '/' + "miRNA2Gene_output_" + time.strftime("%Y%m%d_%H%M") + ".tab", 'w')
-                mirna2genesRelevant = open(self.getTemporalDir() +  '/' + "miRNA2Gene_relevant_" + time.strftime("%Y%m%d_%H%M") + ".tab", 'w')
+                mirna2genesOutput = open(self.getTemporalDir() + '/' + "miRNA2Gene_output_" + self.date + ".tab", 'w')
+                mirna2genesRelevant = open(self.getTemporalDir() +  '/' + "miRNA2Gene_relevant_" + self.date + ".tab", 'w')
 
                 # PRINT HEADER
                 genesToMiRNAFile.write("# Gene name\tmiRNA ID\tDE\tScore\tSelection\n")
@@ -356,7 +354,7 @@ class MiRNA2GeneJob(Job):
                 #COMPRESS THE RESULTING FILES AND CLEAN TEMPORAL DATA
                 #TODO: REMOVE THE genesToMiRNAFile
                 logging.info("COMPRESSING RESULTS...")
-                fileName = "mirna2genes_" + time.strftime("%Y%m%d_%H%M")
+                fileName = "mirna2genes_" + self.date
                 shutil.make_archive(self.getOutputDir() + fileName, "zip", self.getTemporalDir() + "/")
                 logging.info("COMPRESSING RESULTS...DONE")
 

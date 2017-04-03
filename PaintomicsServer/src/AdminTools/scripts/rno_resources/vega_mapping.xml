@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Query>
 <Query  virtualSchemaName = "default" formatter = "CSV" header = "0" uniqueRows = "0" count = "" datasetConfigVersion = "0.6" >
-			
+
 	<Dataset name = "rnorvegicus_gene_vega" interface = "default" >
 		<Attribute name = "vega_gene_id" />
 		<Attribute name = "entrezgene" />

@@ -7,7 +7,10 @@
 	{"name" : "Relevant compounds list", "type": "list"},
 	{"name" : "Proteomics quatification", "type": "data"},
 	{"name" : "Relevant proteins list", "type": "list"},
+	{"name" : "Regions quantification", "type": "data"},
 	{"name" : "BED file (regions)", "type": "data"},
 	{"name" : "Relevant regions list", "type": "list"},
-	{"name" : "GTF file", "type": "data"}
+	{"name" : "GTF file", "type": "data"},
+	{"name" : "Reference file", "type": "data"},
+	{"name" : "miRNA targets file", "type": "data"}
 ]}

@@ -1,0 +1,21 @@
+<div class="modal-header">
+	<h3 class="modal-title" >Message details</h3>
+</div>
+<div class="modal-body">
+	<form>
+		<div class="form-group">
+			<label for="sel1">Message type:</label>
+			<select class="form-control" ng-model="model.message_type">
+				<option>starting_message</option>
+			</select>
+		</div>
+		<div class="form-group">
+			<label for="description">Message content:</label>
+			<textarea class="form-control" rows="5" ng-model="model.message_content"></textarea>
+		</div>
+		<div style="text-align:right;">
+			<a class="btn btn-success" ng-click="controller.saveMessageDetailsHandler();">Save file</a>
+			<a class="btn btn-danger" ng-click="controller.closeMessageDetailsHandler();">Cancel</a>
+		</div>
+	</form>
+</div>

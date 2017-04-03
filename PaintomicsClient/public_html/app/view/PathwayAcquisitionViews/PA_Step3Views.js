@@ -222,6 +222,22 @@ function PA_Step3JobView() {
 		return this.indexedPathways;
 	};
 
+	this.getTotalVisiblePathways = function(){
+		var visible = 0;
+		var significative = 0;
+		var pathways = this.getModel().getPathways();
+		for (var i in pathways) {
+			visible += (pathways[i].isVisible() ? 1 : 0);
+			significative += ((pathways[i].isVisible() && pathways[i].getCombinedSignificanceValues() <= 0.05) ? 1 : 0);
+		}
+
+		var visiblePathways = {
+			visible: visible,
+			significative : significative
+		};
+		return visiblePathways;
+	};
+
 	/*********************************************************************
 	* OTHER FUNCTIONS
 	***********************************************************************/
@@ -283,8 +299,9 @@ function PA_Step3JobView() {
 		/* STEP 5: UPDATE THE SUMMARY                           */
 		/********************************************************/
 		setTimeout(function() {
-			$("#foundPathwaysTag").html(me.getModel().getPathways().length);
-			$("#significantPathwaysTag").html(me.significativePathways);
+			var visiblePathways = me.getTotalVisiblePathways();
+			$("#foundPathwaysTag").html(visiblePathways.visible);
+			$("#significantPathwaysTag").html(visiblePathways.significative);
 		}, 1000);
 
 		initializeTooltips(".helpTip");
@@ -325,6 +342,15 @@ function PA_Step3JobView() {
 		/* STEP 4. UPDATE THE CACHE
 		/********************************************************/
 		me.getController().updateStoredVisualOptions(me.getModel().getJobID(), me.visualOptions);
+
+		/********************************************************/
+		/* STEP 5: UPDATE THE SUMMARY                           */
+		/********************************************************/
+		setTimeout(function() {
+			var visiblePathways = me.getTotalVisiblePathways();
+			$("#foundPathwaysTag").html(visiblePathways.visible);
+			$("#significantPathwaysTag").html(visiblePathways.significative);
+		}, 1000);
 
 		return this;
 	};

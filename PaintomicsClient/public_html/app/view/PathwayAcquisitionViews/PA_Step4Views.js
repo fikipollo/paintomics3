@@ -593,7 +593,7 @@ function PA_Step4PathwayView() {
 		/********************************************************/
 		/* STEP 3. UPDATE THE CACHE
 		/********************************************************/
-		this.getController().updateStoredVisualOptions(this.getParent().getModel().getJobID(), this.visualOptions);
+		this.getParent().getController().updateStoredVisualOptions(this.getParent().getModel().getJobID(), this.visualOptions);
 
 		return this;
 	};

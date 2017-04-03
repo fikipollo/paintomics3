@@ -25,9 +25,9 @@ from src.common.UserSessionManager import UserSessionManager
 from src.common.JobInformationManager import JobInformationManager
 from src.common.ServerErrorManager import handleException
 
-from src.conf.serverconf import CLIENT_TMP_DIR, EXAMPLE_FILES_DIR
+from src.conf.serverconf import CLIENT_TMP_DIR
 
-def fromBEDtoGenes_STEP1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, exampleMode=False):
+def fromBEDtoGenes_STEP1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, EXAMPLE_FILES_DIR, exampleMode=False):
     """
     This function corresponds to FIRST PART of the FIRST step in the Bed2Genes process.
     First, it takes a Request object which contains the fields of the form that started the process.
