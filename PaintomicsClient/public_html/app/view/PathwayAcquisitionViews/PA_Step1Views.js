@@ -1362,6 +1362,12 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 				'</h4>'
 			},
 			{
+				xtype: "box",
+				itemId: "toogleMapRegions",
+				hidden: !this.allowToogle,
+				html: '<div class="checkbox" style=" margin: 10px 50px; font-size: 16px; "><input type="checkbox" id="' + this.namePrefix + '_mapRegions"><label for="' + this.namePrefix + '_mapRegions">My miRNAs are already mapped to Gene IDs, skip this step.</label></div>'
+			}, 
+			{
 				xtype: "container",
 				itemId: "itemsContainerAlt",
 				layout: {
@@ -1718,6 +1724,10 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 		listeners: {
 			boxready: function() {
 				initializeTooltips(".helpTip");
+
+				$("#" + me.namePrefix + "_mapRegions").change(function() {
+					me.toogleContent();
+				});
 
 				$(this.getEl().dom).find("a.deleteOmicBox").click(function() {
 					me.removeOmicSubmittingPanel();
