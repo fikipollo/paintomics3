@@ -387,11 +387,18 @@ function ajaxErrorHandler(responseObj) {
 		err = err || {message: "Unable to parse the error message."};
 	}
 
-	showErrorMessage("Oops..Internal error!", {
-		message: err.message + "</br>Please try again later.</br>If the error persists, please contact the <a href='mailto:paintomics@cipf.es' target='_blank'> administrator</a>.",
-		extra : err.extra,
-		showButton: true
-	});
+	// For credential errors force the user logout
+	if (typeof application != "undefined" && 
+		err.extra.hasOwnProperty("exc_type") &&
+		err.extra.exc_type.includes("CredentialException")) {
+			application.getController("UserController").signOutButtonClickHandler();
+	} else {
+		showErrorMessage("Oops..Internal error!", {
+			message: err.message + "</br>Please try again later.</br>If the error persists, please contact the <a href='mailto:paintomics@cipf.es' target='_blank'> administrator</a>.",
+			extra : err.extra,
+			showButton: true
+		});
+	}
 }
 
 function extJSErrorHandler(form, responseObj) {
