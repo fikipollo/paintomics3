@@ -1631,8 +1631,8 @@ function PA_Step3PathwayClassificationView() {
 				/* STEP 4.2 IF SAVE=false AND PREVIOUS POSITION DATA -> CLEAN  */
 				/***************************************************************/
 				this.clearNodePositions();
-				updateNeeded=true;
 			}
+			updateNeeded=true;
 
 			/********************************************************/
 			/* STEP 5. HIDE THE SETTINGS PANEL                      */
@@ -2683,27 +2683,35 @@ function PA_Step3PathwayClassificationView() {
 						var color = Math.round(225 * (value/0.065));
 						metadata.style += "background-color:rgb(255, " + color +"," + color + ");";
 					}
-					//TODO: ARREGLAR ESTO
-					var totalFeatures = 10000; //me.model.summary[4][metadata.column.text.replace(/<\/br>/g, " ")];
-					var totalRelevant = 5000;//me.model.summary[5][metadata.column.text.replace(/<\/br>/g, " ")];
-					var foundFeatures = record.get('totalMatched' + omicName);
-					var foundRelevant = record.get('totalRelevantMatched' + omicName);
 
-					var foundNotRelevant = foundFeatures - foundRelevant;
-					var notFoundRelevant = totalRelevant - foundRelevant;
-					var notFoundNotRelev = (totalFeatures - foundFeatures) - notFoundRelevant;
+					try {
+						var totalFeatures = me.model.summary[4][metadata.column.text.replace(/<\/br>/g, " ")] || 0;
+						var totalRelevant = me.model.summary[5][metadata.column.text.replace(/<\/br>/g, " ")] || 0;
+						var foundFeatures = record.get('totalMatched' + omicName);
+						var foundRelevant = record.get('totalRelevantMatched' + omicName);
 
-					myToolTipText +=
-					'<b>p-value:</b>'  + (value === -1 ? "-" : renderedValue) + "</br>" +
-					"<table class='contingencyTable'>" +
-					' <thead><th></th><th>Relevant</th><th>Not Relevant</th><th></th></thead>' +
-					'  <tr><td>Found</td><td>' + foundRelevant + '</td><td>' + foundNotRelevant + '</td><td>' + foundFeatures + '</td></tr>' +
-					'  <tr><td>Not found</td><td>' + notFoundRelevant + '</td><td>' + notFoundNotRelev + '</td><td>' + (totalFeatures - foundFeatures) + '</td></tr>' +
-					'  <tr><td></td><td>' + totalRelevant + '</td><td>' + (totalFeatures - totalRelevant) + '</td><td>' + (totalFeatures) + '</td></tr>' +
-					'</table>';
-					// myToolTipText = myToolTipText + "Features matched: " + ) + "</br>";
-					// myToolTipText = myToolTipText + "Relevant features matched: " +  + "</br>";
-					metadata.tdAttr = 'data-qtip="' + myToolTipText + '"';
+						var foundNotRelevant = foundFeatures - foundRelevant;
+						var notFoundRelevant = totalRelevant - foundRelevant;
+						var notFoundNotRelev = (totalFeatures - foundFeatures) - notFoundRelevant;
+
+						myToolTipText +=
+						'<b>p-value:</b>'  + (value === -1 ? "-" : renderedValue) + "</br>" +
+						"<table class='contingencyTable'>" +
+						' <thead><th></th><th>Relevant</th><th>Not Relevant</th><th></th></thead>' +
+						'  <tr><td>Found</td><td>' + foundRelevant + '</td><td>' + foundNotRelevant + '</td><td>' + foundFeatures + '</td></tr>' +
+						'  <tr><td>Not found</td><td>' + notFoundRelevant + '</td><td>' + notFoundNotRelev + '</td><td>' + (totalFeatures - foundFeatures) + '</td></tr>' +
+						'  <tr><td></td><td>' + totalRelevant + '</td><td>' + (totalFeatures - totalRelevant) + '</td><td>' + (totalFeatures) + '</td></tr>' +
+						'</table>';
+						// myToolTipText = myToolTipText + "Features matched: " + ) + "</br>";
+						// myToolTipText = myToolTipText + "Relevant features matched: " +  + "</br>";
+						metadata.tdAttr = 'data-qtip="' + myToolTipText + '"';
+
+					} catch (e) {
+						debugger;
+						console.error("Error while creating tooltip");
+					} finally {
+
+					}
 
 					return renderedValue;
 				};

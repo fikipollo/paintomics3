@@ -54,6 +54,25 @@ function MainView() {
 		return null;
 	};
 
+	this.clearSubViews = function(){
+		for(var i in this.subviews){
+			if(this.subviews[i].getModel && this.subviews[i].getModel() !== null){
+					var observers = this.subviews[i].getModel().getObservers();
+					for(var j = observers.length - 1; j >= 0; j--) {
+						this.subviews[i].getModel().deleteObserver(observers[j])
+					}
+			}
+
+			nObservers = 0;
+
+			delete this.subviews[i];
+			this.subviews[i] = null;
+		}
+		this.currentView = null;
+		this.subviews = {};
+		this.getComponent().queryById("mainViewCenterPanel").removeAll();
+	};
+
 	this.changeMainView = function(aViewName) {
 		var aView = null;
 		var me = this;
@@ -104,6 +123,14 @@ function MainView() {
 
 		me.getComponent().queryById("mainViewCenterPanel").add(aView.getComponent());
 	};
+
+	this.showSignInDialog = function () {
+		var loggedIn = Ext.util.Cookies.get("userID") !== null;
+		if (loggedIn !== true) {
+			$(".loggedOption").remove();
+			application.getController("UserController").signInLinkClickHandler();
+		}
+	}
 
 	this.initComponent = function() {
 		var me = this;
@@ -172,13 +199,8 @@ function MainView() {
 					$("#logoutButton").click(function() {
 						application.getController("UserController").signOutButtonClickHandler();
 					});
-					var loggedIn = Ext.util.Cookies.get("userID") !== null;
-					if (loggedIn !== true) {
-						$(".loggedOption").remove();
-						application.getController("UserController").signInLinkClickHandler();
-					} else {
-						//$(".loggedOption").css("display", "block");
-					}
+
+					me.showSignInDialog();
 
 					$(".submenu .menuOption:not(.externalOption)").click(function() {
 						$(".menuOption.selected").removeClass("selected");
