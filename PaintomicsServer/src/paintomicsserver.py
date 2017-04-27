@@ -437,7 +437,7 @@ class Application(object):
         ##*******************************************************************************************
         ##* LAUNCH APPLICATION
         ##*******************************************************************************************
-        self.app.run(host=SERVER_HOST_NAME, port=SERVER_PORT_NUMBER,  debug=SERVER_ALLOW_DEBUG, threaded=True)
+        self.app.run(host=SERVER_HOST_NAME, port=SERVER_PORT_NUMBER,  debug=SERVER_ALLOW_DEBUG)
 
     ##*************************************************************************************************************
     # This function returns a new random job id

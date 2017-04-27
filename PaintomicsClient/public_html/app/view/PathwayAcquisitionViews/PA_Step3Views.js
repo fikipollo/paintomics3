@@ -228,7 +228,11 @@ function PA_Step3JobView() {
 		var pathways = this.getModel().getPathways();
 		for (var i in pathways) {
 			visible += (pathways[i].isVisible() ? 1 : 0);
-			significative += ((pathways[i].isVisible() && pathways[i].getCombinedSignificanceValues() <= 0.05) ? 1 : 0);
+			if(Object.keys(this.model.summary[4]).length > 1){
+				significative += ((pathways[i].isVisible() && pathways[i].getCombinedSignificanceValues() <= 0.05) ? 1 : 0);
+			}else{
+				significative += ((pathways[i].isVisible() && pathways[i].getSignificanceValues()[Object.keys(pathways[i].getSignificanceValues())[0]][2] <= 0.05) ? 1 : 0);
+			}
 		}
 
 		var visiblePathways = {
