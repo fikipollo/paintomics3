@@ -1,3 +1,27 @@
+Changelog (v0.4.4) - 2017-04-28
+
+        [General changes]
+        - Reset button -> do not reload the entire application
+        - Download pathways images (ahora baja en PNG un poco a capón, pero es mejorable)
+        - Network sometimes is not being drawn (he forzado que se dibuje)
+        - Fix Contingency table 
+        - Add region quantification and miRNA to genes options in file type selector
+        - Upload files -> if I choose first a file from my PC and then change to My Data, the local file is sent to server
+        - Upload files --> added a new option "Clear selection"
+        - After filtering pathways by classification, update the displayed number of pathways and significant pathways 
+        - After feature name mapping, changed the method for creating the ZIP file with results (sometimes it failed)
+        - Filter miRNAs: by cutoff (score) and by DE/all option
+        - My data panel --> fixed problems (update content after uploding files)
+        - Change password in My Data panel
+        [Admin site]
+        - Reference files: allow admin to register new file without uploading the file (e.g. upload using terminal), in case of huge files
+        - Improved tools for installing, updating and deleteing species
+        - Added settings to specify the valid ADMIN_ACCOUNTS and added functions to test valid admin account
+        - CRON job  for cleaning databases
+        - Clean databases option in admin site
+        - USER ACCOUNTS en config
+        - Remove ROOT_DIR & examples dir (now auto-calculated)
+
 Changelog (v0.4.3) - 2016-09-05
 
 	- Improved the metabolite selection panel: more information and added some control for repeated metabolites
