@@ -108,8 +108,8 @@ def fromMiRNAtoGenes_STEP1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, EXAMPLE_FI
             relevantFileName =omicName.replace(" ", "_").lower() + "_relevant.tab"
             logging.info("STEP1 - USING ALREADY SUBMITTED FILE (relevant features file) " + EXAMPLE_FILES_DIR + relevantFileName + " FOR  " + omicName)
 
-            jobInstance.addGeneBasedInputOmic("file", {"omicName": omicName, "inputDataFile": EXAMPLE_FILES_DIR + dataFileName, "relevantFeaturesFile": EXAMPLE_FILES_DIR + relevantFileName,  "isExample" : True})
-            jobInstance.addGeneBasedInputOmic("rnaseqaux_file", {"omicName": "Gene expression", "inputDataFile": EXAMPLE_FILES_DIR + "gene_expression_values.tab", "isExample" : True})
+            jobInstance.addGeneBasedInputOmic({"omicName": omicName, "inputDataFile": EXAMPLE_FILES_DIR + dataFileName, "relevantFeaturesFile": EXAMPLE_FILES_DIR + relevantFileName,  "isExample" : True})
+            jobInstance.addGeneBasedInputOmic({"omicName": "Gene expression", "inputDataFile": EXAMPLE_FILES_DIR + "gene_expression_values.tab", "isExample" : True})
             #jobInstance.addReferenceInput({"omicName": omicName, "fileType":  "Reference file", "inputDataFile": EXAMPLE_FILES_DIR + "sorted_mmu.gtf"})
             jobInstance.addReferenceInput({"omicName": omicName, "fileType": "Reference file", "inputDataFile": EXAMPLE_FILES_DIR + "mmu_mirBase_to_ensembl.tab", "isExample" : True})
 

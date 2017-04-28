@@ -52,7 +52,7 @@ class Job(Model):
         self.compoundBasedInputOmics = []
         #LIST OF OBJECTS THAT CONTAINS ALL THE INPUT OMICS THAT ARE BASED ON GENE IDS
         #{omicName:<omicName>, inputDataFile: <inputDataFile>, relevantFeaturesFile: <relevantFeaturesFile>}
-        self.geneBasedInputOmics = {}
+        self.geneBasedInputOmics = []
         #LIST OF OBJECTS THAT CONTAINS ALL THE INPUT REFERENCE FILES
         #{omicName:"Reference file", "fileType": <fileType>, inputDataFile: <inputDataFile>}
         self.referenceInputs = []
@@ -117,8 +117,8 @@ class Job(Model):
         self.geneBasedInputOmics = geneBasedInputOmics
     def getGeneBasedInputOmics(self):
         return self.geneBasedInputOmics
-    def addGeneBasedInputOmic(self, key, geneBasedInputOmic):
-        self.geneBasedInputOmics[key] = geneBasedInputOmic
+    def addGeneBasedInputOmic(self, geneBasedInputOmic):
+        self.geneBasedInputOmics.append(geneBasedInputOmic)
 
 
     def setInputCompoundsData(self, inputCompoundsData):

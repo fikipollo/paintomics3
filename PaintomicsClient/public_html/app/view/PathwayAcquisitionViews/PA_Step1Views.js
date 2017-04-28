@@ -208,7 +208,7 @@ function PA_Step1JobView() {
 	this.checkForm = function() {
 		var items, valid, emptyFields;
 
-		items = this.getComponent().query("container[cls=omicbox], container[cls=omicbox regionBasedOmic]");
+		items = this.getComponent().query("container[cls=omicbox], container[cls=omicbox regionBasedOmic],[cls=omicbox miRNABasedOmic]");
 		valid = this.getComponent().queryById("speciesCombobox").isValid();
 		for (var i in items) {
 			valid = valid && items[i].isValid();

@@ -78,12 +78,18 @@ class MiRNA2GeneJob(Job):
         except:
             error +=  " -  Cutoff must be a numeric value"
 
-        logging.info("VALIDATING miRNA-seq BASED FILES..." )
-        nConditions, error = self.validateFile(self.geneBasedInputOmics["file"], -1, error)
+        # Look using the name instead of relying in the dictionary order
+        geneDataInputs = self.getGeneBasedInputOmics()
 
-        if len(self.geneBasedInputOmics) > 1:
+        miRNAdataInput = next((x for x in geneDataInputs if x["omicName"] != "Gene Expression"))
+
+        logging.info("VALIDATING miRNA-seq BASED FILES..." )
+        nConditions, error = self.validateFile(miRNAdataInput, -1, error)
+
+        if len(geneDataInputs) > 1:
             logging.info("VALIDATING RNA-seq BASED FILES..." )
-            nConditions, error = self.validateFile(self.geneBasedInputOmics["rnaseqaux_file"], -1, error)
+            RNAdataInput = next((x for x in geneDataInputs if x["omicName"] == "Gene Expression"))
+            nConditions, error = self.validateFile(RNAdataInput, -1, error)
 
         if error != "":
             raise Exception("Errors detected in input files, please fix the following issues and try again:" + error)
@@ -206,16 +212,18 @@ class MiRNA2GeneJob(Job):
         if not os_path.isfile(referenceFile):
             raise Exception("Reference file not found.")
 
-        inputOmic= self.getGeneBasedInputOmics()["file"]
-        dataFile = inputOmic.get("inputDataFile")
-        relevantFile = inputOmic.get("relevantFeaturesFile")
+        geneDataInputs = self.getGeneBasedInputOmics()
+
+        miRNAinputOmic = next((x for x in geneDataInputs if x["omicName"] != "Gene Expression"))
+        dataFile = miRNAinputOmic.get("inputDataFile")
+        relevantFile = miRNAinputOmic.get("relevantFeaturesFile")
 
         geneExpressionFile =  None
-        if len(self.getGeneBasedInputOmics()) > 1:
-            inputOmic= self.getGeneBasedInputOmics()["rnaseqaux_file"]
-            geneExpressionFile = inputOmic.get("inputDataFile")
+        if len(geneDataInputs) > 1:
+            RNAinputOmic = next((x for x in geneDataInputs if x["omicName"] == "Gene Expression"))
+            geneExpressionFile = RNAinputOmic.get("inputDataFile")
 
-        if(inputOmic.get("isExample", False) == False):
+        if(miRNAinputOmic.get("isExample", False) == False):
             dataFile = self.getInputDir()+  dataFile
             relevantFile = self.getInputDir()+ relevantFile
             if geneExpressionFile != None:
@@ -359,14 +367,14 @@ class MiRNA2GeneJob(Job):
                 logging.info("COMPRESSING RESULTS...DONE")
 
                 fields = {
-                    "omicType" : self.getGeneBasedInputOmics()["file"].get("omicName"),
-                    "dataType" : self.getGeneBasedInputOmics()["file"].get("omicName").replace("data","quantification"),
+                    "omicType" : miRNAinputOmic.get("omicName"),
+                    "dataType" : miRNAinputOmic.get("omicName").replace("data","quantification"),
                     "description" : "File generated using miRNA2Target tool (miRNA2Target);" + self.getJobDescription(True, dataFile, relevantFile, referenceFile, geneExpressionFile)
                 }
                 mainOutputFileName = copyFile(self.getUserID(), os_path.split(mirna2genesOutput.name)[1], fields,self.getTemporalDir() +  "/", self.getInputDir())
 
                 fields = {
-                    "omicType" : self.getGeneBasedInputOmics()["file"].get("omicName"),
+                    "omicType" : miRNAinputOmic.get("omicName"),
                     "dataType" : "Relevant Genes list",
                     "description" : "File generated using miRNA2Target tool (miRNA2Target);"  + self.getJobDescription()
                 }

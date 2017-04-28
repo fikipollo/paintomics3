@@ -260,9 +260,7 @@ class JobInformationManager:
 
             if(jobInstance != None):
                 if(matchingType.lower() == "gene"):
-                    # i.e. omicN_<keyName>
-                    keyName = uploadedFileName.split('_', 1)[1]
-                    jobInstance.addGeneBasedInputOmic(keyName, {"omicName": omicType, "inputDataFile": dataFileName, "relevantFeaturesFile": relevantFileName})
+                    jobInstance.addGeneBasedInputOmic({"omicName": omicType, "inputDataFile": dataFileName, "relevantFeaturesFile": relevantFileName})
                 elif(matchingType.lower() == "compound"):
                     jobInstance.addCompoundBasedInputOmic({"omicName": omicType, "inputDataFile": dataFileName, "relevantFeaturesFile": relevantFileName})
                 elif(matchingType.lower() == "reference_file"):
