@@ -1,2 +1,1 @@
-require('./angular-sanitize');
-module.exports = 'ngSanitize';
+require("./angular-sanitize");module.exports="ngSanitize";

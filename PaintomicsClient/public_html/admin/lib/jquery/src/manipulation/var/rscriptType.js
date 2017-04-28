@@ -1,5 +1,1 @@
-define( function() {
-	"use strict";
-
-	return ( /^$|\/(?:java|ecma)script/i );
-} );
+define(function(){"use strict";return/^$|\/(?:java|ecma)script/i});

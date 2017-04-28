@@ -1,5 +1,1 @@
-define( function() {
-	"use strict";
-
-	return window.document;
-} );
+define(function(){"use strict";return window.document});
