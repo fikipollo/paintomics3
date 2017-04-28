@@ -13,7 +13,7 @@
 
 	app.constant('myAppConfig', {
 		VERSION: '0.1',
-		SERVER_URL : "/"
+		SERVER_URL : "/"  + getPathname()
 	});
 
 	//Define the events that are fired in the APP
