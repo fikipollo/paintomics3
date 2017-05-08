@@ -266,6 +266,7 @@ function GuestSessionPanel(email, p) {
      ***********************************************************************/
     this.continueButtonClick = function () {
         application.getController("JobController").resetButtonClickHandler(null, true);
+				location.reload();
     };
 
     this.initComponent = function () {

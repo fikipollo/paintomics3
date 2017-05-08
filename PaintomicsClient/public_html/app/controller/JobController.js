@@ -454,6 +454,7 @@ function JobController() {
 							showErrorMessage(response.errorMessage);
 							return;
 						}
+						me.cleanStoredApplicationData();
 
 						var jobModel = new JobInstance(jobID);
 						//UPDATE THE STEP NUMBER
@@ -624,7 +625,11 @@ function JobController() {
 		var me = this;
 		if (force === true) {
 			me.cleanStoredApplicationData();
-			location.reload();
+			me.showJobInstance(new JobInstance(null));
+			if (callback !== undefined) {
+				callback();
+			}
+			//location.reload();
 			return;
 		}
 		Ext.MessageBox.confirm('Confirm', 'Are you sure you want to reset the current job?', function (opcion) {
@@ -634,7 +639,7 @@ function JobController() {
 				if (callback !== undefined) {
 					callback();
 				}
-				location.reload();
+				// location.reload();
 			}
 		});
 	};
@@ -745,8 +750,12 @@ function JobController() {
 			sessionStorage.removeItem("jobModel");
 			sessionStorage.removeItem("pathwaysNetwork");
 			sessionStorage.removeItem("visualOptions");
+			sessionStorage.clear();
 		}
+		application.getMainView().clearSubViews();
+		application.getMainView().showSignInDialog();
 	};
+
 	this.getCredentialsParams = function (request_params) {
 		var credentials = {};
 		if (request_params != null) {

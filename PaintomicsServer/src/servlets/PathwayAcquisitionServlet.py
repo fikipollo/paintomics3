@@ -20,6 +20,9 @@
 import logging
 import logging.config
 
+import cairo
+import rsvg
+
 from src.common.ServerErrorManager import handleException
 from src.common.UserSessionManager import UserSessionManager
 from src.common.JobInformationManager import JobInformationManager
@@ -106,10 +109,10 @@ def pathwayAcquisitionStep1_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, EXA
 
             exampleOmics = ["Gene expression", "Metabolomics", "Proteomics", "miRNA-seq", "DNase-seq"]
             for omicName in exampleOmics:
-                dataFileName = omicName.replace(" ", "_").lower() + "_values.tab"
+                dataFileName = omicName.replace(" ", "_").replace("-seq", "").lower() + "_values.tab"
                 logging.info("STEP1 - USING ALREADY SUBMITTED FILE (data file) " + EXAMPLE_FILES_DIR + dataFileName + " FOR  " + omicName)
 
-                relevantFileName = omicName.replace(" ", "_").lower() + "_relevant.tab"
+                relevantFileName =omicName.replace(" ", "_").replace("-seq", "").lower() + "_relevant.tab"
                 logging.info("STEP1 - USING ALREADY SUBMITTED FILE (relevant features file) " + EXAMPLE_FILES_DIR + relevantFileName + " FOR  " + omicName)
 
                 if(["Metabolomics"].count(omicName)):
@@ -499,6 +502,7 @@ def pathwayAcquisitionRecoverJob(request, response):
                 "geneBasedInputOmics":jobInstance.getGeneBasedInputOmics(),
                 "compoundBasedInputOmics": jobInstance.getCompoundBasedInputOmics(),
                 "organism" : jobInstance.getOrganism(),
+                "summary" : jobInstance.summary,
                 "visualOptions" : JobInformationManager().getVisualOptions(jobID)
             })
 
@@ -526,18 +530,25 @@ def pathwayAcquisitionSaveImage(request, response):
         fileFormat = request.form.get("format")
 
 
-        path = CLIENT_TMP_DIR + userID + jobInstance.getOutputDir()
+        path = CLIENT_TMP_DIR + userID + jobInstance.getOutputDir().replace(CLIENT_TMP_DIR + userID, "")
 
         if(fileFormat == "png"):
-            import cairo
-            import rsvg
-            svg = rsvg.Handle(data=svgData)
-            width = svg.props.width
-            height = svg.props.height
-            surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
-            context = cairo.Context(surface)
-            svg.render_cairo(context)
-            surface.write_to_png(path + fileName + "." + fileFormat)
+            def createImage(svgData):
+                svg = rsvg.Handle(data=svgData)
+                width = svg.props.width
+                height = svg.props.height
+                surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
+                context = cairo.Context(surface)
+                open(path + fileName + "." + fileFormat, 'a').close()
+                svg.render_cairo(context)
+                surface.write_to_png(path + fileName + "." + fileFormat)
+            try:
+                logging.info("TRYING...")
+                createImage(svgData=svgData)
+            except Exception as ex:
+                logging.info("TRYING again...")
+                createImage(svgData=svgData)
+
         elif(fileFormat == "svg"):
             file_ = open(path + fileName + "." + fileFormat, 'w')
             file_.write(svgData)

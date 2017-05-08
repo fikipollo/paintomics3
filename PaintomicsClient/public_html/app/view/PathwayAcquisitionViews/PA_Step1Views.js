@@ -162,11 +162,11 @@ function PA_Step1JobView() {
 		showInfoMessage("About this example", {
 			message: 'The following example data was loaded:' +
 			'<ul>' +
-			'  <li>Gene Expression data: 6404 genes [4195 relevant genes].</li>' +
-			'  <li>Proteomics data: 556 proteins [52 relevant proteins].</li>' +
-			'  <li>Metalomics data: 59 compounds [21 relevant compounds].</li>' +
-			'  <li>DNase-seq data: 18330 regions [3595 relevant regions].</li>'+
-			'  <li>miRNA-seq data: 69 genes with miRNA values [69 relevant genes].</li>'+
+			'  <li>Gene Expression data: 6337 genes [5524 relevant genes].</li>' +
+			'  <li>Proteomics data: 1110 proteins [148 relevant proteins].</li>' +
+			'  <li>Metabolomics data: 59 compounds [41 relevant compounds].</li>' +
+			'  <li>DNase-seq data: 5101 regions [3596 relevant regions].</li>'+
+			'  <li>miRNA-seq data: 4998 genes with miRNA values [605 relevant genes].</li>'+
 			'</ul>',
 			showButton: true,
 			height: 240

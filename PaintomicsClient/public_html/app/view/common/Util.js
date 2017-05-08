@@ -70,13 +70,13 @@ function Observable() {
 		return this.observers;
 	};
 	this.addObserver = function (observer) {
-		if (observer.updateObserver !== undefined) {
-			//TODO: REMOVE THIS CODE
+		if (observer.updateObserver !== undefined && this.getObservers().indexOf(observer) === -1) {
+			this.getObservers().push(observer);
+			console.log("OBSERVERS " + this.getObservers().length) ;
 			if (debugging === true) {
 				nObservers += 1;
 				console.info("New observer added " + ((observer.name !== undefined) ? observer.name : observer.constructor.name) + " TOTAL OBSERVERS: " + nObservers);
 			}
-			this.getObservers().push(observer);
 		}
 	};
 	this.clearChanged = function () {
@@ -95,6 +95,7 @@ function Observable() {
 					console.info("Observer removed " + ((observer.name !== undefined) ? observer.name : observer.constructor.name) + " TOTAL OBSERVERS: " + nObservers);
 				}
 				this.getObservers().splice([i], 1);
+				console.log("OBSERVERS " + this.getObservers().length) ;
 			}
 		}
 	};
@@ -374,9 +375,16 @@ function initializeTooltips(query, options) {
 	$(query).powerTip(options);
 }
 
+ignoreOtherErrors = false;
 function ajaxErrorHandler(responseObj) {
 	if (debugging === true)
 		debugger
+
+	if(ignoreOtherErrors){
+		return;
+	}
+
+	ignoreOtherErrors = true;
 
 	var err;
 	try {
@@ -387,18 +395,27 @@ function ajaxErrorHandler(responseObj) {
 		err = err || {message: "Unable to parse the error message."};
 	}
 
-	// For credential errors force the user logout
-	if (typeof application != "undefined" && 
-		err.extra.hasOwnProperty("exc_type") &&
-		err.extra.exc_type.includes("CredentialException")) {
-			application.getController("UserController").signOutButtonClickHandler();
-	} else {
-		showErrorMessage("Oops..Internal error!", {
-			message: err.message + "</br>Please try again later.</br>If the error persists, please contact the <a href='mailto:paintomics@cipf.es' target='_blank'> administrator</a>.",
-			extra : err.extra,
-			showButton: true
+	if(err.message && err.message.indexOf("User not valid") !== -1){
+		showErrorMessage("Invalid session", {
+			message: "<b>Your session is not valid.</b> Please sign-in again to continue.",
+			callback: function () {
+				ignoreOtherErrors = false;
+					Ext.util.Cookies.clear("sessionToken", location.pathname);
+					Ext.util.Cookies.clear("userID", location.pathname);
+					Ext.util.Cookies.clear("userName", location.pathname);
+					setTimeout(function(){location.reload(); }, 2000);
+			},
+			showButton: false,
+			showReportButton: false
 		});
+		return;
 	}
+
+	showErrorMessage("Oops..Internal error!", {
+		message: err.message + "</br>Please try again later.</br>If the error persists, please contact the <a href='mailto:paintomics@cipf.es' target='_blank'> administrator</a>.",
+		extra : err.extra,
+		showButton: true
+	});
 }
 
 function extJSErrorHandler(form, responseObj) {

@@ -114,7 +114,8 @@ def sendEmail(ROOT_DIRECTORY, toEmail, toName, subject, _message, fromEmail=None
        server.starttls()
 
     if use_smtp_auth == True :
-       server.login(smpt_username, smpt_pass)
+        import base64
+        server.login(smpt_username, base64.b64decode(smpt_pass))
 
     server.sendmail(fromEmail, toEmail, message.as_string())
 

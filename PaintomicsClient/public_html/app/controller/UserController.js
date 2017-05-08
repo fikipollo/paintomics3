@@ -111,6 +111,7 @@ function UserController() {
                             logMessage: "Signed in as " + response.userName,
                             callback: function () {
                                 application.getController("JobController").resetButtonClickHandler(null, true);
+																location.reload();
                             }
                         });
                     },
@@ -251,14 +252,15 @@ function UserController() {
                     Ext.util.Cookies.clear("sessionToken", location.pathname);
                     Ext.util.Cookies.clear("userID", location.pathname);
                     Ext.util.Cookies.clear("userName", location.pathname);
-                    if (userView)
-                    userView.getComponent().updateLoginState();
+                    if (userView){
+											userView.getComponent().updateLoginState();
+										}
                     //                this.signInButtonClickHandler();
                     application.getController("JobController").resetButtonClickHandler(null, true);
+										location.reload();
                 },
                 error: ajaxErrorHandler
             });
-
         };
 
         /**
@@ -298,6 +300,7 @@ function UserController() {
 
             var guestSessionPanel = new GuestSessionPanel(email, p);
             guestSessionPanel.setController(this);
+						guestSessionPanel.setParent(userViewsDialog);
             userViewsDialog.removeAll();
             userViewsDialog.add(guestSessionPanel.getComponent());
             userViewsDialog.setLoading(false);

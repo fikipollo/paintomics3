@@ -41,6 +41,6 @@ use_smtp_auth   = True                       #Enable SMTP authentication
 use_smtp_ssl    = True                       #Whether use normal SMTP or SMTP_SSL
 smtp_secure     = ""                         #Use tls, etc.
 smpt_username   = "notifications@mydomain.com"  #THE SENDER EMAIL, DEPENDS ON THE SMTP SETTINGS
-smpt_pass       = "09bf93aae4166cd12775c2592a1c613c" #THE SENDER PASS IN MD5 CODIFICATION, DEPENDS ON THE SMTP SETTINGS
+smpt_pass       = "09bf93aae4166cd12775c2592a1c613c" #THE SENDER PASS IN BASE64 CODIFICATION, DEPENDS ON THE SMTP SETTINGS
 smpt_sender     = "notifications@mydomain.com"       #Sender email (From value at the email)
 smpt_sender_name= "Paintomics 3"             #Sender name (From value at the email)
