@@ -348,7 +348,8 @@ class MiRNA2GeneJob(Job):
                         #WRITE RESULTS TO miRNA2Gene_output FILE -->   gen_id mirna values
                         #TODO: RE-ENABLE THIS CODE
                         #mirna2genesOutput.write(lineAux + '\t'.join(map(str, omicValue.getValues())) + "\n")
-                        mirna2genesOutput.write(geneID + "\t" + '\t'.join(map(str, omicValue.getValues())) + "\n")
+                        # mirna2genesOutput.write(geneID + "\t" + '\t'.join(map(str, omicValue.getValues())) + "\n")
+                        mirna2genesOutput.write(":::".join([geneID, omicValue.getOriginalName()]) + "\t" + '\t'.join(map(str, omicValue.getValues())) + "\n")
 
                         if omicValue.isRelevant():
                             #WRITE RESULTS TO mirna2genesRelevant FILE -->   gen_id mirna

@@ -253,15 +253,25 @@ class Job(Model):
                         #*************************************************************************
                         # STEP 2.C.1 CREATE A NEW OMIC VALUE WITH ROW DATA
                         #*************************************************************************
-                        omicValueAux = OmicValue(line[0])
+
+                        # Split the ID column as it might contain associated_gene:::original_name
+                        columnID = line[0].split(":::")
+
+                        omicValueAux = OmicValue(columnID[0])
                         omicValueAux.setOmicName(omicName)
-                        omicValueAux.setRelevant(relevantFeatures.has_key(omicValueAux.getInputName().lower()))
+                        # omicValueAux.setRelevant(relevantFeatures.has_key(omicValueAux.getInputName().lower()))
+                        # TODO: Relevant flag using whole line including original name?
+                        omicValueAux.setRelevant(relevantFeatures.has_key(line[0].lower()))
                         omicValueAux.setValues(map(float, line[1:len(line)]))
+
+                        if len(columnID) > 1:
+                            omicValueAux.setOriginalName(columnID[1])
+
                         #*************************************************************************
                         # STEP 2.C.2 CREATE A NEW TEMPORAL GENE INSTANCE
                         #*************************************************************************
                         geneAux = Gene("")
-                        geneAux.setName(line[0])
+                        geneAux.setName(columnID[0])
                         geneAux.addOmicValue(omicValueAux)
                         #*************************************************************************
                         # STEP 2.C.3 ADD THE TEMPORAL GENE INSTANCE TO THE LIST OF GENES
@@ -452,10 +462,17 @@ class Job(Model):
             with open(fileName, 'rU') as inputDataFile:
                 for line in csv_reader(inputDataFile, delimiter="\t"):
                     if(isBedFormat == True):
-                        line = line[0] + "_" + line[1] + "_" + line[2]
+                        lineProc = line[0] + "_" + line[1] + "_" + line[2]
                     else:
-                        line = line[0]
-                    relevantFeatures[line.lower()] = 1
+                        lineProc = line[0]
+
+                    # If the relevants file is not in BED format and contains more than 1 column, it means
+                    # that the second one contains the original ID
+                    if len(line) > 1 and not isBedFormat:
+                        featureID = ":::".join([line[0], line[1]]).lower()
+                    else:
+                        featureID = lineProc.lower()
+                    relevantFeatures[featureID] = 1
             inputDataFile.close()
             logging.info("PARSING RELEVANT FEATURES FILE (" + fileName + ")... THE FILE CONTAINS " + str(len(relevantFeatures.keys())) + " RELEVANT FEATURES" );
         else:

@@ -1437,8 +1437,12 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 
 			omicValues = feature.getOmicValues(omicName);
 			if (omicValues !== null) {
-				serie = {name: (omicValues.isRelevant() === true ? "* " : "") + omicName + "#" + omicValues.inputName};
-				yAxisCat.push((omicValues.isRelevant() === true ? "* " : "") + omicName + "#" + omicValues.inputName);
+				shownameValue = omicValues.inputName != omicValues.originalName && omicValues.originalName !== undefined ?
+					omicValues.originalName + ": " + omicValues.inputName :
+					omicValues.inputName
+
+				serie = {name: (omicValues.isRelevant() === true ? "* " : "") + omicName + "#" + shownameValue};
+				yAxisCat.push((omicValues.isRelevant() === true ? "* " : "") + omicName + "#" + shownameValue);
 
 				values = omicValues.getValues();
 				serie.data = [];
@@ -2574,13 +2578,18 @@ function PA_Step4GlobalHeatmapView() {
 
 			//Get the values and the name for the new serie
 			featureValues = omicsValues[i].values;
+
+			shownameValue = omicsValues[i].inputName != omicsValues[i].originalName && omicsValues[i].originalName !== undefined ?
+				omicsValues[i].originalName + ": " + omicsValues[i].inputName :
+				omicsValues[i].inputName
+
 			serie = {
-				name: (omicsValues[i].isRelevant === true ? "* " : "") + omicsValues[i].keggName + "#" + omicsValues[i].inputName,
+				name: (omicsValues[i].isRelevant === true ? "* " : "") + omicsValues[i].keggName + "#" + shownameValue,
 				data: [],
 				turboThreshold: Number.MAX_VALUE
 			};
 			//Add the name for the row (e.g. MagoHb or "miRNA my_mirnaid_1")
-			yAxisCat.push((omicsValues[i].isRelevant === true ? "* " : "") + omicsValues[i].keggName + "#" + omicsValues[i].inputName);
+			yAxisCat.push((omicsValues[i].isRelevant === true ? "* " : "") + omicsValues[i].keggName + "#" + shownameValue);
 
 			if (featureValues !== null) {
 				for (var j in featureValues) {
@@ -2996,6 +3005,7 @@ function PA_Step4DetailsView() {
 				entriesTable[entrieName].push({
 					keggName: featureName + ((entrieName === omicValue.getOmicName()) ? "" : " " + omicValue.getOmicName()),
 					inputName: omicValue.inputName,
+					originalName: omicValue.originalName,
 					isRelevant: omicValue.isRelevant(),
 					values: omicValue.getValues()
 				});
@@ -3055,9 +3065,13 @@ function PA_Step4DetailsView() {
 			x = 0;
 			//Get the values and the name for the new serie
 			featureValues = omicsValues[i].values;
-			serie = {name: (omicsValues[i].isRelevant === true ? "* " : "") + omicsValues[i].keggName + "#" + omicsValues[i].inputName, data: []};
+			shownameValue = omicsValues[i].inputName != omicsValues[i].originalName && omicsValues[i].originalName !== undefined ?
+				omicsValues[i].originalName + ": " + omicsValues[i].inputName :
+				omicsValues[i].inputName
+
+			serie = {name: (omicsValues[i].isRelevant === true ? "* " : "") + omicsValues[i].keggName + "#" + shownameValue, data: []};
 			//Add the name for the row (e.g. MagoHb or "miRNA my_mirnaid_1")
-			yAxisCat.push((omicsValues[i].isRelevant === true ? "* " : "") + omicsValues[i].keggName + "#" + omicsValues[i].inputName);
+			yAxisCat.push((omicsValues[i].isRelevant === true ? "* " : "") + omicsValues[i].keggName + "#" + shownameValue);
 
 			var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences);
 
