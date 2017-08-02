@@ -21,6 +21,11 @@
 root {
 	display: block;
 }
+
+:root {
+  --main-max-width: 1900px;
+}
+
 body {
 	background-color: #000;
 	font-family: 'SourceSansPro', sans-serif !important;
@@ -764,7 +769,7 @@ div.availableOmicsBox h4 {
 	color: #ff6666
 }
 .omicSummaryContainer {
-	max-width: 1300px;
+	max-width: var(--main-max-width);
 	margin: 5px 10px;
 }
 .contentbox.metaboliteBox {
@@ -870,7 +875,7 @@ span.networkClusterImage > i {
 span.networkClusterImage.disabled > i {display:block;}
 .mainInfoPanel {font-size: 12px;}
 .pathwayPlotwrappers h4{color: #D16949;font-size: 13px;margin: 0;margin-top: 5px;}
-#networkClustersContainer, #patwaysDetailsWrapper{overflow-y:auto; overflow-x: hidden; min-height: 623px; height: 100%; padding: 2px 10px;}
+#networkClustersContainer, #patwaysDetailsWrapper{overflow-y:auto; overflow-x: hidden; min-height: 722px; height: 100%; padding: 2px 10px;}
 #networkSettingsPanel, #networkDetailsPanel {width:260px; float:right; margin:0; margin-left:10px;}
 #networkDetailsPanel {width:270px;}
 
@@ -1542,7 +1547,7 @@ a.toolbarOption {
 	cursor: pointer;
 }
 div.contentbox {
-	max-width: 1300px;
+	max-width: var(--main-max-width);
 }
 div.contentbox a.toolbarOption {
 	font-size: 15px;

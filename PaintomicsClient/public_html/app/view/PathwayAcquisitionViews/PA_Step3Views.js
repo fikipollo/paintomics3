@@ -101,7 +101,9 @@ function PA_Step3JobView() {
 				backgroundLayout : false,
 				showNodeLabels : true,
 				//showEdgeLabels : false,
-				edgesClass : 'l'
+				edgesClass : 'l',
+				minNodeSize: 1,
+				maxNodeSize: 8
 			};
 
 			for (var i in pathways) {
@@ -381,7 +383,7 @@ function PA_Step3JobView() {
 
 		this.component = Ext.widget({
 			xtype: "container",
-			padding: '10', border: 0, maxWidth: 1300,
+			padding: '10', border: 0, maxWidth: 1900,
 			items: [
 				{ //THE TOOLBAR
 					xtype: "box",cls: "toolbar secondTopToolbar", html:
@@ -389,7 +391,7 @@ function PA_Step3JobView() {
 					'<a href="javascript:void(0)" class="button btn-default btn-right backButton"><i class="fa fa-arrow-left"></i> Go back</a>'
 				},{ //THE SUMMARY PANEL
 					xtype: 'container', itemId: "pathwaysSummaryPanel",
-					layout: 'column', style: "max-width:1300px; margin: 5px 10px; margin-top:50px;", items: [
+					layout: 'column', style: "max-width:1900px; margin: 5px 10px; margin-top:50px;", items: [
 						{
 							xtype: 'box', cls: "contentbox omicSummaryBox", html:
 							'<div id="about">' +
@@ -769,7 +771,7 @@ function PA_Step3PathwayClassificationView() {
 
 			this.component = Ext.widget({
 				xtype: 'box', cls: "contentbox",
-				maxWidth: 1300, html:
+				maxWidth: 1900, html:
 				'<h2>Pathways classification</h2>' +
 				'<div id="pathwayClassificationPlot1Box" style="padding-left: 10px;overflow:hidden;  min-height:300px; width: 45%; float: left;">'+
 				'  <h4>Category Distribution<span class="infoTip">Click on each slice to view the distribution of the subcategories.</span></h4> '+
@@ -942,6 +944,9 @@ function PA_Step3PathwayClassificationView() {
 						}
 					}
 
+					// Assign "color" attribute for svg renderer
+					elem.data.color = this.getParent().getClassificationColor(elem.data.parent[0])
+
 					/*********************************************************/
 					/* STEP 1.B.4 ADD GLYP INDICATING THE MAIN CLASSIFICATION*/
 					/*********************************************************/
@@ -1017,7 +1022,11 @@ function PA_Step3PathwayClassificationView() {
 			/********************************************************/
 			this.network = new sigma({
 				graph: {nodes: nodesAux,edges: edgesAux},
-				renderers: [{container: $('#pathwayNetworkBox')[0], type: 'canvas' }],
+				renderers: [
+					{container: $('#pathwayNetworkBox')[0], type: 'canvas' },
+					{container: $('#pathwayNetworkBoxSVG')[0], type: 'svg' }
+				],
+				//renderers: [{container: $('#pathwayNetworkBox')[0], type: 'svg' }],
 				settings: {
 					zoomMin: 0.01,
 					zoomMax: 10,
@@ -1048,7 +1057,10 @@ function PA_Step3PathwayClassificationView() {
 					nodeHaloColor: '#ff8e8e',
 					edgeHaloColor: '#ff8e8e',
 					nodeHaloSize: 5,
-					edgeHaloSize: 3
+					edgeHaloSize: 3,
+					// min/maxNodeSize:
+					minNodeSize: visualOptions.minNodeSize,
+					maxNodeSize: visualOptions.maxNodeSize
 				}
 			});
 
@@ -1240,6 +1252,7 @@ function PA_Step3PathwayClassificationView() {
 				me.network.renderers[0].glyphs({draw: me.drawGlyphs});
 				me.network.settings({
 					drawEdges:true,
+					drawEdgeLabels:false,
 					//edgeLabelThreshold: ((visualOptions.showEdgeLabels===true?0:8)),
 					labelThreshold : ((visualOptions.showNodeLabels===true?1:8))
 				});
@@ -1490,23 +1503,56 @@ function PA_Step3PathwayClassificationView() {
 		*/
 		this.downloadNetwork = function(option){
 			if(option === "png"){
-				// sigma.plugins.image(me.network, me.network.renderers[0], {
+				// sigma.plugins.image(this.network, this.network.renderers[0], {
 				// 	download:true,
-				// 	size: 1000,
-				// 	background: 'white',
-				// 	labels:true,
 				// 	clip: true,
-				// 	margin:30,
-				// 	filename:'paintomics_network_' + me.getParent("PA_Step3JobView").getModel().getJobID() + '.png'
+				// 	labels: true,
+				// 	margin: 30,
+				// 	// size: 400,
+				// 	format: 'png',
+				// 	background: 'white',
+				// 	zoom: true,
+				// 	filename:'paintomics_network_plugin' + this.getParent("PA_Step3JobView").getModel().getJobID() + '.png'
 				// });
+
 				var newCanvas =  $('<canvas/>')[0];
-				newCanvas.height = $("#pathwayNetworkBox").height();
-				newCanvas.width = $("#pathwayNetworkBox").width();
+				// var scaleFactor = 2;
+				newCanvas.height = $("#pathwayNetworkBox").height();// * scaleFactor;
+				newCanvas.width = $("#pathwayNetworkBox").width();// * scaleFactor;
+				// newCanvas.style.width = $("#pathwayNetworkBox").width() + "px";
+				// newCanvas.style.height = $("#pathwayNetworkBox").height() + "px"
+
 				var ctx3 = newCanvas.getContext('2d');
+				// ctx3.scale(scaleFactor, scaleFactor);
 				ctx3.drawImage($("canvas.sigma-scene")[0], 0, 0);
 				ctx3.drawImage($("canvas.sigma-glyphs")[0], 0, 0);
+
+				// Avoid network error when image is too large
+				// function dataURLtoBlob(dataurl) {
+				//     var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+				//         bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+				//     while(n--){
+				//         u8arr[n] = bstr.charCodeAt(n);
+				//     }
+				//     return new Blob([u8arr], {type:mime});
+				// }
+				//
+				// var imgData = newCanvas.toDataURL('image/png')
+				// var strDataURI = imgData.substr(22, imgData.length);
+				// var blob = dataURLtoBlob(imgData);
+				// URL.createObjectURL(blob)
+
 				$('<a target="_blank" id="downloadNetworkLink" download="paintomics_network_' + this.getParent("PA_Step3JobView").getModel().getJobID() + '.png" style="display:none;"></a>').attr("href", newCanvas.toDataURL('image/png'))[0].click();
 
+			}
+			else if(option === "svg"){
+					// Get sigma instance
+					this.network.toSVG({
+						download: true,
+						labels: true,
+						data: true,
+						filename: 'paintomics_network_' + this.getParent("PA_Step3JobView").getModel().getJobID() + '.svg'
+					})
 			}
 			return this;
 		};
@@ -1561,8 +1607,41 @@ function PA_Step3PathwayClassificationView() {
 					selectedNodes[i].y = y + Math.sin(2 * i * Math.PI / selectedNodes.length)* selectedNodes.length*size;
 				}
 			}
-			$('#reorderOptions h3[name="block"]').toggle(option === "block");
-			$('#reorderOptions h3[name="ring"]').toggle(option === "ring");
+			$('#reorderOptions h3').each(function(index) {
+				$(this).toggle($(this).attr("name") === option);
+			});
+			$("#reorderOptions").slideDown();
+
+			this.network.refresh();
+			return this;
+		};
+
+		/**
+		* This function changes different node attributes
+		* @param  {String} option the attribute to change
+		* @return {PA_Step3PathwayNetworkView}        this view
+		*/
+		this.configureNodes = function(option, size){
+			var selectedNodes = sigma.plugins.activeState(this.network).nodes();
+			if(selectedNodes.length === 0){
+				return this;
+			}
+
+			// Modify the point size
+			if(option === "size-conf"){
+				var nodes = this.network.graph.nodes();
+				size = parseInt((size|| $('#reorderOptions h3[name="size-conf"]').attr("value")));
+
+				console.log("Increasing node by size ", size)
+
+				for(var i in selectedNodes){
+					console.log(selectedNodes[i].size)
+					selectedNodes[i].size = selectedNodes[i].size + size
+				}
+			}
+			$('#reorderOptions h3').each(function(index) {
+				$(this).toggle($(this).attr("name") === option);
+			});
 			$("#reorderOptions").slideDown();
 
 			this.network.refresh();
@@ -1595,7 +1674,10 @@ function PA_Step3PathwayClassificationView() {
 			var newValue, id;
 
 			$("#pathwayNetworkToolsBox div.slider-ui").each(function() {
-				newValue = (($(this).attr("id") !== "minPValueSlider") ? $(this).slider("value") / 100 : $(this).slider("value"));
+				newValue = ($.inArray($(this).attr("id"),
+				 ["minPValueSlider", "maxNodeSizeSlider", "minNodeSizeSlider"]) === -1 ?
+				 $(this).slider("value") / 100 : $(this).slider("value"));
+
 				id = $(this).attr("id").replace("Slider", "");
 				updateNeeded = updateNeeded || (visualOptions[id] !== newValue);
 				visualOptions[id] = newValue;
@@ -1707,7 +1789,13 @@ function PA_Step3PathwayClassificationView() {
 			$("#minSharedFeaturesValue").html(visualOptions.minSharedFeatures * 100);
 
 			$("#minPValueSlider").slider({value: visualOptions.minPValue});
-			$("#minPValueValue").html(visualOptions.minPValue * 100);
+			$("#minPValue").html(visualOptions.minPValue);
+
+			$("#minNodeSizeSlider").slider({value: visualOptions.minNodeSize});
+			$("#minNodeSizeValue").html(visualOptions.minNodeSize);
+
+			$("#maxNodeSizeSlider").slider({value: visualOptions.maxNodeSize});
+			$("#maxNodeSizeValue").html(visualOptions.maxNodeSize);
 
 			$("#background-layout-check").attr("checked", visualOptions.backgroundLayout===true);
 			$("#show-node-labels-check").attr("checked", visualOptions.showNodeLabels===true);
@@ -1734,7 +1822,7 @@ function PA_Step3PathwayClassificationView() {
 
 			this.component = Ext.widget({
 				xtype: 'container',
-				style: "max-width:1300px; margin: 5px 10px; ",
+				style: "max-width:1900px; margin: 5px 10px; ",
 				items: [ {
 					xtype: 'box', id: 'networkDetailsPanel', cls: "contentbox lateralOptionsPanel", html:
 					//THE PANEL WITH THE CLUSTERS SUMMARY
@@ -1774,6 +1862,10 @@ function PA_Step3PathwayClassificationView() {
 					'  <div class="checkbox"><input type="checkbox" id="show-node-labels-check" name="showNodeLabelsCheckbox">' +
 					'    <label for="show-node-labels-check">Show all node labels <span class="helpTip" style="float:right;" title="Shows labels for nodes (reduces performance). By default labels are visible when zooming the network."</span></label>' +
 					'  </div>'+
+					'  <h5>Max node size (<span id="maxNodeSizeValue">8</span>)<span class="helpTip" style="float:right;" title="Determines the maximum size that a node can have, scaling the others to maintain the correct ratio."</span></h5>' +
+					'  <div class="slider-ui" style="margin:10px;" id="maxNodeSizeSlider"></div>' +
+					'  <h5>Min node size (<span id="minNodeSizeValue">1</span>)<span class="helpTip" style="float:right;" title="Determines the minimum size that a node can have, scaling the others to maintain the correct ratio."</span></h5>' +
+					'  <div class="slider-ui" style="margin:10px;" id="minNodeSizeSlider"></div>' +
 					// '  <div class="checkbox"><input type="checkbox" id="show-edge-labels-check" name="showEdgeLabelsCheckbox">' +
 					// '    <label for="show-edge-labels-check">Show all edge labels <span class="helpTip" style="float:right;" title="Shows labels for edges (reduces performance). Edge labels indicate the percentage of shared features (genes + metabolites) shared between 2 pathways."</span></label>' +
 					// '  </div>'+
@@ -1797,7 +1889,8 @@ function PA_Step3PathwayClassificationView() {
 					xtype: 'box', cls: "contentbox", style: 'overflow: hidden; margin:0;', html:
 					//THE PANEL WITH THE NETWORK
 					'<div class="lateralOptionsPanel-toolbar">'+
-					'  <a href="javascript:void(0)" class="toolbarOption downloadTool helpTip" id="downloadNetworkTool" title="Download the network" style="margin-top: 10px;"><i class="fa fa-download"></i> Download</a>' +
+					'  <a href="javascript:void(0)" class="toolbarOption downloadTool helpTip" id="downloadNetworkToolSVG" title="Download the network (SVG)" style="margin-top: 10px;"><i class="fa fa-download"></i> Download (SVG)</a>' +
+					'  <a href="javascript:void(0)" class="toolbarOption downloadTool helpTip" id="downloadNetworkTool" title="Download the network (PNG)" style="margin-top: 10px;"><i class="fa fa-download"></i> Download (PNG)</a>' +
 					'</div>'+
 					'<h2>Pathways network <span class="helpTip" title="This Network represents the relationships between matched pathways."></h2>' +
 					'<div id="step3-network-toolbar">' +
@@ -1807,6 +1900,7 @@ function PA_Step3PathwayClassificationView() {
 					'  </div>' +
 					'  <h3 name="block" value="10">Nodes per row:</h3>' +
 					'  <h3 name="ring" style="display: none;" value="2">Ring size:</h3>' +
+					'  <h3 name="size-conf" style="display: none;" value="0">Node size:</h3>' +
 					'  <span>' +
 					'    <i class="fa fa-minus-square fa-2x" name="less" style="margin-right: 22px;padding-top: 5px; color: #DA643D;"></i>' +
 					'    <i class="fa fa-plus-square fa-2x"  name="more" style="color: #DA643D;"></i>' +
@@ -1830,12 +1924,19 @@ function PA_Step3PathwayClassificationView() {
 					'      <a href="javascript:void(0)" class="toolbarOption helpTip submenuOption reorderNodesOption" name="random" title="Set random positions for selected nodes"><i class="fa fa-random"></i> Randomize positions</a>' +
 					'    </div>'+
 					'  </div>' +
+					'  <div class="menu">'+
+					'    <a href="javascript:void(0)" class="toolbarOption menuOption helpTip"><i class="fa fa-cog"></i> Node attributes</a>' +
+					'    <div class="menuBody">' +
+					'      <a href="javascript:void(0)" class="toolbarOption helpTip submenuOption configureNodesOption" name="size-conf" title="Increase or decrease point size"><i class="fa fa-th"></i> Change point size</a>' +
+					'    </div>'+
+					'  </div>' +
 					'  <a href="javascript:void(0)" class="toolbarOption helpTip" id="fullscreenSettingsPanelButton" ><i class="fa fa-arrows-alt"></i> Full screen</a>' +
 					'  <a href="javascript:void(0)" class="toolbarOption helpTip resumeLayout" id="resumeLayoutButton" style="float:right"><i class="fa fa-play"></i> Resume layout</a>' +
 					'  <a href="javascript:void(0)" class="toolbarOption resumeLayout helpTip" id="saveNodePositionsButton"  style="float:right"><i class="fa fa-floppy-o"></i> Save Node Positions</a>' +
 					'  <p id="step3-network-toolbar-message"></p>'+
 					'</div>' +
-					'<div id="pathwayNetworkBox" style="position: relative;overflow:hidden; height:595px; width: 100%;"><div id="pathwayNetworkWaitBox"><i class="fa fa-cog fa-spin"></i> Building network...</div></div>'
+					'<div id="pathwayNetworkBox" style="position: relative;overflow:hidden; height:695px; width: 100%;"><div id="pathwayNetworkWaitBox"><i class="fa fa-cog fa-spin"></i> Building network...</div></div>' +
+					'<div id="pathwayNetworkBoxSVG" style="display: none;">'
 				}],
 				listeners: {
 					boxready: function() {
@@ -1855,7 +1956,19 @@ function PA_Step3PathwayClassificationView() {
 						$("#minPValueSlider").slider({
 							value: 0,min: 0.005,max: 0.05,step: 0.005,
 							slide: function(event, ui) {
-								$("#minPValueSlider").html(ui.value);
+								$("#minPValue").html(ui.value);
+							}
+						});
+						$("#maxNodeSizeSlider").slider({
+							value: 0,min: 1,max: 50,step: 1,
+							slide: function(event, ui) {
+								$("#maxNodeSizeValue").html(ui.value);
+							}
+						});
+						$("#minNodeSizeSlider").slider({
+							value: 0,min: 1,max: 50,step: 1,
+							slide: function(event, ui) {
+								$("#minNodeSizeValue").html(ui.value);
 							}
 						});
 						$("#applyNetworkSettingsButton").click(function() {
@@ -1867,6 +1980,10 @@ function PA_Step3PathwayClassificationView() {
 							me.stopNetworkLayout();
 							me.downloadNetwork("png");
 						});
+						$("#downloadNetworkToolSVG").click(function() {
+							me.stopNetworkLayout();
+							me.downloadNetwork("svg");
+						});
 						$("#step3-network-toolbar .selectNodesOption").click(function() {
 							me.stopNetworkLayout();
 							me.selectNodes($(this).attr("name"));
@@ -1874,6 +1991,10 @@ function PA_Step3PathwayClassificationView() {
 						$("#step3-network-toolbar .reorderNodesOption").click(function() {
 							me.stopNetworkLayout();
 							me.reorderNodes($(this).attr("name"));
+						});
+						$("#step3-network-toolbar .configureNodesOption").click(function() {
+							me.stopNetworkLayout();
+							me.configureNodes($(this).attr("name"));
 						});
 						$("#resumeLayoutButton").click(function() {
 							if ($(this).hasClass("resumeLayout")) {
@@ -1923,9 +2044,19 @@ function PA_Step3PathwayClassificationView() {
 						});
 						$("#reorderOptions span i").click(function() {
 							var option = $('#reorderOptions h3:visible');
-							var value = Math.max(Number.parseInt(option.attr("value")) + ($(this).attr("name")==="less"?-1:1), 1);
-							option.attr("value", value);
-							me.reorderNodes(option.attr("name"), value);
+
+							if (option.attr("name").indexOf("-conf") === -1) {
+								var value = Math.max(Number.parseInt(option.attr("value")) + ($(this).attr("name")==="less"?-1:1), 1);
+								option.attr("value", value);
+
+								me.reorderNodes(option.attr("name"), value);
+							} else {
+								// Keep the value in the range [-1, +1]
+								var value = $(this).attr("name")==="less"?-1:1;
+								option.attr("value", value);
+
+								me.configureNodes(option.attr("name"), value);
+							}
 						});
 
 						$(".hideOption").click(function() {
@@ -1942,7 +2073,7 @@ function PA_Step3PathwayClassificationView() {
 							target: this,
 							handles: 's',
 							pinned:true,
-							maxWidth:1300,
+							maxWidth:1900,
 							minHeight: 700,
 							dynamic: true,
 							transparent:true,
