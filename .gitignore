@@ -1,6 +1,7 @@
 PaintomicsServer/src/CLIENT_TMP/*
 PaintomicsServer/src/log/application.log
 PaintomicsServer/src/AdminTools/log/application.log
+application.log*
 
 /PaintomicsClient/public_html/js/libs/highcharts-4.1.5/exporting-server/java/highcharts-export/highcharts-export-convert/target/
 /PaintomicsClient/public_html/js/libs/highcharts-4.1.5/exporting-server/java/highcharts-export/highcharts-export-web/target/
@@ -8,3 +9,7 @@ PaintomicsServer/src/AdminTools/log/application.log
 PaintomicsServer/.idea/workspace.xml
 PaintomicsServer/src/conf/serverconf.py
 PaintomicsServer/src/examplefiles/GTF/*.gtf
+PaintomicsServer/src/examplefiles.bak*
+*.orig
+.tags*
+PaintomicsServer/src/data*

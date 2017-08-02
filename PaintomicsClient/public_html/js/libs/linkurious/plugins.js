@@ -4,7 +4,7 @@
   if (typeof sigma === 'undefined')
     throw new Error('sigma is not declared');
 
-  var _fixedNodesIndex = Object.create(null);
+  var _fixedNodesIndex = new sigma.utils.map();
 
   /**
    * Sigma Graph Helpers
@@ -25,7 +25,7 @@
     'sigma.helpers.graph.addNode',
     function(n) {
       if (n.fixed) {
-        _fixedNodesIndex[n.id] = this.nodesIndex[n.id];
+        _fixedNodesIndex.set(n.id, this.nodesIndex.get(n.id));
       }
     }
   );
@@ -35,7 +35,7 @@
     'dropNode',
     'sigma.helpers.graph.dropNode',
     function(id) {
-      delete _fixedNodesIndex[id];
+      _fixedNodesIndex.delete(id);
     }
   );
 
@@ -44,13 +44,8 @@
     'clear',
     'sigma.helpers.graph.clear',
     function() {
-      var k;
-
-      for (k in _fixedNodesIndex)
-        if (!('hasOwnProperty' in _fixedNodesIndex) || _fixedNodesIndex.hasOwnProperty(k))
-          delete _fixedNodesIndex[k];
-
-      _fixedNodesIndex = Object.create(null);
+      _fixedNodesIndex.clear();
+      _fixedNodesIndex = new sigma.utils.map();
     }
   );
 
@@ -61,9 +56,9 @@
    */
   if (!sigma.classes.graph.hasMethod('fixNode'))
     sigma.classes.graph.addMethod('fixNode', function(id) {
-      if (this.nodesIndex[id]) {
-        this.nodesIndex[id].fixed = true;
-        _fixedNodesIndex[id] = this.nodesIndex[id];
+      if (this.nodesIndex.get(id)) {
+        this.nodesIndex.get(id).fixed = true;
+        _fixedNodesIndex.set(id, this.nodesIndex.get(id));
       }
       return this;
     });
@@ -75,9 +70,9 @@
    */
   if (!sigma.classes.graph.hasMethod('unfixNode'))
     sigma.classes.graph.addMethod('unfixNode', function(id) {
-      if (this.nodesIndex[id]) {
-        delete this.nodesIndex[id].fixed;
-        delete _fixedNodesIndex[id];
+      if (this.nodesIndex.get(id)) {
+        this.nodesIndex.get(id).fixed = undefined;
+        _fixedNodesIndex.delete(id);
       }
       return this;
     });
@@ -89,12 +84,21 @@
    */
   if (!sigma.classes.graph.hasMethod('getFixedNodes'))
     sigma.classes.graph.addMethod('getFixedNodes', function() {
-      var nid,
-          nodes = [];
-      for(nid in _fixedNodesIndex) {
-        nodes.push(this.nodesIndex[nid]);
-      }
+      var nodes = [];
+      _fixedNodesIndex.forEach(function(n, id) {
+        nodes.push(n);
+      });
       return nodes;
+    });
+
+  /**
+   * This methods returns true if fixed nodes exist.
+   *
+   * @return {boolean}
+   */
+  if (!sigma.classes.graph.hasMethod('hasFixedNodes'))
+    sigma.classes.graph.addMethod('hasFixedNodes', function() {
+      return _fixedNodesIndex.size != 0;
     });
 
 
@@ -176,15 +180,15 @@
           target,
           edgeNotHidden,
           nodes = [];
-      for(target in this.allNeighborsIndex[id]) {
+      (this.allNeighborsIndex.get(id) || []).forEach(function(map, target) {
         if (options.withHidden) {
-          nodes.push(this.nodesIndex[target]);
+          nodes.push(self.nodesIndex.get(target));
         }
-        else if (!this.nodes(target).hidden) {
+        else if (!self.nodes(target).hidden) {
           // check if at least one non-hidden edge exists
           // between the node and the target node:
           edgeNotHidden =
-            Object.keys(this.allNeighborsIndex[id][target]).map(function(eid) {
+            self.allNeighborsIndex.get(id).get(target).keyList().map(function(eid) {
               return self.edges(eid);
             })
             .filter(function(e) {
@@ -193,10 +197,11 @@
             .length != 0;
 
           if (edgeNotHidden) {
-            nodes.push(this.nodesIndex[target]);
+            nodes.push(self.nodesIndex.get(target));
           }
         }
-      }
+      });
+
       return nodes;
     });
 
@@ -218,17 +223,19 @@
       if (typeof id !== 'string' && typeof id !== 'number')
         throw new TypeError('The node id is not a string or a number, was ' + id);
 
-      var a = this.allNeighborsIndex[id],
+      var self = this,
+          a = this.allNeighborsIndex.get(id) || [],
           eid,
-          target,
           edges = [];
-      for(target in a) {
-        for(eid in a[target]) {
-          if (options.withHidden || !this.edges(eid).hidden) {
-            edges.push(a[target][eid]);
+
+      a.forEach(function(map, target) {
+        a.get(target).forEach(function(map2, eid) {
+          if (options.withHidden || !self.edges(eid).hidden) {
+            edges.push(self.edges(eid));
           }
-        }
-      }
+        });
+      });
+
       return edges;
     });
 
@@ -1454,6 +1461,7 @@
     size: '1000',
     width: '1000',
     height: '1000',
+    margin: 0.05,
     classes: true,
     labels: true,
     data: false,
@@ -1545,13 +1553,22 @@
 
     var prefix = this.settings('classPrefix'),
         w = params.size || params.width || DEFAULTS.size,
-        h = params.size || params.height || DEFAULTS.size;
+        h = params.size || params.height || DEFAULTS.size,
+        margin = params.margin || DEFAULTS.margin;
 
     // Creating a dummy container
     var container = document.createElement('div');
     container.setAttribute('width', w);
     container.setAttribute('height', h);
     container.setAttribute('style', 'position:absolute; top: 0px; left:0px; width: ' + w + 'px; height: ' + h + 'px;');
+
+    // Add margin to deal with curved edges
+    var sideMargin = this.settings('sideMargin');
+    this.settings('sideMargin', margin);
+
+    // Fit graph to viewport
+    var autoRescale = this.settings('autoRescale');
+    this.settings('autoRescale', true);
 
     // Creating a camera
     var camera = this.addCamera();
@@ -1571,6 +1588,10 @@
     // Dropping camera and renderers before something nasty happens
     this.killRenderer(renderer);
     this.killCamera(camera);
+
+    // reset setting
+    this.settings('sideMargin', sideMargin);
+    this.settings('autoRescale', autoRescale);
 
     // Retrieving svg
     var svg = container.querySelector('svg');
@@ -2034,7 +2055,6 @@
       throw Error('sigma.renderers.image: unsupported format "' + params.format + '".');
 
     var ratio = calculateRatio(s, r, params);
-
     var batchEdgesDrawing = s.settings('batchEdgesDrawing');
     if (batchEdgesDrawing) {
       s.settings('batchEdgesDrawing', false); // it may crash if true
@@ -2066,15 +2086,18 @@
   Image.prototype.clone = function(s, params, ratio) {
     params.tmpContainer = params.tmpContainer || 'image-container';
 
+    var pixelRatio = sigma.utils.getPixelRatio();
+    var webglOversamplingRatio = s.settings('webglOversamplingRatio');
     var el = document.getElementById(params.tmpContainer);
+
     if (!el) {
       el =  document.createElement("div");
       el.id = params.tmpContainer;
       document.body.appendChild(el);
     }
     el.setAttribute("style",
-        'width:' + ratio.width + 'px;' +
-        'height:' + Math.round(ratio.height) + 'px;');
+      'width:' + Math.round(ratio.width / pixelRatio) + 'px;' +
+      'height:' + Math.round(ratio.height / pixelRatio) + 'px;');
 
     var renderer = s.addRenderer({
       container: document.getElementById(params.tmpContainer),
@@ -2084,7 +2107,11 @@
         drawLabels: !!params.labels
       }
     });
+
     renderer.camera.ratio = (params.zoomRatio > 0) ? params.zoomRatio : 1;
+    if (!params.size) {
+      renderer.camera.ratio *= pixelRatio;
+    }
 
     var webgl = renderer instanceof sigma.renderers.webgl,
         sized = false,
@@ -2110,15 +2137,18 @@
         _canvas.height = ratio.height;
 
         if (webgl && context instanceof WebGLRenderingContext) {
-          _canvas.width  *= 0.5;
-          _canvas.height *= 0.5;
+          _canvas.width  /= webglOversamplingRatio;
+          _canvas.height /= webglOversamplingRatio;
         }
 
         sized = true;
       }
 
       if (context instanceof WebGLRenderingContext)
-        _canvasContext.drawImage(canvas, 0, 0, canvas.width / 2, canvas.height / 2);
+        _canvasContext.drawImage(canvas, 0, 0,
+          canvas.width / webglOversamplingRatio,
+          canvas.height / webglOversamplingRatio
+      );
       else
         _canvasContext.drawImage(canvas, 0, 0);
 
@@ -2139,10 +2169,6 @@
   * @param {params}  Options
   */
   Image.prototype.draw = function(r, params, ratio) {
-
-    if(!params.size || params.size < 1)
-      params.size = window.innerWidth;
-
     var webgl = r instanceof sigma.renderers.webgl,
         sized = false,
         doneContexts = [];
@@ -2170,18 +2196,21 @@
         if(!params.clip) {
           width = _canvas.width;
           height = _canvas.height;
-        } else {
+        }
+        else {
+          var size = (!params.size || params.size < 1) ? window.innerWidth : params.size;
           width = canvas.width;
           height = canvas.height;
-          ratio = calculateAspectRatioFit(width, height, params.size);
+          ratio = calculateAspectRatioFit(width, height, size);
         }
 
         merged.width = ratio.width;
         merged.height = ratio.height;
 
         if (!webgl && !context instanceof WebGLRenderingContext) {
-          merged.width *= 2;
-          merged.height *=2;
+          var webglOversamplingRatio = s.settings('webglOversamplingRatio');
+          merged.width *= webglOversamplingRatio;
+          merged.height *= webglOversamplingRatio;
         }
 
         sized = true;
@@ -2194,10 +2223,13 @@
         }
       }
 
-      if(params.clip)
-        mergedContext.drawImage(canvas, 0, 0, merged.width, merged.height);
-      else
-        mergedContext.drawImage(_canvas, 0, 0, merged.width, merged.height);
+      mergedContext.drawImage(
+        (params.clip) ? canvas : _canvas,
+        0,
+        0,
+        merged.width,
+        merged.height
+      );
 
       doneContexts.push(context);
     });
@@ -2416,7 +2448,7 @@
       if (!dg) return;
 
       var nodes = dg.nodes().map(function(nid) {
-        return self.sigInst.graph.nodes(nid);
+        return self.sigInst.graph.nodes(nid) || self.sigInst.graph.nodes(Number(nid));
       });
 
       var coord;
@@ -3113,7 +3145,7 @@
 
       // 2) Repulsion
       //--------------
-      // NOTES: adjustSize = antiCollision & scalingRatio = coefficient
+      // NOTES: adjustSizes = antiCollision & scalingRatio = coefficient
 
       if (W.settings.barnesHutOptimize) {
         coefficient = W.settings.scalingRatio;
@@ -3143,7 +3175,7 @@
                 xDist = NodeMatrix[np(n, 'x')] - RegionMatrix[rp(r, 'massCenterX')];
                 yDist = NodeMatrix[np(n, 'y')] - RegionMatrix[rp(r, 'massCenterY')];
 
-                if (W.settings.adjustSize) {
+                if (W.settings.adjustSizes) {
 
                   //-- Linear Anti-collision Repulsion
                   if (distance > 0) {
@@ -3199,7 +3231,7 @@
 
                 distance = Math.sqrt(xDist * xDist + yDist * yDist);
 
-                if (W.settings.adjustSize) {
+                if (W.settings.adjustSizes) {
 
                   //-- Linear Anti-collision Repulsion
                   if (distance > 0) {
@@ -3251,7 +3283,7 @@
             xDist = NodeMatrix[np(n1, 'x')] - NodeMatrix[np(n2, 'x')];
             yDist = NodeMatrix[np(n1, 'y')] - NodeMatrix[np(n2, 'y')];
 
-            if (W.settings.adjustSize) {
+            if (W.settings.adjustSizes) {
 
               //-- Anticollision Linear Repulsion
               distance = Math.sqrt(xDist * xDist + yDist * yDist) -
@@ -4155,7 +4187,8 @@
         // node siblings:
         alignNodeSiblings: false,
         nodeSiblingsScale: 1,
-        nodeSiblingsAngleMin: 0
+        nodeSiblingsAngleMin: 0,
+        minNodeDistance: 0
       }
     };
 
@@ -4192,147 +4225,15 @@
      * Return the euclidian distance between two points of a plane
      * with an orthonormal basis.
      *
-     * @param  {number} x1  The X coordinate of the first point.
-     * @param  {number} y1  The Y coordinate of the first point.
-     * @param  {number} x2  The X coordinate of the second point.
-     * @param  {number} y2  The Y coordinate of the second point.
+     * @param  {number} x0  The X coordinate of the first point.
+     * @param  {number} y0  The Y coordinate of the first point.
+     * @param  {number} x1  The X coordinate of the second point.
+     * @param  {number} y1  The Y coordinate of the second point.
      * @return {number}     The euclidian distance.
      */
     function getDistance(x0, y0, x1, y1) {
       return Math.sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0));
-    };
-
-    /**
-     * Return the coordinates of the intersection points of two circles.
-     *
-     * @param  {number} x0  The X coordinate of center location of the first
-     *                      circle.
-     * @param  {number} y0  The Y coordinate of center location of the first
-     *                      circle.
-     * @param  {number} r0  The radius of the first circle.
-     * @param  {number} x1  The X coordinate of center location of the second
-     *                      circle.
-     * @param  {number} y1  The Y coordinate of center location of the second
-     *                      circle.
-     * @param  {number} r1  The radius of the second circle.
-     * @return {xi,yi}      The coordinates of the intersection points.
-     */
-    function getCircleIntersection(x0, y0, r0, x1, y1, r1) {
-      // http://stackoverflow.com/a/12219802
-      var a, dx, dy, d, h, rx, ry, x2, y2;
-
-      // dx and dy are the vertical and horizontal distances between the circle
-      // centers:
-      dx = x1 - x0;
-      dy = y1 - y0;
-
-      // Determine the straight-line distance between the centers:
-      d = Math.sqrt((dy * dy) + (dx * dx));
-
-      // Check for solvability:
-      if (d > (r0 + r1)) {
-          // No solution. circles do not intersect.
-          return false;
-      }
-      if (d < Math.abs(r0 - r1)) {
-          // No solution. one circle is contained in the other.
-          return false;
-      }
-
-      //'point 2' is the point where the line through the circle intersection
-      // points crosses the line between the circle centers.
-
-      // Determine the distance from point 0 to point 2:
-      a = ((r0 * r0) - (r1 * r1) + (d * d)) / (2.0 * d);
-
-      // Determine the coordinates of point 2:
-      x2 = x0 + (dx * a / d);
-      y2 = y0 + (dy * a / d);
-
-      // Determine the distance from point 2 to either of the intersection
-      // points:
-      h = Math.sqrt((r0 * r0) - (a * a));
-
-      // Determine the offsets of the intersection points from point 2:
-      rx = -dy * (h / d);
-      ry = dx * (h / d);
-
-      // Determine the absolute intersection points:
-      var xi = x2 + rx;
-      var xi_prime = x2 - rx;
-      var yi = y2 + ry;
-      var yi_prime = y2 - ry;
-
-      return {xi: xi, xi_prime: xi_prime, yi: yi, yi_prime: yi_prime};
-    };
-
-    /**
-     * Find the intersection between two lines, two segments, or one line and one segment.
-     * http://jsfiddle.net/justin_c_rounds/Gd2S2/
-     *
-     * @param  {number} line1x1  The X coordinate of the start point of the first line.
-     * @param  {number} line1y1  The Y coordinate of the start point of the first line.
-     * @param  {number} line1x2  The X coordinate of the end point of the first line.
-     * @param  {number} line1y2  The Y coordinate of the end point of the first line.v
-     * @param  {number} line2x1  The X coordinate of the start point of the second line.
-     * @param  {number} line2y1  The Y coordinate of the start point of the second line.
-     * @param  {number} line2x2  The X coordinate of the end point of the second line.
-     * @param  {number} line2y2  The Y coordinate of the end point of the second line.
-     * @return {object}           The coordinates of the intersection point.
-     */
-    function getLinesIntersection(line1x1, line1y1, line1x2, line1y2, line2x1, line2y1, line2x2, line2y2) {
-      // if the lines intersect, the result contains the x and y of the intersection
-      // (treating the lines as infinite) and booleans for whether line segment 1 or
-      // line segment 2 contain the point
-      var
-        denominator,
-        a,
-        b,
-        numerator1,
-        numerator2,
-        result = {
-          x: null,
-          y: null,
-          onLine1: false,
-          onLine2: false
-      };
-
-      denominator =
-        ((line2y2 - line2y1) * (line1x2 - line1x1)) -
-        ((line2x2 - line2x1) * (line1y2 - line1y1));
-
-      if (denominator == 0) {
-          return result;
-      }
-
-      a = line1y1 - line2y1;
-      b = line1x1 - line2x1;
-
-      numerator1 = ((line2x2 - line2x1) * a) - ((line2y2 - line2y1) * b);
-      numerator2 = ((line1x2 - line1x1) * a) - ((line1y2 - line1y1) * b);
-
-      a = numerator1 / denominator;
-      b = numerator2 / denominator;
-
-      // if we cast these lines infinitely in both directions, they intersect here:
-      result.x = line1x1 + (a * (line1x2 - line1x1));
-      result.y = line1y1 + (a * (line1y2 - line1y1));
-      /*
-      // it is worth noting that this should be the same as:
-        x = line2x1 + (b * (line2x2 - line2x1));
-        y = line2x1 + (b * (line2y2 - line2y1));
-      */
-      // if line1 is a segment and line2 is infinite, they intersect if:
-      if (a > 0 && a < 1) {
-          result.onLine1 = true;
-      }
-      // if line2 is a segment and line1 is infinite, they intersect if:
-      if (b > 0 && b < 1) {
-          result.onLine2 = true;
-      }
-      // if line1 and line2 are segments, they intersect if both of the above are true
-      return result;
-    };
+    }
 
     /**
      * Scale a value from the range [baseMin, baseMax] to the range
@@ -4347,7 +4248,7 @@
      */
     function scaleRange(value, baseMin, baseMax, limitMin, limitMax) {
       return ((limitMax - limitMin) * (value - baseMin) / (baseMax - baseMin)) + limitMin;
-    };
+    }
 
     /**
      * Get the angle of the vector (in radian).
@@ -4357,7 +4258,7 @@
      */
     function getVectorAngle(v) {
       return Math.acos( v.x / Math.sqrt(v.x * v.x + v.y * v.y) );
-    };
+    }
 
     /**
      * Get the normal vector of the line segment, i.e. the vector
@@ -4377,7 +4278,7 @@
         xi_prime:   bY - aY,
         yi_prime: -(bX - aX)
       };
-    };
+    }
 
     /**
      * Get the normalized vector.
@@ -4389,9 +4290,9 @@
     function getNormalizedVector(v, length) {
       return {
         x: (v.xi_prime - v.xi) / length,
-        y: (v.yi_prime - v.yi) / length,
+        y: (v.yi_prime - v.yi) / length
       };
-    };
+    }
 
     /**
      * Get the a point the line segment [A,B] at a specified distance percentage
@@ -4410,8 +4311,6 @@
         y: aY + (bY - aY) * t
       };
     }
-
-
 
     /**
      * Matrices properties accessors
@@ -4492,13 +4391,6 @@
               'Inexistant region property given (' + p + ').');
     }
 
-    // DEBUG
-    function nan(v) {
-      if (isNaN(v))
-        throw new TypeError('NaN alert!');
-    }
-
-
     /**
      * Algorithm initialization
      */
@@ -4541,7 +4433,8 @@
           mass,
           distance,
           size,
-          factor;
+          factor,
+          minNodeDistance = W.settings.minNodeDistance;
 
       // 1) Initializing layout data
       //-----------------------------
@@ -4825,7 +4718,7 @@
 
       // 2) Repulsion
       //--------------
-      // NOTES: adjustSize = antiCollision & scalingRatio = coefficient
+      // NOTES: adjustSizes = antiCollision & scalingRatio = coefficient
 
       if (W.settings.barnesHutOptimize) {
         coefficient = W.settings.scalingRatio;
@@ -4857,7 +4750,7 @@
                 xDist = NodeMatrix[np(n, 'x')] - RegionMatrix[rp(r, 'massCenterX')];
                 yDist = NodeMatrix[np(n, 'y')] - RegionMatrix[rp(r, 'massCenterY')];
 
-                if (W.settings.adjustSize) {
+                if (W.settings.adjustSizes) {
 
                   //-- Linear Anti-collision Repulsion
                   if (distance > 0) {
@@ -4913,7 +4806,7 @@
 
                 distance = Math.sqrt(xDist * xDist + yDist * yDist);
 
-                if (W.settings.adjustSize) {
+                if (W.settings.adjustSizes) {
 
                   //-- Linear Anti-collision Repulsion
                   if (distance > 0) {
@@ -4965,7 +4858,7 @@
             xDist = NodeMatrix[np(n1, 'x')] - NodeMatrix[np(n2, 'x')];
             yDist = NodeMatrix[np(n1, 'y')] - NodeMatrix[np(n2, 'y')];
 
-            if (W.settings.adjustSize) {
+            if (W.settings.adjustSizes) {
 
               //-- Anticollision Linear Repulsion
               distance = Math.sqrt(xDist * xDist + yDist * yDist) -
@@ -5056,10 +4949,7 @@
 
       // 4) Attraction
       //---------------
-      coefficient = 1 *
-        (W.settings.outboundAttractionDistribution ?
-          outboundAttCompensation :
-          1);
+      coefficient = 1 * (W.settings.outboundAttractionDistribution ? outboundAttCompensation : 1);
 
       // TODO: simplify distance
       // TODO: coefficient is always used as -c --> optimize?
@@ -5082,7 +4972,7 @@
             (xDist * xDist + yDist * yDist) -
             NodeMatrix[np(n1, 'size')] -
             NodeMatrix[np(n2, 'size')]
-          );
+          ) - minNodeDistance;
 
           if (W.settings.linLogMode) {
             if (W.settings.outboundAttractionDistribution) {
@@ -5121,7 +5011,7 @@
         }
         else {
 
-          distance = Math.sqrt(xDist * xDist + yDist * yDist);
+          distance = Math.sqrt(xDist * xDist + yDist * yDist) - minNodeDistance;
 
           if (W.settings.linLogMode) {
             if (W.settings.outboundAttractionDistribution) {
@@ -5405,7 +5295,7 @@
                 // New vector of angle PI - angleMin
                 nNormaleVector = {
                   x: Math.cos(Math.PI - angleMin) * 2,
-                  y: Math.sin(Math.PI - angleMin) * 2,
+                  y: Math.sin(Math.PI - angleMin) * 2
                 };
               }
               else if ((angle > 2 * Math.PI - angleMin) ||
@@ -5414,7 +5304,7 @@
                 // New vector of angle angleMin
                 nNormaleVector = {
                   x: Math.cos(angleMin) * 2,
-                  y: Math.sin(angleMin) * 2,
+                  y: Math.sin(angleMin) * 2
                 };
               }
             }
@@ -5643,6 +5533,7 @@
     sigma.layouts.getForceLinkWorker = getWorkerFn;
   }
 }).call(this);
+
 ;(function(undefined) {
   'use strict';
 
@@ -6452,6 +6343,414 @@
   };
 }).call(this);
 
+;(function(undefined) {
+  'use strict';
+
+  if (typeof sigma === 'undefined')
+    throw new Error('sigma is not declared');
+
+  // Initialize package:
+  sigma.utils.pkg('sigma.layouts.noverlap');
+
+  /**
+   * Noverlap Layout
+   * ===============================
+   *
+   * Author: @apitts / Andrew Pitts
+   * Algorithm: @jacomyma / Mathieu Jacomy (originally contributed to Gephi and ported to sigma.js under the MIT license by @andpitts with permission)
+   * Acknowledgement: @sheyman / Sébastien Heymann (some inspiration has been taken from other MIT licensed layout algorithms authored by @sheyman)
+   * Version: 0.1
+   */
+
+  var settings = {
+    speed: 3,
+    scaleNodes: 1.2,
+    nodeMargin: 5.0,
+    gridSize: 20,
+    permittedExpansion: 1.1,
+    rendererIndex: 0,
+    maxIterations: 500
+  };
+
+  var _instance = {};
+
+  /**
+   * Event emitter Object
+   * ------------------
+   */
+  var _eventEmitter = {};
+
+   /**
+   * Noverlap Object
+   * ------------------
+   */
+  function Noverlap() {
+    var self = this;
+
+    this.init = function (sigInst, options) {
+      options = options || {};
+
+      // Properties
+      this.sigInst = sigInst;
+      this.config = sigma.utils.extend(options, settings);
+      this.easing = options.easing;
+      this.duration = options.duration;
+
+      if (options.nodes) {
+        this.nodes = options.nodes;
+        delete options.nodes;
+      }
+
+      if (!sigma.plugins || typeof sigma.plugins.animate === 'undefined') {
+        throw new Error('sigma.plugins.animate is not declared');
+      }
+
+      // State
+      this.running = false;
+    };
+
+    /**
+     * Single layout iteration.
+     */
+    this.atomicGo = function () {
+      if (!this.running || this.iterCount < 1) return false;
+
+      var nodes = this.nodes || this.sigInst.graph.nodes(),
+          nodesCount = nodes.length,
+          i,
+          n,
+          n1,
+          n2,
+          xmin = Infinity,
+          xmax = -Infinity,
+          ymin = Infinity,
+          ymax = -Infinity,
+          xwidth,
+          yheight,
+          xcenter,
+          ycenter,
+          grid,
+          row,
+          col,
+          minXBox,
+          maxXBox,
+          minYBox,
+          maxYBox,
+          adjacentNodes,
+          subRow,
+          subCol,
+          nxmin,
+          nxmax,
+          nymin,
+          nymax;
+
+      this.iterCount--;
+      this.running = false;
+
+      for (i=0; i < nodesCount; i++) {
+        n = nodes[i];
+        n.dn.dx = 0;
+        n.dn.dy = 0;
+
+        //Find the min and max for both x and y across all nodes
+        xmin = Math.min(xmin, n.dn_x - (n.dn_size*self.config.scaleNodes + self.config.nodeMargin) );
+        xmax = Math.max(xmax, n.dn_x + (n.dn_size*self.config.scaleNodes + self.config.nodeMargin) );
+        ymin = Math.min(ymin, n.dn_y - (n.dn_size*self.config.scaleNodes + self.config.nodeMargin) );
+        ymax = Math.max(ymax, n.dn_y + (n.dn_size*self.config.scaleNodes + self.config.nodeMargin) );
+
+      }
+
+      xwidth = xmax - xmin;
+      yheight = ymax - ymin;
+      xcenter = (xmin + xmax) / 2;
+      ycenter = (ymin + ymax) / 2;
+      xmin = xcenter - self.config.permittedExpansion*xwidth / 2;
+      xmax = xcenter + self.config.permittedExpansion*xwidth / 2;
+      ymin = ycenter - self.config.permittedExpansion*yheight / 2;
+      ymax = ycenter + self.config.permittedExpansion*yheight / 2;
+
+      grid = {}; //An object of objects where grid[row][col] is an array of node ids representing nodes that fall in that grid. Nodes can fall in more than one grid
+
+      for(row = 0; row < self.config.gridSize; row++) {
+        grid[row] = {};
+        for(col = 0; col < self.config.gridSize; col++) {
+          grid[row][col] = [];
+        }
+      }
+
+      //Place nodes in grid
+      for (i=0; i < nodesCount; i++) {
+        n = nodes[i];
+
+        nxmin = n.dn_x - (n.dn_size*self.config.scaleNodes + self.config.nodeMargin);
+        nxmax = n.dn_x + (n.dn_size*self.config.scaleNodes + self.config.nodeMargin);
+        nymin = n.dn_y - (n.dn_size*self.config.scaleNodes + self.config.nodeMargin);
+        nymax = n.dn_y + (n.dn_size*self.config.scaleNodes + self.config.nodeMargin);
+
+        minXBox = Math.floor(self.config.gridSize* (nxmin - xmin) / (xmax - xmin) );
+        maxXBox = Math.floor(self.config.gridSize* (nxmax - xmin) / (xmax - xmin) );
+        minYBox = Math.floor(self.config.gridSize* (nymin - ymin) / (ymax - ymin) );
+        maxYBox = Math.floor(self.config.gridSize* (nymax - ymin) / (ymax - ymin) );
+        for(col = minXBox; col <= maxXBox; col++) {
+          for(row = minYBox; row <= maxYBox; row++) {
+            grid[row][col].push(n.id);
+          }
+        }
+      }
+
+
+      adjacentNodes = {}; //An object that stores the node ids of adjacent nodes (either in same grid box or adjacent grid box) for all nodes
+
+      for(row = 0; row < self.config.gridSize; row++) {
+        for(col = 0; col < self.config.gridSize; col++) {
+          grid[row][col].forEach(function(nodeId) {
+            if(!adjacentNodes[nodeId]) {
+              adjacentNodes[nodeId] = [];
+            }
+            for(subRow = Math.max(0, row - 1); subRow <= Math.min(row + 1, self.config.gridSize - 1); subRow++) {
+              for(subCol = Math.max(0, col - 1); subCol <= Math.min(col + 1,  self.config.gridSize - 1); subCol++) {
+                grid[subRow][subCol].forEach(function(subNodeId) {
+                  if(subNodeId !== nodeId && adjacentNodes[nodeId].indexOf(subNodeId) === -1) {
+                    adjacentNodes[nodeId].push(subNodeId);
+                  }
+                });
+              }
+            }
+          });
+        }
+      }
+
+      //If two nodes overlap then repulse them
+      for (i=0; i < nodesCount; i++) {
+        n1 = nodes[i];
+        adjacentNodes[n1.id].forEach(function(nodeId) {
+          var n2 = self.sigInst.graph.nodes(nodeId);
+          var xDist = n2.dn_x - n1.dn_x;
+          var yDist = n2.dn_y - n1.dn_y;
+          var dist = Math.sqrt(xDist*xDist + yDist*yDist);
+          var collision = (dist < ((n1.dn_size*self.config.scaleNodes + self.config.nodeMargin) + (n2.dn_size*self.config.scaleNodes + self.config.nodeMargin)));
+          if(collision) {
+            self.running = true;
+            if(dist > 0) {
+              n2.dn.dx += xDist / dist * (1 + n1.dn_size);
+              n2.dn.dy += yDist / dist * (1 + n1.dn_size);
+            } else {
+              n2.dn.dx += xwidth * 0.01 * (0.5 - Math.random());
+              n2.dn.dy += yheight * 0.01 * (0.5 - Math.random());
+            }
+          }
+        });
+      }
+
+      for (i=0; i < nodesCount; i++) {
+        n = nodes[i];
+        if(!n.fixed) {
+          n.dn_x = n.dn_x + n.dn.dx * 0.1 * self.config.speed;
+          n.dn_y = n.dn_y + n.dn.dy * 0.1 * self.config.speed;
+        }
+      }
+
+      if(this.running && this.iterCount < 1) {
+        this.running = false;
+      }
+
+      return this.running;
+    };
+
+    this.go = function () {
+      this.iterCount = this.config.maxIterations;
+
+      while (this.running) {
+        this.atomicGo();
+      };
+
+      this.stop();
+    };
+
+    this.start = function() {
+      if (this.running) return;
+
+      var nodes = this.sigInst.graph.nodes();
+
+      var prefix = this.sigInst.renderers[self.config.rendererIndex].options.prefix;
+
+      this.running = true;
+
+      // Init nodes
+      for (var i = 0; i < nodes.length; i++) {
+        nodes[i].dn_x = nodes[i][prefix + 'x'];
+        nodes[i].dn_y = nodes[i][prefix + 'y'];
+        nodes[i].dn_size = nodes[i][prefix + 'size'];
+        nodes[i].dn = {
+          dx: 0,
+          dy: 0
+        };
+      }
+      _eventEmitter[self.sigInst.id].dispatchEvent('start');
+      this.go();
+    };
+
+    this.stop = function() {
+      var nodes = this.sigInst.graph.nodes();
+
+      this.running = false;
+
+      if (this.easing) {
+        _eventEmitter[self.sigInst.id].dispatchEvent('interpolate');
+        sigma.plugins.animate(
+          self.sigInst,
+          {
+            x: 'dn_x',
+            y: 'dn_y'
+          },
+          {
+            easing: self.easing,
+            onComplete: function() {
+              self.sigInst.refresh();
+              for (var i = 0; i < nodes.length; i++) {
+                nodes[i].dn = null;
+                nodes[i].dn_x = null;
+                nodes[i].dn_y = null;
+              }
+              _eventEmitter[self.sigInst.id].dispatchEvent('stop');
+            },
+            duration: self.duration
+          }
+        );
+      }
+      else {
+        // Apply changes
+        for (var i = 0; i < nodes.length; i++) {
+          nodes[i].x = nodes[i].dn_x;
+          nodes[i].y = nodes[i].dn_y;
+        }
+
+        this.sigInst.refresh();
+
+        for (var i = 0; i < nodes.length; i++) {
+          nodes[i].dn = null;
+          nodes[i].dn_x = null;
+          nodes[i].dn_y = null;
+        }
+        _eventEmitter[self.sigInst.id].dispatchEvent('stop');
+      }
+    };
+
+    this.kill = function() {
+      this.sigInst = null;
+      this.config = null;
+      this.easing = null;
+    };
+  };
+
+  /**
+   * Interface
+   * ----------
+   */
+
+  /**
+   * Configure the layout algorithm.
+
+   * Recognized options:
+   * **********************
+   * Here is the exhaustive list of every accepted parameter in the settings
+   * object:
+   *
+   *   {?number}            speed               A larger value increases the convergence speed at the cost of precision
+   *   {?number}            scaleNodes          The ratio to scale nodes by - a larger ratio will lead to more space around larger nodes
+   *   {?number}            nodeMargin          A fixed margin to apply around nodes regardless of size
+   *   {?number}            maxIterations       The maximum number of iterations to perform before the layout completes.
+   *   {?integer}           gridSize            The number of rows and columns to use when partioning nodes into a grid for efficient computation
+   *   {?number}            permittedExpansion  A permitted expansion factor to the overall size of the network applied at each iteration
+   *   {?integer}           rendererIndex       The index of the renderer to use for node co-ordinates. Defaults to zero.
+   *   {?(function|string)} easing              Either the name of an easing in the sigma.utils.easings package or a function. If not specified, the
+   *                                            quadraticInOut easing from this package will be used instead.
+   *   {?number}            duration            The duration of the animation. If not specified, the "animationsTime" setting value of the sigma instance will be used instead.
+   *
+   *
+   * @param  {object} config  The optional configuration object.
+   *
+   * @return {sigma.classes.dispatcher} Returns an event emitter.
+   */
+  sigma.prototype.configNoverlap = function(config) {
+
+    var sigInst = this;
+
+    if (!config) throw new Error('Missing argument: "config"');
+
+    // Create instance if undefined
+    if (!_instance[sigInst.id]) {
+      _instance[sigInst.id] = new Noverlap();
+
+      _eventEmitter[sigInst.id] = {};
+      sigma.classes.dispatcher.extend(_eventEmitter[sigInst.id]);
+
+      // Binding on kill to clear the references
+      sigInst.bind('kill', function() {
+        _instance[sigInst.id].kill();
+        _instance[sigInst.id] = null;
+        _eventEmitter[sigInst.id] = null;
+      });
+    }
+
+    _instance[sigInst.id].init(sigInst, config);
+
+    return _eventEmitter[sigInst.id];
+  };
+
+  /**
+   * Start the layout algorithm. It will use the existing configuration if no
+   * new configuration is passed.
+
+   * Recognized options:
+   * **********************
+   * Here is the exhaustive list of every accepted parameter in the settings
+   * object
+   *
+   *   {?number}            speed               A larger value increases the convergence speed at the cost of precision
+   *   {?number}            scaleNodes          The ratio to scale nodes by - a larger ratio will lead to more space around larger nodes
+   *   {?number}            nodeMargin          A fixed margin to apply around nodes regardless of size
+   *   {?number}            maxIterations       The maximum number of iterations to perform before the layout completes.
+   *   {?integer}           gridSize            The number of rows and columns to use when partioning nodes into a grid for efficient computation
+   *   {?number}            permittedExpansion  A permitted expansion factor to the overall size of the network applied at each iteration
+   *   {?integer}           rendererIndex       The index of the renderer to use for node co-ordinates. Defaults to zero.
+   *   {?(function|string)} easing              Either the name of an easing in the sigma.utils.easings package or a function. If not specified, the
+   *                                            quadraticInOut easing from this package will be used instead.
+   *   {?number}            duration            The duration of the animation. If not specified, the "animationsTime" setting value of the sigma instance will be used instead.
+   *
+   *
+   *
+   * @param  {object} config  The optional configuration object.
+   *
+   * @return {sigma.classes.dispatcher} Returns an event emitter.
+   */
+
+  sigma.prototype.startNoverlap = function(config) {
+
+    var sigInst = this;
+
+    if (config) {
+      this.configNoverlap(sigInst, config);
+    }
+
+    _instance[sigInst.id].start();
+
+    return _eventEmitter[sigInst.id];
+  };
+
+  /**
+   * Returns true if the layout has started and is not completed.
+   *
+   * @return {boolean}
+   */
+  sigma.prototype.isNoverlapRunning = function() {
+
+    var sigInst = this;
+
+    return !!_instance[sigInst.id] && _instance[sigInst.id].running;
+  };
+
+}).call(this);
 ;(function (undefined) {
     'use strict';
 
@@ -6472,12 +6771,23 @@
      * @param   {string|object}     neo4j       The URL of neo4j server or a neo4j server object.
      * @param   {string}            endpoint    Endpoint of the neo4j server
      * @param   {string}            method      The calling method for the endpoint : 'GET' or 'POST'
-     * @param   {object|string}     data        Data that will be send to the server
+     * @param   {object|string}     data        Data that will be sent to the server
      * @param   {function}          callback    The callback function
+     * @param   {integer}           timeout     The amount of time in milliseconds that neo4j should run the query before
+     *                                          returning a timeout error.  Note, this will only work if the following
+     *                                          two settings are added to the neo4j property files:
+     *                                          To the file './conf/neo4j.properties' add 'execution_guard_enabled=true'.
+     *                                          To the file './conf/neo4j-server.properties' add 'org.neo4j.server.webserver.limit.executiontime={timeout_in_seconds}'.
+     *                                          Make sure the timeout in the above property file is greater then the timeout that
+     *                                          you want to send with the request, because neo4j will use whichever timeout is shorter.
      */
-    sigma.neo4j.send = function(neo4j, endpoint, method, data, callback) {
-        var xhr = sigma.utils.xhr(),
-            url, user, password;
+    sigma.neo4j.send = function(neo4j, endpoint, method, data, callback, timeout) {
+        var
+          xhr = sigma.utils.xhr(),
+          timeout = timeout || -1,
+          url,
+          user,
+          password;
 
         // if neo4j arg is not an object
         url = neo4j;
@@ -6499,6 +6809,9 @@
         }
         xhr.setRequestHeader('Accept', 'application/json');
         xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8');
+        if (timeout > 0) {
+        	xhr.setRequestHeader('max-execution-time', timeout);
+        }
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4) {
                 // Call the callback if specified:
@@ -6594,11 +6907,14 @@
      *                                          with the related sigma instance as
      *                                          parameter.
      */
-    sigma.neo4j.cypher = function (neo4j, cypher, sig, callback) {
-        var endpoint = '/db/data/transaction/commit',
-            data, cypherCallback;
+    sigma.neo4j.cypher = function (neo4j, cypher, sig, callback, timeout) {
+        var
+          endpoint = '/db/data/transaction/commit',
+          timeout = timeout || -1,
+          data,
+          cypherCallback;
 
-        // Data that will be send to the server
+        // Data that will be sent to the server
         data = JSON.stringify({
             "statements": [
                 {
@@ -6644,7 +6960,7 @@
         };
 
         // Let's call neo4j
-        sigma.neo4j.send(neo4j, endpoint, 'POST', data, cypherCallback(callback));
+        sigma.neo4j.send(neo4j, endpoint, 'POST', data, cypherCallback(callback), timeout);
     };
 
     /**
@@ -7279,6 +7595,14 @@
           obj.size = obj.viz.size;
           obj.color = obj.viz.color;
         }
+
+        if (obj.attributes) {
+          if (obj.attributes.latitude)
+            obj.lat = obj.attributes.latitude;
+
+          if (obj.attributes.longitude)
+            obj.lng = obj.attributes.longitude;
+        }
       }
 
       arr = graph.edges;
@@ -7587,16 +7911,12 @@
       // to sigma at instantiation.
       _activeNodesIndex,
       _activeEdgesIndex,
-      _activeNodesCount,
-      _activeEdgesCount,
       _g = null,
       _enableEvents = true;
 
   function initIndexes() {
-    _activeNodesIndex = Object.create(null);
-    _activeEdgesIndex = Object.create(null);
-    _activeNodesCount = 0;
-    _activeEdgesCount = 0;
+    _activeNodesIndex = new sigma.utils.map();
+    _activeEdgesIndex = new sigma.utils.map();
   };
   initIndexes();
 
@@ -7630,8 +7950,7 @@
     'sigma.plugins.activeState.addNode',
     function(n) {
       if (n.active) {
-        _activeNodesIndex[n.id] = this.nodesIndex[n.id];
-        _activeNodesCount++;
+        _activeNodesIndex.set(n.id, this.nodesIndex.get(n.id));
         dispatchNodeEvent();
       }
     }
@@ -7643,7 +7962,7 @@
     'sigma.plugins.activeState.addEdge',
     function(e) {
       if (e.active) {
-        _activeEdgesIndex[e.id] = this.edgesIndex[e.id];
+        _activeEdgesIndex.set(e.id, this.edgesIndex.get(e.id));
         dispatchEdgeEvent();
       }
     }
@@ -7655,9 +7974,8 @@
     'dropNode',
     'sigma.plugins.activeState.dropNode',
     function(id) {
-      if (this.nodesIndex[id] !== undefined && this.nodesIndex[id].active) {
-        delete _activeNodesIndex[id];
-        _activeNodesCount--;
+      if (this.nodesIndex.get(id) !== undefined && this.nodesIndex.get(id).active) {
+        _activeNodesIndex.delete(id);
         dispatchNodeEvent();
       }
     }
@@ -7669,9 +7987,8 @@
     'dropEdge',
     'sigma.plugins.activeState.dropEdge',
     function(id) {
-      if (this.edgesIndex[id] !== undefined && this.edgesIndex[id].active) {
-        delete _activeEdgesIndex[id];
-        _activeEdgesCount--;
+      if (this.edgesIndex.get(id) !== undefined && this.edgesIndex.get(id).active) {
+        _activeEdgesIndex.delete(id);
         dispatchEdgeEvent();
       }
     }
@@ -7696,25 +8013,21 @@
 
     if (_activeNodesIndex === null) {
       // It happens after a kill. Index nodes:
-      _activeNodesIndex = Object.create(null);
-      _activeNodesCount = 0;
+      _activeNodesIndex = new sigma.utils.map();
 
       _g.nodes().forEach(function(o) {
         if (o.active) {
-          _activeNodesIndex[o.id] = o;
-          _activeNodesCount++;
+          _activeNodesIndex.set(o.id, o);
         }
       });
     }
     if (_activeEdgesIndex === null) {
       // It happens after a kill. Index edges:
-      _activeEdgesIndex = Object.create(null);
-      _activeEdgesCount = 0;
+      _activeEdgesIndex = new sigma.utils.map();
 
       _g.edges().forEach(function(o) {
         if (o.active) {
-          _activeEdgesIndex[o.id] = o;
-          _activeEdgesCount++;
+          _activeEdgesIndex.set(o.id, o);
         }
       });
     }
@@ -7731,8 +8044,6 @@
     this.unbind();
     _activeNodesIndex = null;
     _activeEdgesIndex = null;
-    _activeNodesCount = 0;
-    _activeEdgesCount = 0;
     _g = null;
     _instance = null;
   };
@@ -7749,7 +8060,7 @@
    * @return {sigma.plugins.activeState} Returns the instance itself.
    */
   ActiveState.prototype.addNodes = function(v) {
-    var oldCount = _activeNodesCount,
+    var oldCount = _activeNodesIndex.size,
         n;
 
     // Activate all nodes:
@@ -7757,7 +8068,7 @@
       _g.nodes().forEach(function(o) {
         if (!o.hidden) {
           o.active = true;
-          _activeNodesIndex[o.id] = o;
+          _activeNodesIndex.set(o.id, o);
         }
       });
     }
@@ -7771,7 +8082,7 @@
       n = _g.nodes(v);
       if (!n.hidden) {
         n.active = true;
-        _activeNodesIndex[v] = n;
+        _activeNodesIndex.set(v, n);
       }
     }
 
@@ -7786,16 +8097,14 @@
           n = _g.nodes(v[i]);
           if (!n.hidden) {
             n.active = true;
-            _activeNodesIndex[v[i]] = n;
+            _activeNodesIndex.set(v[i], n);
           }
         }
         else
           throw new TypeError('Invalid argument: a node id is not a string or a number, was ' + v[i]);
     }
 
-    _activeNodesCount = Object.keys(_activeNodesIndex).length;
-
-    if (oldCount != _activeNodesCount) {
+    if (oldCount != _activeNodesIndex.size) {
       dispatchNodeEvent();
     }
 
@@ -7814,7 +8123,7 @@
    * @return {sigma.plugins.activeState} Returns the instance itself.
    */
   ActiveState.prototype.addEdges = function(v) {
-    var oldCount = _activeEdgesCount,
+    var oldCount = _activeEdgesIndex.size,
         e;
 
     // Activate all edges:
@@ -7822,7 +8131,7 @@
       _g.edges().forEach(function(o) {
         if (!o.hidden) {
           o.active = true;
-          _activeEdgesIndex[o.id] = o;
+          _activeEdgesIndex.set(o.id, o);
         }
       });
     }
@@ -7836,7 +8145,7 @@
       e = _g.edges(v);
       if (!e.hidden) {
         e.active = true;
-        _activeEdgesIndex[v] = e;
+        _activeEdgesIndex.set(v, e);
       }
     }
 
@@ -7851,16 +8160,14 @@
           e = _g.edges(v[i]);
           if (!e.hidden) {
             e.active = true;
-            _activeEdgesIndex[v[i]] = e;
+            _activeEdgesIndex.set(v[i], e);
           }
         }
         else
           throw new TypeError('Invalid argument: an edge id is not a string or a number, was ' + v[i]);
     }
 
-    _activeEdgesCount = Object.keys(_activeEdgesIndex).length;
-
-    if (oldCount != _activeEdgesCount) {
+    if (oldCount != _activeEdgesIndex.size) {
       dispatchEdgeEvent();
     }
 
@@ -7879,13 +8186,13 @@
    * @return {sigma.plugins.activeState} Returns the instance itself.
    */
   ActiveState.prototype.dropNodes = function(v) {
-    var oldCount = _activeNodesCount;
+    var oldCount = _activeNodesIndex.size;
 
     // Deactivate all nodes:
     if (!arguments.length) {
       _g.nodes().forEach(function(o) {
         o.active = false;
-        delete _activeNodesIndex[o.id];
+        _activeNodesIndex.delete(o.id);
       });
     }
 
@@ -7896,7 +8203,7 @@
     // Deactivate one node:
     else if (typeof v === 'string' || typeof v === 'number') {
       _g.nodes(v).active = false;
-      delete _activeNodesIndex[v];
+      _activeNodesIndex.delete(v);
     }
 
     // Deactivate a set of nodes:
@@ -7907,15 +8214,13 @@
       for (i = 0, l = v.length; i < l; i++)
         if (typeof v[i] === 'string' || typeof v[i] === 'number') {
           _g.nodes(v[i]).active = false;
-          delete _activeNodesIndex[v[i]];
+          _activeNodesIndex.delete(v[i]);
         }
         else
           throw new TypeError('Invalid argument: a node id is not a string or a number, was ' + v[i]);
     }
 
-    _activeNodesCount = Object.keys(_activeNodesIndex).length;
-
-    if (oldCount != _activeNodesCount) {
+    if (oldCount != _activeNodesIndex.size) {
       dispatchNodeEvent();
     }
 
@@ -7934,13 +8239,13 @@
    * @return {sigma.plugins.activeState} Returns the instance itself.
    */
   ActiveState.prototype.dropEdges = function(v) {
-    var oldCount = _activeEdgesCount;
+    var oldCount = _activeEdgesIndex.size;
 
     // Deactivate all edges:
     if (!arguments.length) {
       _g.edges().forEach(function(o) {
         o.active = false;
-        delete _activeEdgesIndex[o.id];
+        _activeEdgesIndex.delete(o.id);
       });
     }
 
@@ -7951,7 +8256,7 @@
     // Deactivate one edge:
     else if (typeof v === 'string' || typeof v === 'number') {
       _g.edges(v).active = false;
-      delete _activeEdgesIndex[v];
+      _activeEdgesIndex.delete(v);
     }
 
     // Deactivate a set of edges:
@@ -7962,15 +8267,13 @@
       for (i = 0, l = v.length; i < l; i++)
         if (typeof v[i] === 'string' || typeof v[i] === 'number') {
           _g.edges(v[i]).active = false;
-          delete _activeEdgesIndex[v[i]];
+          _activeEdgesIndex.delete(v[i]);
         }
         else
           throw new TypeError('Invalid argument: an edge id is not a string or a number, was ' + v[i]);
     }
 
-    _activeEdgesCount = Object.keys(_activeEdgesIndex).length;
-
-    if (oldCount != _activeEdgesCount) {
+    if (oldCount != _activeEdgesIndex.size) {
       dispatchEdgeEvent();
     }
 
@@ -7986,24 +8289,19 @@
     if (!('adjacentNodes' in _g))
       throw new Error('Missing method graph.adjacentNodes');
 
-    var a,
-        id;
+    var a = _activeNodesIndex.keyList();
 
-    a = Object.keys(_activeNodesIndex);
+    _activeNodesIndex.forEach(function(n, id) {
+      _g.adjacentNodes(id).forEach(function (adj) {
+        if (!adj.hidden)
+          a.push(adj.id);
+      });
+    });
 
-    if (a.length) {
-      for (id in _activeNodesIndex) {
-        _g.adjacentNodes(id).forEach(function (adj) {
-          if (!adj.hidden)
-            a.push(adj.id);
-        });
-      };
-
-      _enableEvents = false;
-      this.dropNodes().dropEdges();
-      _enableEvents = true;
-      this.addNodes(a);
-    }
+    _enableEvents = false;
+    this.dropNodes().dropEdges();
+    _enableEvents = true;
+    this.addNodes(a);
 
     return this;
   };
@@ -8129,11 +8427,17 @@
    * @return {array} The active nodes.
    */
   ActiveState.prototype.nodes = function() {
+    if (!_activeNodesIndex) return [];
+
+    if (!sigma.forceES5) {
+      return _activeNodesIndex.valueList();
+    }
+
     var id,
         a = [];
-    for (id in _activeNodesIndex) {
-        a.push(_activeNodesIndex[id]);
-    }
+    _activeNodesIndex.forEach(function(n, id) {
+      a.push(n);
+    });
     return a;
   };
 
@@ -8142,12 +8446,36 @@
    * @return {array} The active edges.
    */
   ActiveState.prototype.edges = function() {
+    if (!_activeEdgesIndex) return [];
+
+    if (!sigma.forceES5) {
+      return _activeEdgesIndex.valueList();
+    }
+
     var id,
         a = [];
-    for (id in _activeEdgesIndex) {
-        a.push(_activeEdgesIndex[id]);
-    }
+    _activeEdgesIndex.forEach(function(e, id) {
+      a.push(e);
+    });
     return a;
+  };
+
+  /**
+   * This method returns the number of the active edges.
+   * @return {number} The number of active edges.
+   */
+  ActiveState.prototype.nbNodes = function() {
+    if (!_activeNodesIndex) return 0;
+    return _activeNodesIndex.size;
+  };
+
+  /**
+   * This method returns the number of the active nodes.
+   * @return {number} The number of active nodes.
+   */
+  ActiveState.prototype.nbEdges = function() {
+    if (!_activeEdgesIndex) return 0;
+    return _activeEdgesIndex.size;
   };
 
 
@@ -8802,7 +9130,7 @@ sigma.plugins.colorbrewer = {YlGn: {
     }
 
     return res;
-  };
+  }
 
   /**
    * This function will generate a consolidated histogram of values grouped by
@@ -8852,7 +9180,95 @@ sigma.plugins.colorbrewer = {YlGn: {
       }
     }
     return d;
-  };
+  }
+
+  /**
+   * Add reference to nodes or edges in histogram bins.
+   *
+   * @param  {object} h         The nodes or edges histograms.
+   * @param  {Vision} vision    The vision object.
+   * @param  {string} p         The property accessor.
+   * @return {array}            The consolidated histogram.
+   */
+  function resolveHistogram(h, vision, p) {
+    var items = vision.get(p),
+      item,
+      value,
+      nBins = h.length,
+      maxOcc = 0;
+
+    for (var bin = 0; bin < nBins; bin++) {
+      h[bin].items = [];
+    }
+
+    Object.keys(items).forEach(function(value) {
+      for (var i = 0; i < items[value].items.length; i++) {
+        item = items[value].items[i];
+        value = strToObjectRef(item, p);
+
+        for (var bin = 0; bin < h.length; bin++) {
+          if ((!'min' in h[bin]) || (!'max' in h[bin]))
+            continue;
+
+          if (h[bin].min <= value && value <= h[bin].max) {
+            h[bin].items.push(item);
+          }
+        }
+      }
+    });
+
+    for (var bin = 0; bin < nBins; bin++) {
+      if (h[bin].items) {
+        maxOcc = (maxOcc > h[bin].items.length) ? maxOcc : h[bin].items.length;
+      }
+    }
+
+    for (var bin = 0; bin < nBins; bin++) {
+      h[bin].itemsRatio = h[bin].items.length / maxOcc;
+    }
+
+    return h;
+  }
+
+  // Utilities
+  function download(fileEntry, extension, filename) {
+    var blob = null,
+        objectUrl = null,
+        dataUrl = null;
+
+    if(window.Blob){
+      // use Blob if available
+      blob = new Blob([fileEntry], {type: 'text/json'});
+      objectUrl = window.URL.createObjectURL(blob);
+    }
+    else {
+      // else use dataURI
+      dataUrl = 'data:text/json;charset=UTF-8,' + encodeURIComponent(fileEntry);
+    }
+
+    if (navigator.msSaveBlob) { // IE11+ : (has Blob, but not a[download])
+      navigator.msSaveBlob(blob, filename);
+    } else if (navigator.msSaveOrOpenBlob) { // IE10+ : (has Blob, but not a[download])
+      navigator.msSaveOrOpenBlob(blob, filename);
+    } else {
+      // A-download
+      var anchor = document.createElement('a');
+      anchor.setAttribute('href', (window.Blob) ? objectUrl : dataUrl);
+      anchor.setAttribute('download', filename || 'graph.' + extension);
+
+      // Firefox requires the link to be added to the DOM before it can be clicked.
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+    }
+
+    if (objectUrl) {
+      setTimeout(function() { // Firefox needs a timeout
+        window.URL.revokeObjectURL(objectUrl);
+      }, 0);
+    }
+  }
+
 
   /**
    * This constructor instanciates a new vision on a specified dataset (nodes
@@ -8949,7 +9365,7 @@ sigma.plugins.colorbrewer = {YlGn: {
           isSequential = (typeof val === 'number');
           // TODO: throw error if is number AND (is NaN or is Infinity)
         }
-        }
+      }
 
       // Index the collection:
       this.idx[key] = {};
@@ -9040,6 +9456,8 @@ sigma.plugins.colorbrewer = {YlGn: {
             break;
 
           case 'size':
+            if (isSequential === undefined) break;
+
             if (!isSequential)
               throw new Error('One value of the property "' + key + '" is not a number.');
 
@@ -9788,6 +10206,34 @@ sigma.plugins.colorbrewer = {YlGn: {
       _visionOnEdges.clear();
     };
 
+    /**
+     * Transform the styles and palette into a JSON representation.
+     *
+     * @param  {object} params The options.
+     * @return {string}        The JSON string.
+     */
+    this.toJSON = function(params) {
+      params = params || {};
+
+      var o = {
+        styles: this.styles,
+        palette: this.palette
+      }
+
+      if (params.pretty) {
+        var jsonString = JSON.stringify(o, null, ' ');
+      }
+      else {
+        var jsonString = JSON.stringify(o);
+      }
+
+      if (params.download) {
+        download(jsonString, 'json', params.filename);
+      }
+
+      return jsonString;
+    };
+
     this.utils = {};
 
     /**
@@ -9839,6 +10285,9 @@ sigma.plugins.colorbrewer = {YlGn: {
         if (found) {
           v.dataTypes[property] = { sequential: isSequential };
         }
+        else if(v.dataTypes[property]) {
+          v.dataTypes[property].sequential = undefined;
+        }
       }
 
       return (v.dataTypes[property] || {}).sequential;
@@ -9887,12 +10336,13 @@ sigma.plugins.colorbrewer = {YlGn: {
       if (typeof property !== 'string')
         throw new TypeError('Invalid argument: "property" is not a string, was' + property);
 
-      var isSequential = this.isSequential(target, property);
+      var isSequential = self.utils.isSequential(target, property);
 
       if (!isSequential)
         throw new Error('The property "'+ property +'" is not sequential.');
 
       var h = histogram(v.histograms[visualVar], property);
+      h = resolveHistogram(h, v, property);
 
       if (visualVar === 'color') {
         if (!self.styles[target].color) {
@@ -10060,7 +10510,8 @@ sigma.plugins.colorbrewer = {YlGn: {
     //this._canvas = renderer.domElements['legend'];
     this._canvas.style.position = 'absolute';
     this._canvas.style.pointerEvents = 'none';
-    setupCanvas(this._canvas, renderer.container.offsetWidth, renderer.container.offsetHeight, pixelRatio);
+    this._renderer = renderer;
+
     renderer.container.appendChild(this._canvas);
 
     window.addEventListener('resize', function () {
@@ -10084,7 +10535,16 @@ sigma.plugins.colorbrewer = {YlGn: {
     this.addWidget('edge', 'color');
     this.addWidget('edge', 'type');
 
-    this.draw();
+    var initDrawLayout = function () {
+      if (renderer.container.offsetWidth) {
+        setupCanvas(this._canvas, renderer.container.offsetWidth, renderer.container.offsetHeight, pixelRatio);
+        this.draw();
+      } else {
+        setTimeout(initDrawLayout, 200);
+      }
+    }.bind(this);
+
+    initDrawLayout();
   }
 
 
@@ -10287,7 +10747,7 @@ sigma.plugins.colorbrewer = {YlGn: {
     var nbWidgetsBuilt = 0,
         nbWidgets = Object.keys(legendPlugin.widgets).length;
 
-    iterate(legendPlugin.widgets, function (value) {
+    iterate(legendPlugin.widgets, function (value, name) {
       buildWidget(value, function () {
         ++nbWidgetsBuilt;
         if (callback && nbWidgetsBuilt === nbWidgets) {
@@ -10302,22 +10762,26 @@ sigma.plugins.colorbrewer = {YlGn: {
    * Does not build widgets.
    * Draw the legend at the end.
    */
-  function drawLayout(legendPlugin) {
-    var vs = legendPlugin._visualSettings,
-        placement = legendPlugin.placement,
+  function drawLayout(self) {
+    var vs = self._visualSettings,
+        placement = self.placement,
         horizontal = placement === 'top' || placement === 'bottom',
-        maxHeight = legendPlugin._canvas.height,
-        maxWidth = legendPlugin._canvas.width,
-        textWidgets = getUnpinnedWidgets(legendPlugin.widgets, 'text'),
-        nodeWidgets = getUnpinnedWidgets(legendPlugin.widgets, 'node'),
-        edgeWidgets = getUnpinnedWidgets(legendPlugin.widgets, 'edge'),
+        maxHeight = self._canvas.height,
+        maxWidth = self._canvas.width,
+        textWidgets = getUnpinnedWidgets(self.widgets, 'text'),
+        nodeWidgets = getUnpinnedWidgets(self.widgets, 'node'),
+        edgeWidgets = getUnpinnedWidgets(self.widgets, 'edge'),
         widgetLists = [textWidgets, nodeWidgets, edgeWidgets],
-        height = horizontal ? getMaxHeight(legendPlugin.widgets) + vs.legendOuterMargin * 2 : maxHeight,
+        height = horizontal ? getMaxHeight(self.widgets) + vs.legendOuterMargin * 2 : maxHeight,
         maxNbCols = Math.floor(maxWidth / vs.totalWidgetWidth),
         cols = initializeColumns(horizontal ? maxNbCols : 1, vs.legendOuterMargin * 2),
         colIndex = 0,
         tryAgain = true,
         notEnoughSpace = false;
+
+    if (cols.length === 0) {
+      return;
+    }
 
     while (tryAgain && !notEnoughSpace) {
       tryAgain = false;
@@ -10348,17 +10812,17 @@ sigma.plugins.colorbrewer = {YlGn: {
 
           if (widgetsToDisplay.length > 0) {
             if (horizontal) {
-             if (colIndex === maxNbCols - 1) {
-               cols = initializeColumns(maxNbCols, vs.legendOuterMargin * 2);
-               height += 30;
-               tryAgain = true;
-               if (height > maxHeight) {
-                 notEnoughSpace = true;
-               }
-               break;
-             } else {
+              if (colIndex === maxNbCols - 1) {
+                cols = initializeColumns(maxNbCols, vs.legendOuterMargin * 2);
+                height += 30; // Arbitrary
+                tryAgain = true;
+                if (height > maxHeight) {
+                  //notEnoughSpace = true;
+                }
+                break;
+              } else {
                 ++colIndex;
-             }
+              }
             } else if (cols.length === maxNbCols) {
               notEnoughSpace = true;
               break;
@@ -10397,18 +10861,18 @@ sigma.plugins.colorbrewer = {YlGn: {
           legendWidth = nbCols * (vs.totalWidgetWidth + vs.legendOuterMargin) + vs.legendOuterMargin,
           legendHeight = cols.reduce(function (previous, value) { return ( previous > value.height ? previous : value.height ); }, 0);
 
-      legendPlugin.boundingBox = {
+      self.boundingBox = {
         w: legendWidth,
         h: legendHeight,
-        x: legendPlugin.placement === 'right' ? maxWidth - legendWidth : 0,
-        y: legendPlugin.placement === 'bottom' ? maxHeight - legendHeight : 0
+        x: self.placement === 'right' ? maxWidth - legendWidth : 0,
+        y: self.placement === 'bottom' ? maxHeight - legendHeight : 0
       };
     } else {
-      legendPlugin.boundingBox = {x:0, y:0, w:0, h:0};
+      self.boundingBox = {x:0, y:0, w:0, h:0};
     }
 
-    drawLegend(legendPlugin);
-    legendPlugin.enoughSpace = !notEnoughSpace;
+    drawLegend(self);
+    self.enoughSpace = !notEnoughSpace;
   }
 
   function initializeColumns(number, initialHeight) {
@@ -10560,7 +11024,7 @@ sigma.plugins.colorbrewer = {YlGn: {
     var vs = widget._legendPlugin._visualSettings;
 
     if (widget.visualVar === 'size') {
-      widget.svg = drawSizeLegend(vs, widget._sigmaInstance.graph, widget._designPlugin, widget.elementType, widget.unit)
+      widget.svg = drawSizeLegend(vs, widget._sigmaInstance.graph, widget._designPlugin, widget.elementType, widget.unit);
     } else if (widget.elementType !== 'text') {
       widget.svg = drawNonSizeLegend(vs, widget._sigmaInstance.graph, widget._designPlugin, widget.elementType, widget.visualVar, widget.unit);
     } else {
@@ -10652,10 +11116,10 @@ sigma.plugins.colorbrewer = {YlGn: {
     ctx.drawImage(widget.img, widget.x, widget.y);
     if (widget.elementType === 'node' && widget.visualVar === 'icon') {
       ctx.textBaseline = 'middle';
-      iterate(widget.svg.icons, function (value, content) {
+      widget.svg.icons.forEach(function (value) {
         ctx.fillStyle = value.color;
         ctx.font = value.fontSize + 'px ' + value.font;
-        ctx.fillText(content, widget.x + value.x, widget.y + value.y);
+        ctx.fillText(value.content, widget.x + value.x, widget.y + value.y);
       });
     }
   }
@@ -10876,7 +11340,7 @@ sigma.plugins.colorbrewer = {YlGn: {
         isInteger = boundaries.min % 1 == 0 && boundaries.max % 1 == 0;
     }
 
-    svg.icons = {};
+    svg.icons = [];
 
     drawBackground(svg, vs, height);
     drawWidgetTitle(vs, svg, getPropertyName(styles[visualVar].by), unit);
@@ -10906,14 +11370,15 @@ sigma.plugins.colorbrewer = {YlGn: {
           drawCircle(svg, vs.legendInnerMargin + vs.legendFontSize / 2, offsetY, vs.legendFontSize / 2, value);
         }
       } else if (visualVar === 'icon') {
-        svg.icons[value.content] = {
+        svg.icons.push({
+          content: value.content,
           font: value.font,
           fontSize: vs.legendFontSize,
           //color: value.color,
           color: vs.legendFontColor,
           x: vs.legendInnerMargin,
           y: offsetY
-        };
+        });
       } else if (visualVar === 'type') {
         if (elementType === 'edge') {
           drawEdge(vs, svg, value, vs.legendInnerMargin, leftColumnWidth - vs.legendInnerMargin, offsetY, vs.legendFontSize / 3);
@@ -11292,10 +11757,8 @@ sigma.plugins.colorbrewer = {YlGn: {
    * Must be called whenever the graph's design changes.
    */
   LegendPlugin.prototype.draw = function (callback) {
-    var self = this,
-        pixelRatio = this._visualSettings.pixelRatio;
+    var self = this;
 
-    //setupCanvas(this._canvas, this._canvas.width / pixelRatio, this._canvas.height / pixelRatio, this._visualSettings.pixelRatio);
     buildLegendWidgets(this, function () {
       drawLayout(self);
       if (callback) {
@@ -11497,9 +11960,8 @@ sigma.plugins.colorbrewer = {YlGn: {
         str += widget.svg.innerHTML;
         if (widget.visualVar === 'icon') {
           var tmpSvg = document.createElement('svg');
-          iterate(widget.svg.icons, function (value, content) {
-            drawText(vs, tmpSvg, content, value.x, value.y, 'left', vs.legendFontColor, value.font,
-              vs.legendFontSize, 'central');
+          widget.svg.icons.forEach(function (value) {
+            drawText(vs, tmpSvg, value.content, value.x, value.y, 'left', vs.legendFontColor, value.font, vs.legendFontSize, 'central');
           });
           str += tmpSvg.innerHTML;
         }
@@ -11567,12 +12029,11 @@ sigma.plugins.colorbrewer = {YlGn: {
       _a = a,
       _body = document.body,
       _renderer = renderer,
-      _mouse = renderer.container.lastChild,
+      _mouse = renderer.container.getElementsByClassName('sigma-mouse')[0],
       _prefix = renderer.options.prefix,
       _node = null,
       _draggingNode = null,
-      _hoverStack = [],
-      _hoverIndex = {},
+      _hoveredNode = null,
       _isMouseDown = false,
       _isMouseOverCanvas = false,
       _drag = false,
@@ -11601,8 +12062,7 @@ sigma.plugins.colorbrewer = {YlGn: {
       _enabled = false;
       _node = null,
       _draggingNode = null,
-      _hoverStack = [],
-      _hoverIndex = {},
+      _hoveredNode = null;
       _isMouseDown = false,
       _isMouseOverCanvas = false,
       _drag = false,
@@ -11639,14 +12099,14 @@ sigma.plugins.colorbrewer = {YlGn: {
       _body.removeEventListener('mousemove', nodeMouseMove);
       _body.removeEventListener('mouseup', nodeMouseUp);
 
-      if (!_hoverStack.length) {
+      if (!_hoveredNode) {
         _node = null;
       }
       else {
         // Drag node right after click instead of needing mouse out + mouse over:
         setTimeout(function() {
-          // Set the current node to be the last one in the array
-          _node = _hoverStack[_hoverStack.length - 1];
+          // Set the current node to be the last hovered node
+          _node = _hoveredNode;
           _mouse.addEventListener('mousedown', nodeMouseDown);
         }, 0);
       }
@@ -11657,18 +12117,18 @@ sigma.plugins.colorbrewer = {YlGn: {
         return;
       }
       var n = event.data.enter.nodes[0];
+
       // Don't treat the node if it is already registered
-      if (_hoverIndex[n.id]) {
+      if (_hoveredNode && _hoveredNode.id === n.id) {
         return;
       }
 
-      // Add node to array of current nodes over
-      _hoverStack.push(n);
-      _hoverIndex[n.id] = true;
+      // Set reference to the hovered node
+      _hoveredNode = n;
 
       if(!_isMouseDown) {
-        // Set the current node to be the last one in the array
-        _node = _hoverStack[_hoverStack.length - 1];
+        // Set the current node to be the last hovered node
+        _node = _hoveredNode;
         _mouse.addEventListener('mousedown', nodeMouseDown);
       }
     };
@@ -11678,15 +12138,12 @@ sigma.plugins.colorbrewer = {YlGn: {
         return;
       }
       var n = event.data.leave.nodes[0];
-      // Remove the node from the array
-      var indexCheck = _hoverStack.map(function(e) { return e; }).indexOf(n);
-      _hoverStack.splice(indexCheck, 1);
-      delete _hoverIndex[n.id];
 
-      if(_hoverStack.length && ! _isMouseDown) {
-        // On out, set the current node to be the next stated in array
-        _node = _hoverStack[_hoverStack.length - 1];
-      } else {
+      if (_hoveredNode && _hoveredNode.id === n.id) {
+        _hoveredNode = null;
+        _node = null;
+      }
+      else if (!_hoveredNode) {
         _mouse.removeEventListener('mousedown', nodeMouseDown);
       }
     };
@@ -11723,7 +12180,7 @@ sigma.plugins.colorbrewer = {YlGn: {
 
       if (_drag) {
         _self.dispatchEvent('drop', {
-          node: _node,
+          node: _draggingNode,
           captor: event,
           renderer: _renderer
         });
@@ -11731,8 +12188,8 @@ sigma.plugins.colorbrewer = {YlGn: {
         if(_a) {
           var activeNodes = _a.nodes();
           for(var i = 0; i < activeNodes.length; i++) {
-            delete activeNodes[i].alphaX;
-            delete activeNodes[i].alphaY;
+            activeNodes[i].alphaX = undefined;
+            activeNodes[i].alphaY = undefined;
           }
         }
 
@@ -11745,7 +12202,7 @@ sigma.plugins.colorbrewer = {YlGn: {
       });
 
       _drag = false;
-      _node = null;
+      _draggingNode = null;
     };
 
     function nodeMouseMove(event) {
@@ -11771,6 +12228,8 @@ sigma.plugins.colorbrewer = {YlGn: {
             aux,
             isHoveredNodeActive,
             dist;
+
+        if (_a && _a.nbNodes() === nodes.length) return;
 
         if (!_enabled || nodes.length < 2) return;
 
@@ -11826,7 +12285,7 @@ sigma.plugins.colorbrewer = {YlGn: {
         if(_a) {
           activeNodes = _a.nodes();
 
-          // If hovered node is active, drag active nodes nodes
+          // If hovered node is active, drag active nodes
           isHoveredNodeActive = (-1 < activeNodes.map(function(node) {
             return node.id;
           }).indexOf(_node.id));
@@ -11835,8 +12294,8 @@ sigma.plugins.colorbrewer = {YlGn: {
             for(var i = 0; i < activeNodes.length; i++) {
               // Delete old reference
               if(_draggingNode != _node) {
-                activeNodes[i].alphaX = null;
-                activeNodes[i].alphaY = null;
+                activeNodes[i].alphaX = undefined;
+                activeNodes[i].alphaY = undefined;
               }
 
               // Calcul first position of activeNodes
@@ -11860,13 +12319,13 @@ sigma.plugins.colorbrewer = {YlGn: {
         _s.refresh({skipIndexation: true});
 
         _drag = true;
+        _draggingNode = _node;
+
         _self.dispatchEvent('drag', {
-          node: _node,
+          node: _draggingNode,
           captor: event,
           renderer: _renderer
         });
-
-        _draggingNode = _node;
       }
     };
   };
@@ -11975,10 +12434,10 @@ sigma.plugins.colorbrewer = {YlGn: {
     //   has siblings and container has different id
 
     if (sibling = this.siblingEdgesIndex[id]) {
-      edges = this.allNeighborsIndex[sibling.source][sibling.target];
+      edges = this.allNeighborsIndex.get(sibling.source).get(sibling.target);
 
-      if (Object.keys(edges).length === 1) {
-        e = this.edges(Object.keys(edges)[0]);
+      if (edges.size === 1) {
+        e = this.edges(edges.keyList()[0]);
         if (e.type !== 'parallel')
           throw new Error('The sibling container must be of type "parallel", was ' + e.type);
 
@@ -11993,30 +12452,31 @@ sigma.plugins.colorbrewer = {YlGn: {
 
         return e;
       }
-      else if (Object.keys(edges).length > 1) {
+      else if (edges.size > 1) {
         // We have parallel edges in the graph structure, maybe because
         // graph.addEdge() has been called directly.
-        var eid;
-        for (eid in edges) {
-          e = this.edges(eid);
+        var edgeFound;
+        edges.forEach(function(e, eid) {
           if (e.type === 'parallel' && e.siblings !== undefined) {
             // The edge contains siblings, but does it contain our sibling?
             if (Object.keys(e.siblings).length) {
               if (e.siblings[id] !== undefined) {
-                return e;
+                edgeFound = e;
               }
             }
             else
               throw new Error('Edge sibling found but its container is missing.');
           }
-        };
+        });
+        if (edgeFound !== undefined)
+          return edgeFound;
         throw new Error('Edge sibling found but its container is missing.');
       }
-      else // Object.keys(edges).length == 0
+      else // edges.size == 0
         throw new Error('Edge sibling found but its container is missing.');
     }
     else
-      return this.edgesIndex[id];
+      return this.edgesIndex.get(id);
   };
 
 
@@ -12173,22 +12633,22 @@ sigma.plugins.colorbrewer = {YlGn: {
       if (typeof edge.id !== 'number' && typeof edge.id !== 'string')
         throw new TypeError('Invalid argument key: "edge.id" is not a string or a number, was ' + edge.id);
 
-      if ((typeof edge.source !== 'number' && typeof edge.source !== 'string') || !this.nodesIndex[edge.source])
+      if ((typeof edge.source !== 'number' && typeof edge.source !== 'string') || !this.nodesIndex.get(edge.source))
         throw new Error('Invalid argument key: "edge.source" is not an existing node id, was ' + edge.source);
 
-      if ((typeof edge.target !== 'number' && typeof edge.target !== 'string') || !this.nodesIndex[edge.target])
+      if ((typeof edge.target !== 'number' && typeof edge.target !== 'string') || !this.nodesIndex.get(edge.target))
         throw new Error('Invalid argument key: "edge.target" is not an existing node id, was ' + edge.target);
 
-      if (this.edgesIndex[edge.id])
+      if (this.edgesIndex.get(edge.id))
         throw new Error('Invalid argument: an edge of id "' + edge.id + '" already exists.');
 
       if (this.siblingEdgesIndex[edge.id])
         throw new Error('Invalid argument: an edge sibling of id "' + edge.id + '" already exists.');
 
-      var edges = this.allNeighborsIndex[edge.source][edge.target];
-      if (edges !== undefined && Object.keys(edges).length) {
+      var edges = this.allNeighborsIndex.get(edge.source).get(edge.target);
+      if (edges !== undefined && edges.size) {
         // An edge already exists, we make it a container and add a sibling:
-        var otherEdge = this.edges(edges[Object.keys(edges)[0]].id);
+        var otherEdge = this.edges(edges.get(edges.keyList()[0]).id);
         add.call(
           this,
           otherEdge,
@@ -12334,41 +12794,81 @@ sigma.plugins.colorbrewer = {YlGn: {
    * This methods returns an array of nodes that are adjacent to a node.
    *
    * @param  {string} id The node id.
+   * @param  {?object}  options:
+   *         {?boolean} withHidden Get not hidden nodes if set false, all
+   *                               nodes otherwise.
    * @return {array}     The array of adjacent nodes.
    */
   if (!sigma.classes.graph.hasMethod('adjacentNodes'))
-    sigma.classes.graph.addMethod('adjacentNodes', function(id) {
-      if (typeof id !== 'number' && typeof id !== 'string')
-        throw new TypeError('Invalid argument: "id" is not a string or a number, was ' + id);
+    sigma.classes.graph.addMethod('adjacentNodes', function(id, options) {
+      options = options || {};
+      options.withHidden = (arguments.length == 2) ? options.withHidden : true;
 
-      var target,
+
+      if (typeof id !== 'string' && typeof id !== 'number')
+        throw new TypeError('The node id is not a string or a number, was ' + id);
+
+      var self = this,
+          target,
+          edgeNotHidden,
           nodes = [];
-      for(target in this.allNeighborsIndex[id]) {
-        nodes.push(this.nodesIndex[target]);
-      }
+      (this.allNeighborsIndex.get(id) || []).forEach(function(map, target) {
+        if (options.withHidden) {
+          nodes.push(self.nodesIndex.get(target));
+        }
+        else if (!self.nodes(target).hidden) {
+          // check if at least one non-hidden edge exists
+          // between the node and the target node:
+          edgeNotHidden =
+            self.allNeighborsIndex.get(id).get(target).keyList().map(function(eid) {
+              return self.edges(eid);
+            })
+            .filter(function(e) {
+              return !e.hidden;
+            })
+            .length != 0;
+
+          if (edgeNotHidden) {
+            nodes.push(self.nodesIndex.get(target));
+          }
+        }
+      });
+
       return nodes;
     });
+
 
   /**
    * This methods returns an array of edges that are adjacent to a node.
    *
    * @param  {string} id The node id.
+   * @param  {?object}  options:
+   *         {?boolean} withHidden Get not hidden nodes if set false, all
+   *                               nodes otherwise.
    * @return {array}     The array of adjacent edges.
    */
   if (!sigma.classes.graph.hasMethod('adjacentEdges'))
-    sigma.classes.graph.addMethod('adjacentEdges', function(id) {
-      if (typeof id !== 'number' && typeof id !== 'string')
-        throw new TypeError('Invalid argument: "id" is not a string or a number, was ' + id);
+    sigma.classes.graph.addMethod('adjacentEdges', function(id, options) {
+      options = options || {};
+      options.withHidden = (arguments.length == 2) ? options.withHidden : true;
 
-      var a = this.allNeighborsIndex[id],
+
+      if (typeof id !== 'string' && typeof id !== 'number')
+        throw new TypeError('The node id is not a string or a number, was ' + id);
+
+      var self = this,
+          a = this.allNeighborsIndex.get(id) || [],
           eid,
-          target,
           edges = [];
-      for(target in a) {
-        for(eid in a[target]) {
-          edges.push(a[target][eid]);
-        }
-      }
+
+      a.forEach(function(map, target) {
+        a.get(target).forEach(function(map2, eid) {
+          if (options.withHidden || !self.edges(eid).hidden) {
+            edges.push(self.edges(eid));
+          }
+        });
+      });
+
       return edges;
     });
 
@@ -12933,6 +13433,9 @@ sigma.plugins.colorbrewer = {YlGn: {
   if (typeof sigma === 'undefined')
     throw 'sigma is not declared';
 
+  // Initialize package:
+  sigma.utils.pkg('sigma.plugins.fullScreen');
+
   /**
    * Sigma Fullscreen
    * =============================
@@ -12942,21 +13445,20 @@ sigma.plugins.colorbrewer = {YlGn: {
    * @version 0.2
    */
 
-  var _self = null,
+  var _container = null,
       _eventListenerElement = null;
 
   function toggleFullScreen() {
     if (!document.fullscreenElement &&    // alternative standard method
         !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement ) {  // current working methods
-
-      if (_self.container.requestFullscreen) {
-        _self.container.requestFullscreen();
-      } else if (_self.container.msRequestFullscreen) {
-        _self.container.msRequestFullscreen();
-      } else if (_self.container.mozRequestFullScreen) {
-        _self.container.mozRequestFullScreen();
-      } else if (_self.container.webkitRequestFullscreen) {
-        _self.container.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+      if (_container.requestFullscreen) {
+        _container.requestFullscreen();
+      } else if (_container.msRequestFullscreen) {
+        _container.msRequestFullscreen();
+      } else if (_container.mozRequestFullScreen) {
+        _container.mozRequestFullScreen();
+      } else if (_container.webkitRequestFullscreen) {
+        _container.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
       }
     } else {
       if (document.exitFullscreen) {
@@ -12975,30 +13477,31 @@ sigma.plugins.colorbrewer = {YlGn: {
    * This plugin enables the activation of full screen mode by clicking on btn.
    * If btn does not exist, this plugin will leave the full screen mode.
    *
-   * @param  {?object} btn The btn id from the page.
+   * @param  {?object} options The configuration. Can contain:
+   *         {?string|DOMElement} options.container A container object or id,
+   *                              otherwise sigma container is used.
+   *         {?string} options.btnId A btn id.
    */
-  function fullScreen(btn) {
-    _self = this,
-    _eventListenerElement = null;
+  function fullScreen(options) {
+    var o = options || {};
 
-    if (document.addEventListener && _self.exitHandler===undefined){
-        _self.exitHandler = function(){
-            if (document.webkitIsFullScreen || document.mozFullScreen || document.msFullscreenElement){
-                _self.container.classList.add('fullscreen');
-            }else{
-                _self.container.classList.remove('fullscreen');
-            }
-        }
-
-        document.addEventListener('webkitfullscreenchange', _self.exitHandler, false);
-        document.addEventListener('mozfullscreenchange', _self.exitHandler, false);
-        document.addEventListener('fullscreenchange', _self.exitHandler, false);
-        document.addEventListener('MSFullscreenChange', _self.exitHandler, false);
+    if (o.container) {
+      if (typeof o.container === 'object') {
+        _container = o.container;
+      }
+      else {
+        _container = document.getElementById(o.container)
+      }
+    }
+    else {
+      _container = this.container;
     }
 
+    _eventListenerElement = null;
+
     // Get the btn element reference from the DOM
-    if(btn) {
-      _eventListenerElement = document.getElementById(btn.id);
+    if(o.btnId) {
+      _eventListenerElement = document.getElementById(o.btnId);
       _eventListenerElement.removeEventListener("click", toggleFullScreen);
       _eventListenerElement.addEventListener("click", toggleFullScreen);
     }
@@ -13012,19 +13515,13 @@ sigma.plugins.colorbrewer = {YlGn: {
    */
   function killFullScreen() {
     toggleFullScreen();
-    _self = null;
+    _container = null;
 
     if (_eventListenerElement)
       _eventListenerElement.removeEventListener("click", toggleFullScreen);
   };
 
-  // Extending canvas and webl renderers
-  sigma.renderers.canvas.prototype.fullScreen = fullScreen;
-  sigma.renderers.webgl.prototype.fullScreen = fullScreen;
-
-  sigma.renderers.canvas.prototype.killFullScreen = killFullScreen;
-  sigma.renderers.webgl.prototype.killFullScreen = killFullScreen;
-
+  sigma.plugins.fullScreen = fullScreen;
 }).call(this);
 
 ;(function(undefined) {
@@ -13702,10 +14199,6 @@ sigma.plugins.colorbrewer = {YlGn: {
     duration: 200,
     // {number} Override the `zoomingRatio` setting of Sigma
     zoomingRatio: 1.7,
-    // {boolean} Set focus on the visualization container when the plugin is
-    // initialized and when the mouse is over it. The container must have the
-    // focus to enable keyboard events.
-    autofocus: true,
     // {number} Tab index of the graph container provided if no `tabindex`
     // attribute is found
     tabIndex: -1
@@ -13733,6 +14226,11 @@ sigma.plugins.colorbrewer = {YlGn: {
     var self = this;
 
     sigma.classes.dispatcher.extend(this);
+
+    // needed to provide focus to the graph container
+    // see http://www.dbp-consulting.com/tutorials/canvas/CanvasKeyEvents.html
+    this.domElt.tabIndex = params.tabIndex;
+
 
     function camera(o) {
       // Normalize ratio:
@@ -13794,6 +14292,26 @@ sigma.plugins.colorbrewer = {YlGn: {
       });
     };
 
+    function bindAll() {
+      self.domElt.addEventListener('keydown', self.keyDown);
+      self.domElt.addEventListener('keyup', self.keyUp);
+
+      self.bind('37 18+37', moveLeft); // (ALT +) LEFT ARROW
+      self.bind('38 18+38', moveTop); // (ALT +) TOP ARROW
+      self.bind('39 18+39', moveRight); // (ALT +) RIGHT ARROW
+      self.bind('40 18+40', moveDown); // (ALT +) BOTTOM ARROW
+
+      self.bind('32+38 18+32+38', zoomIn); // (ALT +) SPACE + TOP ARROW
+      self.bind('32+40 18+32+40', zoomOut); // (ALT +) SPACE + BOTTOM ARROW
+    }
+
+    function unbindAll() {
+      self.domElt.removeEventListener('keydown', self.keyDown);
+      self.domElt.removeEventListener('keyup', self.keyUp);
+
+      self.unbind();
+    }
+
     this.keyDown = function(event) {
       if (event.which !== 9 && event.which !== 18 && event.which !== 20 && !self.keys[event.which]) {
         // Do nothing on Tabbing, Alt and Capslock because keyUp won't be triggered
@@ -13820,26 +14338,14 @@ sigma.plugins.colorbrewer = {YlGn: {
       return true;
     }
 
-    // needed to provide focus to the graph container
-    // see http://www.dbp-consulting.com/tutorials/canvas/CanvasKeyEvents.html
-    this.domElt.tabIndex = params.tabIndex;
-
-    if (params.autofocus) {
-      this.domElt.focus();
-      this.domElt.addEventListener('mouseover', this.focus, false);
-      this.domElt.addEventListener('mouseout', this.blur, false);
+    this.kill = function() {
+      unbindAll();
+      self.domElt = null;
+      self.keys = {};
+      self.currentEvents = null;
     }
 
-    this.domElt.addEventListener('keydown', this.keyDown, false);
-    this.domElt.addEventListener('keyup', this.keyUp, false);
-
-    this.bind('37 18+37', moveLeft); // (ALT +) LEFT ARROW
-    this.bind('38 18+38', moveTop); // (ALT +) TOP ARROW
-    this.bind('39 18+39', moveRight); // (ALT +) RIGHT ARROW
-    this.bind('40 18+40', moveDown); // (ALT +) BOTTOM ARROW
-
-    this.bind('32+38 18+32+38', zoomIn); // (ALT +) SPACE + TOP ARROW
-    this.bind('32+40 18+32+40', zoomOut); // (ALT +) SPACE + BOTTOM ARROW
+    bindAll();
   };
 
 
@@ -13877,14 +14383,7 @@ sigma.plugins.colorbrewer = {YlGn: {
    */
   sigma.plugins.killKeyboard = function(s) {
     if (_instance[s.id] instanceof Keyboard) {
-      _instance[s.id].unbind();
-      _instance[s.id].domElt.removeEventListener('mouseover', _instance[s.id].focus, false);
-      _instance[s.id].domElt.removeEventListener('mouseout', _instance[s.id].blur, false);
-      _instance[s.id].domElt.removeEventListener('keydown', _instance[s.id].keyDown, false);
-      _instance[s.id].domElt.removeEventListener('keyup', _instance[s.id].keyUp, false);
-      _instance[s.id].domElt = null;
-      _instance[s.id].keys = {};
-      _instance[s.id].currentEvents = null;
+      _instance[s.id].kill();
       delete _instance[s.id];
     }
   };
@@ -14226,6 +14725,1001 @@ sigma.plugins.colorbrewer = {YlGn: {
 
     return _instances[sigmaInstance.id];
   };
+
+}).call(this);
+
+;(function(undefined) {
+  'use strict';
+
+  if (typeof sigma === 'undefined')
+    throw new Error('sigma is not declared');
+
+  if (typeof L === 'undefined')
+    console.warn('Include leaflet to use the leaflet plugin for sigma.');
+
+  // Initialize package:
+  sigma.utils.pkg('sigma.plugins.leaflet');
+
+
+  /**
+   * Create a new MouseEvent object with the same properties as the given
+   * event object.
+   *
+   * @param  {MouseEvent} e
+   * @return {MouseEvent}
+   */
+  function cloneMouseEvent(e) {
+    // http://stackoverflow.com/a/12752970/738167
+    // It doesn't handle WheelEvent.
+    var evt = document.createEvent("MouseEvent");
+    evt.initMouseEvent(e.type, e.canBubble, e.cancelable, e.view, e.detail, e.screenX,
+      e.screenY, e.clientX, e.clientY, e.ctrlKey, e.altKey, e.shiftKey, e.metaKey,
+      e.button, e.relatedTarget);
+    return evt;
+  }
+
+  /**
+   * Return true if the node has latitude and longitude coordinates.
+   *
+   * @param  {object} node
+   * @return {boolean}
+   */
+  function hasNodeGeoCoordinates(node) {
+    return typeof node.lat != 'undefined' && typeof node.lng != 'undefined' &&
+      typeof node.lat === 'number' && typeof node.lng === 'number';
+  }
+
+  // Index of the nodes that have geo coordinates
+  var _geoNodesIndex = new sigma.utils.map();
+
+  /**
+   * Attach methods to the graph to keep indexes updated.
+   * ------------------
+   */
+
+  // Index the node after its insertion in the graph if it has geo coordinates.
+  sigma.classes.graph.attach(
+    'addNode',
+    'sigma.plugins.leaflet.addNode',
+    function(n) {
+      if (hasNodeGeoCoordinates(n)) {
+        _geoNodesIndex.set(n.id, this.nodesIndex.get(n.id));
+      }
+    }
+  );
+
+  // Deindex the node before its deletion from the graph.
+  sigma.classes.graph.attachBefore(
+    'dropNode',
+    'sigma.plugins.leaflet.dropNode',
+    function(id) {
+      _geoNodesIndex.delete(id);
+    }
+  );
+
+  // Deindex all nodes before the graph is cleared.
+  sigma.classes.graph.attachBefore(
+    'clear',
+    'sigma.plugins.leaflet.clear',
+    function() {
+      _geoNodesIndex.clear();
+      _geoNodesIndex = new sigma.utils.map();
+    }
+  );
+
+  /**
+   * This methods returns true if the given node has geo coordinates. If no
+   * node is given, returns true if one node has geo coordinates in the graph.
+   *
+   * @param {?string|number} nodeId The optional node id to check.
+   * @return {boolean}
+   */
+  if (!sigma.classes.graph.hasMethod('hasLatLngCoordinates'))
+    sigma.classes.graph.addMethod('hasLatLngCoordinates', function(nodeId) {
+      if (nodeId !== undefined) {
+        var node = this.nodesIndex.get(nodeId);
+        if (node) {
+          return hasNodeGeoCoordinates(node);
+        }
+      }
+      return _geoNodesIndex.size != 0;
+    });
+
+
+  /**
+   * Sigma Leaflet integration plugin
+   * ===============================
+   *
+   * Require https://github.com/Leaflet/Leaflet
+   * Author: Sébastien Heymann @ Linkurious
+   * Version: 0.1
+   */
+
+  var settings = {
+    // Leaflet zoom is discrete while Sigma zoom is continuous!
+    // We use sigma zoom ratio as a binary switch.
+    // It will zoom to the center of the view regardless of where the mouse was.
+    zoomingRatio: 0.999999999,
+    doubleClickZoomingRatio: 0.999999999,
+    // Non-instant zoom can trigger the coordinatesUpdated event multiple times:
+    mouseZoomDuration: 0,
+    doubleClickZoomDuration: 0,
+    // Disable automatic fit-to-screen:
+    autoRescale: ['nodeSize', 'edgeSize'],
+    // Disable zoom on mouse location:
+    zoomOnLocation: false,
+    // Disable inertia because of inaccurate node position:
+    mouseInertiaDuration: 0,
+    mouseInertiaRatio: 1,
+    touchInertiaDuration: 0,
+    touchInertiaRatio: 1
+  };
+
+  var locateAnimationSettings = {
+    node: {
+      duration: 0
+    },
+    edge: {
+      duration: 0
+    },
+    center: {
+      duration: 0
+    }
+  };
+
+  // List of events received by the graph container
+  // and copied to the map container
+  var forwardedEvents = [
+    'click',
+    'mouseup',
+    'mouseover',
+    'mouseout',
+    'mousemove',
+    // 'contextmenu', // conflict with sigma.plugins.tooltips
+    'focus',
+    'blur'
+  ];
+
+
+  /**
+   * This function provides geospatial features to Sigma by intergrating Leaflet.
+   *
+   * Fired events:
+   * *************
+   * enabled  Fired when the plugin is enabled and node coordinates are synchronized with the map.
+   * disabled Fired when the plugin is disabled and original node coordinates are restored.
+   *
+   * @param {sigma}     sigInst     The Sigma instance.
+   * @param {leaflet}   leafletMap  The Leaflet map instance.
+   * @param {?object}   options     The options.
+   */
+  function LeafletPlugin(sigInst, leafletMap, options) {
+    sigma.classes.dispatcher.extend(this);
+
+    if (typeof L === 'undefined')
+      throw new Error('leaflet is not declared');
+
+    options = options || {};
+
+    var _self = this,
+      _s = sigInst,
+      _map = leafletMap,
+      _renderer = options.renderer || _s.renderers[0],
+      _dragListener,
+      _filter,
+      _sigmaSettings = Object.create(null),
+      _locateAnimationSettings = Object.create(null),
+
+      // Easing parameters (can be applied only at enable/disable)
+      _easeEnabled = false,
+      _easing = options.easing,
+      _duration = options.duration,
+      _isAnimated = false,
+
+      // Plugin state
+      _enabled = false,
+      _bound = false,
+      _settingsApplied = false,
+      _locateSettingsApplied = false,
+
+      // Cache camera properties
+      _sigmaCamera = {
+        x: _s.camera.x,
+        y: _s.camera.y,
+        ratio: _s.camera.ratio
+      };
+
+    if (_easing && (!sigma.plugins || typeof sigma.plugins.animate === 'undefined')) {
+      throw new Error('sigma.plugins.animate is not declared');
+    }
+
+    /**
+     * Check if at least one node has geographical coordinates.
+     *
+     * @return {boolean}
+     */
+    this.isApplicable = function() {
+      var nodes = _s.graph.nodes();
+      for (var i = 0, l = nodes.length; i < l; i++) {
+        if (hasNodeGeoCoordinates(nodes[i])) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    /**
+     * Check if the plugin is enabled.
+     *
+     * @return {boolean}
+     */
+    this.isEnabled = function() {
+      return _enabled;
+    }
+
+    /**
+     * Apply mandatory Sigma settings, update node coordinates from their
+     * geospatial coordinates, and bind all event listeners.
+     *
+     * @return {sigma.plugins.leaflet} The plugin instance.
+     */
+    this.enable = function() {
+      showMapContainer();
+      applySigmaSettings();
+      applyLocatePluginSettings();
+
+      // Reset camera cache
+      _sigmaCamera = {
+        x: _s.camera.x,
+        y: _s.camera.y,
+        ratio: _s.camera.ratio
+      };
+
+      _self.bindAll();
+
+      _easeEnabled = !!_easing;
+      _self.syncNodes(function() {
+        _self.dispatchEvent('enabled');
+      });
+      _easeEnabled = false;
+
+      _enabled = true;
+
+      return _self;
+    };
+
+    /**
+     * Restore the original Sigma settings and node coordinates,
+     * and unbind event listeners.
+     *
+     * @return {sigma.plugins.leaflet} The plugin instance.
+     */
+    this.disable = function() {
+      hideMapContainer();
+      restoreSigmaSettings();
+      restoreLocatePluginSettings();
+
+      _easeEnabled = !!_easing;
+
+      if (_filter) {
+        // must be before unbindAll
+        _filter.undo('geo-coordinates').apply();
+      }
+
+      restoreGraph(function() {
+        _self.dispatchEvent('disabled');
+      });
+
+      _easeEnabled = false;
+      _enabled = false;
+
+      _self.unbindAll();
+
+      return _self;
+    };
+
+    /**
+     * Update the cartesian coordinates of the given node ids from their geospatial
+     * coordinates and refresh sigma.
+     * All nodes will be updated if no parameter is given.
+     *
+     * @param {?number|string|array} v One node id or a list of node ids.
+     * @param {?function} callback A callback function triggered after node positions are updated.
+     * @return {sigma.plugins.leaflet} The plugin instance.
+     */
+    this.syncNodes = function(v, callback) {
+      var nodes, node, point;
+
+      if (typeof v === 'string' || typeof v === 'number' || Array.isArray(v)) {
+        nodes = _s.graph.nodes(v);
+      }
+      else {
+        nodes = _s.graph.nodes();
+      }
+
+      if (typeof v === 'function') {
+        callback = v;
+      }
+
+      if (!Array.isArray(nodes)) {
+        nodes = [nodes];
+      }
+
+      for (var i = 0, l = nodes.length; i < l; i++) {
+        node = nodes[i];
+
+        // Store current cartesian coordinates
+        if (node.leaflet_x === undefined) {
+          node.leaflet_x = node.x;
+        }
+        if (node.leaflet_y === undefined) {
+          node.leaflet_y = node.y;
+        }
+
+        if (hasNodeGeoCoordinates(node)) {
+          // ensures the node is indexed if lat/lng properties have been added
+          _geoNodesIndex.set(node.id, _s.graph.nodes(node.id));
+
+          // Compute new cartesian coordinates
+          point = _self.utils.latLngToSigmaPoint(node);
+
+          if (_easeEnabled) {
+            // Set current position on screen
+            node.x = node['read_cam0:x'] || node.x;
+            node.y = node['read_cam0:y'] || node.y;
+
+            // Store new cartesian coordinates for animation
+            node.leaflet_x_easing = point.x;
+            node.leaflet_y_easing = point.y;
+          }
+          else {
+            // Apply new cartesian coordinates
+            node.x = point.x;
+            node.y = point.y;
+          }
+        }
+        else {
+          // ensures the node is not indexed if lat/lng properties have been removed
+          _geoNodesIndex.delete(node.id);
+
+          if (!_filter) {
+            // Hide node because it doesn't have geo coordinates
+            // and store current "hidden" state
+            if (node.leaflet_hidden === undefined) {
+              node.leaflet_hidden = !!node.hidden;
+            }
+            node.hidden = true;
+          }
+        }
+      }
+
+      applyGeoFilter();
+
+      if (_easeEnabled) {
+        animate(nodes, callback);
+      }
+      else {
+        _s.refresh();
+        if (callback) callback();
+      }
+      return _self;
+    };
+
+    /**
+     * It will increment the zoom level of the map by 1
+     * if the zoom ratio of Sigma has been decreased.
+     * It will decrement the zoom level of the map by 1
+     * if the zoom ratio of Sigma has been increased.
+     * It will update the Leaflet map center if the zoom ratio of Sigma is the same.
+     *
+     * @return {sigma.plugins.leaflet} The plugin instance.
+     */
+    this.syncMap = function() {
+      // update map zoom
+      if (_sigmaCamera.ratio !== _s.camera.ratio) {
+
+        // Leaflet zoom is discrete while Sigma zoom is continuous!
+        // We use sigma zoom ratio as a binary switch.
+        if (_sigmaCamera.ratio < _s.camera.ratio) {
+          _map.zoomIn();
+        }
+        else {
+          _map.zoomOut();
+        }
+        // Reset zoom ratio of Sigma
+        _s.camera.ratio = 1;
+      }
+      else {
+        // update map center
+        var dX = _s.camera.x - _sigmaCamera.x;
+        var dY = _s.camera.y - _sigmaCamera.y;
+
+        _sigmaCamera.x = _s.camera.x;
+        _sigmaCamera.y = _s.camera.y;
+
+        _map.panBy([dX, dY], {
+          animate: false // the map will stick to the graph
+        });
+      }
+      return _self;
+    };
+
+    /**
+     * Fit the view to the graph or to the given nodes or edges. If sigma is
+     * currently animated, it will postpone the execution after the end of the
+     * animation.
+     *
+     * @param  {?object} options       The options. Fit to all nodes otherwise.
+     *         {?number|string|array}  options.nodeIds The set of node ids.
+     *         {?number|string|array}  options.edgeIds The set of edges ids.
+     *         {?boolean}              options.animate Animate the nodes if true.
+     *         {?function}             options.onComplete The callback function.
+     * @return {sigma.plugins.leaflet} The plugin instance.
+     */
+    this.fitBounds = function(options) {
+      var o = options || {};
+      var zoom = _map.getZoom();
+      if (_isAnimated) {
+        _s.bind('animate.end', fitGeoBounds);
+      }
+      else {
+        fitGeoBounds();
+      }
+
+      function fitGeoBounds() {
+        if (o.edgeIds) {
+          if (!Array.isArray(o.edgeIds)) {
+            o.edgeIds = [o.edgeIds];
+          }
+          o.nodeIds = [];
+          var edges = _s.graph.edges(o.edgeIds);
+          for (var i = 0, l = edges.length; i < l; i++) {
+            o.nodeIds.push(edges[i].source);
+            o.nodeIds.push(edges[i].target);
+          }
+        }
+        if (o.nodeIds && !Array.isArray(o.nodeIds)) {
+          o.nodeIds = [o.nodeIds];
+        }
+        var nodes = o.nodeIds ? _s.graph.nodes(o.nodeIds) : _s.graph.nodes();
+
+        _map.fitBounds(_self.utils.geoBoundaries(nodes), {
+          animate: false
+        });
+
+        if (_map.getZoom() === zoom) {
+          _easeEnabled = !!o.animate;
+
+          if (o.onComplete) {
+            _self.syncNodes(o.onComplete);
+          }
+          else {
+            _self.syncNodes();
+          }
+
+          _easeEnabled = false;
+        }
+        else if (o.onComplete) {
+          o.onComplete();
+        }
+
+        // handler removes itself
+        setTimeout(function() {
+          _s.unbind('animate.end', fitGeoBounds);
+        }, 0);
+      }
+
+      return _self;
+    };
+
+    /**
+     * Zoom in the map.
+     */
+    this.zoomIn = function() {
+      _map.zoomIn();
+    };
+
+    /**
+     * Zoom out the map.
+     */
+    this.zoomOut = function() {
+      _map.zoomOut();
+    };
+
+    /**
+     * Bind the given instance of the dragNodes listener. The geographical
+     * coordinates of the dragged nodes will be updated to their new location
+     * to preserve their position during zoom.
+     *
+     * @param {sigma.plugins.dragNodes} listener The dragNodes plugin instance.
+     * @return {sigma.plugins.leaflet} The plugin instance.
+     */
+    this.bindDragListener = function(listener) {
+      _dragListener = _dragListener || listener;
+      _dragListener.bind('drop', leafletDropNodesHandler);
+      return _self;
+    };
+
+    /**
+     * Unbind the instance of the dragNodes listener.
+     *
+     * @return {sigma.plugins.leaflet} The plugin instance.
+     */
+    this.unbindDragListener = function() {
+      if (_dragListener === undefined) return;
+
+      _dragListener.unbind('drop', leafletDropNodesHandler);
+      _dragListener = undefined;
+      return _self;
+    };
+
+    /**
+     * Bind the given instance of the filter plugin and apply the geo filter.
+     *
+     * @param {sigma.plugins.filter} listener The filter plugin instance.
+     * @return {sigma.plugins.leaflet} The plugin instance.
+     */
+    this.bindFilter = function(filterInstance) {
+      _filter = filterInstance;
+      applyGeoFilter();
+      return _self;
+    };
+
+    /**
+     * Unbind the instance of the filter plugin.
+     *
+     * @return {sigma.plugins.leaflet} The plugin instance.
+     */
+    this.unbindFilter = function() {
+      _filter = undefined;
+      return _self;
+    };
+
+    /**
+     * Reset the geographical coordinates of the nodes that have been dragged.
+     *
+     * @return {sigma.plugins.leaflet} The plugin instance.
+     */
+    this.resetDraggedNodesLatLng = function() {
+      var node,
+        nodes = _s.graph.nodes();
+
+      for (var i = 0, l = nodes.length; i < l; i++) {
+        node = nodes[i];
+
+        if (node.lat_init !== undefined && node.lng_init !== undefined) {
+          node.lat = node.lat_init;
+          node.lng = node.lng_init;
+
+          node.lat_init = undefined;
+          node.lng_init = undefined;
+        }
+      }
+      return _self;
+    };
+
+    /**
+     * Bind all event listeners.
+     *
+     * @return {sigma.plugins.leaflet} The plugin instance.
+     */
+    this.bindAll = function() {
+      if (_bound) return;
+
+      _bound = true;
+      forwardEvents();
+      _s.bind('coordinatesUpdated', _self.syncMap);
+      _map
+        .on('zoomstart', hideGraphContainer)
+        .on('zoomend', showGraphContainer);
+
+      // Toggle animation state
+      _s.bind('animate.start', toggleAnimating);
+      _s.bind('animate.end', toggleAnimating);
+
+      return _self;
+    };
+
+    /**
+     * Unbind all event listeners.
+     *
+     * @return {sigma.plugins.leaflet} The plugin instance.
+     */
+    this.unbindAll = function() {
+      if (!_bound) return;
+
+      _bound = false;
+      cancelForwardEvents();
+      _s.unbind('coordinatesUpdated', _self.syncMap);
+      _map
+        .off('zoomstart', hideGraphContainer)
+        .off('zoomend', showGraphContainer);
+
+      // Toggle animation state
+      _s.unbind('animate.start', toggleAnimating);
+      _s.unbind('animate.end', toggleAnimating);
+
+      _self.unbindDragListener();
+      _self.unbindFilter();
+
+      return _self;
+    };
+
+    /**
+     * Unbind all event listeners, restore Sigma settings and remove all
+     * references to Sigma and the Leaflet map.
+     */
+    this.kill = function() {
+      _self.unbindAll();
+      hideMapContainer();
+      restoreSigmaSettings();
+      _enabled = false;
+
+      _s = undefined;
+      _renderer = undefined;
+      _map = undefined;
+      _sigmaCamera = undefined;
+    };
+
+    this.utils = {};
+
+    /**
+     * Returns the geographical coordinates of a given Sigma point x,y.
+     *
+     * @param  {node|leaflet<Point>} point The Sigma x,y coordinates.
+     * @return {leaflet<LatLng>}           The geographical coordinates.
+     */
+    this.utils.sigmaPointToLatLng = function(point) {
+      var center = _map.project(_map.getCenter());
+      return _map.unproject([
+        point.x + center.x - _s.camera.x,
+        point.y + center.y - _s.camera.y
+      ]);
+    };
+
+    /**
+     * Returns the cartesian coordinates of a Leaflet map layer point.
+     *
+     * @param  {node|leaflet<LatLng>} latlng The Leaflet map layer point.
+     * @return {leaflet<Point>}              The Sigma x,y coordinates.
+     */
+    this.utils.latLngToSigmaPoint = function(latlng) {
+      var center = _map.project(_map.getCenter());
+      var point = _map.project(latlng);
+      return {
+        x: point.x - center.x + _s.camera.x,
+        y: point.y - center.y + _s.camera.y
+      }
+    };
+
+    /**
+     * Compute the spatial boundaries of the given nodes.
+     * Ignore hidden nodes and nodes with missing latitude or longitude coordinates.
+     *
+     * @param  {array}   nodes The nodes of the graph.
+     * @return {leaflet<LatLngBounds>}
+     */
+    this.utils.geoBoundaries = function(nodes) {
+      var node,
+        minLat = Infinity,
+        minLng = Infinity,
+        maxLat = -Infinity,
+        maxLng = -Infinity;
+
+      for (var i = 0, l = nodes.length; i < l; i++) {
+        node = nodes[i];
+        if (node.hidden || !hasNodeGeoCoordinates(node)) {
+          continue; // skip node
+        }
+        maxLat = Math.max(node.lat, maxLat);
+        minLat = Math.min(node.lat, minLat);
+        maxLng = Math.max(node.lng, maxLng);
+        minLng = Math.min(node.lng, minLng);
+      }
+
+      return L.latLngBounds(L.latLng(minLat, minLng), L.latLng(maxLat, maxLng));
+    };
+
+
+    // PRIVATE FUNCTIONS
+
+    /**
+     * Restore original cartesian coordinates of the nodes and "hidden" state.
+     * Unpin all nodes.
+     */
+    function restoreGraph(callback) {
+      if (!_s) return;
+
+      var nodes = _s.graph.nodes(),
+        node;
+
+      for (var i = 0; i < nodes.length; i++) {
+        node = nodes[i];
+
+        if (!_filter && node.leaflet_hidden !== undefined) {
+          node.hidden = node.leaflet_hidden;
+          node.leaflet_hidden = undefined;
+        }
+
+        if (node.leaflet_x !== undefined && node.leaflet_y !== undefined) {
+          if (_easeEnabled) {
+            // Set current position on screen
+            node.x = node['read_cam0:x'] || node.x;
+            node.y = node['read_cam0:y'] || node.y;
+
+            // Store new cartesian coordinates for animation
+            node.leaflet_x_easing = node.leaflet_x;
+            node.leaflet_y_easing = node.leaflet_y;
+          }
+          else {
+            node.x = node.leaflet_x;
+            node.y = node.leaflet_y;
+          }
+
+          node.leaflet_x = undefined;
+          node.leaflet_y = undefined;
+        }
+      }
+
+      if (_easeEnabled) {
+        animate(nodes, callback);
+      }
+      else {
+        _s.refresh();
+        if (callback) callback();
+      }
+    }
+
+    /**
+     * Apply the geo filter or create it and apply it.
+     */
+    function applyGeoFilter() {
+      if (_filter) {
+        if (_filter.has('geo-coordinates')) {
+          _filter.apply();
+        }
+        else {
+          _filter.nodesBy(hasNodeGeoCoordinates, 'geo-coordinates').apply();
+        }
+      }
+    }
+
+    /**
+     * Toggle the node animation state.
+     */
+    function toggleAnimating() {
+      _isAnimated = !_isAnimated;
+    }
+
+    /**
+     * Animate a set of given nodes.
+     *
+     * @param {array} nodes The list of nodes to animate.
+     * @param {?function} callback The function to run after the animation is complete.
+     */
+    function animate(nodes, callback) {
+      sigma.plugins.animate(
+        _s,
+        {
+          x: 'leaflet_x_easing',
+          y: 'leaflet_y_easing'
+        },
+        {
+          easing: _easing,
+          onComplete: function() {
+            _s.refresh();
+            for (var i = 0; i < nodes.length; i++) {
+              nodes[i].leaflet_x_easing = null;
+              nodes[i].leaflet_y_easing = null;
+            }
+            if (callback) callback();
+          },
+          duration: _duration
+        }
+      );
+    }
+
+    /**
+     * Set new geographical coordinates to the nodes of the given event
+     * according to their Sigma cartesian coordinates.
+     *
+     * @param {object} event The Sigma 'drop' nodes event.
+     */
+    function leafletDropNodesHandler(event) {
+      var node,
+        latLng,
+        nodes = event.data.nodes || [event.data.node];
+
+      for (var i = 0, l = nodes.length; i < l; i++) {
+        node = nodes[i];
+        latLng = _self.utils.sigmaPointToLatLng(node);
+
+        node.lat_init = node.lat;
+        node.lng_init = node.lng;
+
+        node.lat = latLng.lat;
+        node.lng = latLng.lng;
+      }
+    }
+
+    /**
+     * Apply mandatory settings to sigma for the integration to work.
+     * Cache overriden sigma settings to be restored when the plugin is killed.
+     * Reset zoom ratio.
+     */
+    function applySigmaSettings() {
+      if (_settingsApplied) return;
+      _settingsApplied = true;
+
+      Object.keys(settings).forEach(function(key) {
+        _sigmaSettings[key] = _s.settings(key);
+        _s.settings(key, settings[key]);
+      });
+
+      _s.camera.ratio = 1;
+    }
+
+    /**
+     * Restore overriden sigma settings.
+     */
+    function restoreSigmaSettings() {
+      if (!_settingsApplied) return;
+      _settingsApplied = false;
+
+      Object.keys(settings).forEach(function(key) {
+        _s.settings(key, _sigmaSettings[key]);
+      });
+    }
+
+    /**
+     * Apply mandatory settings to sigma.plugins.locate for the integration to work.
+     * Cache overriden settings to be restored when the plugin is killed.
+     */
+    function applyLocatePluginSettings() {
+      if (_locateSettingsApplied || typeof sigma.plugins.locate === 'undefined') return;
+      _locateSettingsApplied = true;
+
+      if (_s) {
+        // locate plugin must be instanciated before!
+        var locateAnim = sigma.plugins.locate(_s).settings.animation;
+
+        _locateAnimationSettings.nodeDuration = locateAnim.node.duration;
+        _locateAnimationSettings.edgeDuration = locateAnim.edge.duration;
+        _locateAnimationSettings.centerDuration = locateAnim.center.duration;
+
+        locateAnim.node.duration = 0;
+        locateAnim.edge.duration = 0;
+        locateAnim.center.duration = 0;
+      }
+    }
+
+    /**
+     * Restore overriden sigma.plugins.locate settings.
+     */
+    function restoreLocatePluginSettings() {
+      if (!_locateSettingsApplied || typeof sigma.plugins.locate === 'undefined') return;
+      _locateSettingsApplied = false;
+
+      if (_s) {
+        // locate plugin must be instanciated before!
+        var locateAnim = sigma.plugins.locate(_s).settings.animation;
+
+        locateAnim.node.duration = _locateAnimationSettings.nodeDuration;
+        locateAnim.edge.duration = _locateAnimationSettings.edgeDuration;
+        locateAnim.center.duration = _locateAnimationSettings.centerDuration;
+      }
+    }
+
+    /**
+     * Forward a subset of mouse events from the sigma container to the Leaflet map.
+     */
+    function forwardEvents() {
+      forwardedEvents.forEach(function(eventType) {
+        // Listen on capture phase because sigma prevents propagation on bubbling phase
+        _renderer.container.addEventListener(eventType, forwardEventsHandler, true);
+      });
+    }
+
+    function cancelForwardEvents() {
+      forwardedEvents.forEach(function(eventType) {
+        _renderer.container.removeEventListener(eventType, forwardEventsHandler, true);
+      });
+    }
+
+    function forwardEventsHandler(e) {
+      _map.getContainer().dispatchEvent(cloneMouseEvent(e));
+    }
+
+    function hideGraphContainer() {
+      _s.settings('enableCamera', false);
+      _renderer.container.style.visibility = 'hidden';
+    }
+
+    function showGraphContainer() {
+      _s.settings('enableCamera', true);
+      _renderer.container.style.visibility = '';
+      _self.syncNodes();
+    }
+
+    function hideMapContainer() {
+      if (_map) {
+        _map.getContainer().style.opacity = 0;
+        _map.getContainer().style.visibility = 'hidden';
+      }
+    }
+
+    function showMapContainer() {
+      if (_map) {
+        _map.getContainer().style.opacity = 1;
+        _map.getContainer().style.visibility = '';
+      }
+    }
+  }
+
+
+  /**
+   * Interface
+   * ------------------
+   *
+   * > var leafletPlugin = sigma.plugins.leaflet(s, map, { easing: 'cubicInOut' });
+   */
+  var _instance = {};
+
+  /**
+   * This function provides geospatial features to Sigma by intergrating Leaflet.
+   *
+   * Recognized options:
+   * **********************
+   * Here is the exhaustive list of every accepted parameters in the settings
+   * object:
+   *
+   *   {?sigma.renderer}    renderer   The instance of the sigma renderer.
+   *   {?(function|string)} easing     Either the name of an easing in the
+   *                                   sigma.utils.easings package or a
+   *                                   function. If not specified, the
+   *                                   quadraticInOut easing from this package
+   *                                   will be used instead.
+   *   {?number}            duration   The duration of the animation. If not
+   *                                   specified, the "animationsTime" setting
+   *                                   value of the sigma instance will be used
+   *                                   instead.
+   *
+   * @param {sigma}   sigInst    The related sigma instance.
+   * @param {leaflet} leafletMap The Leaflet map instance.
+   * @param {?object} options    The configuration options.
+   */
+  sigma.plugins.leaflet = function(sigInst, leafletMap, options) {
+    if (!sigInst) throw new Error('Missing argument: "sigInst"');
+    if (!leafletMap) throw new Error('Missing argument: "leafletMap"');
+
+    // Create instance if undefined
+    if (!_instance[sigInst.id]) {
+      _instance[sigInst.id] = new LeafletPlugin(sigInst, leafletMap, options);
+
+      // Binding on kill to clear the references
+      sigInst.bind('kill', function() {
+        _instance[sigInst.id].kill();
+        _instance[sigInst.id] = undefined;
+      });
+    }
+
+    return _instance[sigInst.id];
+  };
+
+  /**
+   * This method removes the event listeners and kills the leaflet plugin instance.
+   *
+   * @param  {sigma} sigInst The related sigma instance.
+   */
+  sigma.plugins.killLeafletPlugin = function(sigInst) {
+    if (!sigInst) throw new Error('Missing argument: "sigInst"');
+
+    if (_instance[sigInst.id] instanceof LeafletPlugin) {
+      _instance[sigInst.id].kill();
+      _instance[sigInst.id] = undefined;
+    }
+  };
+
 
 }).call(this);
 
@@ -14934,7 +16428,7 @@ sigma.plugins.colorbrewer = {YlGn: {
   */
   var settings = {
     // {string}
-    poweredByHTML: 'Powered by Linkurious.js',
+    poweredByHTML: 'Linkurious.js',
     // {number}
     poweredByURL: 'https://github.com/Linkurious/linkurious.js',
     // {string}
@@ -14971,7 +16465,7 @@ sigma.plugins.colorbrewer = {YlGn: {
         content = [
           '<a href="' +
           url +
-          '" target="_blank" style="font-family:Lato,sans-serif;font-size:11px;color:#333;text-decoration:none;">' +
+          '" target="_blank" style="font-family:\'Helvetica Neue\',Arial,Helvetica,sans-serif; font-size:11px">' +
           html +
           '</a>'
         ];
@@ -14989,10 +16483,11 @@ sigma.plugins.colorbrewer = {YlGn: {
       dom.setAttribute('class', 'sigma-poweredby');
       dom.innerHTML = content.join('');
       dom.style.position = 'absolute';
+      dom.style.padding = '0 5px';
       dom.style.bottom = '2px';
       dom.style.right = '1px';
       dom.style.zIndex = '1000';
-      dom.style.background = 'rgba(255, 255, 255, 0.8)';
+      dom.style.background = 'rgba(255, 255, 255, 0.7)';
 
       this.container.appendChild(dom);
     }
@@ -15027,42 +16522,6 @@ sigma.plugins.colorbrewer = {YlGn: {
       _spacebar = false,
       _doubleClickingNodes = false;
 
-  /**
-   * Utility function to make the difference between two arrays.
-   * See https://github.com/lodash/lodash/blob/master/lodash.js#L1627
-   *
-   * @param  {array} array  The array to inspect.
-   * @param  {array} values The values to exclude.
-   * @return {array}        Returns the new array of filtered values.
-   */
-  function difference(array, values) {
-    var length = array ? array.length : 0;
-    if (!length) {
-      return [];
-    }
-    var index = -1,
-        result = [],
-        valuesLength = values.length;
-
-    outer:
-    while (++index < length) {
-      var value = array[index];
-
-      if (value === value) {
-        var valuesIndex = valuesLength;
-        while (valuesIndex--) {
-          if (values[valuesIndex] === value) {
-            continue outer;
-          }
-        }
-        result.push(value);
-      }
-      else if (values.indexOf(value) < 0) {
-        result.push(value);
-      }
-    }
-    return result;
-  }
 
   function keyDown(event) {
     _spacebar = event.which === 32;
@@ -15105,14 +16564,13 @@ sigma.plugins.colorbrewer = {YlGn: {
      * node is active before any mouse event.
      */
     this.init = function() {
-      var nodes = a.nodes();
-      if (nodes.length) {
-        _nodeReference = nodes[0].id;
+      if (a.nbNodes()) {
+        _nodeReference = a.nodes()[0].id;
       }
     };
 
     /**
-     * This fuction handles the node click event. The clicked nodes are activated.
+     * This fuction handles the node click event. The clicked node is activated.
      * All active nodes are deactivated if one of the active nodes is clicked.
      * The double-clicked nodes are activated.
      * If the Spacebar key is hold, it adds the nodes to the list of active
@@ -15125,30 +16583,30 @@ sigma.plugins.colorbrewer = {YlGn: {
       // Prevent nodes to be selected while dragging:
       if (mousemoveCount > 1) return;
 
-      var targets = event.data.node.map(function(n) {
-        return n.id;
-      });
+      var target = event.data.node[0].id;
       var actives = a.nodes().map(function(n) {
         return n.id;
       });
-      var newTargets = difference(targets, actives);
+
+      var newTarget = (actives.indexOf(target) > -1) ? undefined : target;
 
       a.dropEdges();
 
       if (_spacebar) {
-        var existingTargets = difference(targets, newTargets);
-        a.dropNodes(existingTargets);
+        var existingTarget = (newTarget === target) ? undefined : target;
+        a.dropNodes(existingTarget);
+        s.refresh({skipIndexation: true});
       }
       else {
         if (actives.length > 1) {
-          a.addNodes(targets);
+          a.addNodes(target);
         }
 
         var activeNode = a.nodes()[0];
 
         if(activeNode != null) {
           if(_nodeReference === activeNode.id) {
-            if(newTargets.length) {
+            if(newTarget != null) {
               a.dropNodes();
               _nodeReference = null;
             }
@@ -15164,11 +16622,15 @@ sigma.plugins.colorbrewer = {YlGn: {
           } else {
             _nodeReference = activeNode.id;
           }
+        } else {
+          _nodeReference = newTarget;
         }
       }
 
-      a.addNodes(newTargets);
-      s.refresh({skipIndexation: true});
+      if (newTarget != null) {
+        a.addNodes(newTarget);
+        s.refresh({skipIndexation: true});
+      }
     };
 
     /**
@@ -15184,7 +16646,7 @@ sigma.plugins.colorbrewer = {YlGn: {
     };
 
     /**
-     * This fuction handles the edge click event. The clicked edges are activated.
+     * This fuction handles the edge click event. The clicked edge is activated.
      * The clicked active edges are deactivated.
      * If the Spacebar key is hold, it adds the edges to the list of active
      * edges instead of clearing the list. It clears the list of active nodes. It
@@ -15196,36 +16658,36 @@ sigma.plugins.colorbrewer = {YlGn: {
       // Prevent edges to be selected while dragging:
       if (mousemoveCount > 1) return;
 
-      var targets = event.data.edge.map(function(e) {
-        return e.id;
-      });
+      var target = event.data.edge[0].id;
       var actives = a.edges().map(function(e) {
         return e.id;
       });
-      var newTargets = difference(targets, actives);
+
+      var newTarget = (actives.indexOf(target) > -1) ? undefined : target;
 
       a.dropNodes();
+      _nodeReference = null;
 
       if (_spacebar) {
-        var existingTargets = difference(targets, newTargets);
-        a.dropEdges(existingTargets);
+        var existingTarget = (newTarget === target) ? undefined : target;
+        a.dropEdges(existingTarget);
+        s.refresh({skipIndexation: true});
       }
       else {
         a.dropEdges();
-        if (actives.length > 1) {
-          a.addEdges(targets);
-        }
       }
 
-      a.addEdges(newTargets);
-      s.refresh({skipIndexation: true});
+      if (newTarget != null) {
+        a.addEdges(newTarget);
+        s.refresh({skipIndexation: true});
+      }
     };
 
     // Select all nodes or deselect them if all nodes are active
     function spaceA() {
       a.dropEdges();
 
-      if (a.nodes().length === s.graph.nodes().length) {
+      if (a.nbNodes() === s.graph.nodes().length) {
         a.dropNodes();
       }
       else {
@@ -15474,7 +16936,7 @@ sigma.plugins.colorbrewer = {YlGn: {
       show: 'rightClickStage',
       hide: 'clickStage',
       cssClass: 'sigma-tooltip',
-      position: '',       // top | bottom | left | right
+      position: 'top',    // top | bottom | left | right
       autoadjust: false,
       delay: 0,
       hideDelay: 0,
@@ -15485,7 +16947,7 @@ sigma.plugins.colorbrewer = {YlGn: {
       show: 'clickNode',
       hide: 'clickStage',
       cssClass: 'sigma-tooltip',
-      position: '',       // top | bottom | left | right
+      position: 'top',    // top | bottom | left | right
       autoadjust: false,
       delay: 0,
       hideDelay: 0,
@@ -15496,7 +16958,7 @@ sigma.plugins.colorbrewer = {YlGn: {
       show: 'clickEdge',
       hide: 'clickStage',
       cssClass: 'sigma-tooltip',
-      position: '',       // top | bottom | left | right
+      position: 'top',    // top | bottom | left | right
       autoadjust: false,
       delay: 0,
       hideDelay: 0,
@@ -15517,8 +16979,9 @@ sigma.plugins.colorbrewer = {YlGn: {
    * *********************************
    * Enable node tooltips by adding the "node" key to the options object.
    * Enable edge tooltips by adding the "edge" key to the options object.
-   * Each value must be an object. Here is the exhaustive list of every
-   * accepted parameters in these objects:
+   * Each value could be an array of objects for multiple tooltips,
+   * or an object for one tooltip.
+   * Here is the exhaustive list of every accepted parameter in these objects:
    *
    *   {?string}   show       The event that triggers the tooltip. Default
    *                          values: "clickNode", "clickEdge". Other suggested
@@ -15566,14 +17029,38 @@ sigma.plugins.colorbrewer = {YlGn: {
    */
   function Tooltips(s, renderer, options) {
     var self = this,
-        so = sigma.utils.extend(options.stage, settings.stage),
-        no = sigma.utils.extend(options.node, settings.node),
-        eo = sigma.utils.extend(options.edge, settings.edge),
         _tooltip,
         _timeoutHandle,
         _timeoutHideHandle,
+        _stageTooltips = [],
+        _nodeTooltips = [],
+        _edgeTooltips = [],
         _mouseOverTooltip = false,
         _doubleClick = false;
+
+    if (Array.isArray(options.stage)) {
+      for (var i = 0; i < options.stage.length; i++) {
+        _stageTooltips.push(sigma.utils.extend(options.stage[i], settings.stage));
+      }
+    } else {
+      _stageTooltips.push(sigma.utils.extend(options.stage, settings.stage));
+    }
+
+    if (Array.isArray(options.node)) {
+      for (var i = 0; i < options.node.length; i++) {
+        _nodeTooltips.push(sigma.utils.extend(options.node[i], settings.node));
+      }
+    } else {
+      _nodeTooltips.push(sigma.utils.extend(options.node, settings.node));
+    }
+
+    if (Array.isArray(options.edge)) {
+      for (var i = 0; i < options.edge.length; i++) {
+        _edgeTooltips.push(sigma.utils.extend(options.edge[i], settings.edge));
+      }
+    } else {
+      _edgeTooltips.push(sigma.utils.extend(options.edge, settings.edge));
+    }
 
     sigma.classes.dispatcher.extend(this);
 
@@ -15796,57 +17283,34 @@ sigma.plugins.colorbrewer = {YlGn: {
       _timeoutHandle = null;
       _timeoutHideHandle = null;
       _doubleClick = false;
-    }
-
-    this.unbindEvents = function() {
-      if (options.stage) {
-        s.unbind(so.show);
-        s.unbind(so.hide);
-        if (so.show !== 'doubleClickStage') {
-          s.unbind('doubleClickStage');
-        }
-      }
-      if (options.node) {
-        s.unbind(no.show);
-        s.unbind(no.hide);
-        if (no.show !== 'doubleClickNode') {
-          s.unbind('doubleClickNode');
-        }
-      }
-      if (options.edge) {
-        s.unbind(eo.show);
-        s.unbind(eo.hide);
-        if (eo.show !== 'doubleClickEdge') {
-          s.unbind('doubleClickEdge');
-        }
-      }
-      if (no.show === 'rightClickNode' ||
-          eo.show === 'rightClickEdge') {
-        renderer.container.removeEventListener(
-          'contextmenu',
-          contextmenuListener
-        );
-      }
+      _stageTooltips = [];
+      _nodeTooltips = [];
+      _edgeTooltips = [];
     };
 
-    // STAGE tooltip:
-    if (options.stage) {
-      if (options.stage.renderer !== undefined &&
-          typeof options.stage.renderer !== 'function')
-        throw new TypeError('"options.stage.renderer" is not a function, was ' + options.stage.renderer);
+    this.unbindEvents = function() {
+      var tooltips = _stageTooltips.concat(_nodeTooltips).concat(_edgeTooltips);
 
-      if (options.stage.position !== undefined) {
-        if (options.stage.position !== 'top' &&
-            options.stage.position !== 'bottom' &&
-            options.stage.position !== 'left' &&
-            options.stage.position !== 'right' &&
-            options.stage.position !== 'css') {
-          throw new Error('"options.position" is not "top", "bottom", "left", "right", or "css", was ' + options.position);
+      for (var i = 0; i < tooltips.length; i++) {
+        s.unbind(tooltips[i].show);
+        s.unbind(tooltips[i].hide);
+
+        if (tooltips[i].show === 'rightClickNode' || tooltips[i].show === 'rightClickEdge') {
+          renderer.container.removeEventListener(
+            'contextmenu',
+            contextmenuListener
+          );
         }
       }
+      // Remove the default event handlers
+      s.unbind('doubleClickStage');
+      s.unbind('doubleClickNode');
+      s.unbind('doubleClickEdge');
+    };
 
-      s.bind(so.show, function(event) {
-        if (so.show !== 'doubleClickStage' && _doubleClick) {
+    this.bindStageEvents = function(tooltip) {
+      s.bind(tooltip.show, function(event) {
+        if (tooltip.show !== 'doubleClickStage' && _doubleClick) {
           return;
         }
 
@@ -15857,50 +17321,24 @@ sigma.plugins.colorbrewer = {YlGn: {
         _timeoutHandle = setTimeout(function() {
           self.open(
             null,
-            so,
+            tooltip,
             clientX,
             clientY,
             self.dispatchEvent.bind(self,'shown', event.data));
-        }, so.delay);
+        }, tooltip.delay);
       });
 
-      s.bind(so.hide, function(event) {
+      s.bind(tooltip.hide, function(event) {
         var p = _tooltip;
         delayedCancel(settings.stage.hideDelay);
         if (p)
           self.dispatchEvent('hidden', event.data);
       });
+    };
 
-      if (so.show !== 'doubleClickStage') {
-        s.bind('doubleClickStage', function(event) {
-          cancel();
-          _doubleClick = true;
-          self.dispatchEvent('hidden', event.data);
-          setTimeout(function() {
-            _doubleClick = false;
-          }, settings.doubleClickDelay);
-        })
-      }
-    }
-
-    // NODE tooltip:
-    if (options.node) {
-      if (options.node.renderer !== undefined &&
-          typeof options.node.renderer !== 'function')
-        throw new TypeError('"options.node.renderer" is not a function, was ' + options.node.renderer);
-
-      if (options.node.position !== undefined) {
-        if (options.node.position !== 'top' &&
-            options.node.position !== 'bottom' &&
-            options.node.position !== 'left' &&
-            options.node.position !== 'right' &&
-            options.node.position !== 'css') {
-          throw new Error('"options.position" is not "top", "bottom", "left", "right", or "css", was ' + options.position);
-        }
-      }
-
-      s.bind(no.show, function(event) {
-        if (no.show !== 'doubleClickNode' && _doubleClick) {
+    this.bindNodeEvents = function(tooltip) {
+      s.bind(tooltip.show, function(event) {
+        if (tooltip.show !== 'doubleClickNode' && _doubleClick) {
           return;
         }
 
@@ -15917,14 +17355,14 @@ sigma.plugins.colorbrewer = {YlGn: {
         _timeoutHandle = setTimeout(function() {
           self.open(
             n,
-            no,
+            tooltip,
             clientX,
             clientY,
             self.dispatchEvent.bind(self,'shown', event.data));
-        }, no.delay);
+        }, tooltip.delay);
       });
 
-      s.bind(no.hide, function(event) {
+      s.bind(tooltip.hide, function(event) {
         if (event.data.leave && event.data.leave.nodes.length == 0)
           return
         var p = _tooltip;
@@ -15932,37 +17370,11 @@ sigma.plugins.colorbrewer = {YlGn: {
         if (p)
           self.dispatchEvent('hidden', event.data);
       });
+    };
 
-      if (no.show !== 'doubleClickNode') {
-        s.bind('doubleClickNode', function(event) {
-          cancel();
-          _doubleClick = true;
-          self.dispatchEvent('hidden', event.data);
-          setTimeout(function() {
-            _doubleClick = false;
-          }, settings.doubleClickDelay);
-        })
-      }
-    }
-
-    // EDGE tooltip:
-    if (options.edge) {
-      if (options.edge.renderer !== undefined &&
-          typeof options.edge.renderer !== 'function')
-        throw new TypeError('"options.edge.renderer" is not a function, was ' + options.edge.renderer);
-
-      if (options.edge.position !== undefined) {
-        if (options.edge.position !== 'top' &&
-            options.edge.position !== 'bottom' &&
-            options.edge.position !== 'left' &&
-            options.edge.position !== 'right' &&
-            options.edge.position !== 'css') {
-          throw new Error('"options.position" is not "top", "bottom", "left", "right", or "css", was ' + options.position);
-        }
-      }
-
-      s.bind(eo.show, function(event) {
-        if (eo.show !== 'doubleClickEdge' && _doubleClick) {
+    this.bindEdgeEvents = function(tooltip) {
+      s.bind(tooltip.show, function(event) {
+        if (tooltip.show !== 'doubleClickEdge' && _doubleClick) {
           return;
         }
 
@@ -15979,14 +17391,14 @@ sigma.plugins.colorbrewer = {YlGn: {
         _timeoutHandle = setTimeout(function() {
           self.open(
             e,
-            eo,
+            tooltip,
             clientX,
             clientY,
             self.dispatchEvent.bind(self,'shown', event.data));
-        }, eo.delay);
+        }, tooltip.delay);
       });
 
-      s.bind(eo.hide, function(event) {
+      s.bind(tooltip.hide, function(event) {
         if (event.data.leave && event.data.leave.edges.length == 0)
           return
         var p = _tooltip;
@@ -15994,8 +17406,123 @@ sigma.plugins.colorbrewer = {YlGn: {
         if (p)
           self.dispatchEvent('hidden', event.data);
       });
+    };
 
-      if (eo.show !== 'doubleClickEdge') {
+    // STAGE tooltip:
+    if (options.stage) {
+      var hasDoubleClickStage = false;
+
+      for (var i = 0; i < _stageTooltips.length; i++) {
+        if (_stageTooltips[i].renderer !== null &&
+            typeof _stageTooltips[i].renderer !== 'function')
+          throw new TypeError('"options.stage.renderer" is not a function, was ' + _stageTooltips[i].renderer);
+
+        if (_stageTooltips[i].position !== undefined) {
+          if (_stageTooltips[i].position !== 'top' &&
+              _stageTooltips[i].position !== 'bottom' &&
+              _stageTooltips[i].position !== 'left' &&
+              _stageTooltips[i].position !== 'right' &&
+              _stageTooltips[i].position !== 'css') {
+            throw new Error('"options.position" is not "top", "bottom", "left", "right", or "css", was ' + _stageTooltips[i].position);
+          }
+        }
+
+        if (_stageTooltips[i].show === 'doubleClickStage') {
+          hasDoubleClickStage = true;
+        }
+      }
+
+      for (var i = 0; i < _stageTooltips.length; i++) {
+        this.bindStageEvents(_stageTooltips[i]);
+      }
+
+      if (!hasDoubleClickStage) {
+        s.bind('doubleClickStage', function(event) {
+          cancel();
+          _doubleClick = true;
+          self.dispatchEvent('hidden', event.data);
+          setTimeout(function() {
+            _doubleClick = false;
+          }, settings.doubleClickDelay);
+        });
+      }
+    }
+
+    // NODE tooltip:
+    if (options.node) {
+      var hasRightClickNode = false;
+      var hasDoubleClickNode = false;
+
+      for (var i = 0; i < _nodeTooltips.length; i++) {
+        if (_nodeTooltips[i].renderer !== null &&
+            typeof _nodeTooltips[i].renderer !== 'function')
+          throw new TypeError('"options.node.renderer" is not a function, was ' + _nodeTooltips[i].renderer);
+
+        if (_nodeTooltips[i].position !== undefined) {
+          if (_nodeTooltips[i].position !== 'top' &&
+              _nodeTooltips[i].position !== 'bottom' &&
+              _nodeTooltips[i].position !== 'left' &&
+              _nodeTooltips[i].position !== 'right' &&
+              _nodeTooltips[i].position !== 'css') {
+            throw new Error('"options.position" is not "top", "bottom", "left", "right", or "css", was ' + _nodeTooltips[i].position);
+          }
+        }
+
+        if (_nodeTooltips[i].show === 'doubleClickNode') {
+          hasDoubleClickNode = true;
+        } else if (_nodeTooltips[i].show === 'rightClickNode') {
+          hasRightClickNode = true;
+        }
+      }
+
+      for (var i = 0; i < _nodeTooltips.length; i++) {
+        this.bindNodeEvents(_nodeTooltips[i]);
+      }
+
+      if (!hasDoubleClickNode) {
+        s.bind('doubleClickNode', function(event) {
+          cancel();
+          _doubleClick = true;
+          self.dispatchEvent('hidden', event.data);
+          setTimeout(function() {
+            _doubleClick = false;
+          }, settings.doubleClickDelay);
+        });
+      }
+    }
+
+    // EDGE tooltip:
+    if (options.edge) {
+      var hasRightClickEdge = false;
+      var hasDoubleClickEdge = false;
+
+      for (var i = 0; i < _edgeTooltips.length; i++) {
+        if (_edgeTooltips[i].renderer !== null &&
+            typeof _edgeTooltips[i].renderer !== 'function')
+          throw new TypeError('"options.edge.renderer" is not a function, was ' + _edgeTooltips[i].renderer);
+
+        if (_edgeTooltips[i].position !== undefined) {
+          if (_edgeTooltips[i].position !== 'top' &&
+              _edgeTooltips[i].position !== 'bottom' &&
+              _edgeTooltips[i].position !== 'left' &&
+              _edgeTooltips[i].position !== 'right' &&
+              _edgeTooltips[i].position !== 'css') {
+            throw new Error('"options.position" is not "top", "bottom", "left", "right", or "css", was ' + _edgeTooltips[i].position);
+          }
+        }
+
+        if (_edgeTooltips[i].show === 'doubleClickEdge') {
+          hasDoubleClickEdge = true;
+        } else if (_edgeTooltips[i].show === 'rightClickEdge') {
+          hasRightClickEdge = true;
+        }
+      }
+
+      for (var i = 0; i < _edgeTooltips.length; i++) {
+        this.bindEdgeEvents(_edgeTooltips[i]);
+      }
+
+      if (!hasDoubleClickEdge) {
         s.bind('doubleClickEdge', function(event) {
           cancel();
           _doubleClick = true;
@@ -16009,7 +17536,7 @@ sigma.plugins.colorbrewer = {YlGn: {
 
     // Prevent the browser context menu to appear
     // if the right click event is already handled:
-    if (no.show === 'rightClickNode' || eo.show === 'rightClickEdge') {
+    if (hasRightClickNode || hasRightClickEdge) {
       renderer.container.addEventListener(
         'contextmenu',
         contextmenuListener
@@ -17023,6 +18550,9 @@ sigma.plugins.colorbrewer = {YlGn: {
      * RENDERERS SETTINGS:
      * *******************
      */
+    // {string} Indicates how to choose the edge labels color. Available values:
+    //          "edge", "default"
+    edgelabelColor: 'default',
     // {string}
     defaultEdgeLabelColor: '#000',
     // {string}
@@ -17438,9 +18968,244 @@ sigma.plugins.colorbrewer = {YlGn: {
     context.closePath();
     context.fill();
     context.restore();
-  }
+  }    
   };
 }).call(this);
+;(function(undefined) {
+  'use strict';
+
+  if (typeof sigma === 'undefined')
+    throw 'sigma is not declared';
+
+  // Initialize packages:
+  sigma.utils.pkg('sigma.svg.edges.labels');
+
+  /**
+   * The label renderer for curved edges. It renders the label as a simple text.
+   */
+  sigma.svg.edges.labels.curve = {
+
+    /**
+     * SVG Element creation.
+     *
+     * @param  {object}                   edge       The edge object.
+     * @param  {configurable}             settings   The settings function.
+     */
+    create: function(edge, settings) {
+      var prefix = settings('prefix') || '',
+          size = edge[prefix + 'size'],
+          text = document.createElementNS(settings('xmlns'), 'text');
+
+      var fontSize = (settings('labelSize') === 'fixed') ?
+        settings('defaultLabelSize') :
+        settings('labelSizeRatio') * size;
+
+      var fontColor = (settings('edgeLabelColor') === 'edge') ?
+        (edge.color || settings('defaultEdgeColor')) :
+        settings('defaultEdgeLabelColor');
+
+      text.setAttributeNS(null, 'data-label-target', edge.id);
+      text.setAttributeNS(null, 'class', settings('classPrefix') + '-label');
+      text.setAttributeNS(null, 'font-size', fontSize);
+      text.setAttributeNS(null, 'font-family', settings('font'));
+      text.setAttributeNS(null, 'fill', fontColor);
+
+      text.innerHTML = edge.label;
+      text.textContent = edge.label;
+
+      return text;
+    },
+
+    /**
+     * SVG Element update.
+     *
+     * @param  {object}                   edge     The edge object.
+     * @param  {object}                   source   The source node object.
+     * @param  {object}                   target   The target node object.
+     * @param  {DOMElement}               text     The label DOM element.
+     * @param  {configurable}             settings The settings function.
+     */
+    update: function(edge, source, target, text, settings) {
+      var prefix = settings('prefix') || '',
+          size = edge[prefix + 'size'],
+          sSize = source[prefix + 'size'],
+          x = Math.round((source[prefix + 'x'] + target[prefix + 'x']) / 2),
+          y = Math.round((source[prefix + 'y'] + target[prefix + 'y']) / 2),
+          sX = source[prefix + 'x'],
+          sY = source[prefix + 'y'],
+          tX = target[prefix + 'x'],
+          tY = target[prefix + 'y'],
+          dX = tX - sX,
+          dY = tY - sY,
+          translateY = 0,
+          sign = (sX < tX) ? 1 : -1,
+          angle = 0,
+          t = 0.5,  //length of the curve
+          cp = {},
+          c,
+          fontSize = (settings('labelSize') === 'fixed') ?
+          settings('defaultLabelSize') :
+          settings('labelSizeRatio') * size;
+
+      // Case when we don't want to display the label
+      if (!settings('forceLabels') && size < settings('edgeLabelThreshold'))
+        return;
+
+      if (typeof edge.label !== 'string')
+        return;
+
+      if (source.id === target.id) {
+        cp = sigma.utils.getSelfLoopControlPoints(sX, sY, sSize);
+        c = sigma.utils.getPointOnBezierCurve(
+          t, sX, sY, tX, tY, cp.x1, cp.y1, cp.x2, cp.y2
+        );
+      } else {
+        cp = sigma.utils.getQuadraticControlPoint(sX, sY, tX, tY, edge.cc);
+        c = sigma.utils.getPointOnQuadraticCurve(t, sX, sY, tX, tY, cp.x, cp.y);
+      }
+
+      if ('auto' === settings('edgeLabelAlignment')) {
+        translateY = -1 - size;
+        if (source.id === target.id) {
+          angle = 45; // deg
+        }
+        else {
+          angle = Math.atan2(dY * sign, dX * sign) * (180 / Math.PI); // deg
+        }
+      }
+
+      // Updating
+      text.setAttributeNS(null, 'x', c.x);
+      text.setAttributeNS(null, 'y', c.y);
+      text.setAttributeNS(
+        null,
+        'transform',
+        'rotate('+angle+' '+c.x+' '+c.y+') translate(0 '+translateY+')'
+      );
+
+      // Showing
+      text.style.display = '';
+
+      return this;
+    }
+  };
+}).call(this);
+
+;(function(undefined) {
+  'use strict';
+
+  if (typeof sigma === 'undefined')
+    throw 'sigma is not declared';
+
+  // Initialize packages:
+  sigma.utils.pkg('sigma.svg.edges.labels');
+
+  /**
+   * The label renderer for curved arrow edges. It renders the label as a simple text.
+   */
+  sigma.svg.edges.labels.curvedArrow = sigma.svg.edges.labels.curve;
+
+}).call(this);
+
+;(function(undefined) {
+  'use strict';
+
+  if (typeof sigma === 'undefined')
+    throw 'sigma is not declared';
+
+  // Initialize packages:
+  sigma.utils.pkg('sigma.svg.edges.labels');
+
+  /**
+   * The default edge label renderer. It renders the label as a simple text.
+   */
+  sigma.svg.edges.labels.def = {
+
+    /**
+     * SVG Element creation.
+     *
+     * @param  {object}                   edge       The edge object.
+     * @param  {configurable}             settings   The settings function.
+     */
+    create: function(edge, settings) {
+      var prefix = settings('prefix') || '',
+          size = edge[prefix + 'size'],
+          text = document.createElementNS(settings('xmlns'), 'text');
+
+      var fontSize = (settings('labelSize') === 'fixed') ?
+        settings('defaultLabelSize') :
+        settings('labelSizeRatio') * size;
+
+      var fontColor = (settings('edgeLabelColor') === 'edge') ?
+        (edge.color || settings('defaultEdgeColor')) :
+        settings('defaultEdgeLabelColor');
+
+      text.setAttributeNS(null, 'data-label-target', edge.id);
+      text.setAttributeNS(null, 'class', settings('classPrefix') + '-label');
+      text.setAttributeNS(null, 'font-size', fontSize);
+      text.setAttributeNS(null, 'font-family', settings('font'));
+      text.setAttributeNS(null, 'fill', fontColor);
+
+      text.innerHTML = edge.label;
+      text.textContent = edge.label;
+
+      return text;
+    },
+
+    /**
+     * SVG Element update.
+     *
+     * @param  {object}                   edge     The edge object.
+     * @param  {object}                   source   The source node object.
+     * @param  {object}                   target   The target node object.
+     * @param  {DOMElement}               text     The label DOM element.
+     * @param  {configurable}             settings The settings function.
+     */
+    update: function(edge, source, target, text, settings) {
+      var prefix = settings('prefix') || '',
+          size = edge[prefix + 'size'],
+          x = Math.round((source[prefix + 'x'] + target[prefix + 'x']) / 2),
+          y = Math.round((source[prefix + 'y'] + target[prefix + 'y']) / 2),
+          dX,
+          dY,
+          tY = 0,
+          sign,
+          angle = 0,
+          fontSize = (settings('labelSize') === 'fixed') ?
+          settings('defaultLabelSize') :
+          settings('labelSizeRatio') * size;
+
+      if (source.id === target.id)
+        return;
+
+      // Case when we don't want to display the label
+      if (!settings('forceLabels') && size < settings('edgeLabelThreshold'))
+        return;
+
+      if (typeof edge.label !== 'string')
+        return;
+
+      if ('auto' === settings('edgeLabelAlignment')) {
+        dX = target[prefix + 'x'] - source[prefix + 'x'];
+        dY = target[prefix + 'y'] - source[prefix + 'y'];
+        sign = (source[prefix + 'x'] < target[prefix + 'x']) ? 1 : -1;
+        angle = Math.atan2(dY * sign, dX * sign) * (180 / Math.PI); // deg
+        tY = Math.round(-1 - size);
+      }
+
+      // Updating
+      text.setAttributeNS(null, 'x', x);
+      text.setAttributeNS(null, 'y', y);
+      text.setAttributeNS(null, 'transform', 'rotate('+angle+' '+x+' '+y+') translate(0 '+tY+')');
+
+      // Showing
+      text.style.display = '';
+
+      return this;
+    }
+  };
+}).call(this);
+
 ;(function(undefined) {
   'use strict';
 
@@ -17543,7 +19308,7 @@ sigma.plugins.colorbrewer = {YlGn: {
       this.domElements['glyphs'].height = this.container.offsetHeight;
       this.container.insertBefore(
         this.domElements['glyphs'],
-        this.domElements['glyphs'].previousSibling
+        this.domElements['mouse']
       );
     }
     this.drawingContext = this.domElements['glyphs'].getContext('2d');
@@ -17893,8 +19658,8 @@ sigma.plugins.colorbrewer = {YlGn: {
         nHaloStroke = params.nodeHaloStroke || self.settings('nodeHaloStroke'),
         nHaloStrokeColor = params.nodeHaloStrokeColor || self.settings('nodeHaloStrokeColor'),
         nHaloStrokeWidth = params.nodeHaloStrokeWidth || self.settings('nodeHaloStrokeWidth'),
-        borderSize = self.settings('borderSize') || 0,
-        outerBorderSize = self.settings('outerBorderSize') || 0,
+        borderSize = self.settings('nodeBorderSize') || 0,
+        outerBorderSize = self.settings('nodeOuterBorderSize') || 0,
         eHaloColor = params.edgeHaloColor || self.settings('edgeHaloColor'),
         eHaloSize = params.edgeHaloSize || self.settings('edgeHaloSize'),
         drawHalo = params.drawHalo || self.settings('drawHalo'),
@@ -18035,7 +19800,7 @@ sigma.plugins.colorbrewer = {YlGn: {
 
     size = (edge.hover) ?
       settings('edgeHoverSizeRatio') * size : size;
-    var aSize = size * 2.5,
+    var aSize = Math.max(size * 2.5, settings('minArrowSize')),
         d = Math.sqrt(Math.pow(tX - sX, 2) + Math.pow(tY - sY, 2)),
         aX = sX + (tX - sX) * (d - aSize - tSize) / d,
         aY = sY + (tY - sY) * (d - aSize - tSize) / d,
@@ -18121,7 +19886,7 @@ sigma.plugins.colorbrewer = {YlGn: {
     }
 
     // draw label with a background
-    if (sigma.canvas.edges.labels.arrow) {
+    if (sigma.canvas.edges.labels && sigma.canvas.edges.labels.arrow) {
       edge.hover = true;
       sigma.canvas.edges.labels.arrow(edge, source, target, context, settings);
       edge.hover = false;
@@ -18237,7 +20002,7 @@ sigma.plugins.colorbrewer = {YlGn: {
     }
 
     // draw label with a background
-    if (sigma.canvas.edges.labels.curve) {
+    if (sigma.canvas.edges.labels && sigma.canvas.edges.labels.curve) {
       edge.hover = true;
       sigma.canvas.edges.labels.curve(edge, source, target, context, settings);
       edge.hover = false;
@@ -18298,7 +20063,7 @@ sigma.plugins.colorbrewer = {YlGn: {
     }
     else {
       d = Math.sqrt(Math.pow(tX - cp.x, 2) + Math.pow(tY - cp.y, 2));
-      aSize = size * 2.5;
+      aSize = Math.max(size * 2.5, settings('minArrowSize'));
       aX = cp.x + (tX - cp.x) * (d - aSize - tSize) / d;
       aY = cp.y + (tY - cp.y) * (d - aSize - tSize) / d;
       vX = (tX - cp.x) * aSize / d;
@@ -18385,7 +20150,7 @@ sigma.plugins.colorbrewer = {YlGn: {
     }
 
     // draw label with a background
-    if (sigma.canvas.edges.labels.curvedArrow) {
+    if (sigma.canvas.edges.labels && sigma.canvas.edges.labels.curvedArrow) {
       edge.hover = true;
       var def = sigma.canvas.edges.labels.curvedArrow;
       (def.render || def)(edge, source, target, context, settings);
@@ -18500,7 +20265,7 @@ sigma.plugins.colorbrewer = {YlGn: {
     context.restore();
 
     // draw label with a background
-    if (sigma.canvas.edges.labels) {
+    if (sigma.canvas.edges.labels && sigma.canvas.edges.labels.def) {
       edge.hover = true;
       sigma.canvas.edges.labels.def(edge, source, target, context, settings);
       edge.hover = false;
@@ -18609,7 +20374,7 @@ sigma.plugins.colorbrewer = {YlGn: {
     }
 
     // draw label with a background
-    if (sigma.canvas.edges.labels.def) {
+    if (sigma.canvas.edges.labels && sigma.canvas.edges.labels.def) {
       edge.hover = true;
       sigma.canvas.edges.labels.def(edge, source, target, context, settings);
       edge.hover = false;
@@ -18723,7 +20488,7 @@ sigma.plugins.colorbrewer = {YlGn: {
     context.restore();
 
     // draw label with a background
-    if (sigma.canvas.edges.labels) {
+    if (sigma.canvas.edges.labels && sigma.canvas.edges.labels.def) {
       edge.hover = true;
       var def = sigma.canvas.edges.labels.def;
       (def.render || def)(edge, source, target, context, settings);
@@ -18851,7 +20616,7 @@ sigma.plugins.colorbrewer = {YlGn: {
     context.restore();
 
     // draw label with a background
-    if (sigma.canvas.edges.labels) {
+    if (sigma.canvas.edges.labels && sigma.canvas.edges.labels.def) {
       edge.hover = true;
       sigma.canvas.edges.labels.def(edge, source, target, context, settings);
       edge.hover = false;
@@ -18975,7 +20740,7 @@ sigma.plugins.colorbrewer = {YlGn: {
     context.restore();
 
     // draw label with a background
-    if (sigma.canvas.edges.labels) {
+    if (sigma.canvas.edges.labels && sigma.canvas.edges.labels.def) {
       edge.hover = true;
       sigma.canvas.edges.labels.def(edge, source, target, context, settings);
       edge.hover = false;
@@ -19013,7 +20778,7 @@ sigma.plugins.colorbrewer = {YlGn: {
         tX = target[prefix + 'x'],
         tY = target[prefix + 'y'];
 
-    var aSize = size * 2.5,
+    var aSize = Math.max(size * 2.5, settings('minArrowSize')),
         d = Math.sqrt(Math.pow(tX - sX, 2) + Math.pow(tY - sY, 2)),
         aX = sX + (tX - sX) * (d - aSize - tSize) / d,
         aY = sY + (tY - sY) * (d - aSize - tSize) / d,
@@ -19150,7 +20915,14 @@ sigma.plugins.colorbrewer = {YlGn: {
             return key;
           }
         }
-        this[key] = { i: 0, n: 0 };
+
+        if (sortByDirection && this[o.target + ',' + o.source]) {
+          // count a parallel edge if an opposite edge exists
+          this[key] = { i: 1, n: 1 };
+        }
+        else {
+          this[key] = { i: 0, n: 0 };
+        }
         return key;
       },
       inc: function(o) {
@@ -19166,21 +20938,24 @@ sigma.plugins.colorbrewer = {YlGn: {
     edges.forEach(function(edge) {
       key = count.key(edge);
 
-      if (count[key].n > 1) {
-        // update edge type:
-        if (edge.type === 'arrow' || edge.type === 'tapered' ||
-          defaultEdgeType === 'arrow' || defaultEdgeType === 'tapered') {
+      // if the edge has parallel edges:
+      if (count[key].n > 1 || count[key].i > 0) {
+        if (!edge.cc) {
+          // update edge type:
+          if (edge.type === 'arrow' || edge.type === 'tapered' ||
+            defaultEdgeType === 'arrow' || defaultEdgeType === 'tapered') {
 
-          if (!edge.cc_prev_type) {
-            edge.cc_prev_type = edge.type;
+            if (!edge.cc_prev_type) {
+              edge.cc_prev_type = edge.type;
+            }
+            edge.type = 'curvedArrow';
           }
-          edge.type = 'curvedArrow';
-        }
-        else {
-          if (!edge.cc_prev_type) {
-            edge.cc_prev_type = edge.type;
+          else {
+            if (!edge.cc_prev_type) {
+              edge.cc_prev_type = edge.type;
+            }
+            edge.type = 'curve';
           }
-          edge.type = 'curve';
         }
 
         // curvature coefficients
@@ -19189,8 +20964,8 @@ sigma.plugins.colorbrewer = {YlGn: {
       else if (edge.cc) {
         // the edge is no longer a parallel edge
         edge.type = edge.cc_prev_type;
-        edge.cc_prev_type = null;
-        edge.cc = null;
+        edge.cc_prev_type = undefined;
+        edge.cc = undefined;
       }
     });
   };
@@ -19359,7 +21134,7 @@ sigma.plugins.colorbrewer = {YlGn: {
     }
     else {
       d = Math.sqrt(Math.pow(tX - cp.x, 2) + Math.pow(tY - cp.y, 2));
-      aSize = size * 2.5;
+      aSize = Math.max(size * 2.5, settings('minArrowSize'));
       aX = cp.x + (tX - cp.x) * (d - aSize - tSize) / d;
       aY = cp.y + (tY - cp.y) * (d - aSize - tSize) / d;
       vX = (tX - cp.x) * aSize / d;
@@ -20061,7 +21836,12 @@ sigma.plugins.colorbrewer = {YlGn: {
         prefix = settings('prefix') || '',
         size = node[prefix + 'size'] || 1,
         defaultNodeColor = settings('defaultNodeColor'),
-        borderSize = node.border_size || settings('borderSize'),
+        borderSize = node.active ?
+          node.border_size || settings('nodeActiveBorderSize') || settings('nodeBorderSize') :
+          node.border_size || settings('nodeHoverBorderSize') || settings('nodeBorderSize'),
+        outerBorderSize = node.active ?
+          settings('nodeActiveOuterBorderSize') || settings('nodeOuterBorderSize') :
+          settings('nodeOuterBorderSize'),
         alignment = settings('labelAlignment'),
         fontSize = (settings('labelSize') === 'fixed') ?
           settings('defaultLabelSize') :
@@ -20069,14 +21849,16 @@ sigma.plugins.colorbrewer = {YlGn: {
         color = settings('nodeHoverColor') === 'node' ?
           (node.color || defaultNodeColor) :
           settings('defaultNodeHoverColor'),
-        borderColor = settings('nodeBorderColor') === 'default'
-          ? settings('defaultNodeBorderColor')
+        borderColor = settings('nodeHoverBorderColor') === 'default'
+          ? (settings('defaultNodeHoverBorderColor') || settings('defaultNodeBorderColor'))
           : (node.border_color || defaultNodeColor),
-        level = settings('nodeHoverLevel');
+        maxLineLength = settings('maxNodeLabelLineLength') || 0,
+        level = settings('nodeHoverLevel'),
+        lines = getLines(node.label, maxLineLength);
 
     if (alignment !== 'center') {
       prepareLabelBackground(context);
-      drawLabelBackground(alignment, context, fontSize, node);
+      drawLabelBackground(alignment, context, fontSize, node, lines, maxLineLength);
     }
 
     // Level:
@@ -20112,12 +21894,12 @@ sigma.plugins.colorbrewer = {YlGn: {
       }
     }
 
-    // Node border:
+    // Border:
     if (borderSize > 0) {
       context.beginPath();
-      context.fillStyle = settings('nodeBorderColor') === 'node'
+      context.fillStyle = settings('nodeHoverBorderColor') === 'node'
         ? borderColor
-        : settings('defaultNodeBorderColor');
+        : (settings('defaultNodeHoverBorderColor') || settings('defaultNodeBorderColor'));
       context.arc(
         node[prefix + 'x'],
         node[prefix + 'y'],
@@ -20142,7 +21924,7 @@ sigma.plugins.colorbrewer = {YlGn: {
 
     if (alignment === 'center') {
       prepareLabelBackground(context);
-      drawLabelBackground(alignment, context, fontSize, node);
+      drawLabelBackground(alignment, context, fontSize, node, lines, maxLineLength);
     }
 
     // Display the label:
@@ -20165,7 +21947,7 @@ sigma.plugins.colorbrewer = {YlGn: {
           break;
         case 'left':
           context.textAlign = "right";
-          labelOffsetX = - size - borderSize - settings('outerBorderSize') - 3 - labelWidth;
+          labelOffsetX = - size - borderSize - outerBorderSize - 3;
           break;
         case 'top':
           labelOffsetY = - size - 2 * fontSize / 3;
@@ -20185,17 +21967,18 @@ sigma.plugins.colorbrewer = {YlGn: {
         case 'right':
         /* falls through*/
         default:
-          labelOffsetX = size + borderSize + settings('outerBorderSize') + 3;
+          labelOffsetX = size + borderSize + outerBorderSize + 3;
           context.textAlign = "left";
           break;
       }
 
       if (shouldRender) {
-        context.fillText(
-          node.label,
-          Math.round(node[prefix + 'x'] + labelOffsetX),
-          Math.round(node[prefix + 'y'] + labelOffsetY)
-        );
+        var baseX = node[prefix + 'x'] + labelOffsetX,
+            baseY = Math.round(node[prefix + 'y'] + labelOffsetY);
+
+        for (var i = 0; i < lines.length; ++i) {
+          context.fillText(lines[i], baseX, baseY + i * (fontSize + 1));
+        }
       }
     }
 
@@ -20216,13 +21999,21 @@ sigma.plugins.colorbrewer = {YlGn: {
       }
     }
 
-    function drawLabelBackground(alignment, context, fontSize, node) {
+    function drawLabelBackground(alignment, context, fontSize, node, lines, maxLineLength) {
+      var labelWidth =
+        (maxLineLength > 1 && lines.length > 1) ?
+        0.6 * maxLineLength * fontSize :
+        sigma.utils.canvas.getTextWidth(
+          context,
+          settings('approximateLabelWidth'),
+          fontSize,
+          lines[0]
+        );
+
       var x = Math.round(node[prefix + 'x']),
           y = Math.round(node[prefix + 'y']),
-          labelWidth = sigma.utils.canvas.getTextWidth(context,
-            settings('approximateLabelWidth'), fontSize, node.label),
           w = Math.round(labelWidth + 4),
-          h = fontSize + 4,
+          h = h = ((fontSize + 1) * lines.length) + 4,
           e = Math.round(size + fontSize * 0.25);
 
       if (node.label && typeof node.label === 'string') {
@@ -20241,8 +22032,8 @@ sigma.plugins.colorbrewer = {YlGn: {
 
             context.moveTo(x, y + e);
             context.arcTo(x, y, x - e, y, e);
-            context.lineTo(x - w - borderSize - e, y);
-            context.lineTo(x - w - borderSize - e, y + h);
+            context.lineTo(x - w - borderSize - outerBorderSize - e, y);
+            context.lineTo(x - w - borderSize - outerBorderSize - e, y + h);
             context.lineTo(x - e, y + h);
             context.arcTo(x, y + h, x, y + h - e, e);
             context.lineTo(x, y + e);
@@ -20269,8 +22060,8 @@ sigma.plugins.colorbrewer = {YlGn: {
 
             context.moveTo(x, y + e);
             context.arcTo(x, y, x + e, y, e);
-            context.lineTo(x + w + borderSize + e, y);
-            context.lineTo(x + w + borderSize + e, y + h);
+            context.lineTo(x + w + borderSize + outerBorderSize + e, y);
+            context.lineTo(x + w + borderSize + outerBorderSize + e, y + h);
             context.lineTo(x + e, y + h);
             context.arcTo(x, y + h, x, y + h - e, e);
             context.lineTo(x, y + e);
@@ -20283,6 +22074,79 @@ sigma.plugins.colorbrewer = {YlGn: {
 
       context.shadowOffsetY = 0;
       context.shadowBlur = 0;
+    }
+
+    /**
+     * Split a text into several lines. Each line won't be longer than the specified maximum length.
+     * @param {string}  text            Text to split
+     * @param {number}  maxLineLength   Maximum length of a line. A value <= 1 will be treated as "infinity".
+     * @returns {Array<string>}         List of lines
+     */
+    function getLines(text, maxLineLength) {
+      if (text == null) {
+        return [];
+      }
+
+      if (maxLineLength <= 1) {
+        return [text];
+      }
+
+      var words = text.split(' '),
+        lines = [],
+        lineLength = 0,
+        lineIndex = -1,
+        lineList = [],
+        lineFull = true;
+
+      for (var i = 0; i < words.length; ++i) {
+        if (lineFull) {
+          if (words[i].length > maxLineLength) {
+            var parts = splitWord(words[i], maxLineLength);
+            for (var j = 0; j < parts.length; ++j) {
+              lines.push([parts[j]]);
+              ++lineIndex;
+            }
+            lineLength = parts[parts.length - 1].length;
+          } else {
+            lines.push([words[i]
+            ]);
+            ++lineIndex;
+            lineLength = words[i].length + 1;
+          }
+          lineFull = false;
+        } else if (lineLength + words[i].length <= maxLineLength) {
+          lines[lineIndex].push(words[i]);
+          lineLength += words[i].length + 1;
+        } else {
+          lineFull = true;
+          --i;
+        }
+      }
+
+      for (i = 0; i < lines.length; ++i) {
+        lineList.push(lines[i].join(' '))
+      }
+
+      return lineList;
+    }
+
+    /**
+     * Split a word into several lines (with a '-' at the end of each line but the last).
+     * @param {string} word       Word to split
+     * @param {number} maxLength  Maximum length of a line
+     * @returns {Array<string>}   List of lines
+     */
+    function splitWord(word, maxLength) {
+      var parts = [];
+
+      for (var i = 0; i < word.length; i += maxLength - 1) {
+        parts.push(word.substr(i, maxLength - 1) + '-');
+      }
+
+      var lastPartLen = parts[parts.length - 1].length;
+      parts[parts.length - 1] = parts[parts.length - 1].substr(0, lastPartLen - 1) + ' ';
+
+      return parts;
     }
   };
 }).call(this);
@@ -20311,14 +22175,14 @@ sigma.plugins.colorbrewer = {YlGn: {
         fontStyle = node.active ?
           settings('activeFontStyle') : settings('fontStyle'),
         borderSize = node.active ?
-          settings('borderSize') + settings('outerBorderSize') : 0,
+          (node.border_size || settings('nodeActiveBorderSize') || settings('nodeBorderSize')) + (settings('nodeActiveOuterBorderSize') || settings('nodeOuterBorderSize')) :
+          settings('nodeBorderSize') + settings('nodeOuterBorderSize'),
         labelWidth,
+        maxLineLength = settings('maxNodeLabelLineLength') || 0,
         labelOffsetX,
         labelOffsetY,
         shouldRender = true,
-        alignment = settings('labelAlignment'),
-        //ADDED BY RAFA
-        labelMaxLength = settings('labelMaxLength')? settings('labelMaxLength'):-1;
+        alignment = settings('labelAlignment');
 
     if (size <= settings('labelThreshold'))
       return;
@@ -20366,7 +22230,7 @@ sigma.plugins.colorbrewer = {YlGn: {
         break;
       case 'left':
         context.textAlign = "right";
-        labelOffsetX = - size - borderSize - 3 ;
+        labelOffsetX = - size - borderSize - 3;
         break;
       case 'top':
         labelOffsetY = - size - 2 * fontSize / 3;
@@ -20374,6 +22238,7 @@ sigma.plugins.colorbrewer = {YlGn: {
       case 'constrained':
         labelWidth = sigma.utils.canvas.getTextWidth(context,
             settings('approximateLabelWidth'), fontSize, node.label);
+
         if (labelWidth > (size + fontSize / 3) * 2) {
           shouldRender = false;
         }
@@ -20381,6 +22246,7 @@ sigma.plugins.colorbrewer = {YlGn: {
       case 'inside':
         labelWidth = sigma.utils.canvas.getTextWidth(context,
             settings('approximateLabelWidth'), fontSize, node.label);
+
         if (labelWidth <= (size + fontSize / 3) * 2) {
           break;
         }
@@ -20394,20 +22260,85 @@ sigma.plugins.colorbrewer = {YlGn: {
     }
 
     if (shouldRender) {
-      context.fillText(
-        //ADDED BY RAFA
-        (labelMaxLength > 0)? node.label.trunc(labelMaxLength): node.label,
-        Math.round(node[prefix + 'x'] + labelOffsetX),
-        Math.round(node[prefix + 'y'] + labelOffsetY)
-      );
+      var lines = getLines(node.label, maxLineLength),
+        baseX = node[prefix + 'x'] + labelOffsetX,
+        baseY = Math.round(node[prefix + 'y'] + labelOffsetY);
+
+      for (var i = 0; i < lines.length; ++i) {
+        context.fillText(lines[i], baseX, baseY + i * (fontSize + 1));
+      }
     }
   };
-}).call(this);
 
-String.prototype.trunc = String.prototype.trunc ||
-      function(n){
-          return (this.length > n) ? this.substr(0,n-1)+'...' : this;
-      };
+  /**
+  * Split a text into several lines. Each line won't be longer than the specified maximum length.
+  * @param {string}  text            Text to split
+  * @param {number}  maxLineLength   Maximum length of a line. A value <= 1 will be treated as "infinity".
+  * @returns {Array<string>}         List of lines
+  */
+  function getLines(text, maxLineLength) {
+    if (maxLineLength <= 1) {
+      return [text];
+    }
+
+    var words = text.split(' '),
+      lines = [],
+      lineLength = 0,
+      lineIndex = -1,
+      lineList = [],
+      lineFull = true;
+
+    for (var i = 0; i < words.length; ++i) {
+      if (lineFull) {
+        if (words[i].length > maxLineLength) {
+          var parts = splitWord(words[i], maxLineLength);
+          for (var j = 0; j < parts.length; ++j) {
+            lines.push([parts[j]]);
+            ++lineIndex;
+          }
+          lineLength = parts[parts.length - 1].length;
+        } else {
+          lines.push([words[i]
+          ]);
+          ++lineIndex;
+          lineLength = words[i].length + 1;
+        }
+        lineFull = false;
+      } else if (lineLength + words[i].length <= maxLineLength) {
+        lines[lineIndex].push(words[i]);
+        lineLength += words[i].length + 1;
+      } else {
+        lineFull = true;
+        --i;
+      }
+    }
+
+    for (i = 0; i < lines.length; ++i) {
+      lineList.push(lines[i].join(' '))
+    }
+
+    return lineList;
+  }
+
+  /**
+   * Split a word into several lines (with a '-' at the end of each line but the last).
+   * @param {string} word       Word to split
+   * @param {number} maxLength  Maximum length of a line
+   * @returns {Array<string>}   List of lines
+   */
+  function splitWord(word, maxLength) {
+    var parts = [];
+
+    for (var i = 0; i < word.length; i += maxLength - 1) {
+      parts.push(word.substr(i, maxLength - 1) + '-');
+    }
+
+    var lastPartLen = parts[parts.length - 1].length;
+    parts[parts.length - 1] = parts[parts.length - 1].substr(0, lastPartLen - 1) + ' ';
+
+    return parts;
+  }
+}).call(this);
 
 ;(function() {
   'use strict';
@@ -20447,8 +22378,10 @@ String.prototype.trunc = String.prototype.trunc ||
         y = node[prefix + 'y'],
         defaultNodeColor = settings('defaultNodeColor'),
         imgCrossOrigin = settings('imgCrossOrigin') || 'anonymous',
-        borderSize = node.border_size || settings('borderSize'),
-        outerBorderSize = settings('outerBorderSize'),
+        borderSize = node.border_size || settings('nodeBorderSize'),
+        outerBorderSize = settings('nodeOuterBorderSize'),
+        activeBorderSize = node.border_size || settings('nodeActiveBorderSize'),
+        activeOuterBorderSize = settings('nodeActiveOuterBorderSize'),
         color = o.color || node.color || defaultNodeColor,
         borderColor = settings('nodeBorderColor') === 'default'
           ? settings('defaultNodeBorderColor')
@@ -20458,38 +22391,58 @@ String.prototype.trunc = String.prototype.trunc ||
     // Level:
     sigma.utils.canvas.setLevel(level, context);
 
-    // Color:
     if (node.active) {
+      // Color:
       if (settings('nodeActiveColor') === 'node') {
         color = node.active_color || color;
       }
       else {
         color = settings('defaultNodeActiveColor') || color;
       }
-    }
 
-    // Outer border:
-    if (node.active) {
+      // Outer Border:
+      if (activeOuterBorderSize > 0) {
+        context.beginPath();
+        context.fillStyle = settings('nodeActiveOuterBorderColor') === 'node' ?
+          (color || defaultNodeColor) :
+          settings('defaultNodeActiveOuterBorderColor');
+        context.arc(x, y, size + activeBorderSize + activeOuterBorderSize, 0, Math.PI * 2, true);
+        context.closePath();
+        context.fill();
+      }
+      // Border:
+      if (activeBorderSize > 0) {
+        context.beginPath();
+        context.fillStyle = settings('nodeActiveBorderColor') === 'node'
+          ? borderColor
+          : settings('defaultNodeActiveBorderColor');
+        context.arc(x, y, size + activeBorderSize, 0, Math.PI * 2, true);
+        context.closePath();
+        context.fill();
+      }
+    }
+    else {
+      // Outer Border:
       if (outerBorderSize > 0) {
         context.beginPath();
         context.fillStyle = settings('nodeOuterBorderColor') === 'node' ?
           (color || defaultNodeColor) :
           settings('defaultNodeOuterBorderColor');
-        drawCross(node, x, y, size + borderSize + outerBorderSize, context);
+        context.arc(x, y, size + borderSize + outerBorderSize, 0, Math.PI * 2, true);
         context.closePath();
         context.fill();
       }
-    }
 
-    // Border:
-    if (borderSize > 0) {
-      context.beginPath();
-      context.fillStyle = settings('nodeBorderColor') === 'node'
-        ? borderColor
-        : settings('defaultNodeBorderColor');
-      drawCross(node, x, y, size + borderSize, context);
-      context.closePath();
-      context.fill();
+      // Border:
+      if (borderSize > 0) {
+        context.beginPath();
+        context.fillStyle = settings('nodeBorderColor') === 'node'
+          ? borderColor
+          : settings('defaultNodeBorderColor');
+        context.arc(x, y, size + borderSize, 0, Math.PI * 2, true);
+        context.closePath();
+        context.fill();
+      }
     }
 
     // Shape:
@@ -20548,12 +22501,14 @@ String.prototype.trunc = String.prototype.trunc ||
         y = node[prefix + 'y'],
         defaultNodeColor = settings('defaultNodeColor'),
         imgCrossOrigin = settings('imgCrossOrigin') || 'anonymous',
-        borderSize = node.border_size || settings('borderSize'),
-        outerBorderSize = settings('outerBorderSize'),
+        borderSize = node.border_size || settings('nodeBorderSize'),
+        outerBorderSize = settings('nodeOuterBorderSize'),
+        activeBorderSize = node.border_size || settings('nodeActiveBorderSize'),
+        activeOuterBorderSize = settings('nodeActiveOuterBorderSize'),
         color = o.color || node.color || defaultNodeColor,
-	    borderColor = settings('nodeBorderColor') === 'default'
+	      borderColor = settings('nodeBorderColor') === 'default'
           ? settings('defaultNodeBorderColor')
-          : (o.borderColor || node.border_color || defaultNodeColor),
+          : (o.borderColor || node.border_color || node.color || defaultNodeColor),
         level = node.active ? settings('nodeActiveLevel') : node.level;
 
     // Level:
@@ -20569,6 +22524,28 @@ String.prototype.trunc = String.prototype.trunc ||
       }
 
       // Outer Border:
+      if (activeOuterBorderSize > 0) {
+        context.beginPath();
+        context.fillStyle = settings('nodeActiveOuterBorderColor') === 'node' ?
+          (color || defaultNodeColor) :
+          settings('defaultNodeActiveOuterBorderColor');
+        context.arc(x, y, size + activeBorderSize + activeOuterBorderSize, 0, Math.PI * 2, true);
+        context.closePath();
+        context.fill();
+      }
+      // Border:
+      if (activeBorderSize > 0) {
+        context.beginPath();
+        context.fillStyle = settings('nodeActiveBorderColor') === 'node'
+          ? borderColor
+          : settings('defaultNodeActiveBorderColor');
+        context.arc(x, y, size + activeBorderSize, 0, Math.PI * 2, true);
+        context.closePath();
+        context.fill();
+      }
+    }
+    else {
+      // Outer Border:
       if (outerBorderSize > 0) {
         context.beginPath();
         context.fillStyle = settings('nodeOuterBorderColor') === 'node' ?
@@ -20578,6 +22555,7 @@ String.prototype.trunc = String.prototype.trunc ||
         context.closePath();
         context.fill();
       }
+
       // Border:
       if (borderSize > 0) {
         context.beginPath();
@@ -20671,13 +22649,18 @@ String.prototype.trunc = String.prototype.trunc ||
         y = node[prefix + 'y'],
         defaultNodeColor = settings('defaultNodeColor'),
         imgCrossOrigin = settings('imgCrossOrigin') || 'anonymous',
-        borderSize = node.border_size || settings('borderSize'),
-        outerBorderSize = settings('outerBorderSize'),
+        borderSize = node.border_size || settings('nodeBorderSize'),
+        outerBorderSize = settings('nodeOuterBorderSize'),
+        activeBorderSize = node.border_size || settings('nodeActiveBorderSize'),
+        activeOuterBorderSize = settings('nodeActiveOuterBorderSize'),
         color = o.color || node.color || defaultNodeColor,
         borderColor = settings('nodeBorderColor') === 'default'
           ? settings('defaultNodeBorderColor')
           : (o.borderColor || node.border_color || defaultNodeColor),
         level = node.active ? settings('nodeActiveLevel') : node.level;
+
+    // Level:
+    sigma.utils.canvas.setLevel(level, context);
 
     if (node.active) {
       // Color:
@@ -20688,40 +22671,50 @@ String.prototype.trunc = String.prototype.trunc ||
         color = settings('defaultNodeActiveColor') || color;
       }
 
-      // Outer border:
+      // Outer Border:
+      if (activeOuterBorderSize > 0) {
+        context.beginPath();
+        context.fillStyle = settings('nodeActiveOuterBorderColor') === 'node' ?
+          (color || defaultNodeColor) :
+          settings('defaultNodeActiveOuterBorderColor');
+        context.arc(x, y, size + activeBorderSize + activeOuterBorderSize, 0, Math.PI * 2, true);
+        context.closePath();
+        context.fill();
+      }
+      // Border:
+      if (activeBorderSize > 0) {
+        context.beginPath();
+        context.fillStyle = settings('nodeActiveBorderColor') === 'node'
+          ? borderColor
+          : settings('defaultNodeActiveBorderColor');
+        context.arc(x, y, size + activeBorderSize, 0, Math.PI * 2, true);
+        context.closePath();
+        context.fill();
+      }
+    }
+    else {
+      // Outer Border:
       if (outerBorderSize > 0) {
-        // Level:
-        if (level) {
-          setShadow(level, context);
-        }
-
         context.beginPath();
         context.fillStyle = settings('nodeOuterBorderColor') === 'node' ?
           (color || defaultNodeColor) :
           settings('defaultNodeOuterBorderColor');
-        drawDiamond(node, x, y, size + borderSize + outerBorderSize, context);
+        context.arc(x, y, size + borderSize + outerBorderSize, 0, Math.PI * 2, true);
         context.closePath();
         context.fill();
+      }
 
-        if (level) {
-          resetShadow(context);
-        }
+      // Border:
+      if (borderSize > 0) {
+        context.beginPath();
+        context.fillStyle = settings('nodeBorderColor') === 'node'
+          ? borderColor
+          : settings('defaultNodeBorderColor');
+        context.arc(x, y, size + borderSize, 0, Math.PI * 2, true);
+        context.closePath();
+        context.fill();
       }
     }
-
-    // Border:
-    if (borderSize > 0) {
-      context.beginPath();
-      context.fillStyle = settings('nodeBorderColor') === 'node'
-        ? borderColor
-        : settings('defaultNodeBorderColor');
-      drawDiamond(node, x, y, size + borderSize, context);
-      context.closePath();
-      context.fill();
-    }
-
-    // Level:
-    sigma.utils.canvas.setLevel(level, context);
 
     // Shape:
     context.fillStyle = color;
@@ -20795,13 +22788,18 @@ String.prototype.trunc = String.prototype.trunc ||
         y = node[prefix + 'y'],
         defaultNodeColor = settings('defaultNodeColor'),
         imgCrossOrigin = settings('imgCrossOrigin') || 'anonymous',
-        borderSize = node.border_size || settings('borderSize'),
-        outerBorderSize = settings('outerBorderSize'),
+        borderSize = node.border_size || settings('nodeBorderSize'),
+        outerBorderSize = settings('nodeOuterBorderSize'),
+        activeBorderSize = node.border_size || settings('nodeActiveBorderSize'),
+        activeOuterBorderSize = settings('nodeActiveOuterBorderSize'),
         color = o.color || node.color || defaultNodeColor,
         borderColor = settings('nodeBorderColor') === 'default'
           ? settings('defaultNodeBorderColor')
           : (o.borderColor || node.border_color || defaultNodeColor),
         level = node.active ? settings('nodeActiveLevel') : node.level;
+
+    // Level:
+    sigma.utils.canvas.setLevel(level, context);
 
     if (node.active) {
       // Color:
@@ -20812,31 +22810,50 @@ String.prototype.trunc = String.prototype.trunc ||
         color = settings('defaultNodeActiveColor') || color;
       }
 
-      // Outer border:
+      // Outer Border:
+      if (activeOuterBorderSize > 0) {
+        context.beginPath();
+        context.fillStyle = settings('nodeActiveOuterBorderColor') === 'node' ?
+          (color || defaultNodeColor) :
+          settings('defaultNodeActiveOuterBorderColor');
+        context.arc(x, y, size + activeBorderSize + activeOuterBorderSize, 0, Math.PI * 2, true);
+        context.closePath();
+        context.fill();
+      }
+      // Border:
+      if (activeBorderSize > 0) {
+        context.beginPath();
+        context.fillStyle = settings('nodeActiveBorderColor') === 'node'
+          ? borderColor
+          : settings('defaultNodeActiveBorderColor');
+        context.arc(x, y, size + activeBorderSize, 0, Math.PI * 2, true);
+        context.closePath();
+        context.fill();
+      }
+    }
+    else {
+      // Outer Border:
       if (outerBorderSize > 0) {
         context.beginPath();
         context.fillStyle = settings('nodeOuterBorderColor') === 'node' ?
           (color || defaultNodeColor) :
           settings('defaultNodeOuterBorderColor');
-        drawEquilateral(node, x, y, size + borderSize + outerBorderSize, context);
+        context.arc(x, y, size + borderSize + outerBorderSize, 0, Math.PI * 2, true);
+        context.closePath();
+        context.fill();
+      }
+
+      // Border:
+      if (borderSize > 0) {
+        context.beginPath();
+        context.fillStyle = settings('nodeBorderColor') === 'node'
+          ? borderColor
+          : settings('defaultNodeBorderColor');
+        context.arc(x, y, size + borderSize, 0, Math.PI * 2, true);
         context.closePath();
         context.fill();
       }
     }
-
-    // Border:
-    if (borderSize > 0) {
-      context.beginPath();
-      context.fillStyle = settings('nodeBorderColor') === 'node'
-        ? borderColor
-        : settings('defaultNodeBorderColor');
-      drawEquilateral(node, x, y, size + borderSize, context);
-      context.closePath();
-      context.fill();
-    }
-
-    // Level:
-    sigma.utils.canvas.setLevel(level, context);
 
     // Shape:
     context.fillStyle = color;
@@ -20905,13 +22922,18 @@ String.prototype.trunc = String.prototype.trunc ||
         y = node[prefix + 'y'],
         defaultNodeColor = settings('defaultNodeColor'),
         imgCrossOrigin = settings('imgCrossOrigin') || 'anonymous',
-        borderSize = node.border_size || settings('borderSize'),
-        outerBorderSize = settings('outerBorderSize'),
+        borderSize = node.border_size || settings('nodeBorderSize'),
+        outerBorderSize = settings('nodeOuterBorderSize'),
+        activeBorderSize = node.border_size || settings('nodeActiveBorderSize'),
+        activeOuterBorderSize = settings('nodeActiveOuterBorderSize'),
         color = o.color || node.color || defaultNodeColor,
         borderColor = settings('nodeBorderColor') === 'default'
           ? settings('defaultNodeBorderColor')
           : (o.borderColor || node.border_color || defaultNodeColor),
         level = node.active ? settings('nodeActiveLevel') : node.level;
+
+    // Level:
+    sigma.utils.canvas.setLevel(level, context);
 
     if (node.active) {
       // Color:
@@ -20922,31 +22944,50 @@ String.prototype.trunc = String.prototype.trunc ||
         color = settings('defaultNodeActiveColor') || color;
       }
 
-      // Outer border:
+      // Outer Border:
+      if (activeOuterBorderSize > 0) {
+        context.beginPath();
+        context.fillStyle = settings('nodeActiveOuterBorderColor') === 'node' ?
+          (color || defaultNodeColor) :
+          settings('defaultNodeActiveOuterBorderColor');
+        context.arc(x, y, size + activeBorderSize + activeOuterBorderSize, 0, Math.PI * 2, true);
+        context.closePath();
+        context.fill();
+      }
+      // Border:
+      if (activeBorderSize > 0) {
+        context.beginPath();
+        context.fillStyle = settings('nodeActiveBorderColor') === 'node'
+          ? borderColor
+          : settings('defaultNodeActiveBorderColor');
+        context.arc(x, y, size + activeBorderSize, 0, Math.PI * 2, true);
+        context.closePath();
+        context.fill();
+      }
+    }
+    else {
+      // Outer Border:
       if (outerBorderSize > 0) {
         context.beginPath();
         context.fillStyle = settings('nodeOuterBorderColor') === 'node' ?
           (color || defaultNodeColor) :
           settings('defaultNodeOuterBorderColor');
-        drawSquare(node, x, y, size + borderSize + outerBorderSize, context);
+        context.arc(x, y, size + borderSize + outerBorderSize, 0, Math.PI * 2, true);
+        context.closePath();
+        context.fill();
+      }
+
+      // Border:
+      if (borderSize > 0) {
+        context.beginPath();
+        context.fillStyle = settings('nodeBorderColor') === 'node'
+          ? borderColor
+          : settings('defaultNodeBorderColor');
+        context.arc(x, y, size + borderSize, 0, Math.PI * 2, true);
         context.closePath();
         context.fill();
       }
     }
-
-    // Border:
-    if (borderSize > 0) {
-      context.beginPath();
-      context.fillStyle = settings('nodeBorderColor') === 'node'
-        ? borderColor
-        : settings('defaultNodeBorderColor');
-      drawSquare(node, x, y, size + borderSize, context);
-      context.closePath();
-      context.fill();
-    }
-
-    // Level:
-    sigma.utils.canvas.setLevel(level, context);
 
     // Shape:
     context.fillStyle = color;
@@ -21018,13 +23059,18 @@ String.prototype.trunc = String.prototype.trunc ||
         y = node[prefix + 'y'],
         defaultNodeColor = settings('defaultNodeColor'),
         imgCrossOrigin = settings('imgCrossOrigin') || 'anonymous',
-        borderSize = node.border_size || settings('borderSize'),
-        outerBorderSize = settings('outerBorderSize'),
+        borderSize = node.border_size || settings('nodeBorderSize'),
+        outerBorderSize = settings('nodeOuterBorderSize'),
+        activeBorderSize = node.border_size || settings('nodeActiveBorderSize'),
+        activeOuterBorderSize = settings('nodeActiveOuterBorderSize'),
         color = o.color || node.color || defaultNodeColor,
         borderColor = settings('nodeBorderColor') === 'default'
           ? settings('defaultNodeBorderColor')
           : (o.borderColor || node.border_color || defaultNodeColor),
         level = node.active ? settings('nodeActiveLevel') : node.level;
+
+    // Level:
+    sigma.utils.canvas.setLevel(level, context);
 
     if (node.active) {
       // Color:
@@ -21035,31 +23081,50 @@ String.prototype.trunc = String.prototype.trunc ||
         color = settings('defaultNodeActiveColor') || color;
       }
 
-      // Outer border:
+      // Outer Border:
+      if (activeOuterBorderSize > 0) {
+        context.beginPath();
+        context.fillStyle = settings('nodeActiveOuterBorderColor') === 'node' ?
+          (color || defaultNodeColor) :
+          settings('defaultNodeActiveOuterBorderColor');
+        context.arc(x, y, size + activeBorderSize + activeOuterBorderSize, 0, Math.PI * 2, true);
+        context.closePath();
+        context.fill();
+      }
+      // Border:
+      if (activeBorderSize > 0) {
+        context.beginPath();
+        context.fillStyle = settings('nodeActiveBorderColor') === 'node'
+          ? borderColor
+          : settings('defaultNodeActiveBorderColor');
+        context.arc(x, y, size + activeBorderSize, 0, Math.PI * 2, true);
+        context.closePath();
+        context.fill();
+      }
+    }
+    else {
+      // Outer Border:
       if (outerBorderSize > 0) {
         context.beginPath();
         context.fillStyle = settings('nodeOuterBorderColor') === 'node' ?
           (color || defaultNodeColor) :
           settings('defaultNodeOuterBorderColor');
-        drawStar(node, x, y, size + borderSize + outerBorderSize * 2, context);
+        context.arc(x, y, size + borderSize + outerBorderSize, 0, Math.PI * 2, true);
+        context.closePath();
+        context.fill();
+      }
+
+      // Border:
+      if (borderSize > 0) {
+        context.beginPath();
+        context.fillStyle = settings('nodeBorderColor') === 'node'
+          ? borderColor
+          : settings('defaultNodeBorderColor');
+        context.arc(x, y, size + borderSize, 0, Math.PI * 2, true);
         context.closePath();
         context.fill();
       }
     }
-
-    // Border:
-    if (borderSize > 0) {
-      context.beginPath();
-      context.fillStyle = settings('nodeBorderColor') === 'node'
-        ? borderColor
-        : settings('defaultNodeBorderColor');
-      drawStar(node, x, y, size + borderSize, context);
-      context.closePath();
-      context.fill();
-    }
-
-    // Level:
-    sigma.utils.canvas.setLevel(level, context);
 
     // Shape:
     context.fillStyle = color;
@@ -21102,6 +23167,53 @@ String.prototype.trunc = String.prototype.trunc ||
   */
   var settings = {
     /**
+     * NODE BORDERS SETTINGS:
+     * **********************
+     */
+    // {string} Indicates how to choose the nodes border color.
+    //          Available values: "node", "default"
+    nodeBorderColor: 'node,',
+    // defaultNodeBorderColor is set in sigma.settings.
+    // {string} Indicates how to choose the nodes outer border color.
+    //          Available values: "node", "default"
+    nodeOuterBorderColor: '',
+    // {number} The size of the outer border of nodes.
+    nodeOuterBorderSize: 0,
+    // {string} The default node outer border's color.
+    defaultNodeOuterBorderColor: '#000',
+
+    /**
+     * HOVERED NODE BORDERS SETTINGS:
+     * **********************
+     */
+    // {number} The size of the border of hovered nodes.
+    nodeHoverBorderSize: 0,
+    // {string} Indicates how to choose the hovered nodes border color.
+    //          Available values: "node", "default"
+    nodeHoverBorderColor: 'node,',
+    // {number} The default hovered node border's color.
+    defaultNodeHoverBorderColor: '#000',
+
+    /**
+     * ACTIVE NODE BORDERS SETTINGS:
+     * **********************
+     */
+    // {number} The size of the border of active nodes.
+    nodeActiveBorderSize: 0,
+    // {string} Indicates how to choose the active nodes border color.
+    //          Available values: "node", "default"
+    nodeActiveBorderColor: 'node,',
+    // {number} The default active node border's color.
+    defaultNodeActiveBorderColor: '#000',
+    // {string} Indicates how to choose the active nodes outer border color.
+    //          Available values: "node", "default"
+    nodeActiveOuterBorderColor: '',
+    // {number} The size of the outer border of active nodes.
+    nodeActiveOuterBorderSize: 0,
+    // {string} The default active node outer border's color.
+    defaultNodeActiveOuterBorderColor: '#000',
+
+    /**
      * ACTIVE STATE SETTINGS:
      * **********************
      */
@@ -21125,22 +23237,6 @@ String.prototype.trunc = String.prototype.trunc ||
     edgeActiveColor: 'edge',
     // {string}
     defaultEdgeActiveColor: 'rgb(236, 81, 72)',
-
-    /**
-     * NODE BORDERS SETTINGS:
-     * **********************
-     */
-    // {string} Indicates how to choose the nodes border color.
-    //          Available values: "node", "default"
-    nodeBorderColor: 'node,',
-    // defaultNodeBorderColor is set in sigma.settings.
-    // {string} Indicates how to choose the nodes outer border color.
-    //          Available values: "node", "default"
-    nodeOuterBorderColor: '',
-    // {number} The size of the outer border of hovered and active nodes.
-    outerBorderSize: 0,
-    // {string} The default hovered and active node outer border's color.
-    defaultNodeOuterBorderColor: '#000',
 
     /**
      * NODE LEVEL SETTINGS:
@@ -21177,6 +23273,96 @@ String.prototype.trunc = String.prototype.trunc ||
   sigma.settings = sigma.utils.extend(sigma.settings || {}, settings);
 
 }).call(this);
+
+;(function() {
+  'use strict';
+
+  sigma.utils.pkg('sigma.svg.edges');
+
+  /**
+   * It renders the edge as a tapered line.
+   * Danny Holten, Petra Isenberg, Jean-Daniel Fekete, and J. Van Wijk (2010)
+   * Performance Evaluation of Tapered, Curved, and Animated Directed-Edge
+   * Representations in Node-Link Graphs. Research Report, Sep 2010.
+   */
+  sigma.svg.edges.tapered = {
+
+    /**
+     * SVG Element creation.
+     *
+     * @param  {object}                   edge       The edge object.
+     * @param  {object}                   source     The source node object.
+     * @param  {object}                   target     The target node object.
+     * @param  {configurable}             settings   The settings function.
+     */
+    create: function(edge, source, target, settings) {
+      var color = edge.color,
+          prefix = settings('prefix') || '',
+          edgeColor = settings('edgeColor'),
+          defaultNodeColor = settings('defaultNodeColor'),
+          defaultEdgeColor = settings('defaultEdgeColor');
+
+      if (!color)
+        switch (edgeColor) {
+          case 'source':
+            color = source.color || defaultNodeColor;
+            break;
+          case 'target':
+            color = target.color || defaultNodeColor;
+            break;
+          default:
+            color = defaultEdgeColor;
+            break;
+        }
+
+      var polygon = document.createElementNS(settings('xmlns'), 'polygon');
+
+      // Attributes
+      polygon.setAttributeNS(null, 'data-edge-id', edge.id);
+      polygon.setAttributeNS(null, 'class', settings('classPrefix') + '-edge');
+      polygon.setAttributeNS(null, 'fill', color);
+      polygon.setAttributeNS(null, 'fill-opacity', 0.6);
+      polygon.setAttributeNS(null, 'stroke-width', 0);
+
+      return polygon;
+    },
+
+    /**
+     * SVG Element update.
+     *
+     * @param  {object}                   edge       The edge object.
+     * @param  {DOMElement}               polygon    The polygon DOM Element.
+     * @param  {object}                   source     The source node object.
+     * @param  {object}                   target     The target node object.
+     * @param  {configurable}             settings   The settings function.
+     */
+    update: function(edge, polygon, source, target, settings) {
+      var prefix = settings('prefix') || '',
+        sX = source[prefix + 'x'],
+        sY = source[prefix + 'y'],
+        tX = target[prefix + 'x'],
+        tY = target[prefix + 'y'],
+        size = edge[prefix + 'size'] || 1,
+        dist = sigma.utils.getDistance(sX, sY, tX, tY),
+        c,
+        p;
+
+      if (!dist) return; // should be a self-loop
+
+      // Intersection points:
+      c = sigma.utils.getCircleIntersection(sX, sY, size, tX, tY, dist);
+
+      // Path
+      p = tX+','+tY+' '+c.xi+','+c.yi+' '+c.xi_prime+','+c.yi_prime;
+      polygon.setAttributeNS(null, "points", p);
+
+      // Showing
+      polygon.style.display = '';
+
+      return this;
+    }
+  };
+})();
 
 ;(function() {
   'use strict';
@@ -23031,52 +25217,52 @@ String.prototype.trunc = String.prototype.trunc ||
       , authList = []
       , nodes = this.nodes()
       , nodesCount = nodes.length
-      , tempRes = {}
+      , tempRes = {};
 
       if (!isUndirected)
-        isUndirected = false
+        isUndirected = false;
 
       for (var i in nodes) {
 
         if (isUndirected) {
-          hubList.push(nodes[i])
-          authList.push(nodes[i])
+          hubList.push(nodes[i]);
+          authList.push(nodes[i]);
         }
         else {
           if (this.degree(nodes[i].id, 'out') > 0)
-            hubList.push(nodes[i])
+            hubList.push(nodes[i]);
 
           if (this.degree(nodes[i].id, 'in') > 0)
-            authList.push(nodes[i])
+            authList.push(nodes[i]);
         }
 
-        res[nodes[i].id] = { authority : 1, hub: 1 }
+        res[nodes[i].id] = { authority : 1, hub: 1 };
       }
 
-      var done
+      var done;
 
       while (true) {
-        done  = true
+        done  = true;
         var authSum = 0
-          , hubSum = 0
+          , hubSum = 0;
 
         for (var i in authList) {
 
-          tempRes[authList[i].id] = {authority : 1, hub:0 }
+          tempRes[authList[i].id] = {authority : 1, hub:0 };
 
-          var connectedNodes = []
+          var connectedNodes = [];
 
           if (isUndirected)
-            connectedNodes =  this.allNeighborsIndex[authList[i].id]
+            connectedNodes =  this.allNeighborsIndex.get(authList[i].id).keyList();
           else
-            connectedNodes =  this.inNeighborsIndex[authList[i].id]
+            connectedNodes =  this.inNeighborsIndex.get(authList[i].id).keyList();
 
           for (var j in connectedNodes) {
             if (j != authList[i].id)
-              tempRes[authList[i].id].authority += res[j].hub
+              tempRes[authList[i].id].authority += res[connectedNodes[j]].hub;
           }
 
-          authSum += tempRes[authList[i].id].authority
+          authSum += tempRes[authList[i].id].authority;
 
         }
 
@@ -23085,47 +25271,48 @@ String.prototype.trunc = String.prototype.trunc ||
           if (tempRes[hubList[i].id])
             tempRes[hubList[i].id].hub = 1
           else
-            tempRes[hubList[i].id] = {authority: 0, hub : 1 }
+            tempRes[hubList[i].id] = {authority: 0, hub : 1 };
 
-          var connectedNodes = []
+          var connectedNodes = [];
 
           if (isUndirected)
-            connectedNodes =  this.allNeighborsIndex[hubList[i].id]
+            connectedNodes =  this.allNeighborsIndex.get(hubList[i].id).keyList();
           else
-            connectedNodes =  this.outNeighborsIndex[hubList[i].id]
+            connectedNodes =  this.outNeighborsIndex.get(hubList[i].id).keyList();
 
           for (var j in connectedNodes) {
+           // console.log(res[connectedNodes[j]]);
             if (j != hubList[i].id)
-              tempRes[hubList[i].id].hub += res[j].authority
+              tempRes[hubList[i].id].hub += res[connectedNodes[j]].authority;
           }
 
-          hubSum += tempRes[hubList[i].id].hub
+          hubSum += tempRes[hubList[i].id].hub;
 
         }
 
         for (var i in authList) {
-          tempRes[authList[i].id].authority /= authSum
+          tempRes[authList[i].id].authority /= authSum;
 
           if (Math.abs((tempRes[authList[i].id].authority - res[authList[i].id].authority) / res[authList[i].id].authority) >= epsilon)
-            done = false
+            done = false;
         }
 
         for (var i in hubList) {
-          tempRes[hubList[i].id].hub /= hubSum
+          tempRes[hubList[i].id].hub /= hubSum;
 
           if (Math.abs((tempRes[hubList[i].id].hub - res[hubList[i].id].hub) / res[hubList[i].id].hub) >= epsilon)
-            done = false
+            done = false;
         }
-        res = tempRes
+        res = tempRes;
 
-        tempRes = {}
+        tempRes = {};
 
         if (done)
-          break
+          break;
 
       }
 
-      return res
+      return res;
 
     }
   )
