@@ -5,6 +5,7 @@ application.log*
 
 /PaintomicsClient/public_html/js/libs/highcharts-4.1.5/exporting-server/java/highcharts-export/highcharts-export-convert/target/
 /PaintomicsClient/public_html/js/libs/highcharts-4.1.5/exporting-server/java/highcharts-export/highcharts-export-web/target/
+PaintomicsClient/public_html/resources/data/all_species.json
 *.pyc
 PaintomicsServer/.idea/workspace.xml
 PaintomicsServer/src/conf/serverconf.py
