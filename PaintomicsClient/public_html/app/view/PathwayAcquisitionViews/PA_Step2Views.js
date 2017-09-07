@@ -62,14 +62,27 @@ function PA_Step2JobView() {
 
 		var omicSummaryPanelComponents = [{
 			xtype: 'box',
-			cls: "contentbox omicSummaryBox", minHeight: 230,
+			cls: "contentbox omicSummaryBox", minHeight: 240,
 			html: '<div id="about">' +
 			'  <h2 >Feature ID/name translation summary <span class="helpTip" title="For example, for Gene Expression data, the diagram indicated the percentage of the input genes (names or identifiers) which were successfully mapped to a Kegg Gene Identifier."></h2>' +
 			'  <p>' +
 			'    Below you will find an overview of the results after matching the input files against the PaintOmics databases.<br>' +
 			'    As a general rule, the bigger the percentage of mapped features, the better the results obtained in later stages.<br>' +
-			'    If the mapping percentage was low, manually check your results and input data.<br>' +
+			'    If the mapping percentage was low, manually check your results and input data.<br><br>' +
 			((Object.keys(dataDistribution).length > 0) ? '  <a href="javascript:void(0)" id="download_mapping_file"><i class="fa fa-download"></i> Download ID/Name mapping results.</a>' : "") +
+			'  </p>' +
+			'</div>'
+		},
+		{
+			xtype: 'box',
+			cls: "contentbox omicSummaryBox", minHeight: 240,
+			html: '<div id="about">' +
+			'  <h2 >Data distribution summary <span class="helpTip" title=" "></h2>' +
+			'  <p>' +
+			'    The following diagrams show the data distribution summary of each data set provided.<br>' +
+			'    By default the percentiles 10 and 90 will be taken as a reference for the colour scale when generating the heatmaps, but <b>in the <span style="text-decoration: underline;">next step</span> you will be able to change the setting</b> using the "Visual settings" button located in the toolbar, the one showed here.<br>' +
+			'		 <div style="margin: 15px auto;text-align:center;"><img src="resources/images/settingsbutton.png" width="400" height="73" /></div>' +
+			'  </p>' +
 			'</div>'
 		}];
 
@@ -411,6 +424,7 @@ function PA_OmicSummaryPanel(omicName, dataDistribution) {
 			'<div>' +
 			'  <div style="height:195px; overflow:hidden; width:50%; float: right;" id="' + divName + 'data_dstribution_plot"></div>' +
 			'  <div style="height:195px; overflow:hidden; width:50%; " id="' + divName + 'mapping_summary_plot"></div>' +
+			'	 <div style="margin: 0 auto; text-align: center" id="customvalues_' + divName + '_summary"></div>' +
 			'</div>',
 			listeners: {
 				boxready: function() {
@@ -462,6 +476,17 @@ function PA_OmicSummaryPanel(omicName, dataDistribution) {
 					//                    var yAxisMin = Math.floor(me.dataDistribution[9]) ;
 					//                    var yAxisMax = Math.floor(me.dataDistribution[10]) + 0.5;
 					//                    debugger;
+
+
+					// TODO: leave this prepared in case it's needed in the frontpage
+					// Ext.create('Ext.slider.MultiCustom', {
+					// 		 renderTo: "customvalues_" + divName + '_summary',
+					// 		 name: "customslider_" + me.omicName,
+					// 		 width: 240,
+					// 		 minValue: me.dataDistribution[2],
+					// 		 maxValue: me.dataDistribution[8],
+					// 		 customValues: [me.dataDistribution[2], me.dataDistribution[8]]
+					//  });
 
 					$('#' + divName + 'data_dstribution_plot').highcharts({
 						chart: {

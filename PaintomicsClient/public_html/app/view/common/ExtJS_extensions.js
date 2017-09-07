@@ -1242,3 +1242,132 @@ Ext.dom.Element.override((function () {
         }
     };
 }()));
+
+/**
+ * @class Ext.dom.Element
+ */
+Ext.define('Ext.slider.MultiCustom', {
+    // extend: 'Ext.form.FieldContainer',
+    extend: 'Ext.panel.Panel',
+    alias: 'widget.multicustomslider',
+    layout:  {
+      type: 'hbox',
+      align: 'stretch',
+      pack: 'center'
+    },
+
+    style: 'margin: 10px auto;',
+
+    config: {
+      // dataCallback: null,
+      // dataOmic: null,
+      // dataValues: null,
+      minValue: 0,
+      maxValue: 0,
+      customValues: [0, 0]
+      // idMinValue: null,
+      // idMaxValue: null
+    },
+
+    initComponent: function() {
+
+      var me = this;
+
+      // Force the values to be integers
+      // TODO: remove this limitation in the future?
+      me.minValue = Math.round(me.minValue);
+      me.maxValue = Math.round(me.maxValue);
+      me.customValues = [Math.round(me.customValues[0]), Math.round(me.customValues[1])];
+
+      //
+      me.idMinValue =
+
+      this.items = [
+          {
+            xtype: 'hiddenfield',
+            id: me.id + "_customMinValue",
+            name: me.id + "_customMinValue",
+            value: me.customValues[0]
+          },
+          {
+            xtype: 'hiddenfield',
+            id: me.id + "_customMaxValue",
+            name: me.id + "_customMaxValue",
+            value: me.customValues[1]
+          },
+          {
+              xtype: 'numberfield',
+              // hideTrigger: true,
+              // flex: 0.25,
+              // style: 'margin-right:10px',
+              width: 50,
+              name: 'minvalue',
+              // cls: 'unstyled',
+              value: this.customValues[0],
+              minValue: this.minValue,
+              maxValue: this.customValues[1],
+              hideLabel: true,
+              listeners: {
+                  change: function(numberField, newValue, oldValue, eOpts){
+                      this.up('panel').down("numberfield[name=maxvalue]").setMinValue(newValue);
+                      this.up('panel').down('multislider').setValue(0, newValue);
+                  }
+              }
+          },
+          {
+              xtype: 'multislider',
+              flex: 1,
+              values: this.customValues,
+              minValue: this.minValue,
+              maxValue: this.maxValue,
+              hideLabel: true,
+              listeners: {
+                  change: function(slider, newValue, thumb, eOpts){
+                      var newValues = slider.getValues();
+
+                      // Update min/max values
+                      this.up('panel').down('numberfield[name=maxvalue]').setValue(newValues[1]);
+                      this.up('panel').down('numberfield[name=minvalue]').setValue(newValues[0]);
+
+                      this.up('panel').down('hiddenfield[name="' + me.id + "_customMinValue" + '"]').setValue(newValues[0]);
+                      this.up('panel').down('hiddenfield[name="' + me.id + "_customMaxValue" + '"]').setValue(newValues[1]);
+
+                      // me.dataValues.splice(11, 2, ...newValues);
+
+                      // Callback must point to setDataDistributionSummaries(newDistribution, omicName)
+                      // me.dataCallback(me.dataValues, me.dataOmic);
+                  }
+              }
+          },
+          {
+              xtype: 'numberfield',
+              // hideTrigger: true,
+              // flex: 0.25,
+              // style: 'margin-left:10px',
+              width: 50,
+              name: 'maxvalue',
+              // cls: 'unstyled',
+              value: this.customValues[1],
+              minValue: this.customValues[0],
+              maxValue: this.maxValue,
+              listeners: {
+                  change: function(numberField, newValue, oldValue, eOpts){
+                    this.up('panel').down("numberfield[name=minvalue]").setMaxValue(newValue);
+                    this.up('panel').down('multislider').setValue(1, newValue);
+                  }
+              }
+          }
+      ];
+
+      this.callParent(arguments);
+    },
+
+    getValues: function() {
+        return [
+          parseInt(this.down('hiddenfield[name="' + this.id + "_customMinValue" + '"]').getValue()),
+          parseInt(this.down('hiddenfield[name="' + this.id + "_customMaxValue" + '"]').getValue())
+        ];
+    },
+
+
+});

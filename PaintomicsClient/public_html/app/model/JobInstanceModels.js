@@ -155,8 +155,8 @@ function JobInstance(jobID) {
 	*   (indexed by omic name)
 	*/
 	this.getDataDistributionSummaries = function (omicName) {
-		//   0        1       2    3   4     5     6    7    8     9       10
-		//[MAPPED, UNMAPPED, MIN, P10, Q1, MEDIAN, Q3, P90, MAX, MIN_IR, Max_IR]
+		//   0        1       2    3   4     5     6    7    8     9       10      11          12
+		//[MAPPED, UNMAPPED, MIN, P10, Q1, MEDIAN, Q3, P90, MAX, MIN_IR, Max_IR, MIN_CUSTOM, MAX_CUSTOM]
 		if(this.dataDistributionSummaries === undefined){
 			this.dataDistributionSummaries = {};
 
@@ -193,6 +193,14 @@ function JobInstance(jobID) {
 
 		return (omicName? this.dataDistributionSummaries[omicName]: this.dataDistributionSummaries);
 	};
+
+	this.setDataDistributionSummaries = function(dataDistributionSummaries, omicName) {
+		if (omicName) {
+			this.dataDistributionSummaries[omicName] = dataDistributionSummaries;
+		} else {
+			this.dataDistributionSummaries = dataDistributionSummaries;
+		}
+ 	};
 
 	this.loadFromJSON = function (jsonObject) {
 		for(var i in jsonObject){

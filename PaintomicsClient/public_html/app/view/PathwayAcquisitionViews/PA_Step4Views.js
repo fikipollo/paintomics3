@@ -340,9 +340,57 @@ function PA_Step4PathwayView() {
 		}
 
 		var update=false;
+		var me = this;
 		if(!this.visualOptions.colorReferences){
-			this.visualOptions.colorReferences = this.model.getGraphicalOptions().getColorReferences();
-			update=true;
+			var defaultColorReference = this.model.getGraphicalOptions().getColorReferences();
+			var setColorReferences = {};
+
+			// Check if the session already contains the values in plain keys,
+			// then transform them to objects.
+			$(Object.keys(me.visualOptions)).each(function(index, keyOption) {
+					var matches = /colorReferences\[(.*)\]/.exec(keyOption);
+
+					if (matches) {
+						setColorReferences[matches[1]] = me.visualOptions[keyOption];
+
+						delete me.visualOptions[keyOption];
+					}
+			});
+
+			if ($.isEmptyObject(setColorReferences)) {
+				$.each(me.getGeneBasedInputOmics().concat(me.getCompoundBasedInputOmics()), function(index, value) {
+					setColorReferences[value.omicName] = defaultColorReference;
+				});
+			}
+			if (!$.isEmptyObject(setColorReferences)) {
+				this.visualOptions.colorReferences = setColorReferences;
+				update=true;
+			}
+		}
+		if(!this.visualOptions.customValues){
+			var setCustomValues = {};
+
+			$(Object.keys(me.visualOptions)).each(function(index, keyOption) {
+					var matches = /customValues\[(.*)\]/.exec(keyOption);
+
+					if (matches) {
+						var omicName = matches[1];
+						var omicDataDistribution = me.getDataDistributionSummaries(omicName);
+						var omicCustomValues = JSON.parse(me.visualOptions[keyOption]);
+
+						omicDataDistribution.splice(11, 2, ...omicCustomValues);
+
+						me.setDataDistributionSummaries(omicDataDistribution, omicName);
+
+						setCustomValues[matches[1]] = omicCustomValues;
+
+						delete me.visualOptions[keyOption];
+					}
+			});
+			if (!$.isEmptyObject(setCustomValues)) {
+				this.visualOptions.customValues = setCustomValues;
+				update=true;
+			}
 		}
 		if(!this.visualOptions.visibleOmics){
 			this.visualOptions.visibleOmics = this.model.getGraphicalOptions().getVisibleOmics();
@@ -376,6 +424,12 @@ function PA_Step4PathwayView() {
 
 		return this.dataDistributionSummaries;
 	};
+
+	this.setDataDistributionSummaries = (function(dataDistributionSummaries, omicName) {
+		this.getParent().getModel().setDataDistributionSummaries(dataDistributionSummaries, omicName);
+
+		this.dataDistributionSummaries[omicName] = dataDistributionSummaries;
+	}).bind(this);
 
 	//TODO: DOCUMENTAR
 	this.getVisualOptions = function(propertyName) {
@@ -582,16 +636,36 @@ function PA_Step4PathwayView() {
 	//TODO: DOCUMENTAR
 	this.applyVisualSettings = function() {
 		var me = this;
+
 		/********************************************************/
-		/* STEP 1: UPDATE DIAGRAM PANEL		                    */
+		/* STEP 1: UPDATE DATA DISTRIBUTION	SUMMARIES           */
+		/********************************************************/
+		$('input[type=radio][name^=colorByCheckbox]:checked').each(function() {
+			if (this.value == "custom") {
+				var omicName = this.name.split(/_(.+)/)[1];
+				var omicDataDistribution = me.getDataDistributionSummaries(omicName);
+				var omicCustomValues = Ext.ComponentQuery.query('[name="customslider_' + omicName + '"]')[0].getValues();
+				var visualOptionsCustomValues = (me.visualOptions.customValues || {});
+
+				omicDataDistribution.splice(11, 2, ...omicCustomValues);
+
+				visualOptionsCustomValues[omicName] = omicCustomValues;
+
+				me.setVisualOptions("customValues", visualOptionsCustomValues)
+ 				me.setDataDistributionSummaries(omicDataDistribution, omicName);
+			}
+		});
+		/********************************************************/
+		/* STEP 2: UPDATE DIAGRAM PANEL		                    */
 		/********************************************************/
 		this.diagramPanel.updateObserver();
 		/********************************************************/
-		/* STEP 2: UPDATE HEATMAP PANEL		                    */
+		/* STEP 3: UPDATE HEATMAP  & FEATURE SET PANELS         */
 		/********************************************************/
 		(this.globalHeatmapView !== null && this.globalHeatmapView.updateObserver());
+		(this.featureSetDetailsPanel !== null && this.featureSetDetailsPanel.updateObserver());
 		/********************************************************/
-		/* STEP 3. UPDATE THE CACHE
+		/* STEP 4. UPDATE THE CACHE
 		/********************************************************/
 		this.getParent().getController().updateStoredVisualOptions(this.getParent().getModel().getJobID(), this.visualOptions);
 
@@ -1448,7 +1522,7 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 				serie.data = [];
 				scaledValues = [];
 
-				var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences);
+				var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences[omicName]);
 
 				for (var j in values) {
 					serie.data.push({
@@ -1565,7 +1639,7 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 			if (omicValues !== null) {
 				scaledValues = [];
 
-				var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences);
+				var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences[omicName]);
 
 				values = omicValues.getValues();
 				for (var j in values) {
@@ -1788,7 +1862,7 @@ function PA_Step4KeggDiagramFeatureSetSVGBox() {
 				values = omicValues.getValues();
 				boxWidth = boxWidth / values.length;
 
-				var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences);
+				var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences[omicName]);
 
 				for (var j in values) {
 					context.beginPath();
@@ -1983,11 +2057,16 @@ function PA_Step4VisualOptionsView() {
 		/********************************************************/
 		/* STEP 2. UPDATE THE colorReferences OPTION               */
 		/********************************************************/
-		selectedOptions = $("div.lateralOptionsSelector input[name=colorByCheckbox]:checked").first().val();
+		selectedOptions = {};
+		$("div.lateralOptionsSelector input[name^=colorByCheckbox]:checked").each(function(index) {
+			var omicName = $(this).attr("name").split(/_(.+)/)[1];
+
+			selectedOptions[omicName] = $(this).val()
+		});
 		this.getParent().setVisualOptions("colorReferences" , selectedOptions);
 
 		/********************************************************/
-		/* STEP 3. UPDATE THE colorReferences OPTION            */
+		/* STEP 3. UPDATE THE colorScale OPTION            */
 		/********************************************************/
 		selectedOptions = $("div.lateralOptionsSelector input[name=colorScaleCheckbox]:checked").first().val();
 		this.getParent().setVisualOptions("colorScale" , selectedOptions);
@@ -2025,13 +2104,13 @@ function PA_Step4VisualOptionsView() {
 			' </div>';
 		}
 
-		omicsAux = me.getParent().getCompoundBasedInputOmics();
+		var omicsCompounds = me.getParent().getCompoundBasedInputOmics();
 		windowContent += '<h5>Compound based omics</h5>';
-		for (var i in omicsAux) {
+		for (var i in omicsCompounds) {
 			windowContent +=
 			' <div class="checkbox">'+
-			'  <input ' + ((visualOptions.visibleOmics.indexOf(omicsAux[i].omicName + "#compoundbased") > -1) ? "checked" : "") + ' type="checkbox" id="' + omicsAux[i].omicName + '#compoundbased' + '">'+
-			'  <label for="' + omicsAux[i].omicName + '#compoundbased">' + omicsAux[i].omicName + '</label>'+
+			'  <input ' + ((visualOptions.visibleOmics.indexOf(omicsCompounds[i].omicName + "#compoundbased") > -1) ? "checked" : "") + ' type="checkbox" id="' + omicsCompounds[i].omicName + '#compoundbased' + '">'+
+			'  <label for="' + omicsCompounds[i].omicName + '#compoundbased">' + omicsCompounds[i].omicName + '</label>'+
 			' </div>';
 		}
 
@@ -2042,12 +2121,26 @@ function PA_Step4VisualOptionsView() {
 		'</div>' + //CLOSE "CHOOSE OMICS TO DRAW" SECTION
 		'<div class="lateralOptionsSelector">' +
 		'  <h4>Coloring options</h4>' +
-		'  <h5>Reference values</h5>'+
-		'  <div>' +
-		'    <div class="radio"><input '+ ((visualOptions.colorReferences ==="p10p90")?"checked ":"") +'type="radio" id="colorByCheckbox1" name="colorByCheckbox" value="p10p90"><label for="colorByCheckbox1">Percentiles 10 and 90</label></div>' +
-		'    <div class="radio"><input '+ ((visualOptions.colorReferences ==="absoluteMinMax")?"checked ":"") +'type="radio" id="colorByCheckbox2" name="colorByCheckbox" value="absoluteMinMax"><label for="colorByCheckbox2">Global Min/Max (including outliers).</label></div>' +
-		'    <div class="radio"><input '+ ((visualOptions.colorReferences ==="riMinMax")?"checked ":"") +'type="radio" id="colorByCheckbox3" name="colorByCheckbox" value="riMinMax"><label for="colorByCheckbox3">Global Min/Max (without outliers).</label></div>' +
+		'  <h5>Reference values</h5>' +
+		'  <div>';
+
+		// Add a fieldset for each omic
+		 $.each(omicsAux.concat(omicsCompounds), function(index, omicObject) {
+			 var omic = omicObject.omicName;
+
+			 windowContent +=
+			 '<fieldset>' +
+			 '		<legend>' + omic + '</legend>' +
+			 '    <div class="radio"><input '+ ((visualOptions.colorReferences[omic] ==="p10p90")?"checked ":"") +'type="radio" id="colorByCheckbox1_' + omic + '" name="colorByCheckbox_' + omic + '" value="p10p90"><label for="colorByCheckbox1_' + omic + '">Percentiles 10 and 90</label></div>' +
+			 '    <div class="radio"><input '+ ((visualOptions.colorReferences[omic] ==="absoluteMinMax")?"checked ":"") +'type="radio" id="colorByCheckbox2_' + omic + '" name="colorByCheckbox_' + omic + '" value="absoluteMinMax"><label for="colorByCheckbox2_' + omic + '">Global Min/Max (including outliers).</label></div>' +
+			 '    <div class="radio"><input '+ ((visualOptions.colorReferences[omic] ==="riMinMax")?"checked ":"") +'type="radio" id="colorByCheckbox3_' + omic + '" name="colorByCheckbox_' + omic + '" value="riMinMax"><label for="colorByCheckbox3_' + omic + '">Global Min/Max (without outliers).</label></div>' +
+			 '    <div class="radio"><input '+ ((visualOptions.colorReferences[omic] ==="custom")?"checked ":"") +'type="radio" id="colorByCheckbox4_' + omic + '" name="colorByCheckbox_' + omic + '" value="custom"><label for="colorByCheckbox4_' + omic + '">Custom values</label></div>' +
+			 '	  <div class="radio" id="colorByCheckbox5_' + omic + '"></div>' +
+'</fieldset>';
+		 });
+
 		//'    <div class="radio"><input type="radio" id="colorByCheckbox4" name="colorByCheckbox" value="localMinMax"><label for="colorByCheckbox4">Local Min/Max (for current pathway).</label></div>' +
+		windowContent +=
 		'  </div>' +
 		'  <h5>Color scale</h5>' +
 		'  <div>' +
@@ -2058,31 +2151,70 @@ function PA_Step4VisualOptionsView() {
 		'</div>'; //advanceOptionsPanel
 
 		this.component = Ext.widget({
-			xtype: "box", cls: "lateralOptionsPanel", width: 300,  height: ($("#mainViewCenterPanel").height() - 100),
-			html:
-			"<div class='lateralOptionsPanel-header' style='background: #d9534f;'>" +
-			'  <div class="lateralOptionsPanel-toolbar">' +
-			'    <a href="javascript:void(0)" class="toolbarOption btn-danger helpTip" id="hideVisualSettingsPanelButton" title="Close this panel"><i class="fa fa-times"></i></a>' +
-			'  </div>' +
-			"  <h2>Visual settings</h2>" +
-			"</div>" +
-			"<div class='lateralOptionsPanel-body'>" +
-			windowContent + '    <a href="javascript:void(0)" class="button btn-success helpTip" id="applyVisualSettingsButton" style="margin-top: 20px;" title="Apply changes"><i class="fa fa-check"></i> Apply</a>' +
-			"</div>",
-			listeners: {
-				boxready: function() {
-					//SOME EVENT HANDLERS
-					$("#hideVisualSettingsPanelButton").click(function() {
-						me.toggle(false);
-					});
-					$("#applyVisualSettingsButton").click(function() {
-						me.applyVisualSettings();
-					});
-				},
-				beforedestroy: function() {
-					me.getModel().deleteObserver(me);
+			xtype: "container", cls: "lateralOptionsPanel",  width: 300, height: ($("#mainViewCenterPanel").height() - 100),
+			items:[{
+				xtype: "box",
+				html:
+				"<div class='lateralOptionsPanel-header' style='background: #d9534f;'>" +
+				'  <div class="lateralOptionsPanel-toolbar">' +
+				'    <a href="javascript:void(0)" class="toolbarOption btn-danger helpTip" id="hideVisualSettingsPanelButton" title="Close this panel"><i class="fa fa-times"></i></a>' +
+				'  </div>' +
+				"  <h2>Visual settings</h2>" +
+				"</div>" +
+				"<div class='lateralOptionsPanel-body'>" +
+				windowContent + '    <a href="javascript:void(0)" class="button btn-success helpTip" id="applyVisualSettingsButton" style="margin-top: 20px;margin-bottom: 20px;" title="Apply changes"><i class="fa fa-check"></i> Apply</a>' +
+				"</div>",
+				listeners: {
+					boxready: function() {
+						//SOME EVENT HANDLERS
+						$("#hideVisualSettingsPanelButton").click(function() {
+							me.toggle(false);
+						});
+						$("#applyVisualSettingsButton").click(function() {
+							me.applyVisualSettings();
+						});
+
+						// CREATE CUSTOM SLIDERS FOR EACH OMIC
+						var PA4View = me.getParent("PA_Step4PathwayView");
+						var omicDistributions = PA4View.getDataDistributionSummaries();
+
+						$.each(omicsAux.concat(omicsCompounds), function(index, omicObject) {
+							 var omic = omicObject.omicName;
+							 var omicValues = getMinMax(omicDistributions[omic], "absoluteMinMax");
+							 var defaultOmicValues = [omicValues.min, omicValues.max];
+							 var customOmicValues = (PA4View.visualOptions.hasOwnProperty("customValues") ?
+							 (PA4View.visualOptions.customValues[omic] || defaultOmicValues) : defaultOmicValues );
+
+							 var customSlider = Ext.create('Ext.slider.MultiCustom', {
+						        renderTo: "colorByCheckbox5_" + omic,
+										name: "customslider_" + omic,
+						        //hideLabel: false,
+						        width: 240,
+						        minValue: omicValues.min,
+						        maxValue: omicValues.max,
+										customValues: [customOmicValues[0], customOmicValues[1]],
+										disabled: ($('input[type=radio][name="colorByCheckbox_' + omic + '"]:checked').val() !== "custom"),
+						   	});
+
+								$('input[type=radio][name="colorByCheckbox_' + omic + '"]').change(function() {
+									 if (this.value !== "custom") {
+										 customSlider.disable();
+									 }	else {
+										 customSlider.enable();
+									 }
+								 });
+							});
+					},
+					resize: function( view, width, height, oldWidth, oldHeight, eOpts ){
+						var componentHeight = $(view.getEl().dom).outerHeight();
+						var headerHeight = $(view.getEl().dom).find(".lateralOptionsPanel-header").outerHeight() + 10;
+						$(view.getEl().dom).find(".lateralOptionsPanel-body").height($("#mainViewCenterPanel").height() - headerHeight - 100);
+					},
+					beforedestroy: function() {
+						me.getModel().deleteObserver(me);
+					}
 				}
-			}
+			}]
 		});
 		return this.component;
 	};
@@ -2574,7 +2706,7 @@ function PA_Step4GlobalHeatmapView() {
 		for (var i = omicsValues.length - 1; i >= 0; i--) {
 			//restart the x coordinate
 			x = 0;
-			var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences);
+			var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences[omicName]);
 
 			//Get the values and the name for the new serie
 			featureValues = omicsValues[i].values;
@@ -3073,7 +3205,7 @@ function PA_Step4DetailsView() {
 			//Add the name for the row (e.g. MagoHb or "miRNA my_mirnaid_1")
 			yAxisCat.push((omicsValues[i].isRelevant === true ? "* " : "") + omicsValues[i].keggName + "#" + shownameValue);
 
-			var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences);
+			var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences[omicName]);
 
 			for (var j in featureValues) {
 				serie.data.push({
@@ -3158,7 +3290,7 @@ function PA_Step4DetailsView() {
 		var series = [], maxX = -1;
 		var yAxisItem = {title: null}, omicsValue, auxValues;
 
-		var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences);
+		var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences[omicName]);
 
 
 		for (var i in omicsValues) {

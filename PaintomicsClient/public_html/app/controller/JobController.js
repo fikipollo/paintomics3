@@ -95,7 +95,7 @@ function JobController() {
 
 		//CHECK FORM VALIDITY
 		if (jobView.checkForm() === true) {
-			
+
 			var regionURL = SERVER_URL_DM_FROMBED2GENES;
 			var miRNAURL = SERVER_URL_DM_FROMMIRNA2GENES;
 
@@ -310,6 +310,16 @@ function JobController() {
 			var me = this;
 			showInfoMessage("Obtaining Pathways list...", {logMessage: "Sending new request (get pathway list).", showSpin: true});
 
+			// TODO: disabled code, allow setting customValues from step2
+			// Get omicNames and customValues from view
+			// jobView.getModel().getCompoundBasedInputOmics().concat(jobView.getModel().getGeneBasedInputOmics());
+			// var omicNames = ...
+			// var omicValues = {};
+			//
+			// $(omicNames).each(function(omic) {
+			// 		omicValues[omic] = Ext.ComponentQuery.query('[name="customslider_' + omic + '"]')[0].getValues();
+			// });
+
 			$.ajax({
 				type: "POST",
 				headers: {"Content-Encoding": "gzip"},
@@ -317,6 +327,8 @@ function JobController() {
 				data: {
 					jobID: jobView.getModel().getJobID(),
 					selectedCompounds: jobView.getSelectedCompounds()
+					// omicNames: omicNames,
+					// customValues: omicValues
 				},
 				success: function (response) {
 					console.log("JOB " + response.jobID + " is queued ");
@@ -711,10 +723,20 @@ function JobController() {
 		/********************************************************/
 		visualOptions.jobID = jobID;
 
+		// Avoid override of values
+		var visualOptionsClone = jQuery.extend(true, {}, visualOptions);
+
+		// Transform customValues to plain text JSON representation
+		if (visualOptionsClone.customValues) {
+			Object.keys(visualOptionsClone.customValues).map(function(key, index) {
+				visualOptionsClone.customValues[key] = JSON.stringify(visualOptionsClone.customValues[key]);
+			});
+		}
+
 		$.ajax({
 			method: "POST",
 			url: SERVER_URL_PA_SAVE_VISUAL_OPTIONS,
-			data: visualOptions,
+			data: visualOptionsClone,
 			success: function (response) {
 				console.info(Date.logFormat() + "Visual options saved succesfully.");
 			},

@@ -2928,8 +2928,12 @@ function PA_Step3PathwayClassificationView() {
 		* @returns {Array}
 		*/
 		var getMinMax = function(dataDistributionSummaries, option) {
-			//   0        1       2    3    4    5     6,   7   8      9        10
-			//[MAPPED, UNMAPPED, MIN, P10, Q1, MEDIAN, Q3, P90, MAX, MIN_IR, Max_IR]
+			// The two last positions are not always present, and are added when restoring
+			// visual settings options on some views. Thus, they are not saved in the omicSummary
+			// property, but on visual settings table.
+			//
+			//   0        1       2    3    4    5     6,   7   8      9        10      11          12
+			//[MAPPED, UNMAPPED, MIN, P10, Q1, MEDIAN, Q3, P90, MAX, MIN_IR, Max_IR, MIN_CUSTOM, MAX_CUSTOM]]
 			var min, max, absMin, absMax;
 
 			absMax = ((dataDistributionSummaries[8] < 0) ? 0 : Math.max(Math.abs(dataDistributionSummaries[2]), Math.abs(dataDistributionSummaries[8])));
@@ -2950,6 +2954,16 @@ function PA_Step3PathwayClassificationView() {
 
 				absMax = ((dataDistributionSummaries[8] < 0) ? 0 : Math.max(Math.abs(dataDistributionSummaries[2]), Math.abs(dataDistributionSummaries[8])));
 				absMin = ((dataDistributionSummaries[2] > 0) ? 0 : -absMax);
+			} else if (option == "custom") { //USE SLIDER CUSTOM VALUES
+				if (dataDistributionSummaries.length < 12) {
+					console.error("No custom range provided: using absolute min/max");
+
+					max = absMax;
+					min = absMin;
+				} else {
+					max = ((dataDistributionSummaries[12] < 0) ? 0 : Math.max(Math.abs(dataDistributionSummaries[11]), Math.abs(dataDistributionSummaries[12])));
+					min = ((dataDistributionSummaries[11] > 0) ? 0 : -max);
+				}
 			} else {
 				console.error("getMinMax:" + option + "Not implemented!!");
 				debugger;
