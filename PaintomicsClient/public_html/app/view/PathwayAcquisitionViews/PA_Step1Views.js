@@ -279,7 +279,7 @@ function PA_Step1JobView() {
 						emptyText: 'Please choose an organism',
 						displayField: 'name',
 						valueField: 'value',
-						editable: false,
+						queryMode: 'local',
 						store: Ext.create('Ext.data.ArrayStore', {
 							fields: ['name', 'value'],
 							autoLoad: true,
@@ -1310,7 +1310,7 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 	};
 	this.setContent = function(target, values) {
 		var component = this.getComponent().queryById(target);
-		
+
 		if (values.title) {
 			component.queryById("omicNameField").setValue(values.title);
 		}
@@ -1366,7 +1366,7 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 				itemId: "toogleMapRegions",
 				hidden: !this.allowToogle,
 				html: '<div class="checkbox" style=" margin: 10px 50px; font-size: 16px; "><input type="checkbox" id="' + this.namePrefix + '_mapRegions"><label for="' + this.namePrefix + '_mapRegions">My miRNAs are already mapped to Gene IDs, skip this step.</label></div>'
-			}, 
+			},
 			{
 				xtype: "container",
 				itemId: "itemsContainerAlt",
