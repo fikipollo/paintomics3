@@ -29,6 +29,7 @@ function Pathway(ID) {
     this.ID = ID;
     this.name = "";
     this.classification = "";
+    this.source = "KEGG";
     this.pValue = 0;
     this.matchedCompounds = []; //IDENTIFIERS OF MATCHED COMPOUNDS, DATA IS AT JOBINSTANCE
     this.matchedGenes = []; //IDENTIFIERS OF MATCHED GENES, DATA IS AT JOBINSTANCE
@@ -63,7 +64,13 @@ function Pathway(ID) {
         this.url = classification;
     };
     this.getClassification = function () {
-        return this.classification;
+        return this.classification.toString();
+    };
+    this.setSource = function (source) {
+        this.source = source;
+    };
+    this.getSource = function () {
+        return this.source;
     };
     this.setPvalue = function (pValue) {
         this.pValue = pValue;
@@ -144,6 +151,9 @@ function Pathway(ID) {
         }
         if (jsonObject.classification !== undefined) {
             this.classification = jsonObject.classification;
+        }
+        if (jsonObject.source !== undefined) {
+            this.source = jsonObject.source;
         }
         if (jsonObject.pValue !== undefined) {
             this.pValue = parseFloat(jsonObject.pValue);

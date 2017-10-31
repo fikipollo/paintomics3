@@ -1,6 +1,7 @@
 #!/usr/bin/python
-import os, csv, json
-from time import sleep
+import os, csv, json, shutil, re, itertools, glob
+from collections import defaultdict, Counter
+from time import sleep, strftime
 from sys import argv, stdout, stderr, path
 from subprocess import check_call, check_output, CalledProcessError
 
@@ -17,6 +18,10 @@ class XREF_Entry (object):
         self._id = _id
     def getID(self):
         return self._id
+    def setDisplayID(self, display_id):
+        self.display_id = display_id
+    def getDisplayID(self):
+        return self.display_id
     def __str__(self):
         return "{_id : " + self._id + "display_id : " + self.display_id + "dbname_id : " + self.dbname_id + "description : " + self.description + "}"
     def __repr__(self):
@@ -611,6 +616,128 @@ def processVegaData():
 
     return total_lines
 
+
+def processMapManMappingData():
+    global external_mapping, kegg_id_2_refseq_tid
+
+    # TODO: split into different types of IDs? Seems like potato can have at least two (PGSC and ITAG)
+    # keep it simple just to try.
+    #STEP 1. Register databases and get the assigned IDs
+    mapman_gene_db_id = insertDatabase(DBNAME_Entry("mapman_gene_id", "MapMan Gene identifier", "Identifier"))
+    kegg_id_db_id = insertDatabase(DBNAME_Entry("kegg_id", "KEGG Feature ID", "Identifier"))
+    # mapman_id_db_id = insertDatabase(DBNAME_Entry("mapman_id", "Mapman Feature ID", "Identifier"))
+
+    # XREF descriptions
+    mapman_gene_desc = "Extracted from MapMan Database"
+    # mapman_feature_desc = "Extracted from Mapman Database (GENE 2 MAPMAN file)"
+    ncbi_kegg_desc = "Extracted from KEGG Database (NCBI Gene ID 2 KEGG  file)"
+
+    #STEP 2. READ THE UniProt 2 KEGG FILE but DO NOT process it as it will be done in "processKEGGMappingData
+    # Instead, load the contents and keep as a link table to KEGG gene ids
+    ncbi_file_name= DATA_DIR + "mapping/" + "ncbi-geneid2kegg.list"
+    if not os.path.isfile(ncbi_file_name):
+        stderr.write("\n\nUnable to find the NCBI 2 KEGG MAPPING file: " + ncbi_file_name + "\n")
+        exit(1)
+
+    # File containing MapMan genes to MapMan feature IDs
+    mapman_resource = EXTERNAL_RESOURCES.get("mapman_gene")[0]
+    mapman_file_name = DATA_DIR + "mapping/" + mapman_resource.get("output")
+    if not os.path.isfile(mapman_file_name):
+        stderr.write("\n\nUnable to find the MapMan Gene 2 MapMan ID MAPPING file: " + mapman_file_name + "\n")
+        exit(1)
+
+    # File containing MapMan genes to NCBI genes
+    mapman_kegg_resource = EXTERNAL_RESOURCES.get("mapman_kegg")[0]
+    mapman_kegg_file_name = DATA_DIR + "mapping/" + mapman_kegg_resource.get("output")
+    if not os.path.isfile(mapman_kegg_file_name):
+        stderr.write("Unable to find the MapMan Gene to KEGG ID MAPPING file: " + mapman_kegg_file_name)
+        exit(1)
+
+    # Initialize the mapping_dict NCBI Gene ID => [many possible KEGG_IDs]
+    ncbi_mapping_dict = defaultdict(list)
+
+    with open(ncbi_file_name, 'r') as mapping_file:
+        dict_reader = csv.DictReader(mapping_file, fieldnames=["ncbi_gene", "kegg_id"], delimiter="\t")
+        for mapping_entry in dict_reader:
+            # Remove prefix
+            ncbi_mapping_dict[mapping_entry["ncbi_gene"].replace("ncbi-geneid:", "")] += [mapping_entry["kegg_id"].replace(SPECIE + ":", "")]
+
+    # Initialize the mapping dict MapmMan Gene => [many possible MapMan feature IDs]
+    external_mapping = defaultdict(list)
+
+    with open(mapman_file_name, 'r') as mapping_file:
+        dict_reader = csv.DictReader(mapping_file, fieldnames=["mapman_gene", "version", "mapman_ids"], delimiter="\t")
+        for mapping_entry in dict_reader:
+            # Each gene might be associated to multiple terms
+            ontology_terms = mapping_entry["mapman_ids"].split()
+
+            # Prepare the dictionary in the form <Term>: [<list of genes>]
+            for ontology_term in ontology_terms:
+                external_mapping[ontology_term].extend([mapping_entry["mapman_gene"]])
+
+    total_lines = int(check_output(['wc', '-l', mapman_kegg_file_name]).split(" ")[0])
+
+     with open(mapman_kegg_file_name, 'r') as mapman_file:
+        i = 0
+        prev = -1
+        errorMessage = ""
+        file_reader = csv.reader(mapman_file, delimiter="\t")
+        genes_present = set()
+
+        for mapping_entry in file_reader:
+            i += 1
+
+            ncbi_gene_id = mapping_entry[1]
+            gene_id = mapping_entry[0]
+
+            prev = showPercentage(i, total_lines, prev, errorMessage)
+
+            # If the gene is present in the mapping dict, we use the KEGG ID transcript id to link
+            # each with one another, otherwise we leave the gene to be linked with "itself" later
+            # in the dump process.
+            try:
+                external_gi = insertXREF(XREF_Entry(gene_id, mapman_gene_db_id, mapman_gene_desc))
+
+                # Keep track of the genes located in this file
+                genes_present.add(gene_id)
+
+                # Insert link with KEGG features (if available)
+                if ncbi_gene_id in ncbi_mapping_dict:
+
+                        mapped_kegg_ids = ncbi_mapping_dict[ncbi_gene_id]
+
+                        # Add a reference for each one
+                        for kegg_id in mapped_kegg_ids:
+                            kegg_gi = insertXREF(XREF_Entry(kegg_id, kegg_id_db_id, ncbi_kegg_desc))
+
+                            transcript_id = kegg_id_2_refseq_tid.get(kegg_gi,
+                                                                 generateRandomID())  # Try to reuse the ids for random transcripts
+                            kegg_id_2_refseq_tid[kegg_gi] = transcript_id
+
+                            insertTR_XREF(external_gi, transcript_id)
+                            insertTR_XREF(kegg_gi, transcript_id)
+
+                # If no mates were linked, add a transcript with itself
+                if not xref2transcript.has_key(external_gi):
+                    insertTR_XREF(external_gi, generateRandomID())
+            except Exception as ex:
+                errorMessage = "FAILED WHILE PROCESSING " + mapman_kegg_file_name +" MAPPING FILE [line " + str(i) + "]: "+ ex.message
+
+        # If we still have info about other genes not present in that file, add them
+        all_genes = set(list(itertools.chain.from_iterable(external_mapping.values())))
+
+        for remaining_gene in all_genes.difference(genes_present):
+            gene_gi = insertXREF(XREF_Entry(remaining_gene, mapman_gene_db_id, mapman_gene_desc))
+
+            insertTR_XREF(gene_gi, generateRandomID())
+
+    version = open(DATA_DIR + 'MAPMAN_MAPPING', 'w')
+    version.write("# CREATION DATE:\t" + strftime("%Y%m%d %H%M"))
+    version.close()
+
+    return total_lines
+
+
 #**************************************************************************
 #  _  ________ _____  _____
 # | |/ /  ____/ ____|/ ____|
@@ -831,6 +958,296 @@ def processKEGG2CompoundSymbolMappingData(file_name):
 
     return total_lines
 
+def processMapManPathwaysData():
+    from DBManager import generateThumbnail
+    import xml.etree.ElementTree as XMLParser
+
+    # Declare later used variables
+    FAILED_LINES["MAPMAN PATHWAYS"] = []
+    NODES = {}
+    EDGES = []
+
+    if not len(external_mapping):
+        stderr.write("The MapMan dictionary is not filled. Mapping files must be processed first.")
+        exit(1)
+
+    # Check if classification file exists
+    mapman_classification_resource = EXTERNAL_RESOURCES.get("mapman_classification")[0]
+    mapman_classification_file_name = DATA_DIR + "mapping/" + mapman_classification_resource.get("output")
+
+    if not os.path.isfile(mapman_classification_file_name):
+        stderr.write("\n\nUnable to find the MapMan classification file: " + mapman_classification_file_name + "\n")
+        exit(1)
+
+    # MapMan pathways files are the same for each species, even the XML files.
+    # The handful of species compatible with MapMan will specify to download the same dataset.
+    # Here we override the data always.
+    # TODO: modify DBManager.py and move the code to "downloadData"?
+    MAPMAN_DIR = DATA_DIR + "../mapman"
+    MAPMAN_XML = MAPMAN_DIR + "/xml/"
+
+    # If the path already exists rename it
+    if (os.path.exists(MAPMAN_DIR)):
+        shutil.rmtree(MAPMAN_DIR + ".bak", ignore_errors=True)
+        shutil.move(MAPMAN_DIR, MAPMAN_DIR + ".bak")
+    else:
+        os.makedirs(MAPMAN_DIR)
+
+    mapman_pathways = EXTERNAL_RESOURCES.get("mapman_pathways")[0]
+    pathways_file_name = DATA_DIR + "mapping/" + mapman_pathways.get("output")
+
+    # Try to extract the archive on the final dir, if there is an error
+    # rename the previous dir
+    try:
+        os.makedirs(MAPMAN_DIR)
+        check_call(["tar", "xzvf", pathways_file_name, "-C", MAPMAN_DIR])
+    except Exception as e:
+        if (os.path.exists(MAPMAN_DIR) + ".bak"):
+            shutil.move(MAPMAN_DIR + ".bak", MAPMAN_DIR)
+        stderr.write("Failed extraction of MapMan pathways. Aborting.")
+        exit(1)
+
+    # Make sure to create the thumbnail directory
+    os.makedirs(MAPMAN_DIR + "/png/thumbnails/")
+
+    # Process the clasiffication file
+    classiffication_mapping_dict = defaultdict(list)
+
+    with open(mapman_classification_file_name, 'r') as mapping_file:
+        dict_reader = csv.DictReader(mapping_file, fieldnames=["primary", "secondary", "pathway"], delimiter="\t")
+        for pathway_entry in dict_reader:
+            # Remove prefix
+            classiffication_mapping_dict[pathway_entry["pathway"].strip()] = ';'.join([pathway_entry["primary"].strip(), pathway_entry["secondary"].strip()])
+
+    i = 0;
+    prev = -1;
+    errorMessage = "";
+    xml_files = os.listdir(MAPMAN_XML)
+    total_lines = len(xml_files)
+
+    # Initialize classification counters
+    mainClassificationIDs = {}
+    secClassificationIDs = {}
+    pathway2gene = defaultdict(set)
+    gene2pathway = defaultdict(set)
+
+    for xml_file in xml_files:
+        i+=1
+        prev = showPercentage(i, total_lines, prev, errorMessage)
+
+        file_name = MAPMAN_XML + xml_file
+        pathway_id = xml_file.replace(".xml", "")
+
+        # Generate thumbnail
+        png_file = MAPMAN_DIR + "/png/" + xml_file.replace(".xml", ".png")
+        generateThumbnail(png_file)
+
+        # Classification (network) data
+        classification = classiffication_mapping_dict.get(pathway_id, "Not classified;Unclassified")
+        classification_terms = classification.split(";")
+
+        mainClassification = classification_terms[0]
+        secondClassification = classification_terms[1]
+
+        # Primary classification
+        if not mainClassification in mainClassificationIDs:
+            mainClassificationIDs[mainClassification] = len(mainClassificationIDs) + 1
+            NODES[str(mainClassificationIDs[mainClassification]) + "A"] = {"data": {"id": mainClassification.lower().replace(" ", "_"), "label": mainClassification, "is_classification": "A"}, "group": "nodes"}
+
+        # Secondary classification
+        if not secondClassification in secClassificationIDs:
+            secClassificationIDs[mainClassification] = len(secClassificationIDs) + 1
+            NODES[str(secClassificationIDs[mainClassification]) + "B"] = {"data": {"id": secondClassification.lower().replace(" ", "_"),
+                                                                 "parent": mainClassification.lower().replace(" ", "_"),
+                                                                 "label": secondClassification,
+                                                                 "is_classification": "B"}, "group": "nodes"}
+
+
+        # Append to the global pathways container
+        ALL_PATHWAYS[pathway_id] = {"ID": pathway_id, "name": pathway_id, "genes": [],
+                                    "compounds": [], "relatedPathways": [], "source": "MapMan", "featureDB": "mapman_id",
+                                    "classification": classification}
+
+        # Pathway node information
+        NODES[pathway_id] = {"data": {"id": pathway_id, "label": pathway_id, "total_features": 0}, "group": "nodes"}
+        NODES[pathway_id]["data"]["parent"] = mainClassification.lower().replace(" ","_"),
+
+        try:
+            pathwayInfoXML = XMLParser.parse(file_name)
+            # Image element
+            root = pathwayInfoXML.getroot()
+            already_added = {}
+            # FOR EACH NODE IN THE XML FILE (DataArea)
+            for child in root:
+                try:
+                    # Somewhere in the future maybe MapMan would get compound support added,
+                    # leave here the possibility of getting the type like in KEGG
+                    # entryType = child.get("type")
+
+                    entry = {
+                        "id": "",
+                        "x": int(child.get("x")),
+                        "y": int(child.get("y")),
+                        "blockFormat": child.get("blockFormat"),
+                        "type": child.get("type"),
+                        "visualizationType": child.get("vistualizationType"),
+                        "recursive": True
+                    }
+
+                    # Each DataArea has at least one 'Identifier' child
+                    for featureID in child:
+                        # and not already_added.has_key(featureID)
+
+                        # As opposed to KEGG, where there are multiple identifiers
+                        # mapped to the same coordinates, MapMan refers to orthology terms
+                        # instead of genes.
+                        #
+                        # We transform the term to its mapped genes and clone the same
+                        # entry pointing to the same x & y coordinates to allow to work
+                        # as a KEGG pathway.
+                        #
+                        # General terms should also include child terms. I.e. 20.1 should
+                        # reference also 20.1.*.*
+                        id_terms = featureID.get("id")
+
+                        pattern_search = re.compile(r"{0}(\.|\Z)".format(id_terms))
+
+                        # external_mapping
+                        genes_linked = set(list(itertools.chain.from_iterable([v for k, v in external_mapping.iteritems() if pattern_search.search(k)])))
+
+                        # Link pathway to genes for network construction
+                        pathway2gene[pathway_id].update(genes_linked)
+
+                        for gene_id in genes_linked:
+
+                            # Link gene to pathway for network construction
+                            gene2pathway[gene_id].add(pathway_id)
+
+                            entryAux = entry.copy()
+                            entryAux["id"] = gene_id
+                            entryAux["recursive"] = featureID.get("recursive")
+
+                            ALL_PATHWAYS[pathway_id]["genes"].append(entryAux)
+
+                except Exception as ex:
+                    errorMessage = "FAILED WHILE PROCESSING PATHWAY XML FILE [" + file_name + "]: " + ex.message
+                    FAILED_LINES["MAPMAN PATHWAYS"].append([errorMessage])
+
+        except Exception as ex:
+            errorMessage = "FAILED WHILE PROCESSING PATHWAY XML FILE [" + file_name + "]: " + ex.message
+
+    #***********************************************************************************
+    #* GENERATE THE NETWORK FILE DATA FOR MAPMAN
+    #***********************************************************************************
+
+    #***********************************************************************************
+    #* FIRST PROCESS THE FILE WITH ALL PATHWAYS AND GENERATE A DIAGONAL MATRIX
+    #          mmu00100 -> [ mmu00101 = 0, mmu00102 = 0, mmu00103 = 0,...]
+    #          mmu00101 -> [               mmu00102 = 0, mmu00103 = 0,...]
+    #          mmu00102 -> [                             mmu00103 = 0,...]
+    #***********************************************************************************
+    all_pathways = sorted(NODES.keys())
+
+    pathways_matrix = {}
+    while len(all_pathways) > 0:
+        current_path = all_pathways[0]
+        del all_pathways[0]
+        pathways_matrix[current_path] = dict(zip(all_pathways, [0]*len(all_pathways)))
+
+    #***********************************************************************************
+    #* PROCESS THE FILE WITH THE RELATION GENE ID -> PATHWAY ID AND FILL THE MATRIX
+    #          WITH THE NUMBER OF SHARED GENES
+    #          mmu00100 -> [ mmu00101 = 1, mmu00102 = 0, mmu00103 = 0,...]
+    #          mmu00101 -> [               mmu00102 = 5, mmu00103 = 3,...]
+    #          mmu00102 -> [                             mmu00103 =20,...]
+    #***********************************************************************************
+    previous_gene = ""
+    associated_paths = set()
+
+    for gene_id, pathway_ids in gene2pathway.items():
+        for path_id in pathway_ids:
+            if gene_id != previous_gene:
+                associated_paths = sorted(associated_paths)
+                while len(associated_paths) > 0:
+                    current_path = associated_paths[0]
+                    del associated_paths[0]
+                    for other_path in associated_paths:
+                        try:
+                            pathways_matrix[current_path][other_path] += 1
+                        except:
+                            stderr.write("Pathways " + current_path + " or " + other_path + " not found in MapMan network values.\n")
+
+                associated_paths = set([])
+
+            associated_paths.add(path_id)
+            previous_gene = gene_id
+
+    # LAST PATHWAY
+    associated_paths = sorted(associated_paths)
+    while len(associated_paths) > 0:
+        current_path = associated_paths[0]
+        del associated_paths[0]
+        for other_path in associated_paths:
+            try:
+                pathways_matrix[current_path][other_path] += 1
+            except:
+                stderr.write(
+                    "Pathways " + current_path + " or " + other_path + " not found in MapMan network values.\n")
+
+    #***********************************************************************************
+    #* GET THE NUMBER OF GENES FOR EACH PATHWAY
+    #***********************************************************************************
+    for path_id, gene_ids in pathway2gene.items():
+        NODES[path_id]["data"]["total_features"] = len(gene_ids)
+
+    #***********************************************************************************
+    #* BULK THE MATRIX INTO JSON:
+    #          FOR EACH PATHWAY ID AND FOR EACH POSITION WITH NON ZERO (SHARE AT LEAST 1 GENE), CREATE AN EDGE
+    #***********************************************************************************
+    already_linked_pathways={}
+    for path_id, shared_genes in pathways_matrix.iteritems():
+        #First create the edges based on the links between networks (extracted from KGML files)
+        if ALL_PATHWAYS.has_key(path_id):
+            relatedPathways = ALL_PATHWAYS[path_id]["relatedPathways"]
+            for other_path_id in relatedPathways:
+                if not already_linked_pathways.has_key(path_id + "-" + other_path_id["id"]):
+                    EDGES.append({"data": {"id": path_id + "-" + other_path_id["id"], "source": path_id, "target": other_path_id["id"], "weight": 1, "class": 'l'}, "group":"edges"})
+                    #Avoid repeated edges (including the opposite links)
+                    already_linked_pathways[path_id + "-" + other_path_id["id"]] = 1
+                    already_linked_pathways[other_path_id["id"]+ "-" + path_id] = 1
+        #Add the edges based on the existance of shared genes
+        for other_path_id, n_shared_genes in shared_genes.iteritems():
+            if n_shared_genes > 0:
+                EDGES.append({"data": {"id": path_id + "-" + other_path_id, "source": path_id, "target": other_path_id, "weight": n_shared_genes, "class": 's'}, "group":"edges"})
+
+    #***********************************************************************************
+    #* SAVE THE NETWORK TO A FILE
+    #***********************************************************************************
+    network = {
+        "nodes": NODES.values(),
+        "edges": EDGES
+    }
+    csvfile = open(DATA_DIR + "pathways_network_MapMan.json", 'w')
+    csvfile.write(json.dumps(network, separators=(',',':')) + "\n")
+    csvfile.close()
+
+    TOTAL_FEATURES["MAPMAN PATHWAYS"]=total_lines
+
+    #***********************************************************************************
+    #* PROCESS THE VERSION FILES
+    #***********************************************************************************
+    version = open(DATA_DIR + 'MAPMAN_VERSION', 'w')
+    version.write("# CREATION DATE:\t" + strftime("%Y%m%d %H%M"))
+    version.close()
+
+    ALL_VERSIONS["MAPMAN"] = {"name" : "MAPMAN", "date" : strftime("%Y%m%d %H%M")}
+    ALL_VERSIONS["MAPMAN_MAPPING"] = {"name": "MAPMAN_MAPPING", "date": strftime("%Y%m%d %H%M")}
+    #
+    # file_name= DATA_DIR + "mapping/MAP_VERSION"
+    # file = open(file_name, 'r')
+    #
+    # file.close()
+
 def processKEGGPathwaysData():
     FAILED_LINES["KEGG PATHWAYS"] = []
 
@@ -843,7 +1260,7 @@ def processKEGGPathwaysData():
         pathway_name = line[1]
         pathway_name = pathway_name[0:pathway_name.rfind(" - ")]
 
-        ALL_PATHWAYS[pathway_id] = {"ID": pathway_id, "name": pathway_name, "classification": set([]), "genes":[], "compounds":[], "relatedPathways":[] }
+        ALL_PATHWAYS[pathway_id] = {"ID": pathway_id, "name": pathway_name, "classification": set([]), "genes":[], "compounds":[], "relatedPathways":[], "source": "KEGG", "featureDB": "kegg_id" }
 
     file.close()
 
@@ -927,7 +1344,8 @@ def processKEGGPathwaysData():
 
     TOTAL_FEATURES["KEGG PATHWAYS"]=total_lines
 
-    generatePathwaysNetwork(ALL_PATHWAYS)
+    # Select only KEGG pathways
+    generatePathwaysNetwork({k: v for k,v in ALL_PATHWAYS.items() if v["source"] == "KEGG"})
 
     #STEP 4. PROCESS THE VERSION FILES
     file_name= DATA_DIR + "KEGG_VERSION"
@@ -1091,6 +1509,35 @@ def generatePathwaysNetwork(ALL_PATHWAYS):
     csvfile.write(json.dumps(network, separators=(',',':')) + "\n")
     csvfile.close()
 
+
+def mergeNetworkFiles():
+    # Other files (MapMan or others)
+    other_files = glob.glob(DATA_DIR + "pathways_network_*.json")
+
+    if other_files:
+        # Initialize the final dictionary in the way:
+        # { DB: {network_info}, DB2: {network2_info}, ...}
+        network_data = {}
+
+        # Load KEGG network file
+        with open(DATA_DIR + "pathways_network.json", 'r+') as kegg_handler:
+            # Append KEGG data
+            network_data["KEGG"] = json.load(kegg_handler)
+
+            # Load each other databases
+            for db_file in other_files:
+                # Extract the DB name
+                db_name = re.search(r"pathways_network_(.*)\.json", db_file).group(1)
+
+                with open(db_file, 'r') as db_handler:
+                    network_data[db_name] = json.load(db_handler)
+
+            # Override the old contents with the new ones
+            kegg_handler.seek(0)
+            kegg_handler.write(json.dumps(network_data, separators=(',', ':')) + "\n")
+            kegg_handler.truncate()
+
+
 #**************************************************************************
 # OTHER DATABASES
 #**************************************************************************
@@ -1119,7 +1566,7 @@ def dumpDatabase():
         if(len(item["mates"])> 0):
             file.write(json.dumps(item, separators=(',',':')) + "\n")
         else:
-            stderr.write("No transcripts detected for " + elem.display_id + "["+ elem.description + "]\n")
+            stderr.write("No transcripts detected for " + elem.display_id + " ["+ elem.description + "]\n")
 
     file.close()
 
@@ -1273,3 +1720,4 @@ SPECIE  =""
 EXTERNAL_RESOURCES = None
 
 kegg_id_2_refseq_tid = {}
+external_mapping = {}

@@ -79,10 +79,23 @@ class Application(object):
         def get_kegg_data(filename):
             if str(filename) == "species.json":
                 return send_from_directory(KEGG_DATA_DIR + 'current/', 'species.json')
-            elif str(filename).endswith("_thumb"):
-                return send_from_directory(KEGG_DATA_DIR + 'current/common/png/thumbnails/', 'map' + sub("[^0-9]", "", filename ) + '_thumb.png')
             else:
-                return send_from_directory(KEGG_DATA_DIR + 'current/common/png/', 'map' + filename + '.png')
+                # Possible accepted format <path>_<source>_thumb
+                split_name = filename.replace('_thumb', '').split('_')
+
+                # Sanitize input
+                source_type = sub(r'\W+', '', split_name[1]) if len(split_name) > 1 else None
+                source_dir = 'current/' + source_type.lower() if source_type is not None else 'current/common'
+
+                # Add "map" prefix for KEGG pathways
+                filename_prefix = 'map' if source_type is None else str()
+
+                filename_cleaned = sub("[^0-9]", "", split_name[0]) if source_type is None else split_name[0]
+
+                if str(filename).endswith("_thumb"):
+                    return send_from_directory(KEGG_DATA_DIR + source_dir + '/png/thumbnails/', filename_prefix + filename_cleaned + '_thumb.png')
+                else:
+                    return send_from_directory(KEGG_DATA_DIR + source_dir + '/png/', filename_prefix + filename_cleaned + '.png')
         ##*******************************************************************************************
         ##* GET PATHWAY IMAGE
         ##*******************************************************************************************

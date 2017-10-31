@@ -384,6 +384,7 @@ class PathwayAcquisitionJob(Job):
                     pathway.setID(pathwayID)
                     pathway.setName(keggInformationManager.getPathwayNameByID(jobInstance.getOrganism(), pathwayID))
                     pathway.setClassification(keggInformationManager.getPathwayClassificationByID(jobInstance.getOrganism(), pathwayID))
+                    pathway.setSource(keggInformationManager.getPathwaySourceByID(jobInstance.getOrganism(), pathwayID))
 
                     matchedPathways[pathwayID] = pathway
 
@@ -578,7 +579,8 @@ class PathwayAcquisitionJob(Job):
 
             graphicalOptions = PathwayGraphicalData()
             graphicalOptions.setFeaturesGraphicalData(genesInPathway + compoundsInPathway)
-            graphicalOptions.setImageSize(getImageSize(keggInformationManager.getKeggDataDir() + 'png/' + pathwayID.replace(self.getOrganism(), "map") + ".png"))
+            # graphicalOptions.setImageSize(getImageSize(keggInformationManager.getKeggDataDir() + 'png/' + pathwayID.replace(self.getOrganism(), "map") + ".png"))
+            graphicalOptions.setImageSize(getImageSize(keggInformationManager.getDataDir(pathwayInstance.getSource()) + 'png/' + pathwayID.replace(self.getOrganism(), "map") + ".png"))
             graphicalOptions.setVisibleOmics(visibleOmics)
 
             #Set the graphical options for the pathway

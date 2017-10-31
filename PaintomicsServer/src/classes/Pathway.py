@@ -29,6 +29,7 @@ class Pathway(Model):
         self.ID = ID
         self.name = ""
         self.classification = ""
+        self.source = "KEGG"
         #IDENTIFIERS OF MATCHED COMPOUNDS, THE DATA IS AT JOBINSTANCE
         self.matchedCompounds =[]
         #IDENTIFIERS OF MATCHED GENES, THE DATA IS AT JOBINSTANCE
@@ -58,6 +59,11 @@ class Pathway(Model):
         self.classification = classification
     def getClassification(self):
         return self.classification
+
+    def setSource(self, source):
+        self.source = source
+    def getSource(self):
+        return self.source
 
     def setMatchedCompounds(self, matchedCompounds):
         self.matchedCompounds = matchedCompounds

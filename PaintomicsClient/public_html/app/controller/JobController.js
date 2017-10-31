@@ -251,6 +251,7 @@ function JobController() {
 						jobModel.setStepNumber(2);         //UPDATE THE STEP NUMBER
 						jobModel.setJobID(response.jobID); //UPDATE THE foundCompounds FIELD WITH RESPONSE DATA+
 						jobModel.setOrganism(response.organism);  //UPDATE ORGANISM
+						jobModel.setDatabases(response.databases); //UPDATE DATABASES
 
 						jobModel.setCompoundBasedInputOmics(response.compoundBasedInputOmics);
 						jobModel.setGeneBasedInputOmics(response.geneBasedInputOmics);
@@ -360,6 +361,7 @@ function JobController() {
 						jobModel.setGeneBasedInputOmics(response.geneBasedInputOmics);
 						jobModel.setSummary(response.summary);
 						jobModel.setOrganism(response.organism);  //UPDATE ORGANISM
+						jobModel.setDatabases(response.databases);
 
 						var pathways = response.pathwaysInfo;
 						var pathway = null;
@@ -476,6 +478,7 @@ function JobController() {
 						jobModel.setGeneBasedInputOmics(response.geneBasedInputOmics);
 						jobModel.setSummary(response.summary);
 						jobModel.setOrganism(response.organism);  //UPDATE ORGANISM
+						jobModel.setDatabases(response.databases); //UPDATE DATABASES
 
 						var pathways = response.pathwaysInfo;
 						var pathway = null;
@@ -727,11 +730,11 @@ function JobController() {
 		var visualOptionsClone = jQuery.extend(true, {}, visualOptions);
 
 		// Transform customValues to plain text JSON representation
-		if (visualOptionsClone.customValues) {
+		/*if (visualOptionsClone.customValues) {
 			Object.keys(visualOptionsClone.customValues).map(function(key, index) {
 				visualOptionsClone.customValues[key] = JSON.stringify(visualOptionsClone.customValues[key]);
 			});
-		}
+		}*/
 
 		$.ajax({
 			method: "POST",

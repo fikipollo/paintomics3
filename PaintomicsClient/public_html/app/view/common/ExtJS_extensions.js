@@ -65,8 +65,10 @@ Ext.define('Ext.grid.column.ActionCustom', {
         for (; i < len; i++) {
             item = items[i];
 
+            item_tooltip = (typeof(item.tooltip) == "function") ? item.tooltip(v, meta, record, rowIdx, colIdx, store, view) : item.tooltip;
+
             disabled = item.disabled || (item.isDisabled ? item.isDisabled.call(item.scope || scope, view, rowIdx, colIdx, item, record) : false);
-            tooltip = disabled ? null : (item.tooltip || (item.getTip ? item.getTip.apply(item.scope || scope, arguments) : null));
+            tooltip = disabled ? null : (item_tooltip || (item.getTip ? item.getTip.apply(item.scope || scope, arguments) : null));
 
             // Only process the item action setup once.
             if (!item.hasActionConfiguration) {
@@ -76,9 +78,13 @@ Ext.define('Ext.grid.column.ActionCustom', {
                 item.enable = Ext.Function.bind(me.enableAction, me, [i], 0);
                 item.hasActionConfiguration = true;
             }
+
+            // If text is a function, call it and use the return value as text
+            var rowText = (typeof(item.text) == "function") ? item.text(v, meta, record, rowIdx, colIdx, store, view): item.text;
+
             ret += '<a href="' + ((item.href !== undefined) ? item.href : 'javascript:void(0)') + '" ' + ((item.style !== undefined) ? 'style="' + item.style + '"' : '') + ' class="helpTip ' + prefix + 'action-col-icon ' + prefix + 'action-col-' + String(i) + ' ' + (disabled ? prefix + 'item-disabled' : ' ') +
                     ' ' + (Ext.isFunction(item.getClass) ? item.getClass.apply(item.scope || scope, arguments) : (item.iconCls || me.iconCls || '')) + '"' +
-                    (tooltip ? ' title="' + tooltip + '"' : '') + '>' + '<i class="fa ' + item.icon + '"></i> ' + item.text + '</a>';
+                    (tooltip ? ' title="' + tooltip + '"' : '') + '>' + '<i class="fa ' + item.icon + '"></i> ' + rowText + '</a>';
         }
         return ret;
     },
@@ -127,6 +133,7 @@ Ext.define('Ext.grid.LiveSearchGridPanel', {
     tagsProtect: '\x0f', // DEL ASCII code
     download: false,
     multidelete: false,
+    databases: [],
     stripeRows: true,
     viewConfig: {
         markDirty: false,
@@ -166,10 +173,31 @@ Ext.define('Ext.grid.LiveSearchGridPanel', {
                 handler: me.caseSensitiveToggle,
                 scope: me
             }, 'Case sensitive',
+            /* Splice position: -3 */
             '->',
             ((me.download !== false) ? '<a class="downloadXLS" href="javascript:void(0)"><i class="fa fa-file-excel-o"></i> Download as XLS</a>' : ""),
             ((me.multidelete !== false) ? '<a class="multiDelete" style="color:rgb(242, 105, 105);" href="javascript:void(0)"><i class="fa fa-trash"></i> Delete selected</a>' : "")
         ];
+
+        if (me.databases.length > 1) {
+          /* Add a separator then the extra checkboxes */
+          var database_options = ['-', '<span style="margin: 0 5px 0 10px;font-weight: bold;">Databases to view:</span>'];
+
+          me.databases.forEach(function(source) {
+            database_options.push({
+              xtype: 'checkbox',
+              hideLabel: true,
+              margin: '0 0 0 4px',
+              handler: me.databaseToggle,
+              name: 'database',
+              scope: me,
+              inputValue: source,
+              checked: true
+            }, source);
+          });
+
+          me.tbar.splice(-3, 0, ...database_options);
+        }
 
         me.callParent(arguments);
     },
@@ -253,6 +281,24 @@ Ext.define('Ext.grid.LiveSearchGridPanel', {
     regExpToggle: function (checkbox, checked) {
         this.regExpMode = checked;
         this.onTextFieldChange();
+    },
+    /**
+     * Enable/disable source databases in the table view
+     * @private
+     */
+    databaseToggle: function (checkbox, checked) {
+        var me = this;
+        var db_cboxes = me.query('checkbox[name=database]').map(function(elem) {
+          if (elem.checked) {
+            return(elem.inputValue);
+          }
+        });
+
+        me.view.refresh();
+        me.store.addFilter({id: "database", filterFn: function(item) {
+          return(db_cboxes.indexOf(item.raw.source) !== -1);
+        }, root: 'data'});
+        me.getSelectionModel().deselectAll();
     }
 });
 

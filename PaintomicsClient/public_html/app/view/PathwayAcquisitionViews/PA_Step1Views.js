@@ -269,37 +269,67 @@ function PA_Step1JobView() {
 				layout: {type: 'vbox', align: 'stretch'},
 				defaults: {labelAlign: "right", border: false},
 				items: [
-					{xtype: "box", flex: 1, html:'<h2>Data uploading</h2><h3>1. Organism selection </h3>'},
-					{
-						xtype: 'combo',fieldLabel: 'Organism', name: 'specie',
-						maxWidth: 450,
-						itemId: "speciesCombobox",
-						allowBlank: false,
-						forceSelection: true,
-						emptyText: 'Please choose an organism',
-						displayField: 'name',
-						valueField: 'value',
-						queryMode: 'local',
-						store: Ext.create('Ext.data.ArrayStore', {
-							fields: ['name', 'value'],
-							autoLoad: true,
-							proxy: {
-								type: 'ajax',
-								url: SERVER_URL_GET_AVAILABLE_SPECIES,
-								reader: {
-									type: 'json',
-									root: 'species',
-									successProperty: 'success'
+					{xtype: "box", flex: 1, html:'<h2>Data uploading</h2><h3>1. Organism and database selection </h3>'},
+					{xtype: "container", flex: 1, layout: {type: "hbox"}, items: [
+						{
+							xtype: "container", layout: { type: "vbox", align: "stretch" }, flex: 0.4, items: [
+							{
+								xtype: 'combo',fieldLabel: 'Organism', name: 'specie',
+								style: "margin: 10px 10px 10px 20px;",
+								flex: 1,
+								maxWidth: 450,
+								itemId: "speciesCombobox",
+								allowBlank: false,
+								forceSelection: true,
+								emptyText: 'Please choose an organism',
+								displayField: 'name',
+								valueField: 'value',
+								queryMode: 'local',
+								store: Ext.create('Ext.data.ArrayStore', {
+									fields: ['name', 'value'],
+									autoLoad: true,
+									proxy: {
+										type: 'ajax',
+										url: SERVER_URL_GET_AVAILABLE_SPECIES,
+										reader: {
+											type: 'json',
+											root: 'species',
+											successProperty: 'success'
+										}
+									}
+								})
+							},
+							{
+								xtype: "box", flex: 1, html:
+								'<span class="infoTip" style=" font-size: 12px; margin-left: 140px; margin-bottom: 10px;">'+
+								' Not your organism? Request new organisms <a href="javascript:void(0)" id="newOrganismRequest" style="color: rgb(211, 21, 108);">clicking here</a>.' +
+								'</span>'
+							}]
+						},
+						{xtype: "container", layout: { type: "vbox", align: "stretch" }, flex: 0.6, items: [
+								{
+									xtype: 'checkboxgroup', fieldLabel: 'Databases',
+									style: "margin: 10px 10px 10px 20px;",
+									maxWidth: 450,
+									allowBlank: false,
+									columns: 2,
+									/* Hardcoded DBs (they can be considered static) */
+									items: [
+											/* Only for information, KEGG database is added always on server side */
+											{ boxLabel: 'KEGG (obligatory)', name: 'databases[]', inputValue: 'KEGG', checked: true, disabled: true },
+											{ boxLabel: 'MapMan', name: 'databases[]', inputValue: 'MapMan', checked: true },
+									]
+								},
+								{
+									xtype: "box", flex: 1, html:
+									'<span class="infoTip" style=" font-size: 12px; margin-left: 140px; margin-bottom: 10px;">'+
+									' For <span style="color: rgb(211, 21, 108);">some</span> species more than one database might be available. Choose which ones do you want to include in the analysis.' +
+									'</span>'
 								}
-							}
-						})
+							]
+						}]
 					},
 					{
-						xtype: "box", flex: 1, html:
-						'<span class="infoTip" style=" font-size: 12px; margin-left: 120px; margin-bottom: 10px;">'+
-						' Not your organism? Request new organisms <a href="javascript:void(0)" id="newOrganismRequest" style="color: rgb(211, 21, 108);">clicking here</a>.' +
-						'</span>'
-					},{
 						xtype: "box",
 						html: '<h3>2. Choose the files to upload </h3>'
 					}, {

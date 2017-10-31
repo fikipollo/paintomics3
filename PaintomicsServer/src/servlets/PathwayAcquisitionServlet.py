@@ -22,6 +22,9 @@ import logging.config
 
 import cairo
 import rsvg
+import re
+
+from collections import defaultdict
 
 from src.common.ServerErrorManager import handleException
 from src.common.UserSessionManager import UserSessionManager
@@ -93,7 +96,9 @@ def pathwayAcquisitionStep1_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, EXA
             formFields   = REQUEST.form
             jobInstance.description=""
             specie = formFields.get("specie") #GET THE SPECIE NAME
+            databases = REQUEST.form.getlist('databases[]')
             jobInstance.setOrganism(specie)
+            jobInstance.setDatabases([u'KEGG'] + databases)
             logging.info("STEP1 - SELECTED SPECIE IS " + specie)
 
             logging.info("STEP1 - READING FILES....")
@@ -122,6 +127,7 @@ def pathwayAcquisitionStep1_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, EXA
 
             specie = "mmu"
             jobInstance.setOrganism(specie)
+            jobInstance.setDatabases(['KEGG'])
         else:
             raise NotImplementedError
 
@@ -206,7 +212,8 @@ def pathwayAcquisitionStep1_PART2(jobInstance, userID, exampleMode, RESPONSE):
             "jobID":jobInstance.getJobID() ,
             "matchedMetabolites": matchedMetabolites,
             "geneBasedInputOmics":jobInstance.getGeneBasedInputOmics(),
-            "compoundBasedInputOmics": jobInstance.getCompoundBasedInputOmics()
+            "compoundBasedInputOmics": jobInstance.getCompoundBasedInputOmics(),
+            "databases": jobInstance.getDatabases()
         })
 
     except Exception as ex:
@@ -370,7 +377,8 @@ def pathwayAcquisitionStep2_PART2(jobID, userID, selectedCompounds, RESPONSE, RO
             "summary" : summary,
             "pathwaysInfo" : matchedPathwaysJSONList,
             "geneBasedInputOmics":jobInstance.getGeneBasedInputOmics(),
-            "compoundBasedInputOmics": jobInstance.getCompoundBasedInputOmics()
+            "compoundBasedInputOmics": jobInstance.getCompoundBasedInputOmics(),
+            "databases": jobInstance.getDatabases()
         })
 
     except Exception as ex:
@@ -503,7 +511,8 @@ def pathwayAcquisitionRecoverJob(request, response):
                 "compoundBasedInputOmics": jobInstance.getCompoundBasedInputOmics(),
                 "organism" : jobInstance.getOrganism(),
                 "summary" : jobInstance.summary,
-                "visualOptions" : JobInformationManager().getVisualOptions(jobID)
+                "visualOptions" : JobInformationManager().getVisualOptions(jobID),
+                "databases": jobInstance.getDatabases()
             })
 
     except Exception as ex:
@@ -582,17 +591,28 @@ def pathwayAcquisitionSaveVisualOptions(request, response):
         #****************************************************************
         formFields = request.form
 
-        visualOptions = {}
+        visualOptions = defaultdict(dict)
         jobID  = formFields.get("jobID")
+
+        # Visual options are stored on a DB basis, with form info in the form
+        # DB[option] or DB[option][] for lists
+        db_matcher = re.compile(r"^(\w+)\[(.+?)\](\Z|\[\])$")
 
         for key in formFields.keys():
             value = formFields.get(key)
-            if key == "pathwaysVisibility[]":
-                visualOptions["pathwaysVisibility"] = formFields.getlist(key)
-                continue
-            elif key == "pathwaysPositions[]":
-                visualOptions["pathwaysPositions"] = formFields.getlist(key)
-                continue
+
+            # If the regex matches, the option is specific for a DB
+            db_match = db_matcher.search(key)
+
+            # if key == "pathwaysVisibility[]":
+            #     visualOptions["pathwaysVisibility"] = formFields.getlist(key)
+            #     continue
+            # elif key == "pathwaysPositions[]":
+            #     visualOptions["pathwaysPositions"] = formFields.getlist(key)
+            #     continue
+            if "[]" in key:
+                value = formFields.getlist(key)
+                key = key.replace("[]", "")
             elif value == "true" or value == "false":
                 value = (value == "true")
             else:
@@ -600,13 +620,21 @@ def pathwayAcquisitionSaveVisualOptions(request, response):
                     value = float(value)
                 except:
                     pass
-            visualOptions[key] = value
+
+            if db_match:
+                db_name = db_match.group(1)
+                option = db_match.group(2)
+                is_list = (db_match.group(3) == "[]")
+
+                visualOptions[db_name][option] = value #formFields.getlist(key) if is_list else value
+            else:
+                visualOptions[key] = value
 
         #************************************************************************
         # Step 3. Save the visual Options in the MongoDB
         #************************************************************************
         logging.info("STEP 3 - SAVING VISUAL OPTIONS FOR JOB " + jobID + "..." )
-        JobInformationManager().storeVisualOptions(jobID, visualOptions)
+        JobInformationManager().storeVisualOptions(jobID, dict(visualOptions))
         logging.info("STEP 3 - SAVING VISUAL OPTIONS FOR JOB " + jobID + "...DONE" )
 
         response.setContent({"success": True})

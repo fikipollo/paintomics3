@@ -34,6 +34,7 @@ class Feature(Model):
         self.url = ""
         self.featureType= ""
         self.omicsValues = []
+        self.matchingDB = ""
 
     #******************************************************************************************************************
     # GETTERS AND SETTER
@@ -67,6 +68,11 @@ class Feature(Model):
     def addOmicValues(self, omicValuesList):
         for omicValue in omicValuesList:
             self.omicsValues.append(omicValue)
+
+    def setMatchingDB(self, matchingDB):
+        self.matchingDB = matchingDB
+    def getMatchingDB(self):
+        return self.matchingDB
 
     #******************************************************************************************************************
     # OTHER FUNCTIONS

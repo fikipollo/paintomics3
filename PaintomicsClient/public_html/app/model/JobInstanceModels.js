@@ -30,6 +30,7 @@ function JobInstance(jobID) {
 	this.organism = null;
 
 	this.pathways = [];
+	this.databases = null;
 	this.summary = null;
 	this.mappingSummary = null;
 
@@ -68,6 +69,11 @@ function JobInstance(jobID) {
 	this.getPathways = function () {
 		return this.pathways;
 	};
+	this.getPathwaysByDB = function (db) {
+		return this.pathways.filter(function(pathway) {
+			return pathway.getSource() == db
+		});
+	};
 	this.getPathway = function (pathwayID) {
 		for (var i in this.pathways) {
 			if (pathwayID == this.pathways[i].getID()) {
@@ -79,6 +85,19 @@ function JobInstance(jobID) {
 	this.addPathway = function (pathway) {
 		//TODO: CHECK CLASSES?
 		this.pathways.push(pathway);
+	};
+	this.getDatabases = function() {
+		if (this.databases === null) {
+			// Check databases present in pathways
+			var pathways = this.getPathways();
+
+			// ES6/ES2015
+			this.databases = [...new Set(pathways.map(item => item.getSource()))];
+		}
+		return this.databases;
+	}
+	this.setDatabases = function (databases) {
+		this.databases = databases;
 	};
 	this.setSummary = function (summary) {
 		this.summary = summary;

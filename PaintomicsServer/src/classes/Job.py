@@ -44,6 +44,9 @@ class Job(Model):
 
         self.organism = ""
 
+        # LIST OF DATABASES TO USE
+        self.databases = []
+
         #FIRST STEP GET THE DIRECTORIES FOR THE JOB
         self.setDirectories(CLIENT_TMP_DIR)
 
@@ -98,6 +101,11 @@ class Job(Model):
         self.organism = organism
     def getOrganism(self):
         return self.organism
+
+    def setDatabases(self, databases):
+        self.databases = databases
+    def getDatabases(self):
+        return self.databases
 
     def setReferenceInputs(self, referenceInputs):
         self.referenceInputs = referenceInputs
@@ -286,7 +294,7 @@ class Job(Model):
                 #*************************************************************************
                 # STEP 3. MAP TH FEATURE NAMES TO KEGG IDs
                 #*************************************************************************
-                foundFeatures, parsedFeatures, notMatchedFeatures = mapFeatureNamesToKeggIDs(self.getJobID(), self.getOrganism(), parsedFeatures)
+                foundFeatures, parsedFeatures, notMatchedFeatures = mapFeatureNamesToKeggIDs(self.getJobID(), self.getOrganism(), self.getDatabases(), parsedFeatures)
                 totalMappedFeatures = len(parsedFeatures)
                 matchedFeaturesFileContent =""
                 notMatchedFeaturesFileContent =""
@@ -294,7 +302,7 @@ class Job(Model):
                 #TODO: HACER ESTE METODO MULTITHREADING -> locker
                 for parsedFeature in parsedFeatures:
                     self.addInputGeneData(parsedFeature)
-                    matchedFeaturesFileContent += parsedFeature.getOmicsValues()[0].getInputName() + '\t' + parsedFeature.getName() + '\t' + parsedFeature.getID() + '\t' + '\t'.join(map(str,parsedFeature.getOmicsValues()[0].getValues())) + "\n"
+                    matchedFeaturesFileContent += parsedFeature.getOmicsValues()[0].getInputName() + '\t' + parsedFeature.getName() + '\t' + parsedFeature.getID() +  '\t' + '\t'.join(map(str,parsedFeature.getOmicsValues()[0].getValues())) + "\n"
 
                 for parsedFeature in notMatchedFeatures:
                     notMatchedFeaturesFileContent += parsedFeature.getName() + '\t' + '\t' + '\t'.join(map(str,parsedFeature.getOmicsValues()[0].getValues())) + "\n"
@@ -334,9 +342,13 @@ class Job(Model):
             logging.info("DISTRIBUTION FOR " + omicName  + "WITHOUT OUTLIERS: MIN: " + str(summary[7])  + "; MAX: " + str(summary[8])  + "; #OUTLIERS: " + str(len(outliers)))
 
             logging.info("PARSING USER GENE BASED FILE (" + omicName + ")... DONE" )
+
+            # Total unique mapped features. "Total" if there are more than one database
+            totalMapped = foundFeatures.get("Total", foundFeatures.values()[0])
+
             #   0        1       2    3    4    5     6,   7   8      9        10
             #[MAPPED, UNMAPPED, MIN, P10, Q1, MEDIAN, Q3, P90, MAX, MIN_IR, Max_IR]
-            return [omicName, [foundFeatures, totalInputFeatures - foundFeatures] + summary ]
+            return [omicName, [foundFeatures, totalInputFeatures - totalMapped] + summary ]
 
         else:
             logging.error("PARSING USER GENE BASED FILE (" + omicName + ")... FAILED. File " + valuesFileName + " NOT FOUND")
