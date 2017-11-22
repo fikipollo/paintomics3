@@ -88,6 +88,32 @@ function PA_Step2JobView() {
 
 		/* INFO PANEL ABOUT DATABASES USED */
 		var databases = me.getModel().getDatabases();
+		var matchingPerDB = {};
+
+		for (var omicName in dataDistribution) {
+			// Get total features
+			var totalFeatures = dataDistribution[omicName][1];
+
+			// Add the largest matched set of features or just KEGG if there is only 1 DB
+			if ("Total" in dataDistribution[omicName][0]) {
+				totalFeatures += dataDistribution[omicName][0]["Total"];
+			} else {
+				totalFeatures += dataDistribution[omicName][0][0];
+			}
+
+			databases.forEach(function(dbname) {
+				// Look for DB name in feature table matches ID
+				var featureTable = Object.keys(dataDistribution[omicName][0]).find(function(el) {return el.indexOf(dbname) != -1; });
+
+				matchingPerDB[dbname] = $.extend(matchingPerDB[dbname] || {}, {
+					[omicName]: {
+						"matched": dataDistribution[omicName][0][featureTable],
+						"percentage": Math.ceil(dataDistribution[omicName][0][featureTable]/totalFeatures * 100)
+					}});
+			});
+
+			omicSummaryPanelComponents.push(new PA_OmicSummaryPanel(omicName, dataDistribution[omicName]).getComponent());
+		}
 
 		if (databases.length > 1) {
 
@@ -97,28 +123,33 @@ function PA_Step2JobView() {
 			};
 
 			var dl_dbs = databases.map(function(dbname) {
-				return '<dt>' + dbname + '</dt><dd>' + dbs_descriptions[dbname] + '</dd>';
+				var divContent =
+				'<table>' +
+					'<tr><th>Omic</th><th>Matched</th></tr>' +
+					Object.keys(matchingPerDB[dbname]).map(function(omicName) {
+						return '<td>' + omicName + '</td><td>' + matchingPerDB[dbname][omicName]["matched"] + " (" + matchingPerDB[dbname][omicName]["percentage"] + "%)</td>";
+					}).join('</tr><tr>') +
+				'</table>';
+
+				return '<dt>' + dbname + '</dt><dd>' + dbs_descriptions[dbname] + '<div id="matching_table_' + dbname + '">' + divContent + '</div></dd>';
 			}).join('');
 
 			var dbs_message = {
 				xtype: 'box',
 				cls: "contentbox", minHeight: 240, id: "dbs_message",
-				html: '<div>' +
-				'  <h2>Multiple databases used' +
+				html: 
+				'<h2>Multiple databases used</h2>' +
+				'<div>' +
 				'  <p>The selected species had more than one database available. Your final analysis contains information about the following databases: ' +
 				'			<dl id="dbs_dl">' + dl_dbs + '</dl>' +
 				'     <br>' +
-				'    The following diagrams summarize combine the matched & unmatched elements considering <b>all</b> databases; for a desambiguation please place the cursor over the graph and check the emerging tooltip.<br>' +
+				'    The following diagrams combine the matched & unmatched elements considering <b>all</b> databases; for a desambiguation please place the cursor over the graph and check the emerging tooltip.<br>' +
 				'  </p>' +
 				'</div>'
 			};
 
 			/* Add an empty container to restore "odd" position of next sibling elements */
-			omicSummaryPanelComponents.push(dbs_message, {xtype: 'container', html:'<div style="display: none;"></div>'});
-		}
-
-		for (var omicName in dataDistribution) {
-			omicSummaryPanelComponents.push(new PA_OmicSummaryPanel(omicName, dataDistribution[omicName]).getComponent());
+			omicSummaryPanelComponents.splice(2, 0, dbs_message, {xtype: 'container', html:'<div style="display: none;"></div>'});
 		}
 
 		var compoundsComponents = [];

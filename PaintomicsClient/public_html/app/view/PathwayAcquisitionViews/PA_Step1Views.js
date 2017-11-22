@@ -316,7 +316,7 @@ function PA_Step1JobView() {
 									/* Hardcoded DBs (they can be considered static) */
 									items: [
 											/* Only for information, KEGG database is added always on server side */
-											{ boxLabel: 'KEGG (obligatory)', name: 'databases[]', inputValue: 'KEGG', checked: true, disabled: true },
+											{ boxLabel: 'KEGG (required)', name: 'databases[]', inputValue: 'KEGG', checked: true, disabled: true },
 											{ boxLabel: 'MapMan', name: 'databases[]', inputValue: 'MapMan', checked: true },
 									]
 								},
