@@ -8,6 +8,7 @@ from collections import defaultdict
 from src.common.Util import chunks
 from src.common.KeggInformationManager import KeggInformationManager
 
+from src.conf.organismDB import dicDatabases
 from src.conf.serverconf import MONGODB_HOST, MONGODB_PORT, MAX_THREADS, MAX_WAIT_THREADS #MULTITHREADING
 
 
@@ -29,14 +30,9 @@ def getDatabasesByOrganismCode(organism):
     @param {String} organism, the organim code e.g. mmu
     @returns {List} databaseConvertion
     """
-    # Nombre del dbname que se obtendra en infrared para la especie en cuestion
-    dicDatabases = {
-        'mmu'   :   [{'KEGG': 'entrezgene'}, 'refseq_gene_symbol'],
-        'hsa'   :   [{'KEGG': 'entrezgene'}, 'refseq_gene_symbol'],
-        'dosa'  :   [{'KEGG': 'ensembl_transcript'}, 'kegg_gene_symbol'],
-        'rno'   :   [{'KEGG': 'entrezgene'}, 'refseq_gene_symbol'],
-        'sot'   :   [{'KEGG': 'kegg_id', 'MapMan': 'mapman_gene_id'}, 'kegg_gene_symbol']
-    }
+
+    # dicDatabases is inside the conf file "organismDB" and should be
+    # updated after installing new species with external annotation data.
 
     return dicDatabases.get(organism, ["kegg_id", "kegg_gene_symbol"])
 

@@ -32,6 +32,7 @@ from src.common.JobInformationManager import JobInformationManager
 from src.classes.JobInstances.PathwayAcquisitionJob import PathwayAcquisitionJob
 
 from src.conf.serverconf import CLIENT_TMP_DIR, KEGG_DATA_DIR
+from src.conf.organismDB import dicDatabases
 #************************************************************************
 #     _____ _______ ______ _____    __
 #    / ____|__   __|  ____|  __ \  /_ |
@@ -98,7 +99,9 @@ def pathwayAcquisitionStep1_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, EXA
             specie = formFields.get("specie") #GET THE SPECIE NAME
             databases = REQUEST.form.getlist('databases[]')
             jobInstance.setOrganism(specie)
-            jobInstance.setDatabases([u'KEGG'] + databases)
+            # Check the available databases for species
+            organismDB = set(dicDatabases.get(specie, [{}])[0].keys())
+            jobInstance.setDatabases(list(set([u'KEGG']) | set(databases).intersection(organismDB)))
             logging.info("STEP1 - SELECTED SPECIE IS " + specie)
 
             logging.info("STEP1 - READING FILES....")

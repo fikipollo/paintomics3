@@ -95,7 +95,7 @@ function PA_Step2JobView() {
 			var totalFeatures = dataDistribution[omicName][1];
 
 			// Add the largest matched set of features or just KEGG if there is only 1 DB
-			if ("Total" in dataDistribution[omicName][0]) {
+			if (dataDistribution[omicName][0].hasOwnProperty("Total")) {
 				totalFeatures += dataDistribution[omicName][0]["Total"];
 			} else {
 				totalFeatures += dataDistribution[omicName][0][0];
@@ -137,7 +137,7 @@ function PA_Step2JobView() {
 			var dbs_message = {
 				xtype: 'box',
 				cls: "contentbox", minHeight: 240, id: "dbs_message",
-				html: 
+				html:
 				'<h2>Multiple databases used</h2>' +
 				'<div>' +
 				'  <p>The selected species had more than one database available. Your final analysis contains information about the following databases: ' +
