@@ -288,6 +288,12 @@ function PA_Step1JobView() {
 								store: Ext.create('Ext.data.ArrayStore', {
 									fields: ['name', 'value'],
 									autoLoad: true,
+									sortOnLoad: true,
+									remoteSort: false,
+									sorters: [{
+							        property: 'name',
+							        direction: 'ASC'
+							    }],
 									proxy: {
 										type: 'ajax',
 										url: SERVER_URL_GET_AVAILABLE_SPECIES,

@@ -61,7 +61,9 @@ function JobController() {
 			success: function (response) {
 				if (response.success === false) {
 					if (response.status === "JobStatus.STARTED" || response.status === "started") {
-						showInfoMessage("Running job " + jobID + "...", {logMessage: "Job " + jobID + " still running.", showSpin: true, append: other.multipleJobs, itemId: jobID, icon: "play"});
+						var jobURL = 'http://' + window.location.host + window.location.pathname + "?jobID=" + jobID;
+
+						showInfoMessage("Running job " + jobID + ".<br/> You will we able to access it from the URL: <br/><br /><a href=\"" + jobURL  + "\" target=\"_blank\">" + jobURL + "</a>", {logMessage: "Job " + jobID + " still running.", showSpin: true, append: other.multipleJobs, itemId: jobID, icon: "play"});
 					}
 					//Check again in N seconds
 					setTimeout(function () {
@@ -465,20 +467,53 @@ function JobController() {
 					data: {jobID: jobID},
 					success: function (response) {
 						if (response.success === false) {
-							showErrorMessage(response.errorMessage);
+							if (response.message) {
+								showInfoMessage(response.message);
+							} else {
+								showErrorMessage(response.errorMessage);
+							}
 							return;
 						}
 						me.cleanStoredApplicationData();
 
 						var jobModel = new JobInstance(jobID);
 						//UPDATE THE STEP NUMBER
-						jobModel.setStepNumber(3);
+						jobModel.setStepNumber(response.stepNumber);
 						//TODO: NO ES NECESARIO DEVOLVER ESTO!!! MUY GRANDE! MEJOR CALCULARLO EN EL SERVER
 						jobModel.setCompoundBasedInputOmics(response.compoundBasedInputOmics);
 						jobModel.setGeneBasedInputOmics(response.geneBasedInputOmics);
 						jobModel.setSummary(response.summary);
 						jobModel.setOrganism(response.organism);  //UPDATE ORGANISM
 						jobModel.setDatabases(response.databases); //UPDATE DATABASES
+
+						jobModel.setFoundCompounds([]);
+						var matchedMetabolites = response.matchedMetabolites;
+						var matchedCompound = null;
+						for (var i in matchedMetabolites) {
+							matchedCompound = new CompoundSet();
+							matchedCompound.loadFromJSON(matchedMetabolites[i]);
+							jobModel.addFoundCompound(matchedCompound);
+						}
+
+						//UPDATE SELECTED METABOLITES IN ORDER TO AVOID REPEATED SELECTIONS
+						// e.g. if the user uploaded "Alanine" and "beta-Alanine" separately,
+						// the beta-Alanine proposed by the "Alanine" panel will be unselected
+						// by default
+						var selectedCompounds = {};
+						var auxCompound=null;
+						for(var i in jobModel.foundCompounds){
+							for(var j in jobModel.foundCompounds[i].mainCompounds){
+								matchedCompound = jobModel.foundCompounds[i].mainCompounds[j];
+								auxCompound = (selectedCompounds[matchedCompound.getID()] || matchedCompound) ;
+								if(matchedCompound.similarity >= auxCompound.similarity){
+									auxCompound.selected = false;
+									matchedCompound.selected = true;
+									selectedCompounds[matchedCompound.getID()] = matchedCompound;
+								}else{
+									matchedCompound.selected = false;
+								}
+							}
+						}
 
 						var pathways = response.pathwaysInfo;
 						var pathway = null;
@@ -655,6 +690,7 @@ function JobController() {
 					callback();
 				}
 				// location.reload();
+				window.history.replaceState(null, null, window.location.pathname);
 			}
 		});
 	};
@@ -707,6 +743,26 @@ function JobController() {
 			console.info(Date.logFormat() + "JobController.js : Updating jobview...");
 			jobView.updateObserver();
 		}
+
+		// Update the URL adding the parameter with the jobID
+		if (jobModel.getJobID() !== null) {
+			window.history.replaceState(null, null, window.location.pathname + "?jobID=" + jobModel.getJobID());
+		}
+
+		// Call the server to update the job's access date even when it was
+		// loaded from session data.
+		$.ajax({
+			type: "POST",
+			url: SERVER_URL_PA_TOUCH_JOB,
+			data: {jobID: jobModel.getJobID()},
+			success: function (response) {
+				console.info(Date.logFormat() + " job's access date update succesfully.");
+			},
+			error: function (response) {
+				console.error(Date.logFormat() + " failed when updating job's access date.");
+			},
+		});
+
 		return jobView;
 	};
 

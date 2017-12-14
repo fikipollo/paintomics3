@@ -14,6 +14,7 @@ SERVER_URL_PA_STEP3 = SERVER_URL + "pa_step3";
 SERVER_URL_PA_SAVE_IMAGE = SERVER_URL + "pa_save_image";
 SERVER_URL_PA_SAVE_VISUAL_OPTIONS = SERVER_URL + "pa_save_visual_options";
 SERVER_URL_PA_RECOVER_JOB = SERVER_URL + "pa_recover_job";
+SERVER_URL_PA_TOUCH_JOB = SERVER_URL + "pa_touch_job";
 SERVER_URL_JOB_STATUS= SERVER_URL + "check_job_status";
 SERVER_URL_GET_CLUSTER_IMAGE= SERVER_URL + "get_cluster_image";
 SERVER_URL_GET_MESSAGE = SERVER_URL + "um_get_message";
@@ -47,6 +48,7 @@ SERVER_URL_UM_SIGNOUT = SERVER_URL + "um_signout";
 SERVER_URL_UM_SIGNUP = SERVER_URL + "um_signup";
 SERVER_URL_UM_CHANGEPASS = SERVER_URL + "um_changepassword";
 SERVER_URL_UM_NEWGUESTSESSION = SERVER_URL + "um_guestsession";
+SERVER_URL_UM_NEWNOLOGINSESSION = SERVER_URL + "um_nologinsession";
 /*********************************************************************
  * OTHER SETTINGS            *****************************************
  **********************************************************************/

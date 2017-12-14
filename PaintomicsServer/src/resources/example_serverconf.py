@@ -13,6 +13,7 @@ KEGG_DATA_DIR             = "/data/KEGG_DATA/"
 MAX_CLIENT_SPACE          = 20 * pow(1024,2) #MAX_CLIENT_SPACE IN MB
 MAX_GUEST_DAYS            = 7
 MAX_JOB_DAYS              = 60
+MAX_NUMBER_FEATURES      = 1000000
 
 #MONGO DB SETTINGS
 MONGODB_HOST      = "localhost"

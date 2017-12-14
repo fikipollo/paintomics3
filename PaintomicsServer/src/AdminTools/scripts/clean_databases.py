@@ -7,10 +7,15 @@ import datetime
 from pymongo import MongoClient
 from conf.serverconf import MONGODB_HOST, MONGODB_PORT, MONGODB_DATABASE, CLIENT_TMP_DIR, ADMIN_ACCOUNTS, MAX_GUEST_DAYS, MAX_JOB_DAYS
 
+from src.common.Util import sendEmail
+
 def cleanDatabases(force=False):
     log("Starting Clean Databases routine")
 
     connection = MongoClient(MONGODB_HOST, MONGODB_PORT)
+
+    import os
+    ROOT_DIRECTORY = os.path.abspath(os.path.dirname(os.path.realpath(__file__)) + "/../") + "/"
 
     # STEP 1. GET ALL USERS BY DIRECTORY
     user_dirs = os.listdir(CLIENT_TMP_DIR)
@@ -25,8 +30,11 @@ def cleanDatabases(force=False):
     users_to_fix = []
     #Jobs that are out of date (normal and guest users)
     jobs_to_remove = {}
+    #Jobs that need to be reminded (normal users)
+    jobs_to_remind = {}
     #In addition we have to clean all files from db and dir
 
+    # TODO: "nologin" user will not be present in the DB
     for user in users_list:
         user_id = int(user["userID"])
         if str(user_id) in user_dirs:
@@ -42,6 +50,14 @@ def cleanDatabases(force=False):
             # If guest user, check if should be removed
             users_to_remove.append(user_id)
             force_remove = True
+        else:
+            # Check if user has jobs to be removed soon that need to be remained about
+            # (only for "no guest" accounts)
+            reminders = checkRemindJobsForUser(connection, user_id)
+
+            if len(reminders) > 0:
+                jobs_to_remind[user_id] = reminders
+
 
         # If check if user has jobs that should be removed
         aux = checkRemoveJobsForUser(connection, user_id, force_remove)
@@ -50,6 +66,7 @@ def cleanDatabases(force=False):
 
     log("Summary:")
     log("   - " + str(str(sum(len(x) for x in jobs_to_remove.values()))) + " jobs will be removed.")
+    log("   - " + str(str(sum(len(x) for x in jobs_to_remind.values()))) + " reminder e-mails will be sent.")
     log("   - " + str(len(users_to_remove)) + " users will be removed.")
     log("   - " + str(len(users_to_fix)) + " users will be fixed.")
     log("   - " + str(len(user_dirs)) + " orphan directories will be removed.")
@@ -83,7 +100,12 @@ def cleanDatabases(force=False):
     for user_id in user_dirs:
         removeDirectoryByUserID(user_id)
 
-    # STEP 8. REBUILD INDEXES
+    # STEP 8. SEND REMINDER E-MAILS
+    for user_id, jobs_to_remind in jobs_to_remind.iteritems():
+        for job_id in jobs_to_remind:
+            remindJobByJobID(connection, user_id, job_id, ROOT_DIRECTORY)
+
+    # STEP 9. REBUILD INDEXES
     rebuildIndexes(connection)
 
 def checkRemoveGuestUser(user, user_id):
@@ -102,11 +124,29 @@ def checkRemoveJobsForUser(connection, user_id, force_remove=False):
     # for each job
     for job in jobs_list:
         #Check if date OR if force_remove
-        date = datetime.datetime.strptime(job['date'][0:8], "%Y%m%d").date()
+        date = datetime.datetime.strptime(job['accessDate'][0:8], "%Y%m%d").date()
         if force_remove or date < max_date:
             log("Job " + str(job["jobID"]) + " (user " + str(user_id) + ") marked to be removed.")
             jobs_remove.append(job['jobID'])
     return jobs_remove
+
+def checkRemindJobsForUser(connection, user_id):
+    #Get all jobs for user
+    jobs_list = connection[MONGODB_DATABASE]['jobInstanceCollection'].find({"userID":str(user_id),
+                                                                            "reminderSent": {"$exists": False}
+                                                                            })
+    max_date = datetime.date.today() - datetime.timedelta(days=MAX_JOB_DAYS + 7)
+    min_date = datetime.date.today() - datetime.timedelta(days=MAX_JOB_DAYS)
+    jobs_remind = []
+    # for each job
+    for job in jobs_list:
+        #Check if date OR if force_remove
+        date = datetime.datetime.strptime(job['accessDate'][0:8], "%Y%m%d").date()
+        # Avoid sending reminders of jobs that will be deleted today
+        if date < max_date and date > min_date:
+            log("Job " + str(job["jobID"]) + " (user " + str(user_id) + ") marked to be reminded.")
+            jobs_remind.append(job['jobID'])
+    return jobs_remind
 
 
 def removeJobByJobID(connection, user_id, job_id):
@@ -119,6 +159,35 @@ def removeJobByJobID(connection, user_id, job_id):
     connection[MONGODB_DATABASE]['jobInstanceCollection'].remove({"jobID": job_id})
     #STEP 4. REMOVE THE JOB DIRECTORY FROM USER DIR
     removeDirectoryByUserID(user_id, job_id)
+
+
+def remindJobByJobID(connection, user_id, job_id, ROOT_DIRECTORY):
+    log("Reminding job " + job_id)
+
+    try:
+        job_data = connection[MONGODB_DATABASE]['jobInstanceCollection'].find_one({"jobID": job_id})
+        user_data = connection[MONGODB_DATABASE]['userCollection'].find_one({"userID": user_id})
+
+        message = '<html><body>'
+        message += "<a href='" + "http://bioinfo.cipf.es/paintomics/" + "' target='_blank'>"
+        message += "  <img src='" + "http://bioinfo.cipf.es/paintomics/" + "resources/images/paintomics_white_300x66' border='0' width='150' height='33' alt='Paintomics 3 logo'>"
+        message += "</a>"
+        message += "<div style='width:100%; height:10px; border-top: 1px dotted #333; margin-top:20px; margin-bottom:30px;'></div>"
+        message += "<h1>Your Paintomics job " + job_id + " will be deleted soon!</h1>"
+        message += "<p>Hello, " + user_data["userName"] + "! Your job with ID " + job_id + " will be deleted in one week.</p>"
+        message += "<p>To avoid it, please visit the following link to update the accession date:</p>"
+        message += "<p><a target='_blank' href='http://bioinfo.cipf.es/paintomics/?jobID=" + job_id + "'>http://bioinfo.cipf.es/paintomics/?jobID=" + job_id + "</a></p></br>"
+        message += "<div style='width:100%; height:10px; border-top: 1px dotted #333; margin-top:20px; margin-bottom:30px;'></div>"
+        message += "<p>Problems? E-mail <a href='mailto:" + "paintomics@cipf.es" + "'>" + "paintomics@cipf.es" + "</a></p>"
+        message += '</body></html>'
+
+        sendEmail(ROOT_DIRECTORY, user_data["email"], user_data["userName"], "Paintomics 3: one job is going to expire soon",
+                  message, isHTML=True)
+    except Exception:
+        logging.error("Failed to send the email.")
+
+    #STEP 3.REMOVE THE JOB FROM DATABASE
+    connection[MONGODB_DATABASE]['jobInstanceCollection'].update({"jobID": job_id}, {'$set': {"reminderSent": 1}}, upsert=False)
 
 
 def removeAllFilesByUserID(connection, user_id, only_db=False):
@@ -169,7 +238,7 @@ def fixUserDataByUserID(connection, user_id):
     os.mkdir(dir + "/tmp/")
 
 def rebuildIndexes(connection):
-    dbs = ['userCollection', 'jobInstanceCollection', 'featuresCollection', 'pathwaysCollection', 'visualOptionsCollection', 'fileCollection', 'messageCollection']
+    dbs = ['userCollection', 'jobInstanceCollection', 'foundFeaturesCollection', 'featuresCollection', 'pathwaysCollection', 'visualOptionsCollection', 'fileCollection', 'messageCollection']
     for db in dbs:
         log("Rebuilding indexes for database " + db)
         connection[MONGODB_DATABASE][db].reindex()

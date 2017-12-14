@@ -26,8 +26,9 @@ from zipfile import ZipFile as zipFile
 from subprocess import check_call, STDOUT, CalledProcessError
 from src.common.Util import unifyAndSort
 
+from collections import defaultdict
 
-from src.common.Statistics import calculateSignificance, calculateCombinedSignificancePvalue
+from src.common.Statistics import calculateSignificance, calculateCombinedSignificancePvalue, adjustPvalues
 from src.common.Util import chunks, getImageSize
 
 from src.common.KeggInformationManager import KeggInformationManager
@@ -37,7 +38,7 @@ from src.classes.Feature import Gene, Compound
 from src.classes.Pathway import Pathway
 from src.classes.PathwayGraphicalData import PathwayGraphicalData
 
-from src.conf.serverconf import KEGG_DATA_DIR, MAX_THREADS, MAX_WAIT_THREADS
+from src.conf.serverconf import KEGG_DATA_DIR, MAX_THREADS, MAX_WAIT_THREADS, MAX_NUMBER_FEATURES
 
 
 class PathwayAcquisitionJob(Job):
@@ -52,6 +53,7 @@ class PathwayAcquisitionJob(Job):
         self.summary = None
         #In this table we save all the matched pathways and for each pathways the associated selected compounds and genes.
         self.matchedPathways = {}
+        self.foundCompounds = []
 
     #******************************************************************************************************************
     # GETTERS AND SETTER
@@ -72,6 +74,10 @@ class PathwayAcquisitionJob(Job):
         return self.matchedPathways
     def addMatchedPathway(self, matchedPathway):
         self.matchedPathways[matchedPathway.getID()] = matchedPathway
+    def addFoundCompound(self, foundCompound):
+        self.foundCompounds.append(foundCompound)
+    def getFoundCompounds(self):
+        return self.foundCompounds
 
     def getJobDescription(self, generate=False, isExampleJob=False):
         if(generate):
@@ -140,10 +146,15 @@ class PathwayAcquisitionJob(Job):
         if os_path.isfile(relevantFileName):
             f = open(relevantFileName, 'rU')
             lines = f.readlines()
-            for line in lines:
-                if len(line) > 80:
-                    error +=  " - Errors detected while processing " + inputOmic.get("relevantFeaturesFile", "") + ": The file does not look like a Relevant Features file (some lines are longer than 80 characters)." + "\n"
-                    break
+
+            # Ensure that relevant features files does not exceed the max number of features
+            if len(lines) > MAX_NUMBER_FEATURES:
+                error += " - Errors detected while processing " + inputOmic.get("relevantFeaturesFile", "") + ": The file exceeds the maximum number of features allowed (" + str(MAX_NUMBER_FEATURES) + ")." + "\n"
+            else:
+                for line in lines:
+                    if len(line) > 80:
+                        error +=  " - Errors detected while processing " + inputOmic.get("relevantFeaturesFile", "") + ": The file does not look like a Relevant Features file (some lines are longer than 80 characters)." + "\n"
+                        break
             f.close()
 
         #*************************************************************************
@@ -175,14 +186,23 @@ class PathwayAcquisitionJob(Job):
                             break
                         nConditions = len(line)
 
+                    # *************************************************************************
+                    # STEP 2.2 CHECK IF IT EXCEEDS THE MAX NUMBER OF FEATURES ALLOWED
+                    # *************************************************************************
+                    if (nLine > MAX_NUMBER_FEATURES):
+                        error += " - Errors detected while processing " + inputOmic.get("inputDataFile",
+                                                                                        "") + ": The file exceeds the maximum number of features allowed (" + str(
+                            MAX_NUMBER_FEATURES) + ")." + "\n"
+                        break
+
                     #**************************************************************************************
-                    # STEP 2.2 IF LINE LENGTH DOES NOT MATCH WITH EXPECTED NUMBER OF CONDITIONS, ADD ERROR
+                    # STEP 2.3 IF LINE LENGTH DOES NOT MATCH WITH EXPECTED NUMBER OF CONDITIONS, ADD ERROR
                     #**************************************************************************************
                     if(nConditions != len(line) and len(line)>0):
                         erroneousLines[nLine] = "Expected " +  str(nConditions) + " columns but found " + str(len(line)) + ";"
 
                     #**************************************************************************************
-                    # STEP 2.2 IF CONTAINS NOT VALID VALUES, ADD ERROR
+                    # STEP 2.4 IF CONTAINS NOT VALID VALUES, ADD ERROR
                     #**************************************************************************************
                     try:
                         map(float, line[1:len(line)])
@@ -243,7 +263,8 @@ class PathwayAcquisitionJob(Job):
                 logging.info("   * PROCESSED " + omicName + "..." )
                 inputOmic["omicSummary"] = omicSummary
             #REMOVE REPETITIONS AND ORDER ALPHABETICALLY
-            checkBoxesData = unifyAndSort(checkBoxesData, lambda checkBoxData: checkBoxData["title"].lower())
+            # checkBoxesData = unifyAndSort(checkBoxesData, lambda checkBoxData: checkBoxData["title"].lower())
+            checkBoxesData = unifyAndSort(checkBoxesData, lambda checkBoxData: checkBoxData.getTitle().lower())
 
             logging.info("PROCESSING COMPOUND BASED FILES...DONE" )
 
@@ -258,6 +279,9 @@ class PathwayAcquisitionJob(Job):
             self.compressDirectory(self.getOutputDir() + fileName, "zip", self.getTemporalDir() + "/")
 
             logging.info("COMPRESSING RESULTS...DONE")
+
+            # Save the metabolites matching data to allow recovering the job
+            self.foundCompounds = checkBoxesData
 
             return checkBoxesData
 
@@ -409,6 +433,20 @@ class PathwayAcquisitionJob(Job):
 
         self.setMatchedPathways(dict(matchedPathways))
         totalMatchedKeggPathways=len(self.getMatchedPathways())
+
+        # Get the adjusted p-values (they need to be passed as a whole)
+        pvalues_list = defaultdict(dict)
+
+        for pathway_id, pathway in self.getMatchedPathways().iteritems():
+            for omic, pvalue in pathway.getSignificanceValues().iteritems():
+                pvalues_list[omic][pathway_id] = pvalue[2]
+
+        adjusted_pvalues = {omic: adjustPvalues(omicPvalues) for omic, omicPvalues in pvalues_list.iteritems()}
+
+        # Set the adjusted p-value on a pathway basis
+        for pathway_id, pathway in self.getMatchedPathways().iteritems():
+            for omic, pvalue in pathway.getSignificanceValues().iteritems():
+                pathway.setOmicAdjustedSignificanceValues(omic, {adjust_method: pvalues[pathway_id] for adjust_method, pvalues in adjusted_pvalues[omic].iteritems()})
 
         logging.info("SUMMARY: " + str(totalMatchedKeggPathways) +  " Matched Pathways of "  + str(totalKeggPathways) + "in KEGG; Total input Genes = " + str(totalInputMatchedGenes) + "; SUMMARY: Total input Compounds  = " + str(totalInputMatchedCompounds))
 
@@ -671,6 +709,16 @@ class PathwayAcquisitionJob(Job):
                     pathwayInstance = Pathway(pathwayID)
                     pathwayInstance.parseBSON(pathwayData)
                     self.addMatchedPathway(pathwayInstance)
+            if (attr == "foundCompounds"):
+                self.foundCompounds[:] = []
+                for foundCompoundID in value:
+                    foundFeatureInstance = FoundFeature("")
+                    self.addFoundCompound({
+                        'mainCompounds': [Compound(compoundData["ID"]).parseBSON(compoundData) for compoundData in
+                                          value.getMainCompounds()],
+                        'otherCompounds': [Compound(compoundData["ID"]).parseBSON(compoundData) for compoundData in
+                                           value.getOtherCompounds()]
+                    })
             elif(attr == "inputCompoundsData"):
                 compoundInstance = None
                 self.inputCompoundsData.clear()
@@ -697,7 +745,8 @@ class PathwayAcquisitionJob(Job):
         """
         bson = {}
         for attr, value in self.__dict__.iteritems():
-            if not isinstance(value, dict) and ( ["svgDir", "inputDir", "outputDir", "temporalDir"].count(attr) == 0) :
+            # Special case: "foundCompounds" is a list (not a dict) that contains recursive object data
+            if not isinstance(value, dict) and ( ["svgDir", "inputDir", "outputDir", "temporalDir", "foundCompounds"].count(attr) == 0) :
                 bson[attr] = value
 
             elif(recursive == True):
@@ -716,5 +765,13 @@ class PathwayAcquisitionJob(Job):
                     for (geneID, geneInstance) in value.iteritems():
                         genes[geneID] = geneInstance.toBSON()
                     value = genes
+                elif(attr == "foundCompounds"):
+                    compounds = []
+                    for compoundCB in value:
+                        compounds.append({
+                            'mainCompounds': [compoundInstance.toBSON() for compoundInstance in compoundCB.getMainCompounds()],
+                            'otherCompounds': [compoundInstance.toBSON() for compoundInstance in compoundCB.getOtherCompounds()]
+                        })
+                    value = compounds
                 bson[attr] = value
         return bson

@@ -34,6 +34,7 @@ from src.common.DAO.PathwayAcquisitionJobDAO import PathwayAcquisitionJobDAO
 from src.common.DAO.Bed2GeneJobDAO import Bed2GeneJobDAO
 from src.common.DAO.MiRNA2GeneJobDAO import MiRNA2GeneJobDAO
 from src.common.DAO.FeatureDAO import FeatureDAO
+from src.common.DAO.FoundFeatureDAO import FoundFeatureDAO
 from src.common.DAO.PathwayDAO import PathwayDAO
 from src.common.DAO.VisualOptionsDAO import VisualOptionsDAO
 
@@ -85,6 +86,9 @@ class JobInformationManager:
                     daoInstance = PathwayAcquisitionJobDAO()
                     logging.info("UPDATING JOB INSTANCE...")
                     daoInstance.update(jobInstance, {"fieldList": ["summary", "lastStep"]})
+                    daoInstance = FoundFeatureDAO()
+                    logging.info("REMOVING MATCHED METABOLITES FROM DATABASE...")
+                    daoInstance.removeAll({"jobID": jobInstance.getJobID()})
                     daoInstance = FeatureDAO()
                     logging.info("REMOVING COMPOUNDS TO DATABASE...")
                     daoInstance.removeAll({"featureType":"Compound","jobID":jobInstance.getJobID()})
@@ -114,6 +118,9 @@ class JobInformationManager:
         jobInstance = None
         jobInstanceDAO = None
         try :
+            # Update access time
+            self.touchAccessDate(jobID)
+
             jobInstance = self.findInCache(jobID)
             if(jobInstance == None):
                 logging.info("JOB "  + jobID + " NOT FOUND IN CACHE, TRYING IN DB...")
@@ -278,3 +285,7 @@ class JobInformationManager:
         success = daoInstance.insert(visualOptionsInstance, {"jobID":jobID})
         daoInstance.closeConnection()
         return success
+
+    def touchAccessDate(self, jobID):
+        jobInstanceDAO = PathwayAcquisitionJobDAO()
+        jobInstanceDAO.touch(jobID)

@@ -37,6 +37,8 @@ from src.servlets.AdminServlet import *
 from src.common.KeggInformationManager import KeggInformationManager
 from src.common.JobInformationManager import JobInformationManager
 
+import os.path
+
 class Application(object):
     #******************************************************************************************************************
     # CONSTRUCTORS
@@ -114,7 +116,15 @@ class Application(object):
         @self.app.route(SERVER_SUBDOMAIN + '/get_cluster_image/<path:filename>')
         def get_cluster_image(filename):
             UserSessionManager().isValidUser(request.cookies.get('userID'), request.cookies.get('sessionToken'))
-            return send_from_directory(CLIENT_TMP_DIR + request.cookies.get('userID') + "/jobsData/", filename)
+
+            # Check if the file really exist, if not, then we are probably accessing a public job from a logged
+            # account.
+            image_path = CLIENT_TMP_DIR + request.cookies.get('userID', 'nologin') + "/jobsData/"
+
+            if not os.path.isfile(os.path.join(image_path, filename)):
+                image_path = CLIENT_TMP_DIR + "nologin/jobsData/"
+
+            return send_from_directory(image_path, filename)
         ##*******************************************************************************************
         ##* GET FILE
         ##*******************************************************************************************
@@ -156,6 +166,12 @@ class Application(object):
         @self.app.route(SERVER_SUBDOMAIN + '/um_guestsession', methods=['OPTIONS', 'POST'])
         def newGuestSessionHandler():
             return userManagementNewGuestSession(request, Response()).getResponse()
+        #*******************************************************************************************
+        ##* LOGOUT
+        #*******************************************************************************************
+        @self.app.route(SERVER_SUBDOMAIN + '/um_nologinsession', methods=['OPTIONS', 'POST'])
+        def newNoLoginSessionHandler():
+            return userManagementNewNoLoginSession(request, Response()).getResponse()
         #*******************************************************************************************
         ##* CHANGE PASS
         #*******************************************************************************************
@@ -244,7 +260,9 @@ class Application(object):
         def checkJobStatus(jobID):
             jobInstance = self.queue.fetch_job(jobID)
 
-            if jobInstance.is_finished():
+            if jobInstance is None:
+                return Response().setContent({"success": False, "status" : "failed", "message": "Your job is not on the queue anymore. Check your job list, if is not there the process stopped and you must resend the data again."})
+            elif jobInstance.is_finished():
                 return self.queue.get_result(jobID).getResponse()
             elif jobInstance.is_failed():
                 self.queue.get_result(jobID) #remove job
@@ -281,7 +299,14 @@ class Application(object):
         #*******************************************************************************************
         @self.app.route(SERVER_SUBDOMAIN + '/pa_recover_job', methods=['OPTIONS', 'POST'])
         def recoverJobHandler():
-            return pathwayAcquisitionRecoverJob(request, Response()).getResponse()
+            return pathwayAcquisitionRecoverJob(request, Response(), self.queue).getResponse()
+
+        # *******************************************************************************************
+        # TOUCH JOB HANDLER
+        # *******************************************************************************************
+        @self.app.route(SERVER_SUBDOMAIN + '/pa_touch_job', methods=['OPTIONS', 'POST'])
+        def touchJobHandler():
+            return pathwayAcquisitionTouchJob(request, Response()).getResponse()
         #*******************************************************************************************
         # SAVE IMAGE HANDLER
         #*******************************************************************************************

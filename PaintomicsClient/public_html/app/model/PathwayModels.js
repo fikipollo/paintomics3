@@ -37,6 +37,8 @@ function Pathway(ID) {
 
     //SIGNIFICANCE VALUES PER OMIC in format OmicName -> [totalFeatures, totalRelevantFeatures, pValue]
     this.significanceValues = null;
+    //ADJUSTED SIGNIFICANTE VALUES PER OMIC format OmicName -> {method: value, method2: value}
+    this.adjustedSignificanceValues = null;
     //SIGNIFICANCE COMBINED VALUE
     this.combinedSignificancePvalue = 0;
     //GRAPHICAL INFORMATION
@@ -120,6 +122,12 @@ function Pathway(ID) {
     this.getSignificanceValues = function () {
         return this.significanceValues;
     };
+    this.setAdjustedSignificanceValues = function (adjustedSignificanceValues) {
+        this.adjustedSignificanceValues = adjustedSignificanceValues;
+    };
+    this.getAdjustedSignificanceValues = function () {
+        return this.adjustedSignificanceValues;
+    };
     this.setCombinedSignificanceValues = function (combinedSignificancePvalue) {
         this.combinedSignificancePvalue = combinedSignificancePvalue;
     };
@@ -181,6 +189,9 @@ function Pathway(ID) {
         }
         if (jsonObject.significanceValues !== undefined) {
             this.significanceValues = jsonObject.significanceValues;
+        }
+        if (jsonObject.adjustedSignificanceValues !== undefined) {
+            this.adjustedSignificanceValues = jsonObject.adjustedSignificanceValues;
         }
         if (jsonObject.combinedSignificancePvalue !== undefined) {
             this.combinedSignificancePvalue = parseFloat(jsonObject.combinedSignificancePvalue);

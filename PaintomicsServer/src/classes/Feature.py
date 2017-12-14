@@ -82,7 +82,7 @@ class Feature(Model):
             self.addOmicValues(otherFeature.getOmicsValues())
 
     def parseBSON(self, bsonData):
-        bsonData.pop("_id");
+        bsonData.pop("_id", None);
 
         for (attr, value) in bsonData.items():
             if(attr == "omicsValues"):

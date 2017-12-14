@@ -38,6 +38,7 @@ class Job(Model):
     def __init__(self, jobID, userID, CLIENT_TMP_DIR):
         self.jobID = jobID
         self.date = formatDate("%Y%m%d%H%M")
+        self.accessDate = formatDate("%Y%m%d%H%M")
         self.userID = userID
         self.lastStep = 1
         self.description=""
@@ -92,10 +93,13 @@ class Job(Model):
     def getOutputDir(self):
         return self.outputDir
     def setDirectories(self, CLIENT_TMP_DIR):
+        # Assign the userID as directory or "nologin" if is null
+        userDir = self.userID if self.userID is not None else "nologin"
+
         #FIRST STEP GET THE DIRECTORIES FOR THE JOB
-        self.inputDir    = CLIENT_TMP_DIR + self.userID + "/inputData/"
-        self.temporalDir = CLIENT_TMP_DIR + self.userID + "/tmp/" + self.jobID
-        self.outputDir   = CLIENT_TMP_DIR + self.userID + "/jobsData/" + self.jobID + "/output/"
+        self.inputDir    = CLIENT_TMP_DIR + userDir + "/inputData/"
+        self.temporalDir = CLIENT_TMP_DIR + userDir + "/tmp/" + self.jobID
+        self.outputDir   = CLIENT_TMP_DIR + userDir + "/jobsData/" + self.jobID + "/output/"
 
     def setOrganism(self, organism):
         self.organism = organism
@@ -428,9 +432,9 @@ class Job(Model):
             foundFeatures, parsedFeatures, notMatchedFeatures = mapFeatureNamesToCompoundsIDs(self.getJobID(), inputCompounds)
             for parsedFeature in parsedFeatures:
                 #STEP 2.C.3 ADD THE TEMPORAL COMPOUND INSTANCE TO THE LIST OF COMPOUNDS
-                for compoundAux in parsedFeature["mainCompounds"]:
+                for compoundAux in parsedFeature.getMainCompounds():
                     self.addInputCompoundData(compoundAux)
-                for compoundAux in parsedFeature["otherCompounds"]:
+                for compoundAux in parsedFeature.getOtherCompounds():
                     self.addInputCompoundData(compoundAux)
 
             #GENERATE SOME STATISTICS

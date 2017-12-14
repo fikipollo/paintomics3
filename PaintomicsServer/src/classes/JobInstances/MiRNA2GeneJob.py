@@ -36,6 +36,8 @@ from csv import reader as csv_reader
 import shutil
 import time
 
+from src.conf.serverconf import MAX_NUMBER_FEATURES
+
 class MiRNA2GeneJob(Job):
     #******************************************************************************************************************
     # CONSTRUCTORS
@@ -120,6 +122,10 @@ class MiRNA2GeneJob(Job):
         if os_path.isfile(relevantFileName):
             f = open(relevantFileName, 'rU')
             lines = f.readlines()
+
+            if len(lines) > MAX_NUMBER_FEATURES:
+                error += " - Errors detected while processing " + inputOmic.get("relevantFeaturesFile", "") + ": The file exceeds the maximum number of features allowed (" + str(MAX_NUMBER_FEATURES) + ")." + "\n"
+
             for line in lines:
                 if len(line) > 80:
                     error +=  " - Errors detected while processing " + inputOmic.get("relevantFeaturesFile", "") + ": The file does not look like a Relevant Features file (some lines are longer than 80 characters)." + "\n"
@@ -155,14 +161,21 @@ class MiRNA2GeneJob(Job):
                             break
                         nConditions = len(line)
 
+                    # *************************************************************************
+                    # STEP 2.2 CHECK IF IT EXCEEDS THE MAX NUMBER OF FEATURES ALLOWED
+                    # *************************************************************************
+                    if (nLine > MAX_NUMBER_FEATURES):
+                        error += " - Errors detected while processing " + inputOmic.get("inputDataFile", "") + ": The file exceeds the maximum number of features allowed (" + str(MAX_NUMBER_FEATURES) + ")." + "\n"
+                        break
+
                     #**************************************************************************************
-                    # STEP 2.2 IF LINE LENGTH DOES NOT MATCH WITH EXPECTED NUMBER OF CONDITIONS, ADD ERROR
+                    # STEP 2.3 IF LINE LENGTH DOES NOT MATCH WITH EXPECTED NUMBER OF CONDITIONS, ADD ERROR
                     #**************************************************************************************
                     if(nConditions != len(line) and len(line)>0):
                         erroneousLines[nLine] = "Expected " +  str(nConditions) + " columns but found " + str(len(line)) + ";"
 
                     #**************************************************************************************
-                    # STEP 2.2 IF CONTAINS NOT VALID VALUES, ADD ERROR
+                    # STEP 2.4 IF CONTAINS NOT VALID VALUES, ADD ERROR
                     #**************************************************************************************
                     try:
                         map(float, line[1:len(line)])

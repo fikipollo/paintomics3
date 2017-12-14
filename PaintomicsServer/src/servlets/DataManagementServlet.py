@@ -143,49 +143,54 @@ def dataManagementDeleteFile(request, response, DESTINATION_DIR, MAX_CLIENT_SPAC
         userID  = request.cookies.get('userID')
         userName = request.cookies.get('userName')
         sessionToken  = request.cookies.get('sessionToken')
-        UserSessionManager().isValidUser(userID, sessionToken)
 
-        #ONLY ADMIN USER (id=0) CAN UPLOAD NEW INBUILT GTF FILES
-        if(isReference and UserSessionManager().isValidAdminUser(userID, userName, sessionToken)):
-            userID="-1"
-
-        if not isReference:
-            DESTINATION_DIR += userID + "/inputData/"
+        if (userID is None):
+            response.setContent({"success": False,
+                             "errorMessage": "Log in required</br>Sorry but the feature you are requesting is only available to registered accounts."})
         else:
-            userID="-1"
-            DESTINATION_DIR += "GTF/"
+            UserSessionManager().isValidUser(userID, sessionToken)
 
-        #****************************************************************
-        # Step 1. GET THE LIST OF JOB IDs
-        #****************************************************************
-        if fileName == None:
-            fileName = request.form.get("fileName")
-        files = fileName.split(",")
+            #ONLY ADMIN USER (id=0) CAN UPLOAD NEW INBUILT GTF FILES
+            if(isReference and UserSessionManager().isValidAdminUser(userID, userName, sessionToken)):
+                userID="-1"
 
-        #****************************************************************
-        # Step 2. DELETE EACH FILE
-        #****************************************************************
-        daoInstance = FileDAO()
-
-        for fileName in files:
-            #****************************************************************
-            # Step 2.1.DELETE THE GIVEN FILE FROM DATABASE
-            #****************************************************************
-            logging.info("STEP1 - REMOVING " + fileName + " FROM DATABASE...")
-            daoInstance.remove(fileName, otherParams={"userID":userID})
-            logging.info("STEP1 - REMOVING " + fileName + " FROM DATABASE...DONE")
-
-            #****************************************************************
-            # Step 2.2.DELETE THE GIVEN FILE FROM DIRECTORY
-            #****************************************************************
-            logging.info("STEP2 - REMOVING " + fileName + " FROM USER DIRECTORY...")
-            if os.path.isfile(DESTINATION_DIR + fileName):
-                os.remove(DESTINATION_DIR + fileName)
-                logging.info("STEP2 - REMOVING " + fileName + " FROM USER DIRECTORY...DONE")
+            if not isReference:
+                DESTINATION_DIR += userID + "/inputData/"
             else:
-                logging.info("STEP2 - REMOVING " + fileName + " FROM USER DIRECTORY...FILE NOT FOUND")
+                userID="-1"
+                DESTINATION_DIR += "GTF/"
 
-        response.setContent({"success": True })
+            #****************************************************************
+            # Step 1. GET THE LIST OF JOB IDs
+            #****************************************************************
+            if fileName == None:
+                fileName = request.form.get("fileName")
+            files = fileName.split(",")
+
+            #****************************************************************
+            # Step 2. DELETE EACH FILE
+            #****************************************************************
+            daoInstance = FileDAO()
+
+            for fileName in files:
+                #****************************************************************
+                # Step 2.1.DELETE THE GIVEN FILE FROM DATABASE
+                #****************************************************************
+                logging.info("STEP1 - REMOVING " + fileName + " FROM DATABASE...")
+                daoInstance.remove(fileName, otherParams={"userID":userID})
+                logging.info("STEP1 - REMOVING " + fileName + " FROM DATABASE...DONE")
+
+                #****************************************************************
+                # Step 2.2.DELETE THE GIVEN FILE FROM DIRECTORY
+                #****************************************************************
+                logging.info("STEP2 - REMOVING " + fileName + " FROM USER DIRECTORY...")
+                if os.path.isfile(DESTINATION_DIR + fileName):
+                    os.remove(DESTINATION_DIR + fileName)
+                    logging.info("STEP2 - REMOVING " + fileName + " FROM USER DIRECTORY...DONE")
+                else:
+                    logging.info("STEP2 - REMOVING " + fileName + " FROM USER DIRECTORY...FILE NOT FOUND")
+
+            response.setContent({"success": True })
 
     except Exception as ex:
         handleException(response, ex, __file__ , "dataManagementDeleteFile")
@@ -208,18 +213,22 @@ def dataManagementGetMyJobs(request, response):
         sessionToken  = request.cookies.get('sessionToken')
         UserSessionManager().isValidUser(userID, sessionToken)
 
-        #****************************************************************
-        # Step 2.GET THE LIST OF JOBS FOR GIVEN USER
-        #****************************************************************
-        logging.info("STEP1 - GET MY JOB LIST REQUEST RECEIVED")
-        daoInstance = JobDAO()
-        matchedFiles = daoInstance.findAll(otherParams={"userID":userID})
-        logging.info("STEP1 - GET MY JOB LIST REQUEST RECEIVED...DONE")
+        if (userID is None):
+            response.setContent({"success": False,
+                             "errorMessage": "Log in required</br>Sorry but the feature you are requesting is only available to registered accounts."})
+        else:
+            #****************************************************************
+            # Step 2.GET THE LIST OF JOBS FOR GIVEN USER
+            #****************************************************************
+            logging.info("STEP1 - GET MY JOB LIST REQUEST RECEIVED")
+            daoInstance = JobDAO()
+            matchedFiles = daoInstance.findAll(otherParams={"userID":userID})
+            logging.info("STEP1 - GET MY JOB LIST REQUEST RECEIVED...DONE")
 
-        response.setContent({"success": True, "jobList" : matchedFiles})
+            response.setContent({"success": True, "jobList" : matchedFiles})
 
     except Exception as ex:
-        handleException(response, ex, __file__ , "dataManagementDeleteFile")
+        handleException(response, ex, __file__ , "dataManagementGetMyJobs")
     finally:
         if(daoInstance != None):
             daoInstance.closeConnection()
@@ -278,7 +287,7 @@ def dataManagementDeleteJob(request, response):
         response.setContent({"success": True })
 
     except Exception as ex:
-        handleException(response, ex,__file__ , "dataManagementDeleteFile")
+        handleException(response, ex,__file__ , "dataManagementDeleteJob")
     finally:
         if(daoInstance != None):
             daoInstance.closeConnection()
@@ -344,7 +353,7 @@ def dataManagementDownloadFile(request, response):
             response.setContent({"success": False, "errorMessage": "File not found.</br>Sorry but it looks like the requested file was removed from system."})
             return response
     except Exception as ex:
-        handleException(response, ex, __file__ , "dataManagementDeleteFile")
+        handleException(response, ex, __file__ , "dataManagementDownloadFile")
         return response
 
 #****************************************************************
@@ -382,6 +391,11 @@ def saveFile(userID, uploadedFileName, options, uploadedFile, DESTINATION_DIR):
     return uploadedFileName
 
 def copyFile(userID, fileName, options, origin, destination):
+
+    # If no user account is provided, do not save the file
+    if (str(userID) == 'None'):
+        return None
+
     file_path = "{path}/{file}".format(path=destination, file=fileName)
 
     #CHECK IF FILENAME ALREADY EXISTS -> IF SO, ADD SUBFIX

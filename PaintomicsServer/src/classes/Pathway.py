@@ -38,6 +38,7 @@ class Pathway(Model):
         self.metagenes = {}
         #SIGNIFICANCE VALUES PER OMIC in format OmicName -> [totalFeatures, totalRelevantFeatures, pValue]
         self.significanceValues= {}
+        self.adjustedSignificanceValues = {}
         self.combinedSignificancePvalue=1
         #GRAPHICAL INFORMATION
         self.graphicalOptions = None
@@ -104,6 +105,13 @@ class Pathway(Model):
             nRelevantFeatures += 1
         pValue = (self.significanceValues.get(omicName, [0,0,-1])[2])
         self.significanceValues[omicName] = [nFeatures, nRelevantFeatures, pValue]
+
+    def setSignificanceValues(self, adjustedSignificanceValues):
+        self.adjustedSignificanceValues = adjustedSignificanceValues
+    def getAdjustedSignificanceValues(self):
+        return self.adjustedSignificanceValues
+    def setOmicAdjustedSignificanceValues(self, omic, adjustedSignificanceValues):
+        self.adjustedSignificanceValues[omic] = adjustedSignificanceValues
 
     def setSignificancePvalue(self, omicName, pValue):
         self.significanceValues[omicName][2] = pValue

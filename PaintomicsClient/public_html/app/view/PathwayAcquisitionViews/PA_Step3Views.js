@@ -1177,7 +1177,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 				graph: {nodes: nodesAux, edges: edgesAux},
 				renderers: [
 					{container: $('#pathwayNetworkBox_' + me.dbid)[0], type: 'canvas' },
-					{container: $('#pathwayNetworkBoxSVG_' + me.dbid)[0], type: 'svg' }
+					//{container: $('#pathwayNetworkBoxSVG_' + me.dbid)[0], type: 'svg' }
 				],
 				//renderers: [{container: $('#pathwayNetworkBox')[0], type: 'svg' }],
 				settings: {
@@ -2099,7 +2099,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					'  <a href="javascript:void(0)" class="toolbarOption resumeLayout helpTip" id="saveNodePositionsButton_' + me.dbid + '"  style="float:right"><i class="fa fa-floppy-o"></i> Save Node Positions</a>' +
 					'  <p id="step3-network-toolbar-message"></p>'+
 					'</div>' +
-					'<div id="pathwayNetworkBox_' + me.dbid + '" style="position: relative;overflow:hidden; height:695px; width: 100%;"><div id="pathwayNetworkWaitBox_' + me.dbid + '"><i class="fa fa-cog fa-spin"></i> Building network...</div></div>' +
+					'<div id="pathwayNetworkBox_' + me.dbid + '" style="position: relative;overflow:hidden; height:700px; width: 100%;"><div id="pathwayNetworkWaitBox_' + me.dbid + '"><i class="fa fa-cog fa-spin"></i> Building network...</div></div>' +
 					'<div id="pathwayNetworkBoxSVG_' + me.dbid + '" style="display: none;">'
 				}],
 				listeners: {
@@ -2781,6 +2781,15 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 						pathwayData['totalRelevantMatched' + omicName] = significanceValues[j][1];
 						pathwayData['pValue' + omicName] = significanceValues[j][2];
 					}
+
+					adjustedSignificanceValues = pathwayModel.getAdjustedSignificanceValues();
+					for (var j in adjustedSignificanceValues) {
+						omicName = "-" + j.toLowerCase().replace(/ /g, "-");
+
+						for (var k in adjustedSignificanceValues[j]) {
+							pathwayData["adjpval" + k + omicName] = adjustedSignificanceValues[j][k];
+						}
+					}
 					this.tableData.push(pathwayData);
 
 					significativePathways += (pathwayModel.getCombinedSignificanceValues() <= 0.05) ? 1 : 0;
@@ -2889,9 +2898,11 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 				//CALL THE PREVIOUS FUNCTION ADDING THE INFORMATION FOR GENE BASED OMIC AND COMPOUND BASED OMICS
 				var secondaryColumns = [];
 				var hidden = (Object.keys(this.model.getGeneBasedInputOmics()).length  + Object.keys(this.model.getCompoundBasedInputOmics()).length  > 5 || $("#mainViewCenterPanel").hasClass("mobileMode"))  ;
+				var adjustedPvalues = (this.model.getPathways() != null ? this.model.getPathways()[0].getAdjustedSignificanceValues() : null);
+				var adjustedPvalueMethods = (adjustedPvalues != null ? Object.keys(adjustedPvalues[Object.keys(adjustedPvalues)[0]]) : null);
 
-				this.generateColumns(this.model.getGeneBasedInputOmics(), secondaryColumns, rowModel, hidden);
-				this.generateColumns(this.model.getCompoundBasedInputOmics(), secondaryColumns, rowModel, hidden);
+				this.generateColumns(this.model.getGeneBasedInputOmics(), secondaryColumns, rowModel, hidden, adjustedPvalueMethods);
+				this.generateColumns(this.model.getCompoundBasedInputOmics(), secondaryColumns, rowModel, hidden, adjustedPvalueMethods);
 
 				//ADD AN ADDITIONAL COLUMN WITH THE COMBINED pValue IF #OMIC > 1
 				if (secondaryColumns.length > 1) {
@@ -2990,7 +3001,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 			* @param {Object} rowModel, Object containing a description for the row model for the table
 			* @return {PA_Step3PathwayTableView}
 			*/
-			this.generateColumns = function(omics, columns, rowModel, hidden) {
+			this.generateColumns = function(omics, columns, rowModel, hidden, adjustedPvaluesMethods) {
 				//FOR EACH OMIC -> ADD COLUM FOR p-value AND CREATE THE HOVER PANEL WITH SUMMARY
 				var omicName;
 				var me = this;
@@ -3073,6 +3084,22 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 						name: 'pValue' + omicName,
 						defaultValue: "-"
 					};
+
+					//Apply only when there are adjusted p-values
+					adjustedPvaluesMethods.forEach(function(m) {
+						columns.push({
+							text: omics[i].omicName.replace(" ","</br>") + '(' + m + ')', cls:"header-45deg",
+							dataIndex: 'adjpval' + m + omicName, width:90,
+							flex: 1, hidden : true, sortable: true, align: "center",
+							filter: {type: 'numeric'},
+							renderer: renderFunction
+						});
+
+						rowModel['adjpval' + m + omicName] = {
+							name: 'adjpval' + m + omicName,
+							defaultValue: "-"
+						};
+					});
 				}
 				return this;
 			};

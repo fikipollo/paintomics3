@@ -8,6 +8,8 @@ from collections import defaultdict
 from src.common.Util import chunks
 from src.common.KeggInformationManager import KeggInformationManager
 
+from src.classes.FoundFeature import FoundFeature
+
 from src.conf.organismDB import dicDatabases
 from src.conf.serverconf import MONGODB_HOST, MONGODB_PORT, MAX_THREADS, MAX_WAIT_THREADS #MULTITHREADING
 
@@ -363,7 +365,9 @@ def mapCompoundsIdentifiers(jobID, featureList, matchedFeatures, notMatchedFeatu
                     matches+=1 #computes the total unique matching
                     oldName = feature.getName()
                     matchedCompoundIDsTable[oldName] = matchedCompounds
-                    matchedElement = {"title" : oldName, "mainCompounds" : [], "otherCompounds" : []}
+                    # matchedElement = {"title" : oldName, "mainCompounds" : [], "otherCompounds" : []}
+                    matchedElement = FoundFeature("")
+                    matchedElement.setTitle(oldName)
 
                     for matchedCompound in matchedCompounds:
                         feature = feature.clone() #IF MORE THAN 1 MATCH, CLONE THE FEATURE
@@ -372,21 +376,23 @@ def mapCompoundsIdentifiers(jobID, featureList, matchedFeatures, notMatchedFeatu
                         feature.getOmicsValues()[0].setInputName(matchedCompound.get("name"))
 
                         if feature.calculateSimilarity(oldName) >=  0.9:
-                            matchedElement["mainCompounds"].append(feature)
+                            # matchedElement["mainCompounds"].append(feature)
+                            matchedElement.addMainCompound(feature)
                         else:
                             feature.getOmicsValues()[0].setOriginalName(oldName)
-                            matchedElement["otherCompounds"].append(feature)
+                            # matchedElement["otherCompounds"].append(feature)
+                            matchedElement.addOtherCompound(feature)
 
                     #Remove some special cases of repeated features
                     # 1.  Find all repeated features
                     repeatedFeatures = {}
-                    for i in range(len(matchedElement["mainCompounds"])):
-                        feature = matchedElement["mainCompounds"][i]
+                    for i in range(len(matchedElement.getMainCompounds())):
+                        feature = matchedElement.getMainCompounds()[i]
                         if feature.getID() not in repeatedFeatures:
                             repeatedFeatures[feature.getID()] = ([],[])
                         repeatedFeatures[feature.getID()][0].append(i)
-                    for i in range(len(matchedElement["otherCompounds"])):
-                        feature = matchedElement["otherCompounds"][i]
+                    for i in range(len(matchedElement.getOtherCompounds())):
+                        feature = matchedElement.getOtherCompounds()[i]
                         if feature.getID() not in repeatedFeatures:
                             repeatedFeatures[feature.getID()] = ([],[])
                         repeatedFeatures[feature.getID()][1].append(i)
@@ -397,27 +403,27 @@ def mapCompoundsIdentifiers(jobID, featureList, matchedFeatures, notMatchedFeatu
                     for indexes in repeatedFeatures.values():
                         #Take the first feature
                         if len(indexes[0]) > 1:
-                            mainFeature = matchedElement["mainCompounds"][indexes[0][0]]
+                            mainFeature = matchedElement.getMainCompounds()[indexes[0][0]]
                             del indexes[0][0]
                         elif len(indexes[1]) > 1:
-                            mainFeature = matchedElement["otherCompounds"][indexes[1][0]]
+                            mainFeature = matchedElement.getOtherCompounds()[indexes[1][0]]
                             del indexes[1][0]
                         else:
                             continue
 
                         #Combine the name for the remaining features
                         for i in indexes[0]:
-                            mainFeature.setName(mainFeature.getName() + ", " + matchedElement["mainCompounds"][i].getName())
+                            mainFeature.setName(mainFeature.getName() + ", " + matchedElement.getMainCompounds()[i].getName())
                             toRemove[0].append(i)
                         for i in indexes[1]:
-                            mainFeature.setName(mainFeature.getName() + ", " + matchedElement["otherCompounds"][i].getName())
+                            mainFeature.setName(mainFeature.getName() + ", " + matchedElement.getOtherCompounds()[i].getName())
                             toRemove[1].append(i)
 
                     #Delete invalid features
                     for i in sorted(toRemove[0], reverse=True): #looping in reverse order avoid "index out of range" errors (we are removing items from the array)
-                        del matchedElement["mainCompounds"][i]
+                        del matchedElement.getMainCompounds()[i]
                     for i in sorted(toRemove[1], reverse=True):
-                        del matchedElement["otherCompounds"][i]
+                        del matchedElement.getOtherCompounds()[i]
 
                     #Add the CompoundSet to the list
                     matchedFeatures.append(matchedElement)

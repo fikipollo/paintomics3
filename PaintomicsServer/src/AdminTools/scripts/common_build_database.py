@@ -677,7 +677,7 @@ def processMapManMappingData():
 
     total_lines = int(check_output(['wc', '-l', mapman_kegg_file_name]).split(" ")[0])
 
-     with open(mapman_kegg_file_name, 'r') as mapman_file:
+    with open(mapman_kegg_file_name, 'r') as mapman_file:
         i = 0
         prev = -1
         errorMessage = ""
