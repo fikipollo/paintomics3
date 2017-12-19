@@ -101,7 +101,9 @@ def pathwayAcquisitionStep1_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, EXA
             jobInstance.setOrganism(specie)
             # Check the available databases for species
             organismDB = set(dicDatabases.get(specie, [{}])[0].keys())
-            jobInstance.setDatabases(list(set([u'KEGG']) | set(databases).intersection(organismDB)))
+            # TODO: disabled multiple databases for the moment
+            # jobInstance.setDatabases(list(set([u'KEGG']) | set(databases).intersection(organismDB)))
+            jobInstance.setDatabases([u'KEGG'])
             logging.info("STEP1 - SELECTED SPECIE IS " + specie)
 
             logging.info("STEP1 - READING FILES....")
@@ -496,7 +498,7 @@ def pathwayAcquisitionRecoverJob(request, response, QUEUE_INSTANCE):
             response.setContent({"success": False, "errorMessage": "Job " + jobID + " not found at database.<br>Please, note that jobs are automatically removed after 7 days for guests and 14 days for registered users."})
             return response
 
-        # Allow "no user" jobs to be view by anyone, logged or not
+        # Allow "no user" jobs to be viewed by anyone, logged or not
         if(str(jobInstance.getUserID()) != 'None' and jobInstance.getUserID() != userID):
             logging.info("RECOVER_JOB - JOB " + jobID + " DOES NOT BELONG TO USER " + userID)
             response.setContent({"success": False, "errorMessage": "Invalid Job ID (" + jobID + ") for current user.<br>Please, check the Job ID and try again."})
@@ -567,8 +569,8 @@ def pathwayAcquisitionSaveImage(request, response):
         fileName = "paintomics_" + request.form.get("fileName").replace(" ", "_") + "_" + jobID
         fileFormat = request.form.get("format")
 
-
-        path = CLIENT_TMP_DIR + userID + jobInstance.getOutputDir().replace(CLIENT_TMP_DIR + userID, "")
+        userDirID = userID if userID is not None else "nologin"
+        path = CLIENT_TMP_DIR + userDirID + jobInstance.getOutputDir().replace(CLIENT_TMP_DIR + userDirID, "")
 
         if(fileFormat == "png"):
             def createImage(svgData):

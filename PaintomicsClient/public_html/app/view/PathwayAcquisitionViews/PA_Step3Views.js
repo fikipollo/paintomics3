@@ -332,6 +332,7 @@ function PA_Step3JobView() {
 		/* STEP 1: LOAD SUMMARY      		                    */
 		/********************************************************/
 		$("#jobIdField").html(this.getModel().getJobID());
+		$("#jobURL").html(window.location.href).attr('href', window.location.href);
 		/********************************************************/
 		/* STEP 2: GENERATE THE PATHWAYS CLASSIFICATION PLOT    */
 		/********************************************************/
@@ -494,7 +495,7 @@ function PA_Step3JobView() {
 							xtype: 'box',
 							cls: "contentbox omicSummaryBox",
 							html: '<h2>Pathways summary</h2>' +
-							'<h3 style="text-align:center;">Your Job ID is <b id="jobIdField">[JOB ID]</b><span class="infoTip" style=" font-size: 12px; ">Use this ID to recover your information in the future (option available at <b>Cloud Drive</b> section).</span></h3>' +
+							'<h3 style="text-align:center;">Your Job ID is <b id="jobIdField">[JOB ID]</b><span class="infoTip" style=" font-size: 12px; ">You can access this job using the URL: <a id="jobURL" target="_blank" href="#">[JOBURL]</a></h3>' +
 							'<div style="text-align:center;font-size: 25px;line-height: 120px;">' +
 							'  <span class="myDataSummaryCount" style=" margin: 0; padding-right: 0; "><i class="fa fa-sitemap"></i> </span>' +
 							'  <div id="foundPathwaysTag" class="odometer odometer-theme-default">000</div>  Found Pathways' +
@@ -2752,6 +2753,9 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 				var pathways = this.model.getPathways();
 				var pathwayData, pathwayModel, omicName, significanceValues;
 
+				// TODO: make it possible to change it
+				var defaultCombinedPvaluesMethod = "fisher";
+
 				var significativePathways = 0;
 
 				for (var i in pathways) {
@@ -2767,7 +2771,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 						title: pathwayModel.getName(),
 						matchedGenes: pathwayModel.getMatchedGenes().length,
 						matchedCompounds: pathwayModel.getMatchedCompounds().length,
-						combinedSignificancePvalue: pathwayModel.getCombinedSignificanceValues(),
+						// combinedSignificancePvalues: pathwayModel.getCombinedSignificanceValues(),
 						mainCategory: pathwayModel.getClassification().split(";")[0],
 						secCategory: pathwayModel.getClassification().split(";")[1],
 						visible: pathwayModel.isVisible(),
@@ -2790,9 +2794,14 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 							pathwayData["adjpval" + k + omicName] = adjustedSignificanceValues[j][k];
 						}
 					}
+
+					combinedSignificanceValues = pathwayModel.getCombinedSignificanceValues();
+					for (var m in combinedSignificanceValues) {
+						pathwayData["combinedSignificancePvalue" + m] = combinedSignificanceValues[m];
+					}
 					this.tableData.push(pathwayData);
 
-					significativePathways += (pathwayModel.getCombinedSignificanceValues() <= 0.05) ? 1 : 0;
+					significativePathways += (combinedSignificanceValues[defaultCombinedPvaluesMethod] <= 0.05) ? 1 : 0;
 				}
 			};
 
@@ -2802,6 +2811,9 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 			//TODO: DOCUMENTAR
 			this.updateObserver = function() {
 				var me = this;
+
+				// TODO: make it possible to change it
+				var defaultCombinedPvaluesMethod = "fisher";
 
 				/*STEP 3.1 GENERATE THE COLUMNS AND THE ROW MODEL*/
 				var columns = [ //DEFINE FIXED COLUMNS
@@ -2888,7 +2900,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					title: {name: "title", defaultValue: ''},
 					matchedGenes: {name: "matchedGenes", defaultValue: '0'},
 					matchedCompounds: {name: "matchedCompounds", defaultValue: '0'},
-					combinedSignificancePvalue: {name: "combinedSignificancePvalue", defaultValue: ''},
+					// combinedSignificancePvalues: {name: "combinedSignificancePvalues", defaultValue: ''},
 					mainCategory: {name: "mainCategory",defaultValue: ''},
 					secCategory: {name: "secCategory",defaultValue: ''},
 					visible: {name: "visible", defaultValue: true},
@@ -2897,38 +2909,51 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 
 				//CALL THE PREVIOUS FUNCTION ADDING THE INFORMATION FOR GENE BASED OMIC AND COMPOUND BASED OMICS
 				var secondaryColumns = [];
+				var modelPathways = this.model.getPathways();
 				var hidden = (Object.keys(this.model.getGeneBasedInputOmics()).length  + Object.keys(this.model.getCompoundBasedInputOmics()).length  > 5 || $("#mainViewCenterPanel").hasClass("mobileMode"))  ;
-				var adjustedPvalues = (this.model.getPathways() != null ? this.model.getPathways()[0].getAdjustedSignificanceValues() : null);
-				var adjustedPvalueMethods = (adjustedPvalues != null ? Object.keys(adjustedPvalues[Object.keys(adjustedPvalues)[0]]) : null);
 
-				this.generateColumns(this.model.getGeneBasedInputOmics(), secondaryColumns, rowModel, hidden, adjustedPvalueMethods);
-				this.generateColumns(this.model.getCompoundBasedInputOmics(), secondaryColumns, rowModel, hidden, adjustedPvalueMethods);
+				var adjustedPvalueMethods = this.model.getMultiplePvaluesMethods();
+				var combinedPvaluesMethods = this.model.getCombinedPvaluesMethods();
+
+				this.generateColumns(this.model.getGeneBasedInputOmics(), secondaryColumns, rowModel, hidden, adjustedPvalueMethods, combinedPvaluesMethods);
+				this.generateColumns(this.model.getCompoundBasedInputOmics(), secondaryColumns, rowModel, hidden, adjustedPvalueMethods, combinedPvaluesMethods);
 
 				//ADD AN ADDITIONAL COLUMN WITH THE COMBINED pValue IF #OMIC > 1
 				if (secondaryColumns.length > 1) {
-					secondaryColumns.push({
-						text: 'Combined </br>pValue', cls:"header-45deg",
-						dataIndex: 'combinedSignificancePvalue',
-						sortable: true,filter: {type: 'numeric'}, align: "center",
-						minWidth: 100, flex:1, height:75,
-						renderer: function(value, metadata, record) {
-							var myToolTipText = "<b style='display:block; width:200px'>" + metadata.column.text + "</b>";
-							metadata.style = "height: 33px; font-size:10px;"
-							if (value === '') {
-								myToolTipText = myToolTipText + "<i>No data for this pathway</i>";
-								metadata.tdAttr = 'data-qtip="' + myToolTipText + '"';
-								metadata.style += " background-color:#D4D4D4;";
-								return "-";
-							}
 
-							if(value <= 0.065){
-								var color = Math.round(161 * (value/0.065));
-								metadata.style += "background-color:rgb(255, " + color +"," + color + ");";
-							}
+					combinedPvaluesMethods.forEach(function(m) {
 
-							//RENDER THE VALUE -> IF LESS THAN 0.05, USE SCIENTIFIC NOTATION
-							return (value > 0.001 || value === 0) ? parseFloat(value).toFixed(5) : parseFloat(value).toExponential(4);
-						}
+						rowModel['combinedSignificancePvalue' + m] = {
+							name: 'combinedSignificancePvalue' + m,
+							defaultValue: "-"
+						};
+
+						secondaryColumns.push({
+							text: 'Combined </br>pValue</br>(' + m + ')', cls:"header-45deg",
+							dataIndex: 'combinedSignificancePvalue' + m,
+							sortable: true,filter: {type: 'numeric'}, align: "center",
+							minWidth: 100, flex:1, height:75, hidden: (m != defaultCombinedPvaluesMethod),
+							renderer: function(value, metadata, record) {
+								var myToolTipText = "<b style='display:block; width:200px'>" + metadata.column.text + "</b>";
+								metadata.style = "height: 33px; font-size:10px;"
+								if (value === '') {
+									myToolTipText = myToolTipText + "<i>No data for this pathway</i>";
+									metadata.tdAttr = 'data-qtip="' + myToolTipText + '"';
+									metadata.style += " background-color:#D4D4D4;";
+									return "-";
+								}
+
+								if(value <= 0.065){
+									var color = Math.round(161 * (value/0.065));
+									metadata.style += "background-color:rgb(255, " + color +"," + color + ");";
+								}
+
+								//RENDER THE VALUE -> IF LESS THAN 0.05, USE SCIENTIFIC NOTATION
+								return (value > 0.001 || value === 0) ? parseFloat(value).toFixed(5) : parseFloat(value).toExponential(4);
+							}
+						});
+
+
 					});
 				}
 				//GROUP ALL COLUMNS INTO A NEW COLUMN 'Significance tests'
@@ -2969,7 +2994,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					fields: Object.values(rowModel),
 					data: this.tableData,
 					sorters: [{
-						property: ((secondaryColumns.length > 1) ? 'combinedSignificancePvalue' : secondaryColumns[0].dataIndex),
+						property: ((secondaryColumns.length > 1) ? 'combinedSignificancePvalue' + defaultCombinedPvaluesMethod : secondaryColumns[0].dataIndex),
 						direction: 'ASC'
 					}]
 				});
@@ -3001,7 +3026,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 			* @param {Object} rowModel, Object containing a description for the row model for the table
 			* @return {PA_Step3PathwayTableView}
 			*/
-			this.generateColumns = function(omics, columns, rowModel, hidden, adjustedPvaluesMethods) {
+			this.generateColumns = function(omics, columns, rowModel, hidden, adjustedPvaluesMethods, combinedPvaluesMethods) {
 				//FOR EACH OMIC -> ADD COLUM FOR p-value AND CREATE THE HOVER PANEL WITH SUMMARY
 				var omicName;
 				var me = this;
@@ -3039,17 +3064,19 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 						var notFoundRelevant = totalRelevant - foundRelevant;
 						var notFoundNotRelev = (totalFeatures - foundFeatures) - notFoundRelevant;
 
-						myToolTipText +=
-						'<b>p-value:</b>'  + (value === -1 ? "-" : renderedValue) + "</br>" +
-						"<table class='contingencyTable'>" +
-						' <thead><th></th><th>Relevant</th><th>Not Relevant</th><th></th></thead>' +
-						'  <tr><td>Found</td><td>' + foundRelevant + '</td><td>' + foundNotRelevant + '</td><td>' + foundFeatures + '</td></tr>' +
-						'  <tr><td>Not found</td><td>' + notFoundRelevant + '</td><td>' + notFoundNotRelev + '</td><td>' + (totalFeatures - foundFeatures) + '</td></tr>' +
-						'  <tr><td></td><td>' + totalRelevant + '</td><td>' + (totalFeatures - totalRelevant) + '</td><td>' + (totalFeatures) + '</td></tr>' +
-						'</table>';
-						// myToolTipText = myToolTipText + "Features matched: " + ) + "</br>";
-						// myToolTipText = myToolTipText + "Relevant features matched: " +  + "</br>";
-						metadata.tdAttr = 'data-qtip="' + myToolTipText + '"';
+						if (foundRelevant !== undefined) {
+							myToolTipText +=
+							'<b>p-value:</b>'  + (value === -1 ? "-" : renderedValue) + "</br>" +
+							"<table class='contingencyTable'>" +
+							' <thead><th></th><th>Relevant</th><th>Not Relevant</th><th></th></thead>' +
+							'  <tr><td>Found</td><td>' + foundRelevant + '</td><td>' + foundNotRelevant + '</td><td>' + foundFeatures + '</td></tr>' +
+							'  <tr><td>Not found</td><td>' + notFoundRelevant + '</td><td>' + notFoundNotRelev + '</td><td>' + (totalFeatures - foundFeatures) + '</td></tr>' +
+							'  <tr><td></td><td>' + totalRelevant + '</td><td>' + (totalFeatures - totalRelevant) + '</td><td>' + (totalFeatures) + '</td></tr>' +
+							'</table>';
+							// myToolTipText = myToolTipText + "Features matched: " + ) + "</br>";
+							// myToolTipText = myToolTipText + "Relevant features matched: " +  + "</br>";
+							metadata.tdAttr = 'data-qtip="' + myToolTipText + '"';
+						}
 
 					} catch (e) {
 						debugger;
@@ -3088,7 +3115,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					//Apply only when there are adjusted p-values
 					adjustedPvaluesMethods.forEach(function(m) {
 						columns.push({
-							text: omics[i].omicName.replace(" ","</br>") + '(' + m + ')', cls:"header-45deg",
+							text: omics[i].omicName.replace(" ","</br>") + '</br>(' + m + ')', cls:"header-45deg",
 							dataIndex: 'adjpval' + m + omicName, width:90,
 							flex: 1, hidden : true, sortable: true, align: "center",
 							filter: {type: 'numeric'},

@@ -189,8 +189,8 @@ class JobInformationManager:
         fields = None
         omicType = ""
         dataType = ""
-
-        CLIENT_TMP_DIR = CLIENT_TMP_DIR + userID + "/inputData/"
+        userDirID = userID if userID is not None else "nologin"
+        CLIENT_TMP_DIR = CLIENT_TMP_DIR + userDirID + "/inputData/"
 
         for uploadedFileName in uploadedFiles.keys():
             #IF THE FILE IS NOT A RELEVANT FEATURES FILE

@@ -45,6 +45,22 @@ def calculateCombinedFisher(significanceValuesList):
 # fdr_bh (default), fdr_by, nada
 def adjustPvalues(pvaluesList):
     # Returns array [reject, pvals_corrected, alphacSidak, alphacBonf]
-    adjusted_pvalues = {adjust_method: dict(zip(pvaluesList.keys(), multipletests(pvaluesList.values(), method = adjust_method)[1].tolist())) for adjust_method in ['fdr_bh', 'fdr_by']}
+    adjust_methods = {'fdr_bh': 'FDR BH', 'fdr_by': 'FDR BY'}
+    adjusted_pvalues = {adjust_methods[adjust_method]: dict(zip(pvaluesList.keys(), multipletests(pvaluesList.values(), method = adjust_method)[1].tolist())) for adjust_method in adjust_methods.keys()}
 
     return adjusted_pvalues
+
+
+def calculateStoufferCombinedPvalue(pvalues, weights):
+    # P-value in third position
+    combinedPvalue = combine_pvalues([pvalue[2] for pvalue in pvalues], 'stouffer', weights)
+
+    return combinedPvalue[1]
+
+def calculateCombinedSignificancePvalues(significanceValuesList, stouferWeights):
+    combined_methods = {
+        'fisher': calculateCombinedFisher(significanceValuesList),
+        'stouffer': calculateStoufferCombinedPvalue(significanceValuesList, stouferWeights)
+    }
+
+    return combined_methods

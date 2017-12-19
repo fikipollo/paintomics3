@@ -36,7 +36,7 @@ def getDatabasesByOrganismCode(organism):
     # dicDatabases is inside the conf file "organismDB" and should be
     # updated after installing new species with external annotation data.
 
-    return dicDatabases.get(organism, ["kegg_id", "kegg_gene_symbol"])
+    return dicDatabases.get(organism, [{'KEGG': "kegg_id"}, "kegg_gene_symbol"])
 
 def getConnectionByOrganismCode(organism):
     """

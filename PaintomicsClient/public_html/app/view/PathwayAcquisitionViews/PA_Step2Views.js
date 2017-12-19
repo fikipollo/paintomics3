@@ -88,6 +88,7 @@ function PA_Step2JobView() {
 
 		/* INFO PANEL ABOUT DATABASES USED */
 		var databases = me.getModel().getDatabases();
+		var compoundOmics = me.getModel().getCompoundBasedInputOmics().map(x => x.omicName);
 		var matchingPerDB = {};
 
 		for (var omicName in dataDistribution) {
@@ -112,7 +113,7 @@ function PA_Step2JobView() {
 					}});
 			});
 
-			omicSummaryPanelComponents.push(new PA_OmicSummaryPanel(omicName, dataDistribution[omicName]).getComponent());
+			omicSummaryPanelComponents.push(new PA_OmicSummaryPanel(omicName, dataDistribution[omicName], (compoundOmics.indexOf(omicName) > -1)).getComponent());
 		}
 
 		if (databases.length > 1) {
@@ -462,7 +463,7 @@ function PA_Step2CompoundView(maxLength, columnWidth) {
 }
 PA_Step2CompoundView.prototype = new View();
 
-function PA_OmicSummaryPanel(omicName, dataDistribution) {
+function PA_OmicSummaryPanel(omicName, dataDistribution, isCompoundOmic) {
 	/***********************************************************************
 	* ATTRIBUTES
 	***********************************************************************/
@@ -490,7 +491,8 @@ function PA_OmicSummaryPanel(omicName, dataDistribution) {
 			'</div>',
 			listeners: {
 				boxready: function() {
-					if (me.dataDistribution[1] !== -1 && me.dataDistribution[0] !== -1) {
+					// if (me.dataDistribution[1] !== -1 && me.dataDistribution[0] !== -1) {
+					if (! isCompoundOmic) {
 						// Mapped features can differ between used databases
 						mappedInfo = me.dataDistribution[0];
 

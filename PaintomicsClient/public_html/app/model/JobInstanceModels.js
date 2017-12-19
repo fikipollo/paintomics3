@@ -160,6 +160,28 @@ function JobInstance(jobID) {
 	this.addOmicValue = function (omicsValue) {
 		this.getOmicsValues()[omicsValue.getID()] = omicsValue;
 	};
+	this.getMultiplePvaluesMethods = function() {
+		var multipleMethods = null;
+
+		if (this.pathways.length && this.pathways[0].getAdjustedSignificanceValues) {
+			var omicPvalues = this.pathways[0].getAdjustedSignificanceValues();
+
+			multipleMethods = Object.keys(omicPvalues[Object.keys(omicPvalues)[0]]);
+		}
+
+		return multipleMethods;
+	};
+	this.getCombinedPvaluesMethods = function() {
+		var combinedMethods = null;
+
+		if (this.pathways.length && this.pathways[0].getCombinedSignificanceValues) {
+			var omicPvalues = this.pathways[0].getCombinedSignificanceValues();
+
+			combinedMethods = Object.keys(omicPvalues);
+		}
+
+		return combinedMethods;
+	};
 
 	/**
 	* This function returns the values for min/max for each omic type.

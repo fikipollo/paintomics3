@@ -312,18 +312,19 @@ function PA_Step1JobView() {
 								'</span>'
 							}]
 						},
-						{xtype: "container", layout: { type: "vbox", align: "stretch" }, flex: 0.6, items: [
+						{xtype: "container", layout: { type: "vbox", align: "stretch" }, flex: 0.6, hidden: true, items: [
 								{
 									xtype: 'checkboxgroup', fieldLabel: 'Databases',
 									style: "margin: 10px 10px 10px 20px;",
 									maxWidth: 450,
 									allowBlank: false,
 									columns: 2,
+									disabled: true,
 									/* Hardcoded DBs (they can be considered static) */
 									items: [
 											/* Only for information, KEGG database is added always on server side */
 											{ boxLabel: 'KEGG (required)', name: 'databases[]', inputValue: 'KEGG', checked: true, disabled: true },
-											{ boxLabel: 'MapMan', name: 'databases[]', inputValue: 'MapMan', checked: true },
+											{ boxLabel: 'MapMan', name: 'databases[]', inputValue: 'MapMan', checked: false },
 									]
 								},
 								{

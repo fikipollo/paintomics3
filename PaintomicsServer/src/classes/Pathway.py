@@ -39,7 +39,8 @@ class Pathway(Model):
         #SIGNIFICANCE VALUES PER OMIC in format OmicName -> [totalFeatures, totalRelevantFeatures, pValue]
         self.significanceValues= {}
         self.adjustedSignificanceValues = {}
-        self.combinedSignificancePvalue=1
+        #self.combinedSignificancePvalue=1
+        self.combinedSignificancePvalues = {}
         #GRAPHICAL INFORMATION
         self.graphicalOptions = None
 
@@ -116,10 +117,14 @@ class Pathway(Model):
     def setSignificancePvalue(self, omicName, pValue):
         self.significanceValues[omicName][2] = pValue
 
-    def setCombinedSignificancePvalue(self, pValue):
-        self.combinedSignificancePvalue = pValue
-    def getCombinedSignificancePvalue(self):
-        return self.combinedSignificancePvalue
+    # def setCombinedSignificancePvalue(self, pValue):
+    #     self.combinedSignificancePvalue = pValue
+    # def getCombinedSignificancePvalue(self):
+    #     return self.combinedSignificancePvalue
+    def setCombinedSignificancePvalues(self, pValues):
+        self.combinedSignificancePvalues = pValues
+    def getCombinedSignificancePvalues(self):
+        return self.combinedSignificancePvalues
 
     def setGraphicalOptions(self, graphicalOptions):
         self.graphicalOptions = graphicalOptions

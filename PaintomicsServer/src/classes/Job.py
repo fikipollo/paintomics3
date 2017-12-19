@@ -460,7 +460,9 @@ class Job(Model):
 
             logging.info("PARSING COMPOUND BASED FILE (" + omicName + ")... DONE" )
 
-            return [omicName, checkBoxesData  + list(parsedFeatures), [-1,-1] + summary ]
+            # TODO: changed to assign the foundFeatures/notMatchedFeatures but they are not the same as the raw data (duplicated compounds?)
+            # return [omicName, checkBoxesData  + list(parsedFeatures), [-1,-1] + summary ]
+            return [omicName, checkBoxesData + list(parsedFeatures), [foundFeatures, len(notMatchedFeatures)] + summary]
         else:
             logging.error("PARSING USER COMPOUND BASED FILE (" + omicName + ")... FAILED. File " + valuesFileName + " NOT FOUND")
 

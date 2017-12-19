@@ -256,8 +256,9 @@ def dataManagementDeleteJob(request, response):
         # Step 2. DELETE EACH JOB
         #****************************************************************.
         daoInstance = JobDAO()
-        userDir = CLIENT_TMP_DIR + userID + "/jobsData/"
-        tmpDir = CLIENT_TMP_DIR + userID + "/tmp/"
+        userDirID = userID if userID is not None else "nologin"
+        userDir = CLIENT_TMP_DIR + userDirID + "/jobsData/"
+        tmpDir = CLIENT_TMP_DIR + userDirID + "/tmp/"
 
         for jobID in jobs:
             #****************************************************************
@@ -319,6 +320,8 @@ def dataManagementDownloadFile(request, response):
         #****************************************************************
         logging.info("STEP1 - GET FILE REQUEST RECEIVED")
 
+        userDirID = userID if userID is not None else "nologin"
+
         if fileType=="job_result":
             userDir =  "/jobsData/" + jobID + "/output/"
         elif fileType=="input":
@@ -326,7 +329,7 @@ def dataManagementDownloadFile(request, response):
         else:
             userDir =  "/tmp/" + jobID
 
-        userDir = CLIENT_TMP_DIR + userID + userDir
+        userDir = CLIENT_TMP_DIR + userDirID + userDir
 
         file_path = "{path}/{file}".format(path=userDir, file=fileName)
 
