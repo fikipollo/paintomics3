@@ -59,8 +59,8 @@ def calculateStoufferCombinedPvalue(pvalues, weights):
 
 def calculateCombinedSignificancePvalues(significanceValuesList, stouferWeights):
     combined_methods = {
-        'fisher': calculateCombinedFisher(significanceValuesList),
-        'stouffer': calculateStoufferCombinedPvalue(significanceValuesList, stouferWeights)
+        'Fisher': calculateCombinedFisher(significanceValuesList),
+        'Stouffer': calculateStoufferCombinedPvalue(significanceValuesList, stouferWeights)
     }
 
     return combined_methods

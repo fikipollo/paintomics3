@@ -134,6 +134,8 @@ Ext.define('Ext.grid.LiveSearchGridPanel', {
     download: false,
     multidelete: false,
     databases: [],
+    adjustedPvaluesMethods: [],
+    combinedPvaluesMethods: [],
     stripeRows: true,
     viewConfig: {
         markDirty: false,
@@ -197,6 +199,71 @@ Ext.define('Ext.grid.LiveSearchGridPanel', {
           });
 
           me.tbar.splice(-3, 0, ...database_options);
+        }
+
+        if (me.adjustedPvaluesMethods.length || me.combinedPvaluesMethods.length) {
+          var pvalue_filter_options = ['-'];
+
+          if (me.adjustedPvaluesMethods.length) {
+              pvalue_filter_options.push('<span style="margin: 0 5px 0 10px;font-weight: bold;">Show FDR:</span>');
+
+              pvalue_filter_options.push({
+                  xtype: 'combobox',
+                  name: 'adjustedpvalue_select',
+                  allowBlank: false,
+                  editable: false,
+                  triggerAction: 'all',
+                  typeAhead: false,
+                  queryMode: 'local',
+                  store: ['None'].concat(me.adjustedPvaluesMethods),
+                  // TODO: this should be saved to visualOptions
+                  //value: 'None',
+                  listeners: {
+                    'select': me.methodPvalueToggle,
+                    scope: me
+                  }
+              });
+          }
+
+          if (me.combinedPvaluesMethods.length) {
+              pvalue_filter_options.push('<span style="margin: 0 5px 0 10px;font-weight: bold;">Show combined p-values:</span>');
+
+              pvalue_filter_options.push({
+                  xtype: 'combobox',
+                  name: 'combinedpvalue_select',
+                  allowBlank: false,
+                  editable: false,
+                  triggerAction: 'all',
+                  typeAhead: false,
+                  queryMode: 'local',
+                  store: me.combinedPvaluesMethods,
+                  // TODO: this should be saved to visualOptions
+                  //value: 'None',
+                  listeners: {
+                    'select': function( combo, records, eOpts ) {
+                      me.methodPvalueToggle( combo, records, eOpts);
+                      me.fireEvent("combinedMethodChanged", records);
+                    }
+                  }
+              });
+
+              /*me.combinedPvaluesMethods.forEach(function(method) {
+                pvalue_filter_options.push({
+                  xtype: 'checkbox',
+                  hideLabel: true,
+                  margin: '0 0 0 4px',
+                  handler: me.combinedPvalueToggle,
+                  name: 'combinedPvalue',
+                  scope: me,
+                  inputValue: method,
+                  checked: true
+                }, method);
+              });*/
+          }
+
+          pvalue_filter_options.push('-')
+
+          me.tbar.splice(-2, 0, ...pvalue_filter_options);
         }
 
         me.callParent(arguments);
@@ -299,6 +366,34 @@ Ext.define('Ext.grid.LiveSearchGridPanel', {
           return(db_cboxes.indexOf(item.raw.source) !== -1);
         }, root: 'data'});
         me.getSelectionModel().deselectAll();
+    },
+    /**
+     * Enable/disable adjusted p-values method columns in the table view
+     * @private
+     */
+    methodPvalueToggle: function ( combo, records, eOpts ) {
+        var me = this;
+
+        // Selected record value (only one)
+        var selectedFDR = records[0].raw[0];
+
+        // Get values
+        var hideValues = combo.store.getRange().map(x => x.raw[0]).filter(option => option != 'None' && option != selectedFDR)
+
+        // Iterate over all columns
+        var allColumns = me.query("gridcolumn");
+
+        allColumns.forEach(function(column) {
+          // If the column has the dataIndex attribute, search for patterns
+          // to hide/show the column.
+          if (column.dataIndex) {
+            if (column.dataIndex.match('(' + hideValues.join('|') + ')')) {
+              column.hide();
+            } else if (column.dataIndex.match(selectedFDR)) {
+              column.show();
+            }
+          }
+        });
     }
 });
 

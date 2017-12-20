@@ -134,6 +134,9 @@ function Pathway(ID) {
     this.getCombinedSignificanceValues = function () {
         return this.combinedSignificancePvalues;
     };
+    this.getCombinedSignificanceValueByMethod = function (method) {
+        return this.combinedSignificancePvalues[method];
+    };
     this.setTotalFeatures = function (totalFeatures) {
         this.totalFeatures = totalFeatures;
     };

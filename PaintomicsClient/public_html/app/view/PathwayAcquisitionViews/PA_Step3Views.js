@@ -186,7 +186,8 @@ function PA_Step3JobView() {
 			pathwayInstance =  pathways[i];
 			pathwayDB = pathwayInstance.getSource();
 
-			if (pathwayInstance.getCombinedSignificanceValues() <= 0.05) {
+			// TODO: change the used method
+			if (pathwayInstance.getCombinedSignificanceValueByMethod('Fisher') <= 0.05) {
 				this.significativePathways += 1
 				this.significativePathwaysByDB[pathwayDB] += 1
 			}
@@ -274,7 +275,8 @@ function PA_Step3JobView() {
 		for (var i in pathways) {
 			visible += (pathways[i].isVisible() ? 1 : 0);
 			if(Object.keys(this.model.summary[4]).length > 1){
-				significative += ((pathways[i].isVisible() && pathways[i].getCombinedSignificanceValues() <= 0.05) ? 1 : 0);
+				// TODO: change the default method
+				significative += ((pathways[i].isVisible() && pathways[i].getCombinedSignificanceValueByMethod('Fisher') <= 0.05) ? 1 : 0);
 			}else{
 				significative += ((pathways[i].isVisible() && pathways[i].getSignificanceValues()[Object.keys(pathways[i].getSignificanceValues())[0]][2] <= 0.05) ? 1 : 0);
 			}
@@ -1071,7 +1073,8 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					/********************************************************/
 					var pValue = 1;
 					try{
-						pValue = (visualOptions.colorBy === "classification")? matchedPathway.getCombinedSignificanceValues() : matchedPathway.getSignificanceValues()[visualOptions.colorBy][2];
+						// TODO: change the default method Fisher
+						pValue = (visualOptions.colorBy === "classification")? matchedPathway.getCombinedSignificanceValueByMethod('Fisher') : matchedPathway.getSignificanceValues()[visualOptions.colorBy][2];
 					}catch(error){
 						//pass
 						pValue = 1;
@@ -2754,7 +2757,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 				var pathwayData, pathwayModel, omicName, significanceValues;
 
 				// TODO: make it possible to change it
-				var defaultCombinedPvaluesMethod = "fisher";
+				var defaultCombinedPvaluesMethod = "Fisher";
 
 				var significativePathways = 0;
 
@@ -2813,7 +2816,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 				var me = this;
 
 				// TODO: make it possible to change it
-				var defaultCombinedPvaluesMethod = "fisher";
+				var defaultCombinedPvaluesMethod = "Fisher";
 
 				/*STEP 3.1 GENERATE THE COLUMNS AND THE ROW MODEL*/
 				var columns = [ //DEFINE FIXED COLUMNS
@@ -3162,7 +3165,14 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 								fields: ['name', 'email', 'phone']
 							}),
 							columns: [{text: 'name', flex: 1, dataIndex: 'name'}],
-							databases: me.model.getDatabases()
+							databases: me.model.getDatabases(),
+							adjustedPvaluesMethods: me.model.getMultiplePvaluesMethods(),
+							combinedPvaluesMethods: me.model.getCombinedPvaluesMethods(),
+							listeners: {
+								'combinedMethodChanged': function(records) {
+										console.log("COMBINED METHOD EVENT.")
+								}
+							}
 						}]
 					}
 				);
