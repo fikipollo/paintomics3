@@ -143,7 +143,7 @@ def checkRemindJobsForUser(connection, user_id):
         #Check if date OR if force_remove
         date = datetime.datetime.strptime(job['accessDate'][0:8], "%Y%m%d").date()
         # Avoid sending reminders of jobs that will be deleted today
-        if date < max_date and date > min_date:
+        if date >= max_date and date < min_date:
             log("Job " + str(job["jobID"]) + " (user " + str(user_id) + ") marked to be reminded.")
             jobs_remind.append(job['jobID'])
     return jobs_remind
@@ -164,6 +164,8 @@ def removeJobByJobID(connection, user_id, job_id):
 def remindJobByJobID(connection, user_id, job_id, ROOT_DIRECTORY):
     log("Reminding job " + job_id)
 
+    ROOT_DIRECTORY_CORRECTED = os.path.abspath(ROOT_DIRECTORY + '/../../../PaintomicsClient/') + '/'
+
     try:
         job_data = connection[MONGODB_DATABASE]['jobInstanceCollection'].find_one({"jobID": job_id})
         user_data = connection[MONGODB_DATABASE]['userCollection'].find_one({"userID": user_id})
@@ -181,9 +183,9 @@ def remindJobByJobID(connection, user_id, job_id, ROOT_DIRECTORY):
         message += "<p>Problems? E-mail <a href='mailto:" + "paintomics@cipf.es" + "'>" + "paintomics@cipf.es" + "</a></p>"
         message += '</body></html>'
 
-        sendEmail(ROOT_DIRECTORY, user_data["email"], user_data["userName"], "Paintomics 3: one job is going to expire soon",
+        sendEmail(ROOT_DIRECTORY_CORRECTED, user_data["email"], user_data["userName"], "Paintomics 3: one job is going to expire soon",
                   message, isHTML=True)
-    except Exception:
+    except Exception as e:
         logging.error("Failed to send the email.")
 
     #STEP 3.REMOVE THE JOB FROM DATABASE
@@ -297,4 +299,4 @@ def confirm(prompt=None, resp=False):
         if ans == 'n' or ans == 'N':
             return False
 
-#cleanDatabases(force=False)
+cleanDatabases(force=True)

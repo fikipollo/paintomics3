@@ -115,13 +115,13 @@ function JobInstance(jobID) {
 		this.geneBasedInputOmics = geneBasedInputOmics;
 	};
 	this.getGeneBasedInputOmics = function () {
-		return this.geneBasedInputOmics;
+		return this.geneBasedInputOmics == null ? [] : this.geneBasedInputOmics;
 	};
 	this.setCompoundBasedInputOmics = function (compoundBasedInputOmics) {
 		this.compoundBasedInputOmics = compoundBasedInputOmics;
 	};
 	this.getCompoundBasedInputOmics = function () {
-		return this.compoundBasedInputOmics;
+		return this.compoundBasedInputOmics == null ? [] : this.compoundBasedInputOmics;
 	};
 	this.setFoundCompounds = function (foundCompounds) {
 		this.foundCompounds = foundCompounds;

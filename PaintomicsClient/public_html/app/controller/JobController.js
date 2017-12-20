@@ -747,21 +747,21 @@ function JobController() {
 		// Update the URL adding the parameter with the jobID
 		if (jobModel.getJobID() !== null) {
 			window.history.replaceState(null, null, window.location.pathname + "?jobID=" + jobModel.getJobID());
-		}
 
-		// Call the server to update the job's access date even when it was
-		// loaded from session data.
-		$.ajax({
-			type: "POST",
-			url: SERVER_URL_PA_TOUCH_JOB,
-			data: {jobID: jobModel.getJobID()},
-			success: function (response) {
-				console.info(Date.logFormat() + " job's access date update succesfully.");
-			},
-			error: function (response) {
-				console.error(Date.logFormat() + " failed when updating job's access date.");
-			},
-		});
+			// Call the server to update the job's access date even when it was
+			// loaded from session data.
+			$.ajax({
+				type: "POST",
+				url: SERVER_URL_PA_TOUCH_JOB,
+				data: {jobID: jobModel.getJobID()},
+				success: function (response) {
+					console.info(Date.logFormat() + " job's access date update succesfully.");
+				},
+				error: function (response) {
+					console.error(Date.logFormat() + " failed when updating job's access date.");
+				},
+			});
+		}
 
 		return jobView;
 	};

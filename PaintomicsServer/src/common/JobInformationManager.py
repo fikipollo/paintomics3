@@ -236,6 +236,10 @@ class JobInformationManager:
                     if( fields["description"] == ""):
                          fields["description"] = "File uploaded through the submission form."
 
+                    # If no user is provided, prepend the jobID to avoid possible conflictions
+                    if userID is None:
+                        dataFileName = jobInstance.getJobID() + '_' + dataFileName
+
                     dataFileName = saveFile(userID, dataFileName, fields, uploadedDataFile, CLIENT_TMP_DIR)
             elif(origin == 'mydata'):
                 dataFileName = formFields.get(uploadedFileName.replace("file","filelocation")).replace("[MyData]/","")

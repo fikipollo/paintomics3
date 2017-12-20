@@ -328,9 +328,10 @@ class MiRNA2GeneJob(Job):
                 methodsHasChanged = (score_type == "fc" and self.score_method != "fc")
 
                 #STEP 6. FOR EACH GENE, ORDER THE MIRNAS BY THE HIGHER CORRELATION OR FC
-                genesToMiRNAFile = open(self.getTemporalDir() + '/genesToMiRNAFile.tab', 'w')
-                mirna2genesOutput = open(self.getTemporalDir() + '/' + "miRNA2Gene_output_" + self.date + ".tab", 'w')
-                mirna2genesRelevant = open(self.getTemporalDir() +  '/' + "miRNA2Gene_relevant_" + self.date + ".tab", 'w')
+                filePrefix = '' if self.getUserID() is not None else self.getJobID() + '_'
+                genesToMiRNAFile = open(self.getTemporalDir() + '/' + filePrefix + 'genesToMiRNAFile.tab', 'w')
+                mirna2genesOutput = open(self.getTemporalDir() + '/' + filePrefix + "miRNA2Gene_output_" + self.date + ".tab", 'w')
+                mirna2genesRelevant = open(self.getTemporalDir() +  '/' + filePrefix + "miRNA2Gene_relevant_" + self.date + ".tab", 'w')
 
                 # PRINT HEADER
                 genesToMiRNAFile.write("# Gene name\tmiRNA ID\tDE\tScore\tSelection\n")

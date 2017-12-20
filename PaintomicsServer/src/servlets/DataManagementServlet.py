@@ -394,11 +394,6 @@ def saveFile(userID, uploadedFileName, options, uploadedFile, DESTINATION_DIR):
     return uploadedFileName
 
 def copyFile(userID, fileName, options, origin, destination):
-
-    # If no user account is provided, do not save the file
-    if (str(userID) == 'None'):
-        return None
-
     file_path = "{path}/{file}".format(path=destination, file=fileName)
 
     #CHECK IF FILENAME ALREADY EXISTS -> IF SO, ADD SUBFIX
@@ -424,6 +419,10 @@ def copyFile(userID, fileName, options, origin, destination):
     return fileName
 
 def registerFile(userID, fileName, options, location):
+    # Do not register the file in the database
+    if (str(userID) == 'None'):
+        return None
+
     logging.info("\tREGISTERING " + fileName + " INTO DATABASE...")
     fileInstance = File("")
     fileInstance.setFileName(fileName)

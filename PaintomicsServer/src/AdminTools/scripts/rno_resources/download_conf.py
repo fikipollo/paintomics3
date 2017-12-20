@@ -29,13 +29,5 @@ EXTERNAL_RESOURCES = {
                     "output"        :   "uniprot_mapping.list",
                     "description"   :    "Source: UniProt idmapping_selected.tab. Downloaded from UniProt FTP. Tab-delimited table which includes the multiple mappings between UniProt Accession and external databases."
                     }
-                ],
-                 "vega"   :   [
-                    {
-                    "url"           :   "http://www.ensembl.org/biomart/martservice/",
-                    "file"          :   "rno_resources/vega_mapping.xml",
-                    "output"        :   "vega_mapping.list",
-                    "description"   :    "Source: Ensembl Vega databases. Downloaded from Biomart."
-                    }
-                ],
+                ]
         }
