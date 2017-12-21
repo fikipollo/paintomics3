@@ -271,7 +271,7 @@ class Bed2GeneJob(Job):
         if not os_path.isfile(gtfFile): #CHECK IF THE FILE IS AN INPUT FILE OR AN INBUILT GTF FILE
             raise Exception("Reference file not found.")
 
-        inputOmic= self.getGeneBasedInputOmics()[0]
+        inputOmic = self.getGeneBasedInputOmics()[0]
         dataFile = inputOmic.get("inputDataFile")
         relevantFile = inputOmic.get("relevantFeaturesFile")
 

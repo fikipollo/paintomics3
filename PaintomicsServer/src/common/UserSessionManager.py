@@ -45,7 +45,8 @@ class UserSessionManager(object):
 
         def isValidUser(self, user_id, sessionToken):
             user_id = str(user_id)
-            if (user_id == "0"):
+            # TODO: security breach? (== 0)check if we are on debug mode
+            if (user_id == "0" or (user_id == 'None' and sessionToken == None)):
                 return True
             if (user_id == 'None' or sessionToken == None or sessionToken != self.logged_users.get(user_id)):
                 raise CredentialException("[b]User not valid[/b]. It looks like your session is not valid, please log-in again.")

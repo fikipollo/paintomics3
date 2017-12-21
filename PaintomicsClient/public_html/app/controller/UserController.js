@@ -64,7 +64,7 @@ function UserController() {
     * This function shows a new dialog for login
     */
     this.signInLinkClickHandler = function () {
-        var userViewsDialog = this.getUserViewsDialog(700, 400);
+        var userViewsDialog = this.getUserViewsDialog(700, 530);
 
         var signInPanel = new SignInPanel();
         signInPanel.setController(this);
@@ -99,6 +99,7 @@ function UserController() {
                     Ext.util.Cookies.set("sessionToken", response.sessionToken, null, location.pathname);
                     Ext.util.Cookies.set("userID", response.userID, null, location.pathname);
                     Ext.util.Cookies.set("userName", response.userName, null, location.pathname);
+                    Ext.util.Cookies.clear("nologin", location.pathname);
                     /*3. Close window*/
                     var userViewsDialog = Ext.getCmp("userViewsDialog");
                     if (userViewsDialog != null) {
@@ -243,24 +244,31 @@ function UserController() {
         * @returns {undefined}
         */
         this.signOutButtonClickHandler = function (userView) {
-            $.ajax({
-                type: "POST",
-                url: SERVER_URL_UM_SIGNOUT,
-                data: this.getCredentialsParams(),
-                success: function (response) {
-                    /*1. Clear the cookies*/
-                    Ext.util.Cookies.clear("sessionToken", location.pathname);
-                    Ext.util.Cookies.clear("userID", location.pathname);
-                    Ext.util.Cookies.clear("userName", location.pathname);
-                    if (userView){
-											userView.getComponent().updateLoginState();
-										}
-                    //                this.signInButtonClickHandler();
-                    application.getController("JobController").resetButtonClickHandler(null, true);
-										location.reload();
-                },
-                error: ajaxErrorHandler
-            });
+            var noLogin = Ext.util.Cookies.get("nologin") !== null;
+
+            if (noLogin != true) {
+              $.ajax({
+                  type: "POST",
+                  url: SERVER_URL_UM_SIGNOUT,
+                  data: this.getCredentialsParams(),
+                  success: function (response) {
+                      /*1. Clear the cookies*/
+                      Ext.util.Cookies.clear("sessionToken", location.pathname);
+                      Ext.util.Cookies.clear("userID", location.pathname);
+                      Ext.util.Cookies.clear("userName", location.pathname);
+                      Ext.util.Cookies.clear("nologin", location.pathname);
+                      if (userView){
+  											userView.getComponent().updateLoginState();
+  										}
+                      //                this.signInButtonClickHandler();
+                      application.getController("JobController").resetButtonClickHandler(null, true, function() { location.reload(); });
+  										// location.reload();
+                  },
+                  error: ajaxErrorHandler
+              });
+            } else {
+              application.getController("UserController").signInLinkClickHandler();
+            }
         };
 
         /**
@@ -280,6 +288,7 @@ function UserController() {
                     Ext.util.Cookies.set("sessionToken", response.sessionToken, null, location.pathname);
                     Ext.util.Cookies.set("userID", response.userID, null, location.pathname);
                     Ext.util.Cookies.set("userName", response.userName, null, location.pathname);
+                    Ext.util.Cookies.clear("nologin", location.pathname);
 
                     /*2. Show Credentials dialog*/
                     //TODO: REVISAR ESTO, SEGURO?
@@ -287,6 +296,42 @@ function UserController() {
                 },
                 error: ajaxErrorHandler
             });
+        };
+
+        /**
+        *
+        * @param {type} userView
+        * @returns {undefined}
+        */
+        this.startNoLoginSessionButtonClickHandler = function (userView) {
+            var me = this;
+
+            var noLogin = Ext.util.Cookies.get("nologin") !== null;
+
+            /* If we are already in a "noLogin" session, close the dialog */
+            if (noLogin == true) {
+              this.signUpCloseButtonClickHandler();
+            } else {
+              $.ajax({
+                  type: "POST",
+                  url: SERVER_URL_UM_NEWNOLOGINSESSION,
+                  success: function (response) {
+                      /*1. Set the cookies*/
+                      Ext.util.Cookies.clear("lastEmail", location.pathname);
+                      Ext.util.Cookies.clear("sessionToken", location.pathname);
+                      Ext.util.Cookies.clear("userID", location.pathname);
+                      Ext.util.Cookies.clear("userName", location.pathname);
+
+                      /* Assign the cookie that identifies the session as anonymous */
+                      Ext.util.Cookies.set("nologin", true, null, location.pathname);
+
+                      /*2. Show Credentials dialog*/
+                      //TODO: REVISAR ESTO, SEGURO?
+                      me.showNoLoginSessionDialog(null, response.p);
+                  },
+                  error: ajaxErrorHandler
+              });
+            }
         };
 
         /**
@@ -303,6 +348,24 @@ function UserController() {
 						guestSessionPanel.setParent(userViewsDialog);
             userViewsDialog.removeAll();
             userViewsDialog.add(guestSessionPanel.getComponent());
+            userViewsDialog.setLoading(false);
+            userViewsDialog.show();
+        };
+
+        /**
+        *
+        * @param {type} email
+        * @param {type} p
+        * @returns {undefined}
+        */
+        this.showNoLoginSessionDialog = function (email, p) {
+            var userViewsDialog = this.getUserViewsDialog(700, 400);
+
+            var noLoginSessionPanel = new NoLoginSessionPanel(email, p);
+            noLoginSessionPanel.setController(this);
+						noLoginSessionPanel.setParent(userViewsDialog);
+            userViewsDialog.removeAll();
+            userViewsDialog.add(noLoginSessionPanel.getComponent());
             userViewsDialog.setLoading(false);
             userViewsDialog.show();
         };

@@ -31,7 +31,7 @@ try:
     COMMON_BUILD_DB_TOOLS.processEnsemblData()
     COMMON_BUILD_DB_TOOLS.processRefSeqData()
     #COMMON_BUILD_DB_TOOLS.processUniProtData()
-    COMMON_BUILD_DB_TOOLS.processVegaData()
+    # COMMON_BUILD_DB_TOOLS.processVegaData()
     COMMON_BUILD_DB_TOOLS.processRefSeqGeneSymbolData()
 
     #**************************************************************************

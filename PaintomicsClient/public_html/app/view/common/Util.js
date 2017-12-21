@@ -403,6 +403,7 @@ function ajaxErrorHandler(responseObj) {
 					Ext.util.Cookies.clear("sessionToken", location.pathname);
 					Ext.util.Cookies.clear("userID", location.pathname);
 					Ext.util.Cookies.clear("userName", location.pathname);
+					Ext.util.Cookies.clear("nologin", location.pathname);
 					setTimeout(function(){location.reload(); }, 2000);
 			},
 			showButton: false,

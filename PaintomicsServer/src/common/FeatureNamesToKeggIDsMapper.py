@@ -1,12 +1,16 @@
 from pymongo import MongoClient
-import logging
+import logging, itertools
 from multiprocessing import Process, cpu_count, Manager
 from math import ceil
 from re import compile as compile_re, IGNORECASE as IGNORECASE_re
+from collections import defaultdict
 
 from src.common.Util import chunks
 from src.common.KeggInformationManager import KeggInformationManager
 
+from src.classes.FoundFeature import FoundFeature
+
+from src.conf.organismDB import dicDatabases
 from src.conf.serverconf import MONGODB_HOST, MONGODB_PORT, MAX_THREADS, MAX_WAIT_THREADS #MULTITHREADING
 
 
@@ -28,15 +32,11 @@ def getDatabasesByOrganismCode(organism):
     @param {String} organism, the organim code e.g. mmu
     @returns {List} databaseConvertion
     """
-    # Nombre del dbname que se obtendra en infrared para la especie en cuestion
-    dicDatabases = {
-        'mmu'   :   ['entrezgene', 'refseq_gene_symbol'],
-        'hsa'   :   ['entrezgene', 'refseq_gene_symbol'],
-        'dosa'  :   ['ensembl_transcript', 'kegg_gene_symbol'],
-        'rno'  :   ['entrezgene', 'refseq_gene_symbol']
-    }
 
-    return dicDatabases.get(organism, ["kegg_id", "kegg_gene_symbol"])
+    # dicDatabases is inside the conf file "organismDB" and should be
+    # updated after installing new species with external annotation data.
+
+    return dicDatabases.get(organism, [{'KEGG': "kegg_id"}, "kegg_gene_symbol"])
 
 def getConnectionByOrganismCode(organism):
     """
@@ -72,7 +72,7 @@ def findKeggIDByFeatureName(jobID, featureName, organism, db, databaseConvertion
     @returns {Boolean} found, True if we found at least one translation
     """
     #Check if the id is ath the cache of translation
-    featureIDs = KeggInformationManager().findInTranslationCache(jobID, featureName, "id")
+    featureIDs = KeggInformationManager().findInTranslationCache(jobID, featureName, "id", databaseConvertion_id)
     if(featureIDs != None):
         return featureIDs, True
 
@@ -103,7 +103,7 @@ def findGeneSymbolByFeatureID(jobID, featureID, organism, db, databaseConvertion
     @returns {Boolean} found, True if we found at least one translation
     """
     #Check if the id is ath the cache of translation
-    geneSymbol = KeggInformationManager().findInTranslationCache(jobID, featureID, "symbol")
+    geneSymbol = KeggInformationManager().findInTranslationCache(jobID, featureID, "symbol", databaseConvertion_id)
     if(geneSymbol != None):
         return geneSymbol, True
 
@@ -117,7 +117,7 @@ def findGeneSymbolByFeatureID(jobID, featureID, organism, db, databaseConvertion
     except Exception as ex:
         return None, False
 
-def mapFeatureIdentifiers(jobID, organism, featureList, matchedFeatures, notMatchedFeatures, foundFeatures, matchedGeneIDsTablesList, matchedGeneSymbolsTablesList):
+def mapFeatureIdentifiers(jobID, organism, databases, featureList, matchedFeatures, notMatchedFeatures, foundFeatures, matchedGeneIDsTablesList, matchedGeneSymbolsTablesList):
     """
     This function is used to query the database in different threads.
 
@@ -136,19 +136,29 @@ def mapFeatureIdentifiers(jobID, organism, featureList, matchedFeatures, notMatc
     #* STEP 2. GET THE CORRESPONDING DATABASE FOR CURRENT SPECIE
     #***********************************************************************************
     databaseConvertion = getDatabasesByOrganismCode(organism)
+
+    # Remove the user not-selected databases
+    databases_codes = [dbid for dbname, dbid in databaseConvertion[0].iteritems() if dbname in databases]
+
     client, db  = getConnectionByOrganismCode(organism)
-    databaseConvertion_id = db.dbname.find({"dbname":databaseConvertion[0]}, {"item":1, "qty":1})[0].get("_id")
-    databaseGeneSymbol_id = db.dbname.find({"dbname":databaseConvertion[1]}, {"item":1, "qty":1})[0].get("_id")
+
+    databaseConvertion_ids = map(lambda dbid: db.dbname.find({"dbname": dbid}, {"item": 1, "qty": 1})[0].get("_id"), databases_codes)
+    databaseConvertion_names = map(lambda dbid: db.dbname.find({"dbname": dbid}, {"item": 1, "qty": 1, "display_label": 1})[0].get("display_label"), databases_codes)
+    databaseGeneSymbol_id = db.dbname.find({"dbname": databaseConvertion[1]}, {"item":1, "qty":1})[0].get("_id")
 
     try:
-        matches=0
-        matchedGeneIDsTable={}
-        matchedGeneSymbolsTable={}
+
+        # Save the found features for each database, plus the unique between them
+        matches = dict.fromkeys(databaseConvertion_names + ["Total"], 0)
+        matchedGeneIDsTable = defaultdict(dict)
+        matchedGeneSymbolsTable = defaultdict(dict)
+
         total = len(featureList)
         current=0
         prev = -1
         aux=0
         for feature in featureList:
+            counted = False
             current+=1
             if  (current*100/total) % 20 == 0:
                 aux= (current*100/total)
@@ -157,30 +167,43 @@ def mapFeatureIdentifiers(jobID, organism, featureList, matchedFeatures, notMatc
                     print "Processed " + str(prev) + "% of " + str(total) + " total features"
 
             if feature.getName() != "" and feature.getName()!= None:
-                featureIDs, found = findKeggIDByFeatureName(jobID, feature.getName(), organism, db, databaseConvertion_id)
+                # Repeat for each database found
+                for databaseConvertion_id, databaseConvertion_name in itertools.izip(databaseConvertion_ids, databaseConvertion_names):
+                    featureIDs, found = findKeggIDByFeatureName(jobID, feature.getName(), organism, db, databaseConvertion_id)
 
-                if(found == True):
-                    matches+=1
-                    matchedGeneIDsTable[feature.getName()] = featureIDs
+                    if(found == True):
+                        # matches+=1
+                        # Increase the counter on the matching database, and keep track of the total
+                        # counting only once the features.
+                        matches[databaseConvertion_name] += 1
+                        matches["Total"] += int(counted == False)
+                        counted = True
+                        matchedGeneIDsTable[databaseConvertion_id][feature.getName()] = matchedGeneIDsTable[databaseConvertion_id].get(feature.getName(), []) + featureIDs
 
-                    for featureID in featureIDs:
-                        feature = feature.clone() #IF MORE THAN 1 MATCH, CLONE THE FEATURE
-                        feature.setID(featureID)
+                        for featureID in featureIDs:
+                            feature = feature.clone() #IF MORE THAN 1 MATCH, CLONE THE FEATURE
+                            feature.setID(featureID)
+                            feature.setMatchingDB(databaseConvertion_id)
 
-                        featureName, found = findGeneSymbolByFeatureID(jobID, featureID, organism, db, databaseConvertion_id, databaseGeneSymbol_id)
-                        if found == False:
-                            featureName=feature.getName()
-                        else:
-                            matchedGeneSymbolsTable[featureID] = featureName
+                            featureName, found = findGeneSymbolByFeatureID(jobID, featureID, organism, db, databaseConvertion_id, databaseGeneSymbol_id)
+                            if found == False:
+                                featureName=feature.getName()
+                            else:
+                                matchedGeneSymbolsTable[databaseConvertion_id][featureID] = featureName
 
-                        feature.setName(featureName)
-                        matchedFeatures.append(feature)
-                else:
-                    notMatchedFeatures.append(feature)
+                            feature.setName(featureName)
+                            matchedFeatures.append(feature)
+                    else:
+                        notMatchedFeatures.append(feature)
 
         #*************************************************************************************
         # STORE THE RESULTS
         #*************************************************************************************
+
+        # If only one database was used for the species, remove the redundant "Total" counter
+        if len(databaseConvertion_ids) < 2:
+            matches.pop("Total", None)
+
         foundFeatures.append(matches)
         matchedGeneIDsTablesList.append(matchedGeneIDsTable)
         matchedGeneSymbolsTablesList.append(matchedGeneSymbolsTable)
@@ -192,7 +215,7 @@ def mapFeatureIdentifiers(jobID, organism, featureList, matchedFeatures, notMatc
     finally:
         client.close()
 
-def mapFeatureNamesToKeggIDs(jobID, organism, featureList, mapGeneIDs=True):
+def mapFeatureNamesToKeggIDs(jobID, organism, databases, featureList, mapGeneIDs=True):
     """
     This function match the provided list of features
     to KEGG accepted feature ID (e.g. entrez gene ID for mmu)
@@ -229,7 +252,7 @@ def mapFeatureNamesToKeggIDs(jobID, organism, featureList, mapGeneIDs=True):
     #CONCATENATE THE OUTPUT LISTS
     matchedFeatures = manager.list()
     notMatchedFeatures= manager.list()
-    foundFeatures= manager.list([0]*nThreads)
+    foundFeatures = manager.list()
     matchedGeneIDsTablesList=manager.list() #STORES THE MAPPING RESULTS TO UPDATE LATER THE CACHE
     matchedGeneSymbolsTablesList=manager.list() #IDEM
 
@@ -240,7 +263,7 @@ def mapFeatureNamesToKeggIDs(jobID, organism, featureList, mapGeneIDs=True):
         threadsList = []
         i=0
         for genesListPart in genesListParts:
-            thread = Process(target=mapFeatureIdentifiers, args=(jobID, organism, genesListPart, matchedFeatures, notMatchedFeatures, foundFeatures, matchedGeneIDsTablesList, matchedGeneSymbolsTablesList))
+            thread = Process(target=mapFeatureIdentifiers, args=(jobID, organism, databases, genesListPart, matchedFeatures, notMatchedFeatures, foundFeatures, matchedGeneIDsTablesList, matchedGeneSymbolsTablesList))
             threadsList.append(thread)
             thread.start()
             i+=1
@@ -261,17 +284,21 @@ def mapFeatureNamesToKeggIDs(jobID, organism, featureList, mapGeneIDs=True):
     #***********************************************************************************
     #COMBINE DICTIONARIES
     for matchedGeneIDsTable in matchedGeneIDsTablesList:
-        KeggInformationManager().updateTranslationCache(jobID, matchedGeneIDsTable, "id")
+        map(lambda dbId: KeggInformationManager().updateTranslationCache(jobID, matchedGeneIDsTable[dbId], "id", dbId), matchedGeneIDsTable.keys())
     for matchedGeneSymbolsTable in matchedGeneSymbolsTablesList:
-        KeggInformationManager().updateTranslationCache(jobID, matchedGeneSymbolsTable, "symbol")
+        map(lambda dbId: KeggInformationManager().updateTranslationCache(jobID, matchedGeneSymbolsTable[dbId], "symbol", dbId), matchedGeneSymbolsTable.keys())
 
-    foundFeatures = sum(foundFeatures)
+    # foundFeatures = sum(foundFeatures)
+    sumFoundFeatures = dict.fromkeys(foundFeatures[0].keys())
+    for dbname in sumFoundFeatures.keys():
+        sumFoundFeatures[dbname] = sum(dbmatches[dbname] for dbmatches in foundFeatures)
 
     #***********************************************************************************
     #* STEP 4. RETURN THE RESULTS
     #***********************************************************************************
-    logging.info("FINISHED. " + str(foundFeatures) + " uniquely matched features, " +  str(len(matchedFeatures)) + " features matched. " + str(len(notMatchedFeatures)) + " features not matched.")
-    return foundFeatures, matchedFeatures, notMatchedFeatures
+    logging.info("FINISHED. " + str(sumFoundFeatures[sumFoundFeatures.keys()[0]]) + " uniquely matched features, " +  str(len(matchedFeatures)) + " features matched. " + str(len(notMatchedFeatures)) + " features not matched.")
+
+    return sumFoundFeatures, matchedFeatures, notMatchedFeatures
 
 # *****************************************************************
 #    _____ ____  __  __ _____   ____  _    _ _   _ _____   _____
@@ -293,6 +320,7 @@ def findCompoundIDByFeatureName(jobID, featureName, db):
     @returns {Boolean} found, True if we found at least one translation
     """
     #Check if the id is ath the cache of translation
+    # TODO: change "KEGG" for the proper database or leave it as it is?
     featureIDs = KeggInformationManager().findInTranslationCache(jobID, featureName, "compound")
     if(featureIDs != None):
         return featureIDs, True
@@ -337,7 +365,9 @@ def mapCompoundsIdentifiers(jobID, featureList, matchedFeatures, notMatchedFeatu
                     matches+=1 #computes the total unique matching
                     oldName = feature.getName()
                     matchedCompoundIDsTable[oldName] = matchedCompounds
-                    matchedElement = {"title" : oldName, "mainCompounds" : [], "otherCompounds" : []}
+                    # matchedElement = {"title" : oldName, "mainCompounds" : [], "otherCompounds" : []}
+                    matchedElement = FoundFeature("")
+                    matchedElement.setTitle(oldName)
 
                     for matchedCompound in matchedCompounds:
                         feature = feature.clone() #IF MORE THAN 1 MATCH, CLONE THE FEATURE
@@ -346,21 +376,23 @@ def mapCompoundsIdentifiers(jobID, featureList, matchedFeatures, notMatchedFeatu
                         feature.getOmicsValues()[0].setInputName(matchedCompound.get("name"))
 
                         if feature.calculateSimilarity(oldName) >=  0.9:
-                            matchedElement["mainCompounds"].append(feature)
+                            # matchedElement["mainCompounds"].append(feature)
+                            matchedElement.addMainCompound(feature)
                         else:
                             feature.getOmicsValues()[0].setOriginalName(oldName)
-                            matchedElement["otherCompounds"].append(feature)
+                            # matchedElement["otherCompounds"].append(feature)
+                            matchedElement.addOtherCompound(feature)
 
                     #Remove some special cases of repeated features
                     # 1.  Find all repeated features
                     repeatedFeatures = {}
-                    for i in range(len(matchedElement["mainCompounds"])):
-                        feature = matchedElement["mainCompounds"][i]
+                    for i in range(len(matchedElement.getMainCompounds())):
+                        feature = matchedElement.getMainCompounds()[i]
                         if feature.getID() not in repeatedFeatures:
                             repeatedFeatures[feature.getID()] = ([],[])
                         repeatedFeatures[feature.getID()][0].append(i)
-                    for i in range(len(matchedElement["otherCompounds"])):
-                        feature = matchedElement["otherCompounds"][i]
+                    for i in range(len(matchedElement.getOtherCompounds())):
+                        feature = matchedElement.getOtherCompounds()[i]
                         if feature.getID() not in repeatedFeatures:
                             repeatedFeatures[feature.getID()] = ([],[])
                         repeatedFeatures[feature.getID()][1].append(i)
@@ -371,27 +403,27 @@ def mapCompoundsIdentifiers(jobID, featureList, matchedFeatures, notMatchedFeatu
                     for indexes in repeatedFeatures.values():
                         #Take the first feature
                         if len(indexes[0]) > 1:
-                            mainFeature = matchedElement["mainCompounds"][indexes[0][0]]
+                            mainFeature = matchedElement.getMainCompounds()[indexes[0][0]]
                             del indexes[0][0]
                         elif len(indexes[1]) > 1:
-                            mainFeature = matchedElement["otherCompounds"][indexes[1][0]]
+                            mainFeature = matchedElement.getOtherCompounds()[indexes[1][0]]
                             del indexes[1][0]
                         else:
                             continue
 
                         #Combine the name for the remaining features
                         for i in indexes[0]:
-                            mainFeature.setName(mainFeature.getName() + ", " + matchedElement["mainCompounds"][i].getName())
+                            mainFeature.setName(mainFeature.getName() + ", " + matchedElement.getMainCompounds()[i].getName())
                             toRemove[0].append(i)
                         for i in indexes[1]:
-                            mainFeature.setName(mainFeature.getName() + ", " + matchedElement["otherCompounds"][i].getName())
+                            mainFeature.setName(mainFeature.getName() + ", " + matchedElement.getOtherCompounds()[i].getName())
                             toRemove[1].append(i)
 
                     #Delete invalid features
                     for i in sorted(toRemove[0], reverse=True): #looping in reverse order avoid "index out of range" errors (we are removing items from the array)
-                        del matchedElement["mainCompounds"][i]
+                        del matchedElement.getMainCompounds()[i]
                     for i in sorted(toRemove[1], reverse=True):
-                        del matchedElement["otherCompounds"][i]
+                        del matchedElement.getOtherCompounds()[i]
 
                     #Add the CompoundSet to the list
                     matchedFeatures.append(matchedElement)

@@ -30,6 +30,7 @@ function JobInstance(jobID) {
 	this.organism = null;
 
 	this.pathways = [];
+	this.databases = null;
 	this.summary = null;
 	this.mappingSummary = null;
 
@@ -68,6 +69,11 @@ function JobInstance(jobID) {
 	this.getPathways = function () {
 		return this.pathways;
 	};
+	this.getPathwaysByDB = function (db) {
+		return this.pathways.filter(function(pathway) {
+			return pathway.getSource() == db
+		});
+	};
 	this.getPathway = function (pathwayID) {
 		for (var i in this.pathways) {
 			if (pathwayID == this.pathways[i].getID()) {
@@ -79,6 +85,19 @@ function JobInstance(jobID) {
 	this.addPathway = function (pathway) {
 		//TODO: CHECK CLASSES?
 		this.pathways.push(pathway);
+	};
+	this.getDatabases = function() {
+		if (this.databases === null || this.databases.length < 1) {
+			// Check databases present in pathways
+			var pathways = this.getPathways();
+
+			// ES6/ES2015
+			this.databases = [...new Set(pathways.map(item => item.getSource()))];
+		}
+		return this.databases;
+	}
+	this.setDatabases = function (databases) {
+		this.databases = databases;
 	};
 	this.setSummary = function (summary) {
 		this.summary = summary;
@@ -96,13 +115,13 @@ function JobInstance(jobID) {
 		this.geneBasedInputOmics = geneBasedInputOmics;
 	};
 	this.getGeneBasedInputOmics = function () {
-		return this.geneBasedInputOmics;
+		return this.geneBasedInputOmics == null ? [] : this.geneBasedInputOmics;
 	};
 	this.setCompoundBasedInputOmics = function (compoundBasedInputOmics) {
 		this.compoundBasedInputOmics = compoundBasedInputOmics;
 	};
 	this.getCompoundBasedInputOmics = function () {
-		return this.compoundBasedInputOmics;
+		return this.compoundBasedInputOmics == null ? [] : this.compoundBasedInputOmics;
 	};
 	this.setFoundCompounds = function (foundCompounds) {
 		this.foundCompounds = foundCompounds;
@@ -141,6 +160,28 @@ function JobInstance(jobID) {
 	this.addOmicValue = function (omicsValue) {
 		this.getOmicsValues()[omicsValue.getID()] = omicsValue;
 	};
+	this.getMultiplePvaluesMethods = function() {
+		var multipleMethods = null;
+
+		if (this.pathways.length && this.pathways[0].getAdjustedSignificanceValues) {
+			var omicPvalues = this.pathways[0].getAdjustedSignificanceValues();
+
+			multipleMethods = omicPvalues.length ? Object.keys(omicPvalues[Object.keys(omicPvalues)[0]]) : [];
+		}
+
+		return multipleMethods;
+	};
+	this.getCombinedPvaluesMethods = function() {
+		var combinedMethods = null;
+
+		if (this.pathways.length && this.pathways[0].getCombinedSignificanceValues) {
+			var omicPvalues = this.pathways[0].getCombinedSignificanceValues();
+
+			combinedMethods = Object.keys(omicPvalues);
+		}
+
+		return combinedMethods;
+	};
 
 	/**
 	* This function returns the values for min/max for each omic type.
@@ -155,8 +196,8 @@ function JobInstance(jobID) {
 	*   (indexed by omic name)
 	*/
 	this.getDataDistributionSummaries = function (omicName) {
-		//   0        1       2    3   4     5     6    7    8     9       10
-		//[MAPPED, UNMAPPED, MIN, P10, Q1, MEDIAN, Q3, P90, MAX, MIN_IR, Max_IR]
+		//   0        1       2    3   4     5     6    7    8     9       10      11          12
+		//[MAPPED, UNMAPPED, MIN, P10, Q1, MEDIAN, Q3, P90, MAX, MIN_IR, Max_IR, MIN_CUSTOM, MAX_CUSTOM]
 		if(this.dataDistributionSummaries === undefined){
 			this.dataDistributionSummaries = {};
 
@@ -193,6 +234,14 @@ function JobInstance(jobID) {
 
 		return (omicName? this.dataDistributionSummaries[omicName]: this.dataDistributionSummaries);
 	};
+
+	this.setDataDistributionSummaries = function(dataDistributionSummaries, omicName) {
+		if (omicName) {
+			this.dataDistributionSummaries[omicName] = dataDistributionSummaries;
+		} else {
+			this.dataDistributionSummaries = dataDistributionSummaries;
+		}
+ 	};
 
 	this.loadFromJSON = function (jsonObject) {
 		for(var i in jsonObject){
