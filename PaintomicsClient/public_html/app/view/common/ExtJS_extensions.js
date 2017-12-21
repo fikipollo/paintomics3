@@ -225,7 +225,7 @@ Ext.define('Ext.grid.LiveSearchGridPanel', {
               });
           }
 
-          if (me.combinedPvaluesMethods.length) {
+          if (me.combinedPvaluesMethods.length > 1) {
               pvalue_filter_options.push('<span style="margin: 0 5px 0 10px;font-weight: bold;">Show combined p-values:</span>');
 
               pvalue_filter_options.push({
@@ -246,19 +246,6 @@ Ext.define('Ext.grid.LiveSearchGridPanel', {
                     }
                   }
               });
-
-              /*me.combinedPvaluesMethods.forEach(function(method) {
-                pvalue_filter_options.push({
-                  xtype: 'checkbox',
-                  hideLabel: true,
-                  margin: '0 0 0 4px',
-                  handler: me.combinedPvalueToggle,
-                  name: 'combinedPvalue',
-                  scope: me,
-                  inputValue: method,
-                  checked: true
-                }, method);
-              });*/
           }
 
           pvalue_filter_options.push('-')
@@ -387,7 +374,7 @@ Ext.define('Ext.grid.LiveSearchGridPanel', {
           // If the column has the dataIndex attribute, search for patterns
           // to hide/show the column.
           if (column.dataIndex) {
-            if (column.dataIndex.match('(' + hideValues.join('|') + ')')) {
+            if (hideValues.length && column.dataIndex.match('(' + hideValues.join('|') + ')')) {
               column.hide();
             } else if (column.dataIndex.match(selectedFDR)) {
               column.show();

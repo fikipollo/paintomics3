@@ -58,6 +58,7 @@ function PA_Step3JobView() {
 	this.pathwayTableView = null;
 	this.significativePathways = 0;
 	this.significativePathwaysByDB = {};
+	this.isFiltered = false;
 
 	/*********************************************************************
 	* GETTERS AND SETTERS
@@ -237,6 +238,10 @@ function PA_Step3JobView() {
 			this.pathwayNetworkViews[db].loadModel(model);
 		}).bind(this));
 
+
+		// Determine if the table is filtered or note
+		this.isFiltered = (this.model.getPathways().length != this.getTotalVisiblePathways().visible);
+
 		if(this.pathwayTableView=== null){
 			this.pathwayTableView = new PA_Step3PathwayTableView();
 			this.pathwayTableView.setController(this.getController());
@@ -247,6 +252,7 @@ function PA_Step3JobView() {
 		if (this.getModel().isRecoveredJob && this.getModel().getStepNumber() === 3) {
 			$(".backButton").hide();
 		}
+
 
 		return this;
 	};
@@ -271,7 +277,7 @@ function PA_Step3JobView() {
 	this.getTotalVisiblePathways = function(db){
 		var visible = 0;
 		var significative = 0;
-		var pathways = this.getModel().getPathwaysByDB(db);
+		var pathways = (db == undefined ? this.getModel().getPathways() : this.getModel().getPathwaysByDB(db));
 		for (var i in pathways) {
 			visible += (pathways[i].isVisible() ? 1 : 0);
 			if(Object.keys(this.model.summary[4]).length > 1){
@@ -1504,7 +1510,9 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 		* @returns {PA_Step3PathwayNetworkView} the view
 		*/
 		this.fullScreenNetwork = function() {
-			this.network.renderers[0].fullScreen();
+			sigma.plugins.fullScreen({
+			  container: $("#pathwayNetworkBox_" + this.dbid)[0]
+			});
 			return this;
 		};
 
@@ -2802,6 +2810,13 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					for (var m in combinedSignificanceValues) {
 						pathwayData["combinedSignificancePvalue" + m] = combinedSignificanceValues[m];
 					}
+
+					adjustedCombinedSignificanceValues = pathwayModel.getAdjustedCombinedSignificanceValues();
+					for (var m in adjustedCombinedSignificanceValues) {
+						for (var k in adjustedCombinedSignificanceValues[m]) {
+							pathwayData["adjustedCombinedSignificancePvalue" + m + k] = adjustedCombinedSignificanceValues[m][k];
+						}
+					}
 					this.tableData.push(pathwayData);
 
 					significativePathways += (combinedSignificanceValues[defaultCombinedPvaluesMethod] <= 0.05) ? 1 : 0;
@@ -2924,6 +2939,25 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 				//ADD AN ADDITIONAL COLUMN WITH THE COMBINED pValue IF #OMIC > 1
 				if (secondaryColumns.length > 1) {
 
+					var rendererMethod = function(value, metadata, record) {
+						var myToolTipText = "<b style='display:block; width:200px'>" + metadata.column.text + "</b>";
+						metadata.style = "height: 33px; font-size:10px;"
+						if (value === '') {
+							myToolTipText = myToolTipText + "<i>No data for this pathway</i>";
+							metadata.tdAttr = 'data-qtip="' + myToolTipText + '"';
+							metadata.style += " background-color:#D4D4D4;";
+							return "-";
+						}
+
+						if(value <= 0.065){
+							var color = Math.round(161 * (value/0.065));
+							metadata.style += "background-color:rgb(255, " + color +"," + color + ");";
+						}
+
+						//RENDER THE VALUE -> IF LESS THAN 0.05, USE SCIENTIFIC NOTATION
+						return (value > 0.001 || value === 0) ? parseFloat(value).toFixed(5) : parseFloat(value).toExponential(4);
+					};
+
 					combinedPvaluesMethods.forEach(function(m) {
 
 						rowModel['combinedSignificancePvalue' + m] = {
@@ -2931,32 +2965,29 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 							defaultValue: "-"
 						};
 
+						// The adjusted combined values should have the same methods
+						adjustedPvalueMethods.forEach(function(fdr) {
+							rowModel['adjustedCombinedSignificancePvalue' + m + fdr] = {
+								name: 'adjustedCombinedSignificancePvalue' + m + fdr,
+								defaultValue: "-"
+							};
+
+							secondaryColumns.push({
+								text: 'Combined </br>pValue</br>(' + m + ')</br>[' + fdr + ']', cls:"header-45deg",
+								dataIndex: 'adjustedCombinedSignificancePvalue' + m + fdr,
+								sortable: true,filter: {type: 'numeric'}, align: "center",
+								minWidth: 100, flex:1, height:75, hidden: true,
+								renderer: rendererMethod
+							});
+						});
+
 						secondaryColumns.push({
 							text: 'Combined </br>pValue</br>(' + m + ')', cls:"header-45deg",
 							dataIndex: 'combinedSignificancePvalue' + m,
 							sortable: true,filter: {type: 'numeric'}, align: "center",
 							minWidth: 100, flex:1, height:75, hidden: (m != defaultCombinedPvaluesMethod),
-							renderer: function(value, metadata, record) {
-								var myToolTipText = "<b style='display:block; width:200px'>" + metadata.column.text + "</b>";
-								metadata.style = "height: 33px; font-size:10px;"
-								if (value === '') {
-									myToolTipText = myToolTipText + "<i>No data for this pathway</i>";
-									metadata.tdAttr = 'data-qtip="' + myToolTipText + '"';
-									metadata.style += " background-color:#D4D4D4;";
-									return "-";
-								}
-
-								if(value <= 0.065){
-									var color = Math.round(161 * (value/0.065));
-									metadata.style += "background-color:rgb(255, " + color +"," + color + ");";
-								}
-
-								//RENDER THE VALUE -> IF LESS THAN 0.05, USE SCIENTIFIC NOTATION
-								return (value > 0.001 || value === 0) ? parseFloat(value).toFixed(5) : parseFloat(value).toExponential(4);
-							}
+							renderer: rendererMethod
 						});
-
-
 					});
 				}
 				//GROUP ALL COLUMNS INTO A NEW COLUMN 'Significance tests'

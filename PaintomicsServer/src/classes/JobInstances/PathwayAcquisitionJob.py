@@ -473,17 +473,25 @@ class PathwayAcquisitionJob(Job):
 
         # Get the adjusted p-values (they need to be passed as a whole)
         pvalues_list = defaultdict(dict)
+        combined_pvalues_list = defaultdict(dict)
 
         for pathway_id, pathway in self.getMatchedPathways().iteritems():
             for omic, pvalue in pathway.getSignificanceValues().iteritems():
                 pvalues_list[omic][pathway_id] = pvalue[2]
 
+            for method, combined_pvalue in pathway.getCombinedSignificancePvalues().iteritems():
+                combined_pvalues_list[method][pathway_id] = combined_pvalue
+
         adjusted_pvalues = {omic: adjustPvalues(omicPvalues) for omic, omicPvalues in pvalues_list.iteritems()}
+        adjusted_combined_pvalues = {method: adjustPvalues(methodCombinedPvalues) for method, methodCombinedPvalues in combined_pvalues_list.iteritems()}
 
         # Set the adjusted p-value on a pathway basis
         for pathway_id, pathway in self.getMatchedPathways().iteritems():
             for omic, pvalue in pathway.getSignificanceValues().iteritems():
                 pathway.setOmicAdjustedSignificanceValues(omic, {adjust_method: pvalues[pathway_id] for adjust_method, pvalues in adjusted_pvalues[omic].iteritems()})
+
+            for method, combined_pvalue in pathway.getCombinedSignificancePvalues().iteritems():
+                 pathway.setMethodAdjustedCombinedSignificanceValues(method, {adjust_method: combined_pvalues[pathway_id] for adjust_method, combined_pvalues in adjusted_combined_pvalues[method].iteritems()})
 
         logging.info("SUMMARY: " + str(totalMatchedKeggPathways) +  " Matched Pathways of "  + str(totalKeggPathways) + "in KEGG; Total input Genes = " + str(totalInputMatchedGenes) + "; SUMMARY: Total input Compounds  = " + str(totalInputMatchedCompounds))
 

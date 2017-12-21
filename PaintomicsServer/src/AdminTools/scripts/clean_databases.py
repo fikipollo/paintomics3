@@ -299,4 +299,4 @@ def confirm(prompt=None, resp=False):
         if ans == 'n' or ans == 'N':
             return False
 
-cleanDatabases(force=True)
+# cleanDatabases(force=True)

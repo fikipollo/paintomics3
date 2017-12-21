@@ -500,12 +500,11 @@ def pathwayAcquisitionRecoverJob(request, response, QUEUE_INSTANCE):
 
         # Allow "no user" jobs to be viewed by anyone, logged or not
         if(str(jobInstance.getUserID()) != 'None' and jobInstance.getUserID() != userID):
-            logging.info("RECOVER_JOB - JOB " + jobID + " DOES NOT BELONG TO USER " + userID)
+            logging.info("RECOVER_JOB - JOB " + jobID + " DOES NOT BELONG TO USER " + str(userID))
             response.setContent({"success": False, "errorMessage": "Invalid Job ID (" + jobID + ") for current user.<br>Please, check the Job ID and try again."})
             return response
 
         logging.info("RECOVER_JOB - JOB " + jobInstance.getJobID() + " LOADED SUCCESSFULLY.")
-
 
         matchedCompoundsJSONList = map(lambda foundFeature: foundFeature.toBSON(), jobInstance.getFoundCompounds())
 

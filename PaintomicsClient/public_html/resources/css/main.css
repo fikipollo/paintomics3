@@ -962,6 +962,7 @@ div[id ^= "step3-network-toolbar_"] div[id ^= "reorderOptions"]{
 	 	height: 80px !important; margin-top: 35px !important;
 	 	border: 1px solid #dfdfdf !important;
 	 	background: rgba(255, 255, 255, 0.88) !important;
+		min-height: auto !important;
  }
 
 .pathwaySummaryTable tr:nth-child(even) {

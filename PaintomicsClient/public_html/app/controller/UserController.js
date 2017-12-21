@@ -261,8 +261,8 @@ function UserController() {
   											userView.getComponent().updateLoginState();
   										}
                       //                this.signInButtonClickHandler();
-                      application.getController("JobController").resetButtonClickHandler(null, true);
-  										location.reload();
+                      application.getController("JobController").resetButtonClickHandler(null, true, function() { location.reload(); });
+  										// location.reload();
                   },
                   error: ajaxErrorHandler
               });

@@ -41,6 +41,7 @@ class Pathway(Model):
         self.adjustedSignificanceValues = {}
         #self.combinedSignificancePvalue=1
         self.combinedSignificancePvalues = {}
+        self.adjustedCombinedSignificanceValues = {}
         #GRAPHICAL INFORMATION
         self.graphicalOptions = None
 
@@ -125,6 +126,13 @@ class Pathway(Model):
         self.combinedSignificancePvalues = pValues
     def getCombinedSignificancePvalues(self):
         return self.combinedSignificancePvalues
+
+    def setAdjustedCombinedSignificancePvalues(self, pValues):
+        self.adjustedCombinedSignificancePvalues = pValues
+    def getAdjustedCombinedSignificancePvalues(self):
+        return self.adjustedCombinedSignificancePvalues
+    def setMethodAdjustedCombinedSignificanceValues(self, method, adjustedCombinedSignificanceValues):
+        self.adjustedCombinedSignificanceValues[method] = adjustedCombinedSignificanceValues
 
     def setGraphicalOptions(self, graphicalOptions):
         self.graphicalOptions = graphicalOptions

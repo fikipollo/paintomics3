@@ -87,7 +87,7 @@ function JobInstance(jobID) {
 		this.pathways.push(pathway);
 	};
 	this.getDatabases = function() {
-		if (this.databases === null) {
+		if (this.databases === null || this.databases.length < 1) {
 			// Check databases present in pathways
 			var pathways = this.getPathways();
 
@@ -166,7 +166,7 @@ function JobInstance(jobID) {
 		if (this.pathways.length && this.pathways[0].getAdjustedSignificanceValues) {
 			var omicPvalues = this.pathways[0].getAdjustedSignificanceValues();
 
-			multipleMethods = Object.keys(omicPvalues[Object.keys(omicPvalues)[0]]);
+			multipleMethods = omicPvalues.length ? Object.keys(omicPvalues[Object.keys(omicPvalues)[0]]) : [];
 		}
 
 		return multipleMethods;
