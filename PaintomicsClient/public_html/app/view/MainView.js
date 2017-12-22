@@ -228,6 +228,10 @@ function MainView() {
 						});
 					});
 
+					$('#header').click(function() {
+							application.getController("JobController").resetButtonClickHandler(null, false);
+					});
+
 					//TODO: AQUI
 					if (Ext.util.Cookies.get("silence") != null) {
 						console.log("Message already shown, ignoring.");
