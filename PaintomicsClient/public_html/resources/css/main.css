@@ -106,6 +106,7 @@ a:hover {color: #2E9B78;}
 	float: left;
 	height: 48px;
 	margin-left: -5px;
+	cursor: pointer;
 }
 #header img {
 	height: 32px;
