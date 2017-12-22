@@ -49,7 +49,7 @@ if(is.null(args$cutoff)) {
 }
 ## cutoff default
 if(is.null(args$cluster)) {
-  args$cluster <- "hierarchical"
+  args$cluster <- "kmeans"
 }
 
 args$kegg_dir <- paste(args$kegg_dir, "current/", args$specie, "/gene2pathway.list", sep="")
@@ -144,7 +144,8 @@ if(is.null(args$kclusters)) {
   library(amap) 
   
   ## cutoff default
-  data <- scale(metagenes)
+  #data <- scale(metagenes)
+  data <- metagenes
   # Compute pairewise distance matrices
   dist.res <- Dist(data, method = "pearson")
   k.max <- round(sqrt(length(row.names(data))/2)) + 1

@@ -126,7 +126,10 @@ function MainView() {
 
 	this.showSignInDialog = function () {
 		var loggedIn = Ext.util.Cookies.get("userID") !== null;
-		if (loggedIn !== true) {
+		var noLogin = Ext.util.Cookies.get("nologin") !== null;
+
+		/* Show the login form only when there is no session or nologin session enabled */
+		if (loggedIn !== true && noLogin !== true) {
 			$(".loggedOption").remove();
 			application.getController("UserController").signInLinkClickHandler();
 		}
@@ -135,9 +138,12 @@ function MainView() {
 	this.initComponent = function() {
 		var me = this;
 
+		/* TODO: currently not used? Update it to work with "nologin" session */
 		var sessionInfoBar = new SessionInfoBar();
 		sessionInfoBar.setController(application.getController("UserController"));
 		sessionInfoBar.getComponent().updateLoginState();
+
+		var noLogin = Ext.util.Cookies.get("nologin") !== null;
 
 		this.component = Ext.create('Ext.container.Viewport', {
 			id: 'mainView',
@@ -153,7 +159,7 @@ function MainView() {
 				'  <img src="resources/images/paintomics_150x150.png" alt="Paintomics logo">' +
 				'  <h1> PaintOmics 3<span style="font-size: 8px; margin-left:10px;">' + APP_VERSION + '</span></h1>' +
 				'</div>' +
-				'<a class="button btn-sm btn-right loggedOption" data-name="logout" id="logoutButton"><i class="fa fa-sign-out"></i> Log out</a>'
+				'<a class="button btn-sm btn-right loggedOption" data-name="logout" id="logoutButton"><i class="fa fa-sign-out"></i> ' + (noLogin !== true ? 'Log out' : 'Sign in/Log in') + '</a>'
 			}, {
 				xtype: "box",
 				id: "lateralMenu",
@@ -162,8 +168,12 @@ function MainView() {
 				html: "<ul class='lateralMenu-body'>" +
 				" <li class='menuOption loggedOption' ><i class='fa fa-cloud'></i>  Personal storage" +
 				"  <ul class='submenu loggedOption'>" +
-				"     <li class='menuOption' data-name='DM_MyDataListView'><i class='fa fa-file-text'></i>  My files and Jobs</li>" +
-				"     <li class='menuOption' data-name='DM_MyDataUploadFilesPanel'><i class='fa fa-cloud-upload'></i>   Upload new files</li>" +
+				(noLogin != true ?
+					"     <li class='menuOption' data-name='DM_MyDataListView'><i class='fa fa-file-text'></i>  My files and Jobs</li>" +
+					"     <li class='menuOption' data-name='DM_MyDataUploadFilesPanel'><i class='fa fa-cloud-upload'></i>   Upload new files</li>"
+					:
+					"     <li class='menuOption externalOption'><i class='fa fa-file-text'></i>  Only available for registered accounts.</li>"
+				) +
 				// "     <li class='menuOption' data-name='fileEdition'><i class='fa fa-cloud-upload'></i>   File edition</li>"+
 				" </ul></li>" +
 				" <li class='menuOption loggedOption' ><i class='fa fa-rocket'></i>  Tools" +
@@ -176,6 +186,7 @@ function MainView() {
 				" <ul class='submenu'>" +
 				"     <li class='menuOption externalOption'><a href='http://paintomics.readthedocs.org/en/latest/' target='_blank'><i class='fa fa-book'></i>  Paintomics Documentation</a></li>" +
 				"     <li class='menuOption externalOption'><a href='http://www.paintomics.org/' target='_blank'><i class='fa fa-external-link'></i>  PaintOmics 2</a></li>" +
+				"			<li class='menuOption externalOption'><a href='http://bioinfo.cipf.es/paintomics/resources/paintomics_example_data.zip' target='_blank'><i class='fa fa-external-link'></i>  Download example data</a></li>" +
 				" </ul></li>" +
 				" <li class='menuOption' ><i class='fa fa-paper-plane-o'></i>  Publications" +
 				" <ul class='submenu'>" +
@@ -215,6 +226,10 @@ function MainView() {
 						}, function() {
 							$(this).children(".submenu").fadeOut(0);
 						});
+					});
+
+					$('#header').click(function() {
+							application.getController("JobController").resetButtonClickHandler(null, false);
 					});
 
 					//TODO: AQUI

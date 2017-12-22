@@ -21,6 +21,11 @@
 root {
 	display: block;
 }
+
+:root {
+  --main-max-width: 1900px;
+}
+
 body {
 	background-color: #000;
 	font-family: 'SourceSansPro', sans-serif !important;
@@ -101,6 +106,7 @@ a:hover {color: #2E9B78;}
 	float: left;
 	height: 48px;
 	margin-left: -5px;
+	cursor: pointer;
 }
 #header img {
 	height: 32px;
@@ -764,7 +770,7 @@ div.availableOmicsBox h4 {
 	color: #ff6666
 }
 .omicSummaryContainer {
-	max-width: 1300px;
+	max-width: var(--main-max-width);
 	margin: 5px 10px;
 }
 .contentbox.metaboliteBox {
@@ -775,6 +781,20 @@ div.availableOmicsBox h4 {
 	display: block;
 	margin: 10px;
 	font-size: 18px;
+}
+#dbs_message {
+	margin: 10px 0;
+	width: 100% !important;
+}
+#dbs_message div {
+	padding: 0 5px 5px 5px;
+}
+#dbs_message dt {
+	font-weight: bold;
+	padding-left: 5px;
+}
+#dbs_message dd {
+
 }
 
 /********************************************************************************
@@ -800,7 +820,7 @@ div.availableOmicsBox h4 {
 	text-align: center;
 }
 
-#pathwayNetworkBox.fullscreen {
+div[id ^= "pathwayNetworkBox_"].fullscreen {
 	background-color: white;
 	width: 100%;
 	height: 100% !important;
@@ -829,7 +849,7 @@ div.availableOmicsBox h4 {
 max-width: 1300px;
 max-height: 600px;
 }*/
-#pathwayNetworkWaitBox {
+div[id ^= "pathwayNetworkWaitBox_"] {
 	position: absolute;
 	height: 600px;
 	width: 100%;
@@ -847,7 +867,7 @@ max-height: 600px;
 	color: #fff !important;
 	background-color: #3BAF6A !important;
 }
-div#pathwayClassificationPlot2Box {
+div[id ^= "pathwayClassificationPlot2Box_"] {
 	font-size: 15px;
 	padding-top: 24px;
 }
@@ -870,9 +890,10 @@ span.networkClusterImage > i {
 span.networkClusterImage.disabled > i {display:block;}
 .mainInfoPanel {font-size: 12px;}
 .pathwayPlotwrappers h4{color: #D16949;font-size: 13px;margin: 0;margin-top: 5px;}
-#networkClustersContainer, #patwaysDetailsWrapper{overflow-y:auto; overflow-x: hidden; min-height: 623px; height: 100%; padding: 2px 10px;}
-#networkSettingsPanel, #networkDetailsPanel {width:260px; float:right; margin:0; margin-left:10px;}
-#networkDetailsPanel {width:270px;}
+div[id ^= "networkview_"] { max-width:1800px; margin: 5px 10px; }
+div[id ^= "networkClustersContainer_"], div[id ^= "patwaysDetailsWrapper_"]{overflow-y:auto; overflow-x: hidden; min-height: 722px; height: 100%; padding: 2px 10px;}
+div[id ^= "networkSettingsPanel_"], div[id ^= "networkDetailsPanel_"] {width:260px; float:right; margin:0; margin-left:10px;}
+div[id ^= "networkDetailsPanel_"] {width:270px;}
 
 i.classificationNameBox {
 	margin-right: 10px;
@@ -887,7 +908,7 @@ i.classificationNameBox {
 	font-weight: bold;
 	margin-bottom: 3px;
 }
-div#pathwayClassificationContainer {overflow-y: auto; overflow-x: hidden;}
+div[id ^= "pathwayClassificationContainer"] {overflow-y: auto; overflow-x: hidden;}
 .step3ClassificationsWrapper{display: block;}
 .step3ClassificationsChildrenContainer{display: none; margin-left: 30px;border-left: 1px dotted #B1B1B1;padding-left: 10px;}
 .step3ClassificationsTitle{cursor: pointer;}
@@ -901,7 +922,7 @@ div#pathwayClassificationContainer {overflow-y: auto; overflow-x: hidden;}
 .step3ClassificationsOptions a.showOption.selected, .step3ClassificationsOptions a.showOption:hover{color: #23AE89;}
 .step3ClassificationsOptions a.customOption.selected, .step3ClassificationsOptions a.customOption:hover{color: #BD7E39;}
 .step3ClassificationsOptions a.selected{float: left;font-weight: bold;}
-#step3-network-toolbar{
+div[id ^= "step3-network-toolbar_"]{
 	margin-bottom: -20px;
 	width: 100%;
 	position: relative;
@@ -911,7 +932,7 @@ div#pathwayClassificationContainer {overflow-y: auto; overflow-x: hidden;}
 	text-align: center;
 	height: 30px;
 }
-#step3-network-toolbar-message{
+div[id ^= "step3-network-toolbar-message_"]{
 	display: none;
 	position: absolute;
 	text-align: center;
@@ -924,11 +945,11 @@ div#pathwayClassificationContainer {overflow-y: auto; overflow-x: hidden;}
 	border: 1px solid #3C9AF5;
 	border-radius: 5px;
 }
-#step3-network-toolbar-message.successMessage{color: #12A22F;border: 1px solid #12A22F;}
-#step3-network-toolbar a{float:left;font-size: 12px;}
+div[id ^= "step3-network-toolbar-message_"].successMessage{color: #12A22F !important;border: 1px solid #12A22F !important;}
+div[id ^= "step3-network-toolbar_"] a{float:left !important;font-size: 12px !important;}
 
-#step3-network-toolbar div.menu {display: block;float: left;}
-#step3-network-toolbar div.menuBody {
+div[id ^= "step3-network-toolbar_"] div.menu {display: block !important; float: left !important;}
+div[id ^= "step3-network-toolbar_"] div.menuBody {
 	position: absolute;
 	width: 165px;
 	border: 1px solid #d3d3d3;
@@ -937,13 +958,85 @@ div#pathwayClassificationContainer {overflow-y: auto; overflow-x: hidden;}
 	background-color: #FFFFFF;
 }
 
-#step3-network-toolbar div#reorderOptions{position: absolute; width: 200px; height: 80px; margin-top: 35px; border: 1px solid #dfdfdf; background: rgba(255, 255, 255, 0.88);}
+div[id ^= "step3-network-toolbar_"] div[id ^= "reorderOptions"]{
+		position: absolute; width: 200px !important;
+	 	height: 80px !important; margin-top: 35px !important;
+	 	border: 1px solid #dfdfdf !important;
+	 	background: rgba(255, 255, 255, 0.88) !important;
+		min-height: auto !important;
+ }
 
 .pathwaySummaryTable tr:nth-child(even) {
 	background: #e2eff8;
 	padding: 0;
 	margin: 0;
 }
+
+div#tabcontainer_network { border-color: silver;}
+div#tabcontainer_network .x-panel-body-default { border-color: silver; }
+div#tabcontainer_network .x-tab.x-active {
+	border-color: silver;
+	border-top-color: gray !important;
+}
+div#tabcontainer_network .x-tab-inner {
+	color: rgb(209, 96, 42);
+	font-family: 'SourceSansPro', sans-serif !important;
+	font-size: 23px;
+	font-weight: lighter !important;
+}
+div#tabcontainer_network .x-tab-bar-strip {
+	top: 40px !important;
+	background-color: silver;
+	border-color: silver;
+}
+div#tabcontainer_network .x-tab-bar .x-tab-bar-body {
+	height: 50 !important;
+	border: 1px !important;
+}
+div#tabcontainer_network .x-tab-bar .x-tab-bar-body .x-box-inner {
+	height: 40px !important;
+}
+div#tabcontainer_network .x-tab-bar .x-tab-bar-body .x-box-inner .x-tab {
+	height: 41px !important;
+}
+div#tabcontainer_network .x-tab-bar .x-tab-bar-body .x-box-inner .x-tab button {
+	line-height: auto !important;
+	font-size: 14px;
+}
+div#tabcontainer_network .x-tab button .x-tab-inner {
+	height: 16px;
+}
+div#tabcontainer_network .x-tab-center {
+	margin-top: -10px;
+}
+div#multisource_msg {
+	min-height: 200px;
+}
+div#multisource_summary { text-align: center; }
+div#multisource_summary table {
+	border: 1px solid black;
+	margin: 0 auto;
+	padding: 10px;
+	text-align: center;
+}
+div#multisource_summary table th {
+	padding: 0 5px;
+}
+
+div.onedatabase .x-panel-body-default {
+	border: none !important;
+}
+
+div.onedatabase .contentbox {
+	margin-left: 0 !important;
+	margin-right: 0 !important;
+}
+
+div.onedatabase div[id ^= "networkview_"] {
+	margin-left: 0 !important;
+	margin-right: 0 !important;
+}
+
 /********************************************************************************
 **STYLES FOR STEP 4
 *********************************************************************************/
@@ -1051,6 +1144,13 @@ i.relevantFeature:before {
 	opacity: 1;
 }
 
+div[id^=matching_table] table {
+	margin: 5px auto;
+	border: 1px solid black;
+	text-align: center;
+	padding: 5px 10px;
+}
+
 /**REUSING THUMBNAILS AT STEP3*/
 
 .sigma-tooltip .step4ThumbContainer {
@@ -1131,6 +1231,7 @@ i.relevantFeature:before {
 	margin: 15px 0px 15px 10px;
 	background: #fff;
 	overflow-y: hidden;
+	min-height: 784px;
 }
 .lateralOptionsPanel-body {
 	padding: 10px;
@@ -1160,7 +1261,7 @@ i.relevantFeature:before {
 }
 .step4_plotwrappers{display: inline-block;}
 
-div.lateralOptionsPanel input[type="text"] {
+div.lateralOptionsPanel input[type="text"]:not([id^=numberfield]) {
 	margin: 10px;
 	width: 250px;
 	font-size: 18px;
@@ -1168,6 +1269,9 @@ div.lateralOptionsPanel input[type="text"] {
 	border-radius: 5px;
 	border: 2px solid #E2E2E2;
 	color: #508EBB;
+}
+div.lateralOptionsPanel fieldset {
+	margin: 10px auto;
 }
 .globalHeatmapConfigurator {
 	padding: 15px;
@@ -1542,7 +1646,7 @@ a.toolbarOption {
 	cursor: pointer;
 }
 div.contentbox {
-	max-width: 1300px;
+	max-width: var(--main-max-width);
 }
 div.contentbox a.toolbarOption {
 	font-size: 15px;

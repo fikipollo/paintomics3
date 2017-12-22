@@ -61,11 +61,25 @@ function Application() {
         this.mainView = new MainView();
         this.mainView.getComponent();
 
+        // Try to load the jobID provided in the URL
+        var URLparams = Ext.urlDecode(location.search.substring(1));
+        var URLjobID = (URLparams["jobID"] !== undefined) ? URLparams.jobID : null;
         var jobInstanceModel = new JobInstance(null);
+
         if (window.sessionStorage && sessionStorage.getItem("jobModel") != null) {
-            jobInstanceModel.loadFromJSON(JSON.parse(sessionStorage.getItem("jobModel")));
+          var sessionJobJSON = JSON.parse(sessionStorage.getItem("jobModel"));
+
+          if (URLjobID == null || URLjobID == sessionJobJSON.jobID) {
+            jobInstanceModel.loadFromJSON(sessionJobJSON);
+          }
         }
-        this.getController("JobController").showJobInstance(jobInstanceModel);
+
+        /* If the job is not on the last step, avoid loading it from session */
+        if (URLjobID !== null && (jobInstanceModel.getJobID() == null || jobInstanceModel.getStepNumber() == 2)){
+          this.getController("JobController").recoverPAJobHandler(URLjobID);
+        } else {
+          this.getController("JobController").showJobInstance(jobInstanceModel);
+        }
 
         if (Ext.util.Cookies.get("silence") != null) {
             console.log("Message already shown, ignoring.");
@@ -91,7 +105,6 @@ function Application() {
             //ADD A COOKIE WITH 2 HOURS EXPIRATION
             Ext.util.Cookies.set("silence", true, new Date(new Date().getTime() + 2 * 60 * 60 * 1000), location.pathname);
         }
-
     };
 
     this.loadModule = function (location, name) {

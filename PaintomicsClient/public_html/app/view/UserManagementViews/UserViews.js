@@ -102,60 +102,78 @@ function SignInPanel() {
     this.startGuestSessionButtonClick = function () {
         this.getController().startGuestSessionButtonClickHandler(this);
     };
+    this.startNoLoginButtonClick = function () {
+        this.getController().startNoLoginSessionButtonClickHandler(this);
+    };
 
     this.initComponent = function () {
         var me = this;
         this.component = Ext.widget(
-                {xtype: "container", layout: {type: 'hbox', align: 'stretch'}, flex: 1, maxWidth: 900, margin: '20px',
-                    items: [
-                        {xtype: 'form', itemId: "signInForm", flex: 1, border: 0,
-                            layout: {type: 'vbox', align: 'stretch'}, defaults: {labelAlign: "top", border: false}, style: {"padding-right": "20px"},
-                            items: [
-                                {xtype: "box", html: '<h2>Sign In</h2>'},
-                                {xtype: "textfield", name: 'email', fieldLabel: 'Email Address', vtype: 'email', value: Ext.util.Cookies.get('lastEmail'), allowBlank: false},
-                                {xtype: "textfield", name: 'password', fieldLabel: 'Password', inputType: 'password', allowBlank: false,
-                                    listeners: {
-                                        specialkey: function (field, e) {
-                                            if (e.getKey() === e.ENTER) {
-                                                me.signInButtonClick();
-                                            }
-                                        }
-                                    }},
-                                {xtype: "box", html:
-                                            '<div style="color: #D22; font-size: 16px;" id="invalidUserPassMessage" style="display:none"></div>' +
-                                            '<a class="button exampleButton" id="signInLink" style=" width: 100%; text-align: center; margin: 10px 0px; "><i class="fa fa-sign-in"></i> Sign in</a>' +
-                                            '<a id="forgotPassLink" href="javascript:void(0)"><p style="text-align: right;">Forgot your password?</p></a>' +
-                                            '<p style="text-align: center;">New in Paintomics? <a class="signUpLink" href="javascript:void(0)">Sign up now.</a></p>'
-                                }
-                            ]
-                        },
-                        {xtype: "box", flex: 1, html:
-                                    '<div style="padding-left: 30px; border-left: 1px solid #E7E7E7;">' +
-                                    '  <h2>Guest session</h2>' +
-                                    '  <h4>Start a new Guest session on Paintomics.</h4>' +
-																		'  <p><b>Please note</b> that all data submitted by Guest users as well as jobs and the generated data, will be stored on the system a maximum of <b>7 days</b>. Besides, <b style="color: #ef2020">Guest accounts do not receive assistance in case of problems</b> as there is not contact information.</p>' +
-                                    '  <p style="text-align:center;font-size: 17px;"><b><a class="signUpLink" href="javascript:void(0)">Sign Up.</a></b> It only takes a few seconds!</p>' +
-                                    '  <a class="button acceptButton" id="guestUserButton" style=" width: 100%; text-align: center; margin: 10px 0px; "><i class="fa fa-sign-in"></i> Start Guest session</a>' +
-                                    '</div>'
-                        }
-                    ],
-                    listeners: {
-                        afterrender: function () {
-                            $("#forgotPassLink").click(function () {
-                                me.signInButtonClick();
-                            });
-                            $(".signUpLink").click(function () {
-                                me.signUpLinkClick();
-                            });
-                            $("#signInLink").click(function () {
-                                me.signInButtonClick();
-                            });
-                            $("#guestUserButton").click(function () {
-                                me.startGuestSessionButtonClick();
-                            });
-                        }
-                    }
-                }
+                {xtype: "container", layout: {type: 'vbox', align: 'stretch'}, flex: 1,
+                  items: [
+                  {xtype: "container", layout: {type: 'hbox', align: 'stretch'}, flex: 1, maxWidth: 900, margin: '20px',
+                      items: [
+                          {xtype: 'form', itemId: "signInForm", flex: 1, border: 0,
+                              layout: {type: 'vbox', align: 'stretch'}, defaults: {labelAlign: "top", border: false}, style: {"padding-right": "20px"},
+                              items: [
+                                  {xtype: "box", html: '<h2>Sign In</h2>'},
+                                  {xtype: "textfield", name: 'email', fieldLabel: 'Email Address', vtype: 'email', value: Ext.util.Cookies.get('lastEmail'), allowBlank: false},
+                                  {xtype: "textfield", name: 'password', fieldLabel: 'Password', inputType: 'password', allowBlank: false,
+                                      listeners: {
+                                          specialkey: function (field, e) {
+                                              if (e.getKey() === e.ENTER) {
+                                                  me.signInButtonClick();
+                                              }
+                                          }
+                                      }},
+                                  {xtype: "box", html:
+                                              '<div style="color: #D22; font-size: 16px;" id="invalidUserPassMessage" style="display:none"></div>' +
+                                              '<a class="button exampleButton" id="signInLink" style=" width: 100%; text-align: center; margin: 10px 0px; "><i class="fa fa-sign-in"></i> Sign in</a>' +
+                                              '<a id="forgotPassLink" href="javascript:void(0)"><p style="text-align: right;">Forgot your password?</p></a>' +
+                                              '<p style="text-align: center;">New in Paintomics? <a class="signUpLink" href="javascript:void(0)">Sign up now.</a></p>'
+                                  }
+                              ]
+                          },
+                          {xtype: "box", flex: 1, html:
+                                      '<div style="padding-left: 30px; border-left: 1px solid #E7E7E7;">' +
+                                      '  <h2>Guest session</h2>' +
+                                      '  <h4>Start a new Guest session on Paintomics.</h4>' +
+  																		'  <p><b>Please note</b> that all data submitted by Guest users as well as jobs and the generated data, will be stored on the system a maximum of <b>7 days</b>. Besides, <b style="color: #ef2020">Guest accounts do not receive assistance in case of problems</b> as there is not contact information.</p>' +
+                                      '  <p style="text-align:center;font-size: 17px;"><b><a class="signUpLink" href="javascript:void(0)">Sign Up.</a></b> It only takes a few seconds!</p>' +
+                                      '  <a class="button acceptButton" id="guestUserButton" style=" width: 100%; text-align: center; margin: 10px 0px; "><i class="fa fa-sign-in"></i> Start Guest session</a>' +
+                                      '</div>'
+                          }
+                      ]
+                  },
+                  {xtype: "box", flex: 1, html:
+                              '<div style="padding: 0 30px; border-left: 1px solid #E7E7E7;">' +
+                              '  <h2>No login</h2>' +
+                              '  <h4>Continue using Paintomics without user or guest accounts.</h4>' +
+                              '  <p><b>Please note</b> that you will not be able to manage your personal data and jobs, and will only be able to access them using the provided URLs.' +
+                              '  <p style="text-align:center"><a class="button acceptButton" id="noLoginButton" style=" width: 50%; text-align: center; margin: 10px auto;float: none; "><i class="fa fa-sign-in"></i> Continue without account</a></p>' +
+                              '</div>'
+                  }
+              ],
+              listeners: {
+                  afterrender: function () {
+                      $("#forgotPassLink").click(function () {
+                          me.signInButtonClick();
+                      });
+                      $(".signUpLink").click(function () {
+                          me.signUpLinkClick();
+                      });
+                      $("#signInLink").click(function () {
+                          me.signInButtonClick();
+                      });
+                      $("#guestUserButton").click(function () {
+                          me.startGuestSessionButtonClick();
+                      });
+                      $("#noLoginButton").click(function () {
+                          me.startNoLoginButtonClick();
+                      });
+                  }
+              }
+            }
         );
         return this.component;
     };
@@ -299,6 +317,50 @@ function GuestSessionPanel(email, p) {
     return this;
 }
 GuestSessionPanel.prototype = new View;
+
+function NoLoginSessionPanel(email, p) {
+    /*********************************************************************
+     * ATTRIBUTES
+     ***********************************************************************/
+    this.name = "SignInPanel";
+    this.email = email;
+    this.p = p;
+    /*********************************************************************
+     * OTHER FUNCTIONS
+     ***********************************************************************/
+    this.continueButtonClick = function () {
+        application.getController("JobController").resetButtonClickHandler(null, true);
+				location.reload();
+    };
+
+    this.initComponent = function () {
+        var me = this;
+        this.component = Ext.widget(
+                {
+                    xtype: "box", flex: 1, margin: '20px',
+                    html:
+                            '<div style="padding-left: 30px; border-left: 1px solid #E7E7E7;">' +
+                            '<h2>No login session</h2>' +
+                            '<p><b>Welcome </b>, please take into account that you will not have access to the data & jobs management area, so be sure to write down the job ID.</p>' +
+                            '<b>Remember:</b> all data, jobs, and results for no registered users will be kept on the system for a maximum of <b>7 days</b>.</p>' +
+                            '<p><a class="signUpLink" href="javascript:void(0)">Sign Up</a></b>. It only takes a few seconds. <a>More info</a>.</p>' +
+                            '<a class="button exampleButton" id="continueButton" style=" width: 100%; text-align: center; margin: 10px 0px; "><i class="fa fa-sign-in"></i> Got it! Let\'s get to work!</a>' +
+                            '</div>',
+                    listeners: {
+                        afterrender: function () {
+                            $("#continueButton").click(function () {
+                                me.continueButtonClick();
+                            });
+                        }
+                    }
+                }
+        );
+        return this.component;
+    };
+
+    return this;
+}
+NoLoginSessionPanel.prototype = new View;
 
 function ChangePasswordPanel() {
     /*********************************************************************

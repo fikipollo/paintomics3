@@ -36,6 +36,8 @@ from csv import reader as csv_reader
 import shutil
 import time
 
+from src.conf.serverconf import MAX_NUMBER_FEATURES
+
 class MiRNA2GeneJob(Job):
     #******************************************************************************************************************
     # CONSTRUCTORS
@@ -78,12 +80,18 @@ class MiRNA2GeneJob(Job):
         except:
             error +=  " -  Cutoff must be a numeric value"
 
-        logging.info("VALIDATING miRNA-seq BASED FILES..." )
-        nConditions, error = self.validateFile(self.geneBasedInputOmics[0], -1, error)
+        # Look using the name instead of relying in the dictionary order
+        geneDataInputs = self.getGeneBasedInputOmics()
 
-        if len(self.geneBasedInputOmics) > 1:
+        miRNAdataInput = next((x for x in geneDataInputs if x["omicName"] != "Gene Expression"))
+
+        logging.info("VALIDATING miRNA-seq BASED FILES..." )
+        nConditions, error = self.validateFile(miRNAdataInput, -1, error)
+
+        if len(geneDataInputs) > 1:
             logging.info("VALIDATING RNA-seq BASED FILES..." )
-            nConditions, error = self.validateFile(self.geneBasedInputOmics[1], -1, error)
+            RNAdataInput = next((x for x in geneDataInputs if x["omicName"] == "Gene Expression"))
+            nConditions, error = self.validateFile(RNAdataInput, -1, error)
 
         if error != "":
             raise Exception("Errors detected in input files, please fix the following issues and try again:" + error)
@@ -114,6 +122,10 @@ class MiRNA2GeneJob(Job):
         if os_path.isfile(relevantFileName):
             f = open(relevantFileName, 'rU')
             lines = f.readlines()
+
+            if len(lines) > MAX_NUMBER_FEATURES:
+                error += " - Errors detected while processing " + inputOmic.get("relevantFeaturesFile", "") + ": The file exceeds the maximum number of features allowed (" + str(MAX_NUMBER_FEATURES) + ")." + "\n"
+
             for line in lines:
                 if len(line) > 80:
                     error +=  " - Errors detected while processing " + inputOmic.get("relevantFeaturesFile", "") + ": The file does not look like a Relevant Features file (some lines are longer than 80 characters)." + "\n"
@@ -149,14 +161,21 @@ class MiRNA2GeneJob(Job):
                             break
                         nConditions = len(line)
 
+                    # *************************************************************************
+                    # STEP 2.2 CHECK IF IT EXCEEDS THE MAX NUMBER OF FEATURES ALLOWED
+                    # *************************************************************************
+                    if (nLine > MAX_NUMBER_FEATURES):
+                        error += " - Errors detected while processing " + inputOmic.get("inputDataFile", "") + ": The file exceeds the maximum number of features allowed (" + str(MAX_NUMBER_FEATURES) + ")." + "\n"
+                        break
+
                     #**************************************************************************************
-                    # STEP 2.2 IF LINE LENGTH DOES NOT MATCH WITH EXPECTED NUMBER OF CONDITIONS, ADD ERROR
+                    # STEP 2.3 IF LINE LENGTH DOES NOT MATCH WITH EXPECTED NUMBER OF CONDITIONS, ADD ERROR
                     #**************************************************************************************
                     if(nConditions != len(line) and len(line)>0):
                         erroneousLines[nLine] = "Expected " +  str(nConditions) + " columns but found " + str(len(line)) + ";"
 
                     #**************************************************************************************
-                    # STEP 2.2 IF CONTAINS NOT VALID VALUES, ADD ERROR
+                    # STEP 2.4 IF CONTAINS NOT VALID VALUES, ADD ERROR
                     #**************************************************************************************
                     try:
                         map(float, line[1:len(line)])
@@ -198,20 +217,26 @@ class MiRNA2GeneJob(Job):
         #STEP 1. GET THE FILES PATH AND PREPRARE THE OPTIONS
         logging.info("READING FILES...")
 
-        referenceFile = self.getInputDir()+ self.getReferenceInputs()[0].get("inputDataFile")
+        inputRef = self.getReferenceInputs()[0]
+        referenceFile = self.getReferenceInputs()[0].get("inputDataFile")
+        if (inputRef.get("isExample", False) == False):
+            referenceFile = self.getInputDir() + referenceFile
+
         if not os_path.isfile(referenceFile):
             raise Exception("Reference file not found.")
 
-        inputOmic= self.getGeneBasedInputOmics()[0]
-        dataFile = inputOmic.get("inputDataFile")
-        relevantFile = inputOmic.get("relevantFeaturesFile")
+        geneDataInputs = self.getGeneBasedInputOmics()
+
+        miRNAinputOmic = next((x for x in geneDataInputs if x["omicName"] != "Gene Expression"))
+        dataFile = miRNAinputOmic.get("inputDataFile")
+        relevantFile = miRNAinputOmic.get("relevantFeaturesFile")
 
         geneExpressionFile =  None
-        if len(self.getGeneBasedInputOmics()) > 1:
-            inputOmic= self.getGeneBasedInputOmics()[1]
-            geneExpressionFile = inputOmic.get("inputDataFile")
+        if len(geneDataInputs) > 1:
+            RNAinputOmic = next((x for x in geneDataInputs if x["omicName"] == "Gene Expression"))
+            geneExpressionFile = RNAinputOmic.get("inputDataFile")
 
-        if(inputOmic.get("isExample", False) == False):
+        if(miRNAinputOmic.get("isExample", False) == False):
             dataFile = self.getInputDir()+  dataFile
             relevantFile = self.getInputDir()+ relevantFile
             if geneExpressionFile != None:
@@ -303,9 +328,10 @@ class MiRNA2GeneJob(Job):
                 methodsHasChanged = (score_type == "fc" and self.score_method != "fc")
 
                 #STEP 6. FOR EACH GENE, ORDER THE MIRNAS BY THE HIGHER CORRELATION OR FC
-                genesToMiRNAFile = open(self.getTemporalDir() + '/genesToMiRNAFile.tab', 'w')
-                mirna2genesOutput = open(self.getTemporalDir() + '/' + "miRNA2Gene_output_" + self.date + ".tab", 'w')
-                mirna2genesRelevant = open(self.getTemporalDir() +  '/' + "miRNA2Gene_relevant_" + self.date + ".tab", 'w')
+                filePrefix = '' if self.getUserID() is not None else self.getJobID() + '_'
+                genesToMiRNAFile = open(self.getTemporalDir() + '/' + filePrefix + 'genesToMiRNAFile.tab', 'w')
+                mirna2genesOutput = open(self.getTemporalDir() + '/' + filePrefix + "miRNA2Gene_output_" + self.date + ".tab", 'w')
+                mirna2genesRelevant = open(self.getTemporalDir() +  '/' + filePrefix + "miRNA2Gene_relevant_" + self.date + ".tab", 'w')
 
                 # PRINT HEADER
                 genesToMiRNAFile.write("# Gene name\tmiRNA ID\tDE\tScore\tSelection\n")
@@ -336,7 +362,8 @@ class MiRNA2GeneJob(Job):
                         #WRITE RESULTS TO miRNA2Gene_output FILE -->   gen_id mirna values
                         #TODO: RE-ENABLE THIS CODE
                         #mirna2genesOutput.write(lineAux + '\t'.join(map(str, omicValue.getValues())) + "\n")
-                        mirna2genesOutput.write(geneID + "\t" + '\t'.join(map(str, omicValue.getValues())) + "\n")
+                        # mirna2genesOutput.write(geneID + "\t" + '\t'.join(map(str, omicValue.getValues())) + "\n")
+                        mirna2genesOutput.write(":::".join([geneID, omicValue.getOriginalName()]) + "\t" + '\t'.join(map(str, omicValue.getValues())) + "\n")
 
                         if omicValue.isRelevant():
                             #WRITE RESULTS TO mirna2genesRelevant FILE -->   gen_id mirna
@@ -355,14 +382,14 @@ class MiRNA2GeneJob(Job):
                 logging.info("COMPRESSING RESULTS...DONE")
 
                 fields = {
-                    "omicType" : self.getGeneBasedInputOmics()[0].get("omicName"),
-                    "dataType" : self.getGeneBasedInputOmics()[0].get("omicName").replace("data","quantification"),
+                    "omicType" : miRNAinputOmic.get("omicName"),
+                    "dataType" : miRNAinputOmic.get("omicName").replace("data","quantification"),
                     "description" : "File generated using miRNA2Target tool (miRNA2Target);" + self.getJobDescription(True, dataFile, relevantFile, referenceFile, geneExpressionFile)
                 }
                 mainOutputFileName = copyFile(self.getUserID(), os_path.split(mirna2genesOutput.name)[1], fields,self.getTemporalDir() +  "/", self.getInputDir())
 
                 fields = {
-                    "omicType" : self.getGeneBasedInputOmics()[0].get("omicName"),
+                    "omicType" : miRNAinputOmic.get("omicName"),
                     "dataType" : "Relevant Genes list",
                     "description" : "File generated using miRNA2Target tool (miRNA2Target);"  + self.getJobDescription()
                 }

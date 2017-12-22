@@ -29,6 +29,7 @@ class Pathway(Model):
         self.ID = ID
         self.name = ""
         self.classification = ""
+        self.source = "KEGG"
         #IDENTIFIERS OF MATCHED COMPOUNDS, THE DATA IS AT JOBINSTANCE
         self.matchedCompounds =[]
         #IDENTIFIERS OF MATCHED GENES, THE DATA IS AT JOBINSTANCE
@@ -37,7 +38,10 @@ class Pathway(Model):
         self.metagenes = {}
         #SIGNIFICANCE VALUES PER OMIC in format OmicName -> [totalFeatures, totalRelevantFeatures, pValue]
         self.significanceValues= {}
-        self.combinedSignificancePvalue=1
+        self.adjustedSignificanceValues = {}
+        #self.combinedSignificancePvalue=1
+        self.combinedSignificancePvalues = {}
+        self.adjustedCombinedSignificanceValues = {}
         #GRAPHICAL INFORMATION
         self.graphicalOptions = None
 
@@ -58,6 +62,11 @@ class Pathway(Model):
         self.classification = classification
     def getClassification(self):
         return self.classification
+
+    def setSource(self, source):
+        self.source = source
+    def getSource(self):
+        return self.source
 
     def setMatchedCompounds(self, matchedCompounds):
         self.matchedCompounds = matchedCompounds
@@ -99,13 +108,31 @@ class Pathway(Model):
         pValue = (self.significanceValues.get(omicName, [0,0,-1])[2])
         self.significanceValues[omicName] = [nFeatures, nRelevantFeatures, pValue]
 
+    def setSignificanceValues(self, adjustedSignificanceValues):
+        self.adjustedSignificanceValues = adjustedSignificanceValues
+    def getAdjustedSignificanceValues(self):
+        return self.adjustedSignificanceValues
+    def setOmicAdjustedSignificanceValues(self, omic, adjustedSignificanceValues):
+        self.adjustedSignificanceValues[omic] = adjustedSignificanceValues
+
     def setSignificancePvalue(self, omicName, pValue):
         self.significanceValues[omicName][2] = pValue
 
-    def setCombinedSignificancePvalue(self, pValue):
-        self.combinedSignificancePvalue = pValue
-    def getCombinedSignificancePvalue(self):
-        return self.combinedSignificancePvalue
+    # def setCombinedSignificancePvalue(self, pValue):
+    #     self.combinedSignificancePvalue = pValue
+    # def getCombinedSignificancePvalue(self):
+    #     return self.combinedSignificancePvalue
+    def setCombinedSignificancePvalues(self, pValues):
+        self.combinedSignificancePvalues = pValues
+    def getCombinedSignificancePvalues(self):
+        return self.combinedSignificancePvalues
+
+    def setAdjustedCombinedSignificancePvalues(self, pValues):
+        self.adjustedCombinedSignificancePvalues = pValues
+    def getAdjustedCombinedSignificancePvalues(self):
+        return self.adjustedCombinedSignificancePvalues
+    def setMethodAdjustedCombinedSignificanceValues(self, method, adjustedCombinedSignificanceValues):
+        self.adjustedCombinedSignificanceValues[method] = adjustedCombinedSignificanceValues
 
     def setGraphicalOptions(self, graphicalOptions):
         self.graphicalOptions = graphicalOptions

@@ -2,8 +2,7 @@ import imp
 import traceback
 
 from sys import argv, stderr
-from subprocess import CalledProcessError
-
+from subprocess import CalledProcessError, check_call
 #**************************************************************************
 #STEP 1. READ CONFIGURATION AND PARSE INPUT FILES
 #
@@ -28,29 +27,30 @@ try:
     #**************************************************************************
     # STEP 1. EXTRACT THE MAPPING DATABASE
     #**************************************************************************
-    COMMON_BUILD_DB_TOOLS.processEnsemblData()
-    COMMON_BUILD_DB_TOOLS.processRefSeqData()
-    COMMON_BUILD_DB_TOOLS.processUniProtData()
-    # COMMON_BUILD_DB_TOOLS.processVegaData()
-    COMMON_BUILD_DB_TOOLS.processRefSeqGeneSymbolData()
-
+    COMMON_BUILD_DB_TOOLS.processMapManMappingData()
+    COMMON_BUILD_DB_TOOLS.processKEGGMappingData()
     #**************************************************************************
     # STEP 2. PROCESS THE KEGG DATABASE
     #**************************************************************************
     COMMON_BUILD_DB_TOOLS.processKEGGPathwaysData()
 
-    #**************************************************************************
-    # RESULTS
-    #**************************************************************************
-    COMMON_BUILD_DB_TOOLS.printResults()
+    # This must be after KEGG to avoid trying to process missing kgml files
+    # (will not fail though)
+    COMMON_BUILD_DB_TOOLS.processMapManPathwaysData()
+
+    COMMON_BUILD_DB_TOOLS.mergeNetworkFiles()
 
     #**************************************************************************
     # DUMP AND INSTALL
     #**************************************************************************
     COMMON_BUILD_DB_TOOLS.dumpDatabase()
-    COMMON_BUILD_DB_TOOLS.dumpErrors()
     COMMON_BUILD_DB_TOOLS.createDatabase()
 
+    try:
+        command = ROOT_DIR + "scripts/generateTestData.sh " + SPECIE + " " + DATA_DIR + "../../../"
+        check_call(command, shell=True)
+    except Exception:
+        pass
 
 except CalledProcessError as ex:
     stderr.write("FAILED WHILE PROCESSING DATA " + ex.message)

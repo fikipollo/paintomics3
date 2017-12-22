@@ -26,8 +26,9 @@ from zipfile import ZipFile as zipFile
 from subprocess import check_call, STDOUT, CalledProcessError
 from src.common.Util import unifyAndSort
 
+from collections import defaultdict
 
-from src.common.Statistics import calculateSignificance, calculateCombinedSignificancePvalue
+from src.common.Statistics import calculateSignificance, calculateCombinedSignificancePvalues, adjustPvalues
 from src.common.Util import chunks, getImageSize
 
 from src.common.KeggInformationManager import KeggInformationManager
@@ -37,7 +38,7 @@ from src.classes.Feature import Gene, Compound
 from src.classes.Pathway import Pathway
 from src.classes.PathwayGraphicalData import PathwayGraphicalData
 
-from src.conf.serverconf import KEGG_DATA_DIR, MAX_THREADS, MAX_WAIT_THREADS
+from src.conf.serverconf import KEGG_DATA_DIR, MAX_THREADS, MAX_WAIT_THREADS, MAX_NUMBER_FEATURES
 
 
 class PathwayAcquisitionJob(Job):
@@ -52,6 +53,7 @@ class PathwayAcquisitionJob(Job):
         self.summary = None
         #In this table we save all the matched pathways and for each pathways the associated selected compounds and genes.
         self.matchedPathways = {}
+        self.foundCompounds = []
 
     #******************************************************************************************************************
     # GETTERS AND SETTER
@@ -72,6 +74,10 @@ class PathwayAcquisitionJob(Job):
         return self.matchedPathways
     def addMatchedPathway(self, matchedPathway):
         self.matchedPathways[matchedPathway.getID()] = matchedPathway
+    def addFoundCompound(self, foundCompound):
+        self.foundCompounds.append(foundCompound)
+    def getFoundCompounds(self):
+        return self.foundCompounds
 
     def getJobDescription(self, generate=False, isExampleJob=False):
         if(generate):
@@ -87,6 +93,26 @@ class PathwayAcquisitionJob(Job):
                 self.description+=omicAux.get("omicName") + " [" + basename(omicAux.get("inputDataFile")) + "]; "
 
         return self.description
+
+    def getMappedRatios(self):
+        # Calculate the mapped/unmapped ratio of each omic
+        mapped_ratios = {}
+
+        for genericOmic in self.getGeneBasedInputOmics() + self.getCompoundBasedInputOmics():
+            omicSummary = genericOmic.get("omicSummary")
+
+            # First position: dictionary with identifiers.
+            # With multiple databases "Total" is the maximum
+            # Compounds omics only have one value (no dict)
+            totalMapped = omicSummary[0].get("Total", omicSummary[0].values()[0]) if not isinstance(omicSummary[0], (int, long)) else omicSummary[0]
+
+            # Second position: considering total if it exists
+            totalUnmapped = omicSummary[1]
+
+            mapped_ratios[genericOmic.get("omicName")] = float(totalMapped)/float(totalMapped + totalUnmapped)
+
+        return mapped_ratios
+
 
     #******************************************************************************************************************
     # OTHER FUNCTIONS
@@ -140,10 +166,15 @@ class PathwayAcquisitionJob(Job):
         if os_path.isfile(relevantFileName):
             f = open(relevantFileName, 'rU')
             lines = f.readlines()
-            for line in lines:
-                if len(line) > 80:
-                    error +=  " - Errors detected while processing " + inputOmic.get("relevantFeaturesFile", "") + ": The file does not look like a Relevant Features file (some lines are longer than 80 characters)." + "\n"
-                    break
+
+            # Ensure that relevant features files does not exceed the max number of features
+            if len(lines) > MAX_NUMBER_FEATURES:
+                error += " - Errors detected while processing " + inputOmic.get("relevantFeaturesFile", "") + ": The file exceeds the maximum number of features allowed (" + str(MAX_NUMBER_FEATURES) + ")." + "\n"
+            else:
+                for line in lines:
+                    if len(line) > 80:
+                        error +=  " - Errors detected while processing " + inputOmic.get("relevantFeaturesFile", "") + ": The file does not look like a Relevant Features file (some lines are longer than 80 characters)." + "\n"
+                        break
             f.close()
 
         #*************************************************************************
@@ -175,14 +206,23 @@ class PathwayAcquisitionJob(Job):
                             break
                         nConditions = len(line)
 
+                    # *************************************************************************
+                    # STEP 2.2 CHECK IF IT EXCEEDS THE MAX NUMBER OF FEATURES ALLOWED
+                    # *************************************************************************
+                    if (nLine > MAX_NUMBER_FEATURES):
+                        error += " - Errors detected while processing " + inputOmic.get("inputDataFile",
+                                                                                        "") + ": The file exceeds the maximum number of features allowed (" + str(
+                            MAX_NUMBER_FEATURES) + ")." + "\n"
+                        break
+
                     #**************************************************************************************
-                    # STEP 2.2 IF LINE LENGTH DOES NOT MATCH WITH EXPECTED NUMBER OF CONDITIONS, ADD ERROR
+                    # STEP 2.3 IF LINE LENGTH DOES NOT MATCH WITH EXPECTED NUMBER OF CONDITIONS, ADD ERROR
                     #**************************************************************************************
                     if(nConditions != len(line) and len(line)>0):
                         erroneousLines[nLine] = "Expected " +  str(nConditions) + " columns but found " + str(len(line)) + ";"
 
                     #**************************************************************************************
-                    # STEP 2.2 IF CONTAINS NOT VALID VALUES, ADD ERROR
+                    # STEP 2.4 IF CONTAINS NOT VALID VALUES, ADD ERROR
                     #**************************************************************************************
                     try:
                         map(float, line[1:len(line)])
@@ -243,7 +283,8 @@ class PathwayAcquisitionJob(Job):
                 logging.info("   * PROCESSED " + omicName + "..." )
                 inputOmic["omicSummary"] = omicSummary
             #REMOVE REPETITIONS AND ORDER ALPHABETICALLY
-            checkBoxesData = unifyAndSort(checkBoxesData, lambda checkBoxData: checkBoxData["title"].lower())
+            # checkBoxesData = unifyAndSort(checkBoxesData, lambda checkBoxData: checkBoxData["title"].lower())
+            checkBoxesData = unifyAndSort(checkBoxesData, lambda checkBoxData: checkBoxData.getTitle().lower())
 
             logging.info("PROCESSING COMPOUND BASED FILES...DONE" )
 
@@ -258,6 +299,9 @@ class PathwayAcquisitionJob(Job):
             self.compressDirectory(self.getOutputDir() + fileName, "zip", self.getTemporalDir() + "/")
 
             logging.info("COMPRESSING RESULTS...DONE")
+
+            # Save the metabolites matching data to allow recovering the job
+            self.foundCompounds = checkBoxesData
 
             return checkBoxesData
 
@@ -287,6 +331,7 @@ class PathwayAcquisitionJob(Job):
         #   and we need to distinguish which one the user selected
         #   e.g. C00075#Uridine 5'-triphosphate, Uridine triphosphate
         #   e.g. C00075#UTP
+        mappedCompounds = set()
         compoundID = compoundName = initialCompound = newCompound = None
         for selectedCompound in selectedCompounds:
             selectedCompound = selectedCompound.split("#")
@@ -307,6 +352,9 @@ class PathwayAcquisitionJob(Job):
             #TODO: this could ignore multiple values of different omics types for the same feature
             for i in sorted(range(len(initialCompound.omicsValues)), reverse=True):
                 omicValue = initialCompound.omicsValues[i]
+                # Add the omic value name (original feature) to the list
+                mappedCompounds.add(omicValue.getOriginalName())
+
                 if omicValue.inputName in compoundName.split(", ") and omicValue.originalName.lower() == originalName.lower(): #Some compounds can have combined names, separated by commas
                     newCompound.addOmicValue(omicValue)
                     del initialCompound.omicsValues[i]
@@ -329,6 +377,17 @@ class PathwayAcquisitionJob(Job):
             #   COMPOUND C00099 (beta-alanine) WILL HAVE 2 OMICS VALUES COMING FROM DIFFERENT COMPOUNDS
             #compoundAux.getOmicsValues()[0].setInputName(compoundAux.getName() + " [" + initialCompoundName + "]")
             #6. ADD THE COMPOUND TO THE JOB
+
+        # Update the omicSummary for the compoundOmic
+        # TODO: at the moment it only considers "one whole compound omic" with the same mapped ratio
+        for cpdOmic in self.getCompoundBasedInputOmics():
+            # Get the original number of CPDs
+            cpdSummary = cpdOmic.get("omicSummary")
+            cpdTotal = cpdSummary[0] + cpdSummary[1]
+
+            # Change the summary stats to reflect the user provided options
+            cpdSummary[0] = len(mappedCompounds)
+            cpdSummary[1] = cpdTotal - len(mappedCompounds)
 
         return True
 
@@ -357,6 +416,8 @@ class PathwayAcquisitionJob(Job):
         totalInputMatchedGenes = len(self.getInputGenesData())
         totalKeggPathways = len(pathwayIDsList)
 
+        mappedRatiosByOmic = self.getMappedRatios()
+
         #****************************************************************
         # Step 2. FOR EACH PATHWAY OF THE SPECIE, CHECK IF THERE IS ONE OR
         #         MORE FEATURES FROM THE INPUT (USING MULTITHREADING)
@@ -369,7 +430,7 @@ class PathwayAcquisitionJob(Job):
         nThreads = MAX_THREADS
         logging.info("USING " + str(nThreads) + " THREADS")
 
-        def matchPathways(jobInstance, pathwaysList, inputGenes, inputCompounds, totalFeaturesByOmic, totalRelevantFeaturesByOmic, matchedPathways):
+        def matchPathways(jobInstance, pathwaysList, inputGenes, inputCompounds, totalFeaturesByOmic, totalRelevantFeaturesByOmic, matchedPathways, mappedRatiosByOmic):
             #****************************************************************
             # Step 2.1. FOR EACH PATHWAY IN THE LIST, GET ALL FEATURE IDS
             #           AND CALCULATE THE SIGNIFICANCE FOR THE PATHWAY
@@ -379,11 +440,12 @@ class PathwayAcquisitionJob(Job):
             genesInPathway = compoundsInPathway = pathway = None
             for pathwayID in pathwaysList:
                 genesInPathway, compoundsInPathway = keggInformationManager.getAllFeatureIDsByPathwayID(jobInstance.getOrganism(), pathwayID)
-                isValidPathway, pathway = self.testPathwaySignificance(genesInPathway, compoundsInPathway, inputGenes, inputCompounds, totalFeaturesByOmic, totalRelevantFeaturesByOmic)
+                isValidPathway, pathway = self.testPathwaySignificance(genesInPathway, compoundsInPathway, inputGenes, inputCompounds, totalFeaturesByOmic, totalRelevantFeaturesByOmic, mappedRatiosByOmic)
                 if(isValidPathway):
                     pathway.setID(pathwayID)
                     pathway.setName(keggInformationManager.getPathwayNameByID(jobInstance.getOrganism(), pathwayID))
                     pathway.setClassification(keggInformationManager.getPathwayClassificationByID(jobInstance.getOrganism(), pathwayID))
+                    pathway.setSource(keggInformationManager.getPathwaySourceByID(jobInstance.getOrganism(), pathwayID))
 
                     matchedPathways[pathwayID] = pathway
 
@@ -394,7 +456,7 @@ class PathwayAcquisitionJob(Job):
         threadsList = []
         #LAUNCH THE THREADS
         for pathwayIDsList in pathwaysListParts:
-            thread = Process(target=matchPathways, args=(self, pathwayIDsList, inputGenes, inputCompounds, totalFeaturesByOmic, totalRelevantFeaturesByOmic, matchedPathways))
+            thread = Process(target=matchPathways, args=(self, pathwayIDsList, inputGenes, inputCompounds, totalFeaturesByOmic, totalRelevantFeaturesByOmic, matchedPathways, mappedRatiosByOmic))
             threadsList.append(thread)
             thread.start()
 
@@ -408,6 +470,28 @@ class PathwayAcquisitionJob(Job):
 
         self.setMatchedPathways(dict(matchedPathways))
         totalMatchedKeggPathways=len(self.getMatchedPathways())
+
+        # Get the adjusted p-values (they need to be passed as a whole)
+        pvalues_list = defaultdict(dict)
+        combined_pvalues_list = defaultdict(dict)
+
+        for pathway_id, pathway in self.getMatchedPathways().iteritems():
+            for omic, pvalue in pathway.getSignificanceValues().iteritems():
+                pvalues_list[omic][pathway_id] = pvalue[2]
+
+            for method, combined_pvalue in pathway.getCombinedSignificancePvalues().iteritems():
+                combined_pvalues_list[method][pathway_id] = combined_pvalue
+
+        adjusted_pvalues = {omic: adjustPvalues(omicPvalues) for omic, omicPvalues in pvalues_list.iteritems()}
+        adjusted_combined_pvalues = {method: adjustPvalues(methodCombinedPvalues) for method, methodCombinedPvalues in combined_pvalues_list.iteritems()}
+
+        # Set the adjusted p-value on a pathway basis
+        for pathway_id, pathway in self.getMatchedPathways().iteritems():
+            for omic, pvalue in pathway.getSignificanceValues().iteritems():
+                pathway.setOmicAdjustedSignificanceValues(omic, {adjust_method: pvalues[pathway_id] for adjust_method, pvalues in adjusted_pvalues[omic].iteritems()})
+
+            for method, combined_pvalue in pathway.getCombinedSignificancePvalues().iteritems():
+                 pathway.setMethodAdjustedCombinedSignificanceValues(method, {adjust_method: combined_pvalues[pathway_id] for adjust_method, combined_pvalues in adjusted_combined_pvalues[method].iteritems()})
 
         logging.info("SUMMARY: " + str(totalMatchedKeggPathways) +  " Matched Pathways of "  + str(totalKeggPathways) + "in KEGG; Total input Genes = " + str(totalInputMatchedGenes) + "; SUMMARY: Total input Compounds  = " + str(totalInputMatchedCompounds))
 
@@ -453,7 +537,7 @@ class PathwayAcquisitionJob(Job):
                     totalRelevantFeaturesByOmic[omicValue.getOmicName()] = totalRelevantFeaturesByOmic.get(omicValue.getOmicName(),0) + sum
         return totalFeaturesByOmic, totalRelevantFeaturesByOmic
 
-    def testPathwaySignificance(self, genesInPathway, compoundsInPathway, inputGenes, inputCompounds, totalFeaturesByOmic, totalRelevantFeaturesByOmic):
+    def testPathwaySignificance(self, genesInPathway, compoundsInPathway, inputGenes, inputCompounds, totalFeaturesByOmic, totalRelevantFeaturesByOmic, mappedRatiosByOmic):
         """
         This function takes a list of genes and compounds from the input and check if those features are at the
         list of feautures involved into a specific pathway.
@@ -525,7 +609,15 @@ class PathwayAcquisitionJob(Job):
                 pathwayInstance.setSignificancePvalue(omicName, pValue)
 
             #SIGNIFICANCE VALUES PER OMIC in format OmicName -> [totalFeatures, totalRelevantFeatures, pValue]
-            pathwayInstance.setCombinedSignificancePvalue(calculateCombinedSignificancePvalue(self.getCombinedTest(), pathwayInstance.getSignificanceValues().values()))
+
+            # Ensure the same order in both values and weights
+            omicSignificanceValues = pathwayInstance.getSignificanceValues()
+            keyOrder = omicSignificanceValues.keys()
+
+            stouferWeights = [mappedRatiosByOmic[omicName] for omicName in keyOrder]
+            omicPvalues = [omicSignificanceValues[omicName] for omicName in keyOrder]
+
+            pathwayInstance.setCombinedSignificancePvalues(calculateCombinedSignificancePvalues(omicPvalues, stouferWeights))
 
         else:
             pathwayInstance=None
@@ -578,7 +670,8 @@ class PathwayAcquisitionJob(Job):
 
             graphicalOptions = PathwayGraphicalData()
             graphicalOptions.setFeaturesGraphicalData(genesInPathway + compoundsInPathway)
-            graphicalOptions.setImageSize(getImageSize(keggInformationManager.getKeggDataDir() + 'png/' + pathwayID.replace(self.getOrganism(), "map") + ".png"))
+            # graphicalOptions.setImageSize(getImageSize(keggInformationManager.getKeggDataDir() + 'png/' + pathwayID.replace(self.getOrganism(), "map") + ".png"))
+            graphicalOptions.setImageSize(getImageSize(keggInformationManager.getDataDir(pathwayInstance.getSource()) + 'png/' + pathwayID.replace(self.getOrganism(), "map") + ".png"))
             graphicalOptions.setVisibleOmics(visibleOmics)
 
             #Set the graphical options for the pathway
@@ -669,6 +762,16 @@ class PathwayAcquisitionJob(Job):
                     pathwayInstance = Pathway(pathwayID)
                     pathwayInstance.parseBSON(pathwayData)
                     self.addMatchedPathway(pathwayInstance)
+            if (attr == "foundCompounds"):
+                self.foundCompounds[:] = []
+                for foundCompoundID in value:
+                    foundFeatureInstance = FoundFeature("")
+                    self.addFoundCompound({
+                        'mainCompounds': [Compound(compoundData["ID"]).parseBSON(compoundData) for compoundData in
+                                          value.getMainCompounds()],
+                        'otherCompounds': [Compound(compoundData["ID"]).parseBSON(compoundData) for compoundData in
+                                           value.getOtherCompounds()]
+                    })
             elif(attr == "inputCompoundsData"):
                 compoundInstance = None
                 self.inputCompoundsData.clear()
@@ -695,7 +798,8 @@ class PathwayAcquisitionJob(Job):
         """
         bson = {}
         for attr, value in self.__dict__.iteritems():
-            if not isinstance(value, dict) and ( ["svgDir", "inputDir", "outputDir", "temporalDir"].count(attr) == 0) :
+            # Special case: "foundCompounds" is a list (not a dict) that contains recursive object data
+            if not isinstance(value, dict) and ( ["svgDir", "inputDir", "outputDir", "temporalDir", "foundCompounds"].count(attr) == 0) :
                 bson[attr] = value
 
             elif(recursive == True):
@@ -714,5 +818,13 @@ class PathwayAcquisitionJob(Job):
                     for (geneID, geneInstance) in value.iteritems():
                         genes[geneID] = geneInstance.toBSON()
                     value = genes
+                elif(attr == "foundCompounds"):
+                    compounds = []
+                    for compoundCB in value:
+                        compounds.append({
+                            'mainCompounds': [compoundInstance.toBSON() for compoundInstance in compoundCB.getMainCompounds()],
+                            'otherCompounds': [compoundInstance.toBSON() for compoundInstance in compoundCB.getOtherCompounds()]
+                        })
+                    value = compounds
                 bson[attr] = value
         return bson

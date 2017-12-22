@@ -1,7 +1,7 @@
 /*********************************************************************
  * GLOBAL SETTINGS           *****************************************
  **********************************************************************/
-APP_VERSION = "v0.4.4";
+APP_VERSION = "v0.4.5";
 SERVER_URL = "";
 //SERVER_PORT = ":8080";
 /*********************************************************************
@@ -14,6 +14,7 @@ SERVER_URL_PA_STEP3 = SERVER_URL + "pa_step3";
 SERVER_URL_PA_SAVE_IMAGE = SERVER_URL + "pa_save_image";
 SERVER_URL_PA_SAVE_VISUAL_OPTIONS = SERVER_URL + "pa_save_visual_options";
 SERVER_URL_PA_RECOVER_JOB = SERVER_URL + "pa_recover_job";
+SERVER_URL_PA_TOUCH_JOB = SERVER_URL + "pa_touch_job";
 SERVER_URL_JOB_STATUS= SERVER_URL + "check_job_status";
 SERVER_URL_GET_CLUSTER_IMAGE= SERVER_URL + "get_cluster_image";
 SERVER_URL_GET_MESSAGE = SERVER_URL + "um_get_message";
@@ -32,6 +33,7 @@ SERVER_URL_DM_DELETE_JOB = SERVER_URL + "dm_delete_job";
 SERVER_URL_DM_FROMBED2GENES = SERVER_URL + "dm_fromBEDtoGenes";
 SERVER_URL_DM_FROMMIRNA2GENES = SERVER_URL + "dm_fromMiRNAtoGenes";
 SERVER_URL_DM_EXAMPLE_FROMBED2GENES = SERVER_URL + "dm_fromBEDtoGenes/example";
+SERVER_URL_DM_EXAMPLE_FROMMIRNA2GENES = SERVER_URL + "dm_fromMiRNAtoGenes/example";
 SERVER_URL_DM_SEND_REPORT = SERVER_URL + "dm_sendReport";
 /*********************************************************************
  * KEGG DATA URLS                          ***************************
@@ -46,6 +48,7 @@ SERVER_URL_UM_SIGNOUT = SERVER_URL + "um_signout";
 SERVER_URL_UM_SIGNUP = SERVER_URL + "um_signup";
 SERVER_URL_UM_CHANGEPASS = SERVER_URL + "um_changepassword";
 SERVER_URL_UM_NEWGUESTSESSION = SERVER_URL + "um_guestsession";
+SERVER_URL_UM_NEWNOLOGINSESSION = SERVER_URL + "um_nologinsession";
 /*********************************************************************
  * OTHER SETTINGS            *****************************************
  **********************************************************************/
@@ -54,6 +57,6 @@ nObservers = 0;
 debugging = true;
 messageDialog = null;
 UPLOAD_TIMEOUT=120; /*IN SECONDS*/
-MAX_LIVE_JOB=60; /*IN DAYS*/
+MAX_LIVE_JOB=365; /*IN DAYS*/
 CHECK_STATUS_TIMEOUT=5000; /*MILISECONDS*/
 MAX_PATHWAYS_OPENED=5;

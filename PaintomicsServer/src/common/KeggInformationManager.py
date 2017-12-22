@@ -1,6 +1,6 @@
 import logging
 
-from collections import deque
+from collections import deque, defaultdict
 from pymongo import MongoClient
 from threading import RLock as threading_lock
 from src.common.Util import Singleton
@@ -43,7 +43,7 @@ class KeggInformationManager():
         try:
             self.lock.acquire() #LOCK CACHE
 
-            self.translationCache[jobID] = {"id": {}, "symbol": {}, "compound":{}}
+            self.translationCache[jobID] = defaultdict(lambda: {"id": {}, "symbol": {}, "compound": {}})
 
             return self
         except Exception as ex:
@@ -51,7 +51,7 @@ class KeggInformationManager():
         finally:
                 self.lock.release() #UNLOCK CACHE
 
-    def findInTranslationCache(self, jobID, featureID, type="id"):
+    def findInTranslationCache(self, jobID, featureID, type="id", dbID = "global"):
         """
         This function...
 
@@ -64,13 +64,13 @@ class KeggInformationManager():
             if self.translationCache.get(jobID) == None:
                 return None
 
-            return self.translationCache.get(jobID)[type].get(featureID, None)
+            return self.translationCache.get(jobID)[dbID][type].get(featureID, None)
         except Exception as ex:
             raise ex
         finally:
                 self.lock.release() #UNLOCK CACHE
 
-    def updateTranslationCache(self, jobID, newDataTable, type="id"):
+    def updateTranslationCache(self, jobID, newDataTable, type="id", dbID = "global"):
         """
         This function...
 
@@ -81,7 +81,7 @@ class KeggInformationManager():
             self.lock.acquire() #LOCK CACHE
 
             if self.translationCache.get(jobID) != None:
-                self.translationCache.get(jobID)[type] = dict(self.translationCache.get(jobID)[type].items() + newDataTable.items())
+                self.translationCache.get(jobID)[dbID][type] = dict(self.translationCache.get(jobID)[dbID][type].items() + newDataTable.items())
             return True
         except Exception as ex:
                 raise ex
@@ -152,6 +152,22 @@ class KeggInformationManager():
             pathway = self.getKeggData(organism).get("pathways").get(pathwayID, None)
             if pathway != None:
                 return pathway.get("classification")
+            return "Unknown Pathway " + pathwayID
+        finally:
+                self.lock.release() #UNLOCK CACHE
+
+    def getPathwaySourceByID(self, organism, pathwayID):
+        """
+        This function...
+
+        @param {type}
+        @return {type}
+        """
+        try:
+            self.lock.acquire() #LOCK CACHE
+            pathway = self.getKeggData(organism).get("pathways").get(pathwayID, None)
+            if pathway != None:
+                return pathway.get("source", "KEGG")
             return "Unknown Pathway " + pathwayID
         finally:
                 self.lock.release() #UNLOCK CACHE
@@ -269,3 +285,11 @@ class KeggInformationManager():
 
     def getKeggDataDir(self):
         return self.KEGG_DATA_DIR
+
+    def getDataDir(self, sourceDB):
+        KeggDataDir = self.getKeggDataDir()
+
+        if sourceDB != "KEGG":
+            KeggDataDir += "../" + sourceDB.lower() + "/"
+
+        return KeggDataDir

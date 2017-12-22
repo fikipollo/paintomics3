@@ -1,7 +1,9 @@
 from src.common.DAO.DAO import DAO
 from src.common.DAO.FeatureDAO import FeatureDAO
+from src.common.DAO.FoundFeatureDAO import FoundFeatureDAO
 from src.common.DAO.PathwayDAO import PathwayDAO
 from src.classes.JobInstances.PathwayAcquisitionJob import PathwayAcquisitionJob
+from time import strftime as formatDate
 
 class PathwayAcquisitionJobDAO(DAO):
     #******************************************************************************************************************
@@ -23,6 +25,11 @@ class PathwayAcquisitionJobDAO(DAO):
             jobInstance = PathwayAcquisitionJob(id, "", "")
             jobInstance.parseBSON(match)
 
+            auxDAO = FoundFeatureDAO(dbManager=self.dbManager)
+            match = auxDAO.findAll({"jobID": id})
+            for feature in match:
+                jobInstance.addFoundCompound(feature)
+
             auxDAO = FeatureDAO(dbManager=self.dbManager)
             match = auxDAO.findAll({"jobID":id, "featureType" : "Gene"})
             for feature in match:
@@ -38,6 +45,12 @@ class PathwayAcquisitionJobDAO(DAO):
 
         return jobInstance
 
+    def touch(self, jobID):
+        collection = self.dbManager.getCollection(self.collectionName)
+
+        collection.update_one({"jobID": jobID}, {'$set': {"accessDate": formatDate("%Y%m%d%H%M")},
+                                                 '$unset': {"reminderSent": 1}}, upsert=False)
+
     def insert(self, instance, otherParams=None):
         jobInstance=instance
         collection = self.dbManager.getCollection(self.collectionName)
@@ -46,6 +59,11 @@ class PathwayAcquisitionJobDAO(DAO):
         instanceBSON["jobType"] = "PathwayAcquisitionJob"
 
         collection.insert(instanceBSON)
+
+        # Save foundCompounds to be able to retrieve the job from database
+        if (len(jobInstance.getFoundCompounds()) > 0):
+            auxDAO = FoundFeatureDAO(dbManager=self.dbManager)
+            auxDAO.insertAll(jobInstance.getFoundCompounds(), {"jobID": jobInstance.getJobID()})
 
         auxDAO = FeatureDAO(dbManager=self.dbManager)
         if(len(jobInstance.getInputGenesData()) > 0):
