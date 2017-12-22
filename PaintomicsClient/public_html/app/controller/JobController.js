@@ -682,7 +682,7 @@ function JobController() {
 			//location.reload();
 			return;
 		}
-		Ext.MessageBox.confirm('Confirm', 'Are you sure you want to reset the current job?', function (opcion) {
+		Ext.MessageBox.confirm('Confirm', 'Are you sure you want to exit the current job?', function (opcion) {
 			if (opcion === "yes") {
 				me.cleanStoredApplicationData();
 				me.showJobInstance(new JobInstance(null));
