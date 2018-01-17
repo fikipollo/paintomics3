@@ -29,6 +29,7 @@ from collections import defaultdict
 from src.common.ServerErrorManager import handleException
 from src.common.UserSessionManager import UserSessionManager
 from src.common.JobInformationManager import JobInformationManager
+from src.common.Statistics import calculateSignificance, calculateCombinedSignificancePvalues, adjustPvalues, calculateStoufferCombinedPvalue
 from src.classes.JobInstances.PathwayAcquisitionJob import PathwayAcquisitionJob
 
 from src.conf.serverconf import CLIENT_TMP_DIR, KEGG_DATA_DIR
@@ -624,7 +625,7 @@ def pathwayAcquisitionSaveVisualOptions(request, response):
         visualOptions = defaultdict(dict)
         jobID  = formFields.get("jobID")
 
-        # Visual options are stored on a DB basis, with form info in the form
+        # Visual options are stored on a DB basis, with form info in the structure
         # DB[option] or DB[option][] for lists
         db_matcher = re.compile(r"^(\w+)\[(.+?)\](\Z|\[\])$")
 
@@ -671,5 +672,72 @@ def pathwayAcquisitionSaveVisualOptions(request, response):
 
     except Exception as ex:
         handleException(response, ex, __file__ , "pathwayAcquisitionStep3", userID=userID)
+    finally:
+        return response
+
+def pathwayAcquisitionAdjustPvalues(request, response):
+    try:
+        #****************************************************************
+        # Step 1.GET THE INFO
+        #****************************************************************
+        formFields = request.get_json() #request.form
+
+        # List of pathway => {pvalues}
+        pvalues = formFields.get("pValues")
+
+        # Check what kind of p-value we want to update
+        if "stoufferWeights" in formFields:
+            newStoufferWeights = formFields.get("stoufferWeights")
+            visiblePathways = formFields.get("visiblePathways")
+
+            newStoufferPvalues = defaultdict(dict)
+            newAdjustedStoufferPvalues = defaultdict(dict)
+
+            # Iterate over each database (adjusting it independently)
+            for db_name, db_pvalues in pvalues.iteritems():
+                # Each pathway has a different set of matching omics and thus, Stouffer weights.
+                # The new Stouffer p-value will be computed for each pathway, even those that are currently hidden.
+                for pathway_id, pathway_pvalues in db_pvalues.iteritems():
+                    # Select those with a proper p-value number and present in Stouffer weights
+                    valid_pvalues = {omic: pvalue for omic, pvalue in pathway_pvalues.iteritems() if pvalue != "-" and omic in newStoufferWeights.keys()}
+
+                    # Make sure to pass the Stouffer weights in the same order as the p-values
+                    newStoufferValue = calculateStoufferCombinedPvalue(valid_pvalues.values(), [newStoufferWeights[omicName] for omicName in valid_pvalues.keys()])
+
+                    newStoufferPvalues[db_name][pathway_id] = newStoufferValue
+
+                # Adjust the new Stouffer p-values passing only those pathways that are currently visible
+                newAdjustedStoufferPvalues[db_name] = adjustPvalues({pathway: pvalue for pathway, pvalue in newStoufferPvalues[db_name].iteritems() if pathway in visiblePathways})
+
+            response.setContent({
+                "success": True,
+                "stoufferPvalues": newStoufferPvalues,
+                "adjustedStoufferPvalues": newAdjustedStoufferPvalues
+            })
+        else:
+
+            # No new stouffer weights, just recalculate the provided p-values
+
+            # Iterate over each database (adjusting it independently)
+            adjustedPvaluesByOmic = defaultdict()
+
+            for db_name, db_pvalues in pvalues.iteritems():
+                pvaluesByOmic = defaultdict(dict)
+
+                for pathway, pathwayPvalues in db_pvalues.iteritems():
+                    for omic, omicPvalue in pathwayPvalues.iteritems():
+                        # Skip those in which there is no pValue (no matching in the pathway for that omic)
+                        if omicPvalue != '-':
+                            pvaluesByOmic[omic][pathway] = omicPvalue
+
+                adjustedPvaluesByOmic[db_name] = {omic: adjustPvalues(omic_pvalues) for omic, omic_pvalues in pvaluesByOmic.iteritems()}
+
+            response.setContent({
+                "success": True,
+                "adjustedPvalues": adjustedPvaluesByOmic
+            })
+
+    except Exception as ex:
+        handleException(response, ex, __file__ , "pathwayAcquisitionAdjustPvalues")
     finally:
         return response

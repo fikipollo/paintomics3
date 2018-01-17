@@ -319,6 +319,13 @@ class Application(object):
         @self.app.route(SERVER_SUBDOMAIN + '/pa_save_visual_options', methods=['OPTIONS', 'POST'])
         def saveVisualOptionsHandler():
             return pathwayAcquisitionSaveVisualOptions(request, Response()).getResponse()
+
+        # *******************************************************************************************
+        # RETRIEVE NEW P-VALUES HANDLER
+        # *******************************************************************************************
+        @self.app.route(SERVER_SUBDOMAIN + '/pa_adjust_pvalues', methods=['OPTIONS', 'POST'])
+        def adjustPvaluesHandler():
+            return pathwayAcquisitionAdjustPvalues(request, Response()).getResponse()
         #*******************************************************************************************
         # PATHWAY SERVLETS HANDLERS - END
         #############################################################################################

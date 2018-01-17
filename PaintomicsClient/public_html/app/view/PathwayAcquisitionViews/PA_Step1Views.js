@@ -253,12 +253,12 @@ function PA_Step1JobView() {
 				'   <b>Paintomics</b> consists of three simple steps:' +
 				' </p>' +
 				' <ul> ' +
-				'   <li><b>Data uploading:</b> typically data matrices, containing, for example, gene expression, metabolite levels and metabolite levels for the same set of samples.</li> ' +
+				'   <li><b>Data uploading:</b> typically data matrices, containing, for example, gene expression, metabolite levels and protein levels for the same set of samples.</li> ' +
 				"   <li><b>Identifier and Name Matching and Metabolite assignment:</b> as Paintomics requires Entrez IDs for working with KEGG pathways, the tool will try to convert the names and identifiers from different sources and databases for the input data. Additionally, it's necessary to specify of metabolite assignments in ambiguity cases.</li>" +
-				'   <li><b>Pathway selection:</b> finally, Paintomics will obtain the list of KEGG Pathway that are ?.</li>' +
+				'   <li><b>Pathway analysis:</b> Paintomics 3 displays the relative abundance of omic features on the KEGG pathway diagram. The tools covers a complete analysis workflow, including pathway enrichment and network analysis, heatmaps, trend charts, etc. KEGG pathways can be interactively explored to visualize not only metabolite and gene expression across experimental conditions but also changes in their regulatory elements such as miRNAs, transcription factors, methylation sites, ChIP-seq peaks, etc.</li>' +
 				' </ul>' +
 				' <p>' +
-				'   Currently <b>Paintomics</b> supports integrated visualization of multipel species of different biological kingdoms and offers user the possibility to request any other organism present in the KEGG database.</br>' +
+				'   Currently <b>Paintomics</b> supports integrated visualization of multiple species of different biological kingdoms and offers user the possibility to request any other organism present in the KEGG database.</br>' +
 				'   Please check the <b><a href="http://paintomics.readthedocs.org/en/latest/" target="_blank">User guide</a></b> for further information. For any question on <b>Paintomics</b>, users can send a mail to <a href="mailto:paintomics@cipf.es">paintomics@cipf.es</a>.' +
 				' </p>' +
 				'</div>'

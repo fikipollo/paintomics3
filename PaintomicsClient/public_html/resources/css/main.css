@@ -1065,6 +1065,9 @@ i.relevantFeature:before {
 	border-bottom: solid #fff;
 	padding-top: 4px;
 }
+.externalLinksContainer a {
+	color: #0076E2;
+}
 .step4PathwayBox {
 	display: inline-table;
 	width: 300px;
