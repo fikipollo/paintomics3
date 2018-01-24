@@ -128,13 +128,21 @@ function SignInPanel() {
                                       }},
                                   {xtype: "box", html:
                                               '<div style="color: #D22; font-size: 16px;" id="invalidUserPassMessage" style="display:none"></div>' +
-                                              '<a class="button exampleButton" id="signInLink" style=" width: 100%; text-align: center; margin: 10px 0px; "><i class="fa fa-sign-in"></i> Sign in</a>' +
-                                              '<a id="forgotPassLink" href="javascript:void(0)"><p style="text-align: right;">Forgot your password?</p></a>' +
-                                              '<p style="text-align: center;">New in Paintomics? <a class="signUpLink" href="javascript:void(0)">Sign up now.</a></p>'
+                                              '<a class="button exampleButton" id="signInLink" style=" width: 195px; text-align: center; margin: 10px 54px; display: block;"><i class="fa fa-sign-in"></i> Sign in</a>' +
+                                              '<a id="forgotPassLink" href="javascript:void(0)"><p style="text-align: center;">Forgot your password?</p></a>' +
+                                              '<p style="text-align: center;">Want your own space? <a class="signUpLink" href="javascript:void(0)">Sign up now.</a></p>'
                                   }
                               ]
                           },
-                          {xtype: "box", flex: 1, html:
+						  	{xtype: "box", flex: 1, html:
+                              '<div style="padding: 0 30px; border-left: 1px solid #E7E7E7;">' +
+                              '  <h2>No login</h2>' +
+                              '  <h4>Continue using Paintomics without using accounts.</h4>' +
+                              '  <p>Please remember to save the provided URL to recover your job.' +
+                              '  <p style="text-align:center; margin-top: 50px;"><a class="button acceptButton" id="noLoginButton" style=" width: 195px; text-align: center; margin: 20px auto;float: none; "><i class="fa fa-sign-in"></i> Continue without account</a></p>' +
+                              '</div>'
+                  			}
+                          /*{xtype: "box", flex: 1, html:
                                       '<div style="padding-left: 30px; border-left: 1px solid #E7E7E7;">' +
                                       '  <h2>Guest session</h2>' +
                                       '  <h4>Start a new Guest session on Paintomics.</h4>' +
@@ -142,16 +150,8 @@ function SignInPanel() {
                                       '  <p style="text-align:center;font-size: 17px;"><b><a class="signUpLink" href="javascript:void(0)">Sign Up.</a></b> It only takes a few seconds!</p>' +
                                       '  <a class="button acceptButton" id="guestUserButton" style=" width: 100%; text-align: center; margin: 10px 0px; "><i class="fa fa-sign-in"></i> Start Guest session</a>' +
                                       '</div>'
-                          }
+                          }*/
                       ]
-                  },
-                  {xtype: "box", flex: 1, html:
-                              '<div style="padding: 0 30px; border-left: 1px solid #E7E7E7;">' +
-                              '  <h2>No login</h2>' +
-                              '  <h4>Continue using Paintomics without user or guest accounts.</h4>' +
-                              '  <p><b>Please note</b> that you will not be able to manage your personal data and jobs, and will only be able to access them using the provided URLs.' +
-                              '  <p style="text-align:center"><a class="button acceptButton" id="noLoginButton" style=" width: 50%; text-align: center; margin: 10px auto;float: none; "><i class="fa fa-sign-in"></i> Continue without account</a></p>' +
-                              '</div>'
                   }
               ],
               listeners: {
@@ -351,6 +351,9 @@ function NoLoginSessionPanel(email, p) {
                             $("#continueButton").click(function () {
                                 me.continueButtonClick();
                             });
+							
+							// TODO: force continue handler
+							me.continueButtonClick();
                         }
                     }
                 }

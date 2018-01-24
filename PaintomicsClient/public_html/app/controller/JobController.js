@@ -815,7 +815,7 @@ function JobController() {
 				url: SERVER_URL_PA_TOUCH_JOB,
 				data: {jobID: jobModel.getJobID()},
 				success: function (response) {
-					console.info(Date.logFormat() + " job's access date update succesfully.");
+					console.info(Date.logFormat() + " job's access date succesfully updated.");
 				},
 				error: function (response) {
 					console.error(Date.logFormat() + " failed when updating job's access date.");

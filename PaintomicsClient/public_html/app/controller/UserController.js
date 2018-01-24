@@ -64,7 +64,7 @@ function UserController() {
     * This function shows a new dialog for login
     */
     this.signInLinkClickHandler = function () {
-        var userViewsDialog = this.getUserViewsDialog(700, 530);
+        var userViewsDialog = this.getUserViewsDialog(700, 330);
 
         var signInPanel = new SignInPanel();
         signInPanel.setController(this);

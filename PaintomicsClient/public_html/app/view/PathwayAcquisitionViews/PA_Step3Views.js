@@ -415,10 +415,7 @@ function PA_Step3JobView() {
 			/* STEP 2. UPDATE THE TABLE WITH THE SELECTED OPTIONS   */
 			/*         (only if updating from categories panel)     */
 			/********************************************************/
-			this.pathwayTableView.updateVisiblePathways();	
-			
-			// Reload the p-values
-			this.getController().step3GetUpdatedPvalues(this.pathwayTableView, this.pathwayTableView.getPvaluesFromStore()); 
+			this.pathwayTableView.updateVisiblePathways(true);	
 		}
 		/********************************************************/
 		/* STEP 3. UPDATE THE pathwayNetworkView VIEW           */
@@ -496,7 +493,7 @@ function PA_Step3JobView() {
 			items: [
 				{ //THE TOOLBAR
 					xtype: "box",cls: "toolbar secondTopToolbar", html:
-					'<a href="javascript:void(0)" class="button btn-danger btn-right" id="resetButton"><i class="fa fa-refresh"></i> Reset</a>' +
+					'<a href="javascript:void(0)" class="button btn-danger btn-right" id="resetButton"><i class="fa fa-refresh"></i> Reset view</a>' +
 					'<a href="javascript:void(0)" class="button btn-default btn-right backButton"><i class="fa fa-arrow-left"></i> Go back</a>'
 				},{ //THE SUMMARY PANEL
 					xtype: 'container', itemId: "pathwaysSummaryPanel",
@@ -3075,15 +3072,57 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 			};
 
 			//TODO: DOCUMENTAR
-			this.updateVisiblePathways = function(){
+			this.updateVisiblePathways = function(loadRemote=false){
 				var store = this.getComponent().queryById("pathwaysGridPanel").getStore();
 				var indexedPathways = this.getAssociatedPathways();
+				var parent = this.getParent();
+				var visualOptions = parent.getVisualOptions();
+				var adjustedPvalueMethods = this.model.getMultiplePvaluesMethods();
 				
 				var filterBy = function(elem){
 					return indexedPathways[elem.get("pathwayID")].isVisible();
 				};
 				
 				store.filterBy(filterBy);
+				
+				// First load: update the grid contained p-values
+				this.updatePvaluesFromStore();
+				
+				if (adjustedPvalueMethods !== null && loadRemote) {
+					/*
+						Check if any database is filtered. It that is the case we retrieve the new
+						p-values from server. 
+						
+						If not filtered (or no longer filtered) remove the layer of "false" adjusted
+						p-values to restore the original, unless there are custom Stouffer weights
+						in which case we retrieve the new ones.
+
+					*/
+					if (Object.values(parent.isFiltered).includes(true)) {
+						parent.getController().step3GetUpdatedPvalues(this, this.getPvaluesFromStore());
+					} else {
+						/*
+							Unfiltered data: remove options and update grid.
+						*/	
+						this.model.getDatabases().forEach(function(db) {
+							delete visualOptions[db].adjustedPvalues;
+						});
+						
+						this.updatePvaluesFromStore();
+						
+						if (! Ext.Object.isEmpty(visualOptions.stoufferWeights)) {
+							var visiblePathways = Object.keys(this.getAssociatedPathways(true));
+							
+							console.log("Unfiltered pathways and custom Stouffer: removing old visualOptions and retrieving adjusted Stouffer.");
+													
+							parent.getController().step3GetUpdatedPvalues(this, this.getPvaluesFromStore(), visualOptions.stoufferWeights, visiblePathways);
+						} else {
+							console.log("Unfiltered pathways: removing old visualOptions and updating the table.");
+							
+							parent.getController().updateStoredApplicationData("visualOptions", visualOptions);
+						}
+					}
+				}
 			};
 			
 			this.updatePvaluesFromStore = function(){
@@ -3117,39 +3156,40 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					var omicNames = me.model.getOmicNames();
 					var restoreRawAdjusted = (visualOptions[db].adjustedPvalues == undefined);
 
-					filteredRecords.each(function(storeRecord) {
-						var pathwayID = storeRecord.raw.pathwayID;
+					if (adjustedPvalueMethods !== null) {
+						filteredRecords.each(function(storeRecord) {
+							var pathwayID = storeRecord.raw.pathwayID;
 
-						/* Iterate over all adjusted columns (omics and combined p-values methods) */
-						//Object.keys(visualOptions[db].adjustedPvalues)
-						omicNames.concat(combinedPvaluesMethods).forEach(function(adjustedColumn) {
-							var keyField;
+							/* Iterate over all adjusted columns (omics and combined p-values methods) */
+							//Object.keys(visualOptions[db].adjustedPvalues)
+							omicNames.concat(combinedPvaluesMethods).forEach(function(adjustedColumn) {
+								var keyField;
 
-							/* Set the correct name for the rowModel */
-							if (combinedPvaluesMethods.indexOf(adjustedColumn) != -1) {
-								keyField = "adjustedCombinedSignificancePvalue" + adjustedColumn + "%fdrterm%";
-							} else {
-								keyField = "adjpval%fdrterm%-" + adjustedColumn.toLowerCase().replace(/ /g, "-");
-							}
-
-							/* Iterate over multiple test adjustment methods */
-							adjustedPvalueMethods.forEach(function(fdrMethod) {
-								var rowModelKey = keyField.replace("%fdrterm%", fdrMethod);
-								var newPvalue;
-								
-								/* 	If the column is present, it must contain all the adjustment methods but not necessarily
-									all the pathways, as not all omics match in all pathways. */
-								if ( ! restoreRawAdjusted && visualOptions[db].adjustedPvalues[adjustedColumn]) {
-									newPvalue = visualOptions[db].adjustedPvalues[adjustedColumn][fdrMethod][pathwayID] || "-";
+								/* Set the correct name for the rowModel */
+								if (combinedPvaluesMethods.indexOf(adjustedColumn) != -1) {
+									keyField = "adjustedCombinedSignificancePvalue" + adjustedColumn + "%fdrterm%";
 								} else {
-									newPvalue = storeRecord.raw[rowModelKey];
+									keyField = "adjpval%fdrterm%-" + adjustedColumn.toLowerCase().replace(/ /g, "-");
 								}
-								
-								storeRecord.set(rowModelKey, newPvalue);
+
+								/* Iterate over multiple test adjustment methods */
+								adjustedPvalueMethods.forEach(function(fdrMethod) {
+									var rowModelKey = keyField.replace("%fdrterm%", fdrMethod);
+									var newPvalue;
+
+									/* 	If the column is present, it must contain all the adjustment methods but not necessarily
+										all the pathways, as not all omics match in all pathways. */
+									if ( ! restoreRawAdjusted && visualOptions[db].adjustedPvalues[adjustedColumn]) {
+										newPvalue = visualOptions[db].adjustedPvalues[adjustedColumn][fdrMethod][pathwayID] || "-";
+									} else {
+										newPvalue = storeRecord.raw[rowModelKey];
+									}
+
+									storeRecord.set(rowModelKey, newPvalue);
+								});
 							});
 						});
-					});
-
+					}
 				});
 				
 				/* Resume events */
@@ -3210,7 +3250,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					metadata.style = "height: 33px; font-size:10px;"
 
 					//IF THERE IS NOT DATA FOR THIS PATHWAY, FOR THIS OMIC, PRINT A '-'
-					if (value === "-") {
+					if (value === "-" || value == undefined) {
 						myToolTipText = myToolTipText + "<i>No data for this pathway</i>";
 						metadata.tdAttr = 'data-qtip="' + myToolTipText + '"';
 						metadata.style += "background-color:#D4D4D4;";
@@ -3323,7 +3363,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 				var me = this;
 				this.component = Ext.widget({
 					xtype: 'container', cls: "contentbox", items: [
-						{xtype: 'box', flex: 1, html: '<h2>Matched Pathways</h2>'},
+						{xtype: 'box', flex: 1, html: '<h2>Pathway enrichment</h2>'},
 						{
 							xtype: "livesearchgrid", itemId: 'pathwaysGridPanel',
 							searchFor: "title",
@@ -3341,6 +3381,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 							combinedPvaluesMethods: me.model.getCombinedPvaluesMethods(),
                             selectedAdjustedMethod: me.getParent().visualOptions.selectedAdjustedMethod,
                             selectedCombinedMethod: me.getParent().visualOptions.selectedCombinedMethod,
+							enableConfigure: (me.getParent().visualOptions.selectedCombinedMethod == 'Stouffer'),
 							listeners: {
                                 'adjustedMethodChanged': function(records) {
                                         me.getParent().setVisualOptions("selectedAdjustedMethod", records[0].raw[0]);
@@ -3349,6 +3390,11 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 								'combinedMethodChanged': function(records) {
                                         me.getParent().setVisualOptions("selectedCombinedMethod", records[0].raw[0]);
                                         me.getParent().applyVisualSettings();
+									
+										// Disable configure element for not Stouffer values
+										var isStouffer = (records[0].raw[0] == "Stouffer");
+									
+										me.component.query("[id=configureButton]")[0].setDisabled(! isStouffer);
 								},
                                 'clickConfigure': function(iconLink) {                            
                                     // Retrieve the default weights used (mapped ratio)
@@ -3418,7 +3464,9 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 																/*me.getParent().getController().updateStoredVisualOptions(me.getParent().getModel().getJobID(), 
 																														 me.getParent().getVisualOptions());*/
 																
-																me.getParent().getController().step3GetUpdatedPvalues(me, currentPValues, stoufferWeigths, visiblePathways);  
+																me.getParent().getController().step3GetUpdatedPvalues(me, currentPValues, stoufferWeigths, visiblePathways); 
+																
+																tip.close();
 															}
 														},
 														{

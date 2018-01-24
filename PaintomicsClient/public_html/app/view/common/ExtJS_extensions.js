@@ -138,6 +138,7 @@ Ext.define('Ext.grid.LiveSearchGridPanel', {
     combinedPvaluesMethods: [],
     selectedAdjustedMethod: null,
     selectedCombinedMethod: null,
+	enableConfigure: false,
     stripeRows: true,
     viewConfig: {
         markDirty: false,
@@ -252,18 +253,23 @@ Ext.define('Ext.grid.LiveSearchGridPanel', {
               
               pvalue_filter_options.push({
                   xtype: 'component',
+				  id: 'configureButton',
                   autoEl: {
                         tag: 'a',
                         href: '#',
                         html: ' Configure',
-                        cls: 'fa fa-cog'
+                        cls: 'fa fa-cog',
+					  	title: 'Customize weights (only for Stouffer method)'
                     },
                   hidden: false,
+				  disabled: ! me.enableConfigure,
                   listeners: {
                         render: function(c){
                             c.getEl().on({
                                 click: function() {
-                                    me.fireEvent("clickConfigure", c);
+									if (! c.isDisabled()) {
+										me.fireEvent("clickConfigure", c);
+									}
                                 }
                             });
                         }
