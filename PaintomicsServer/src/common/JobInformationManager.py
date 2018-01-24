@@ -258,7 +258,7 @@ class JobInformationManager:
 
                 fieldsRelevant={"omicType": omicType}
                 fieldsRelevant["dataType"]= formFields.get(uploadedFileName.replace("file","relevant_file_type")) ##GET THE FILE TYPE: GENE EXPRESSION, ETC.
-                fieldsRelevant["description"] =  formFields.get(uploadedFileName.replace("file","description"), "TODO")##GET THE FILE DESCRIPTION
+                fieldsRelevant["description"] =  formFields.get(uploadedFileName.replace("file","description"), "Uploaded using ")##GET THE FILE DESCRIPTION
 
                 logging.info("STEP1 - ORIGIN FOR " + uploadedFileName.replace("file","relevant") + " IS " + origin)
                 if(origin == 'client'):

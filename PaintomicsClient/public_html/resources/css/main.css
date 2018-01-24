@@ -237,6 +237,9 @@ ul.menu li.loggedOption, ul.menu span.loggedOption {
 .btn-left {
 	float:left; /*TODO: REPLACE BY btn-float*/
 }
+.btn-inline {
+	float: none;
+}
 .btn-default {
 	color: #333;
 	background-color: #fff;
@@ -266,6 +269,10 @@ ul.menu li.loggedOption, ul.menu span.loggedOption {
 	color: #fff;
 	background-color: #59b790;
 	border-color: #419875;
+}
+.btn-small {
+	font-size: 12px;
+	padding: 4px 6px;
 }
 .btn-info{
 	color: #fff;
@@ -1064,6 +1071,9 @@ i.relevantFeature:before {
 	border-top: solid 3px #539EF0 !important;
 	border-bottom: solid #fff;
 	padding-top: 4px;
+}
+.externalLinksContainer a {
+	color: #0076E2;
 }
 .step4PathwayBox {
 	display: inline-table;

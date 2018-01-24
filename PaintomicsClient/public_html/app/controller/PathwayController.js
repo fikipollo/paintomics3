@@ -139,7 +139,8 @@ function PathwayController() {
 					var a = document.createElement('a');
 					a.download = "paintomics_" + fileName.replace(" ", "_") + "_" + jobID +  "." + format;
 					a.type = 'image/' + format;
-					a.href = window.location.href.replace(/\/$/,"") + response.filepath;
+					// a.href = window.location.href.replace(/\/$/,"") + response.filepath;
+					a.href = window.location.href.replace(window.location.search, "").replace(/\/$/,"") + response.filepath;
 					a.target = "_blank";
 					a.style = "display:none";
 					a.id = "downloadImage";

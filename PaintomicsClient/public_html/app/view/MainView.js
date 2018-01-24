@@ -166,6 +166,7 @@ function MainView() {
 				cls: "lateralMenu",
 				region: 'west',
 				html: "<ul class='lateralMenu-body'>" +
+				" <li class='menuOption' id='homeButton'><i class='fa fa-paint-brush'></i> Home</li>" + 
 				" <li class='menuOption loggedOption' ><i class='fa fa-cloud'></i>  Personal storage" +
 				"  <ul class='submenu loggedOption'>" +
 				(noLogin != true ?
@@ -176,9 +177,8 @@ function MainView() {
 				) +
 				// "     <li class='menuOption' data-name='fileEdition'><i class='fa fa-cloud-upload'></i>   File edition</li>"+
 				" </ul></li>" +
-				" <li class='menuOption loggedOption' ><i class='fa fa-rocket'></i>  Tools" +
+				" <li class='menuOption loggedOption' ><i class='fa fa-rocket'></i>  Supporting tools" +
 				" <ul class='submenu loggedOption'>" +
-				"     <li class='menuOption' data-name='paintPathways'><i class='fa fa-paint-brush'></i>  Paint pathways</li>" +
 				"     <li class='menuOption' data-name='fromBEDtoGenes'><i class='fa fa-align-center'></i>   From Regions to Genes</li>" +
 				"     <li class='menuOption' data-name='fromMiRNAtoGenes'><i class='fa fa-link'></i>   From miRNA to Genes</li>"+
 				" </ul></li>" +
@@ -186,7 +186,9 @@ function MainView() {
 				" <ul class='submenu'>" +
 				"     <li class='menuOption externalOption'><a href='http://paintomics.readthedocs.org/en/latest/' target='_blank'><i class='fa fa-book'></i>  Paintomics Documentation</a></li>" +
 				"     <li class='menuOption externalOption'><a href='http://www.paintomics.org/' target='_blank'><i class='fa fa-external-link'></i>  PaintOmics 2</a></li>" +
-				"			<li class='menuOption externalOption'><a href='http://bioinfo.cipf.es/paintomics/resources/paintomics_example_data.zip' target='_blank'><i class='fa fa-external-link'></i>  Download example data</a></li>" +
+				"	  <li class='menuOption externalOption'><a href='http://bioinfo.cipf.es/paintomics/resources/paintomics_example_data.zip' target='_blank'><i class='fa fa-download'></i>  Paintomics example data</a></li>" +
+				"	  <li class='menuOption externalOption'><a href='http://bioinfo.cipf.es/paintomics/resources/rgmatch_example_data.zip' target='_blank'><i class='fa fa-download'></i>  RGmatch example data</a></li>" +
+				"	  <li class='menuOption externalOption'><a href='http://bioinfo.cipf.es/paintomics/resources/mirna2genes_example_data.zip' target='_blank'><i class='fa fa-download'></i>  miRNA2Genes example data</a></li>" +
 				" </ul></li>" +
 				" <li class='menuOption' ><i class='fa fa-paper-plane-o'></i>  Publications" +
 				" <ul class='submenu'>" +
@@ -212,6 +214,11 @@ function MainView() {
 					});
 
 					me.showSignInDialog();
+					
+					$('#homeButton').click(function() {
+						$(".menuOption.selected").removeClass("selected");
+						me.changeMainView('paintPathways');
+					});
 
 					$(".submenu .menuOption:not(.externalOption)").click(function() {
 						$(".menuOption.selected").removeClass("selected");

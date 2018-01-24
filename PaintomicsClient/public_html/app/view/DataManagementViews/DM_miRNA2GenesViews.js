@@ -99,6 +99,7 @@ function DM_miRNA2GenesJobView() {
 						'     <li>A mRNA-Seq quantification file that will be used for filtering the matched targets based on the correlation between gene expression and miRNA expression.<br>Naming convention must be the same that the used in the miRNA--> target gene file (Figure 1.D).</li>' +
 						'   </ul>' +
 						'   <img alt="paintomics_input_figure5b.png" src="resources/images/paintomics_input_figure5b.png" style="max-width: 800px;margin: auto;display: block;">' +
+						'	<div style="text-align: center;height: 35px;margin-top: 20px;"><a class="button btn-success btn-right" target="_blank" style="float: none;" href="resources/mirna2genes_example_data.zip"><i class="fa fa-play"></i> Download example data</a></div>' +
 						'   <h3>About multiple target genes</h3>' +
 						'   <p>Usually, for each miRNA there are numerous known target genes. However, the presence of a miRNA does not mean that a certain target gene is being regulated for that miRNA. Hence, it is necessary to discriminate those genes that may be affected by the action of a miRNA from the complete list of potential target genes for that miRNA. Assuming that all files explained above are provided, miRNA2Genes includes the following selection strategies.</p>' +
 						'   <ul>' +
@@ -130,7 +131,11 @@ function DM_miRNA2GenesJobView() {
 				});
 			},
 			beforedestroy: function () {
-				me.getModel().deleteObserver(me);
+				var model = me.getModel();
+				
+				if (model) {
+					model.deleteObserver(me);
+				}
 			}
 		}
 	});

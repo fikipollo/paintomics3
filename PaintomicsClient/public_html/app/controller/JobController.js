@@ -447,6 +447,66 @@ function JobController() {
 			});
 		}
 	};
+    
+ 	/************************************************************
+	* This function...
+	* @param {type} jobView
+	*
+	************************************************************/   
+    this.step3GetUpdatedPvalues = function (pathwayTableView, pathwayPvalues, stouferrWeights = null, visiblePathways = null) {
+        var me = this;
+        var formData = {pValues: pathwayPvalues};
+        
+        if (stouferrWeights !== null) {
+            formData['stoufferWeights'] = stouferrWeights;
+			formData['visiblePathways'] = visiblePathways;
+        }
+        
+        showInfoMessage("Fetching new adjusted p-values...", {logMessage: "Sending new request (get new adjusted p-values after filtering).", showSpin: true});
+        
+        $.ajax({
+            data: JSON.stringify(formData),
+            method: 'POST', 
+			url: SERVER_URL_ADJUST_PVALUES,
+			dataType: "json",
+  			contentType : "application/json",
+            success: function (response) {
+				
+				if (response.success) {
+					/*
+						For new Stouffer values, update the visualOptions of each database
+						in both Stouffer and adjusted, otherwise only the adjusted p-values.
+						
+						The visual options databases objects should be initialized at this point.
+					*/	
+					var currentVisualOptions = pathwayTableView.getParent().getVisualOptions();
+					
+					if (response.stoufferPvalues) {
+						Object.keys(response.stoufferPvalues).forEach(function(db) {
+							currentVisualOptions[db]['Stouffer'] = response.stoufferPvalues[db];
+							
+							$.extend(true, currentVisualOptions[db], {
+								'adjustedPvalues': {
+									'Stouffer': response.adjustedStoufferPvalues[db]
+								}
+							});
+						});
+					} else {
+						Object.keys(response.adjustedPvalues).forEach(function(db) {
+							currentVisualOptions[db]['adjustedPvalues'] = response.adjustedPvalues[db];
+						});
+					}
+					
+					me.updateStoredVisualOptions(pathwayTableView.getParent().getModel().jobID, currentVisualOptions);
+                	showSuccessMessage("Done", {logMessage: "Adjusted p-values retrieved successfully", closeTimeout: 0.4});
+                	pathwayTableView.updatePvaluesFromStore();
+				}                
+            },
+            failure: extJSErrorHandler
+        });
+        
+        
+    };
 
 	/************************************************************
 	* This function recovers an instance of JOB from database by a given JobID.
@@ -755,7 +815,7 @@ function JobController() {
 				url: SERVER_URL_PA_TOUCH_JOB,
 				data: {jobID: jobModel.getJobID()},
 				success: function (response) {
-					console.info(Date.logFormat() + " job's access date update succesfully.");
+					console.info(Date.logFormat() + " job's access date succesfully updated.");
 				},
 				error: function (response) {
 					console.error(Date.logFormat() + " failed when updating job's access date.");

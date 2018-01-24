@@ -18,6 +18,7 @@ SERVER_URL_PA_TOUCH_JOB = SERVER_URL + "pa_touch_job";
 SERVER_URL_JOB_STATUS= SERVER_URL + "check_job_status";
 SERVER_URL_GET_CLUSTER_IMAGE= SERVER_URL + "get_cluster_image";
 SERVER_URL_GET_MESSAGE = SERVER_URL + "um_get_message";
+SERVER_URL_ADJUST_PVALUES = SERVER_URL + "pa_adjust_pvalues";
 
 /*********************************************************************
  * DATA MANIPULATION SERVICES URLS         ***************************

@@ -94,8 +94,9 @@ function DM_Bed2GenesJobView() {
 				'       <li>A <b>GTF</b> annotation file containing the chromosome positions of all the features to be considered (genes, transcripts and exons).<br>This GTF file must be sorted and should include annotations at exon level, that is, the 3rd column of the GTF must contain "exon" tag.</li>' +
 				'       <li>A <i>modified</i> BED format file containing the regions of interest to be associated to features, followed by quantification values for each region (Figure 1. A). </li>' +
 				'       <li>A list of all the regions which are specially relevant for our experiment (Figure 1. B).</li>' +
-				'   </ul>' +
+				'   </ul>' + 
 				'   <img alt="paintomics_input_figure2.png" src="resources/images/paintomics_input_figure2.png" style="max-width: 700px;margin: auto;display: block;">' +
+				'	<div style="text-align: center;height: 35px;margin-top: 20px;"><a class="button btn-success btn-right" target="_blank" style="float: none;" href="resources/rgmatch_example_data.zip"><i class="fa fa-play"></i> Download example data</a></div>' +
 				'   <h3>About gene regions</h3>' +
 				'   <p>By default, the region to gene associations will be computed as follows:</p>' +
 				'   <ul>' +
@@ -125,7 +126,11 @@ function DM_Bed2GenesJobView() {
 					});
 				},
 				beforedestroy: function () {
-					me.getModel().deleteObserver(me);
+					var model = me.getModel();
+
+					if (model) {
+						model.deleteObserver(me);
+					}
 				}
 			}
 		});

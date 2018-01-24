@@ -334,6 +334,10 @@ def initializeUserDirectories(userID):
     if userID is None:
         if not os.path.exists(CLIENT_TMP_DIR + "nologin"):
             os.makedirs(CLIENT_TMP_DIR + "nologin")
+
+            os.mkdir(CLIENT_TMP_DIR + "/nologin/inputData")
+            os.mkdir(CLIENT_TMP_DIR + "/nologin/jobsData")
+            os.mkdir(CLIENT_TMP_DIR + "/nologin/tmp")
     else:
         if os.path.isfile(CLIENT_TMP_DIR + userID):
             import shutil

@@ -1128,6 +1128,10 @@ function PA_Step4KeggDiagramFeatureSetTooltip() {
 		this.forceHide = force;
 		this.getComponent().hide();
 	};
+	
+	this.stick = function() {
+		//this.getCompoment().stick();
+	};
 
 	//TODO: DOCUMENTAR
 	this.showFeatureSetDetails = function(targetID, feature) {
@@ -1268,6 +1272,7 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 	this.name = "PA_Step4KeggDiagramFeatureView";
 	this.collapsible = true;
 	this.closable = false;
+	this.sticky = false;
 	this.showButtons = (showButtons === true);
 
 	/***********************************************************************
@@ -1278,6 +1283,9 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 	};
 	this.setClosable = function(closable){
 		this.closable = closable;
+	};
+	this.setSticky = function(sticky){
+		this.sticky = sticky;	
 	};
 	/***********************************************************************
 	* OTHER FUNCTIONS
@@ -1691,6 +1699,7 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 			cls: "contentbox mainInfoPanel neverExpanded",
 			style:"margin:0;",
 			html:
+			((this.sticky)?'<a class="toolbarOption stickyOption" style="margin: 2px; "><i class="fa fa-fa-thumb-tack"></i></a>':'') +
 			((this.closable)?'<a class="toolbarOption hideOption" style="margin: 2px; "><i class="fa fa-times"></i></a>':'') +
 			"<h3 class='geneInfoTitle'>"+
 			((this.collapsible)?"<i class='fa fa-chevron-circle-right'></i>":"") +
@@ -1723,6 +1732,11 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 					$(this.el.dom).find(".hideOption").click(function () {
 						if(me.parent.hide !== undefined){
 							me.parent.hide(true);
+						}
+					});
+					$(this.el.dom).find(".stickyOption").click(function () {
+						if(me.parent.stick !== undefined){
+							me.parent.stick(true);
 						}
 					});
 				},

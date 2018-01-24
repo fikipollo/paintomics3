@@ -249,17 +249,21 @@ function PA_Step1JobView() {
 				html: '<div id="about">' +
 				' <h2>Welcome to PaintOmics (' + APP_VERSION + ')</h2>' +
 				' <p>' +
-				'   <b>Paintomics</b>  is a web tool for the integrative visualization of multiple omic datasets onto KEGG pathways.</br>' +
-				'   <b>Paintomics</b> consists of three simple steps:' +
+				'   <b>Paintomics</b>  is a web tool for the integrative visualization of multiple omic datasets onto KEGG pathways. Currently Paintomics supports integrated visualization of multiple species of different biological kingdoms and offers user the possibility to request any other organism present in the KEGG database.<br/><br/>' +
+				'   <b>Paintomics</b> is easy to run because the application itself guides you through the three different steps that are detailed next:' +
 				' </p>' +
 				' <ul> ' +
-				'   <li><b>Data uploading:</b> typically data matrices, containing, for example, gene expression, metabolite levels and metabolite levels for the same set of samples.</li> ' +
-				"   <li><b>Identifier and Name Matching and Metabolite assignment:</b> as Paintomics requires Entrez IDs for working with KEGG pathways, the tool will try to convert the names and identifiers from different sources and databases for the input data. Additionally, it's necessary to specify of metabolite assignments in ambiguity cases.</li>" +
-				'   <li><b>Pathway selection:</b> finally, Paintomics will obtain the list of KEGG Pathway that are ?.</li>' +
+				'   <li><b>Data uploading:</b>' +
+				'	<ol>' +
+				'		<li>Choose your organism (see selection box below).</li>' +
+				'		<li>Upload your multi-omic data (see form below). You can <a href="resources/paintomics_example_data.zip">download the example data from here</a> to check the format of the files. You can also load an example (<a class="button btn-secondary btn-inline btn-small" href="javascript:void(0)"><i class="fa fa-file-text-o"></i> Load example</a> button in the upper right corner of the screen) to explore Paintomics functionalities.</li>' +
+				'		<li>Click on <a class="button btn-success btn-inline btn-small" href="javascript:void(0)"><i class="fa fa-play"></i> Run PaintOmics</a> button.</li>' +
+				'	</ol><br/></li> ' +
+				'   <li><b>Identifier and Name Matching and Metabolite assignment:</b> Paintomics requires Entrez IDs for working with KEGG pathways, so the tool will convert the names and identifiers from different sources and databases in user’s the input data. This screen give users information about the number of features successfully mapped to KEGG pathways. It also shows the data distribution that will be used for pathway colouring, which can be modified when visualizing a pathway. Additionally, the metabolite names assignments are displayed and users can choose their favourite option in case of ambiguity. Click <a href="javascript:void(0)" class="button btn-success btn-inline btn-small"><i class="fa fa-play"></i> Next step</a> button when you are ready.<br/><br/></li>' +
+				'   <li><b>Results:</b> Pathways summary, Pathways classification, Pathways network, Pathways enrichment, Pathways visualization (by clicking <a href="javascript:void(0)" class="button btn-inline btn-small"  style="background-color:#ADA6A6;font-size: 14px;"><i class="fa fa-paint-brush"></i></a> for any of the displayed pathways in Pathways enrichment section). Read more about these analyses in <a href="http://paintomics.readthedocs.io/en/latest/" target="_blank">our documentation</a>.</li>' +
 				' </ul>' +
 				' <p>' +
-				'   Currently <b>Paintomics</b> supports integrated visualization of multipel species of different biological kingdoms and offers user the possibility to request any other organism present in the KEGG database.</br>' +
-				'   Please check the <b><a href="http://paintomics.readthedocs.org/en/latest/" target="_blank">User guide</a></b> for further information. For any question on <b>Paintomics</b>, users can send a mail to <a href="mailto:paintomics@cipf.es">paintomics@cipf.es</a>.' +
+				'   Please check the <b><a href="http://paintomics.readthedocs.org/en/latest/" target="_blank">User guide</a></b> for further information. For any question on <b>Paintomics</b>, you can send an e-mail to <a href="mailto:paintomics@cipf.es">paintomics@cipf.es</a>.' +
 				' </p>' +
 				'</div>'
 			}, {
@@ -338,7 +342,7 @@ function PA_Step1JobView() {
 					},
 					{
 						xtype: "box",
-						html: '<h3>2. Choose the files to upload </h3>'
+						html: '<h3>2. Choose the files to upload <a class="button btn-right btn-small" href="http://bioinfo.cipf.es/paintomics/resources/paintomics_example_data.zip"><i class="fa fa-download"></i> Download example data</a></h3>'
 					}, {
 						xtype: "container",
 						layout: 'hbox',
@@ -352,7 +356,7 @@ function PA_Step1JobView() {
 							'<div class="availableOmicsBox" title="geneexpression"><h4><a href="javascript:void(0)"><i class="fa fa-plus-circle"></i></a> Gene Expression</h4></div>' +
 							'<div class="availableOmicsBox" title="metabolomics"><h4><a href="javascript:void(0)"><i class="fa fa-plus-circle"></i></a> Metabolomics</h4></div>' +
 							'<div class="availableOmicsBox" title="proteomics"><h4><a href="javascript:void(0)"><i class="fa fa-plus-circle"></i></a> Proteomics</h4></div>' +
-							'<div class="availableOmicsBox" title="mirnabasedomic"><h4><a href="javascript:void(0)"><i class="fa fa-plus-circle"></i></a> miRNA based omic</h4></div>' +
+							'<div class="availableOmicsBox" title="mirnabasedomic"><h4><a href="javascript:void(0)"><i class="fa fa-plus-circle"></i></a> Regulatory omic</h4></div>' +
 							'<div class="availableOmicsBox" title="bedbasedomic"><h4><a href="javascript:void(0)"><i class="fa fa-plus-circle"></i></a> Region based omic</h4></div>' +
 							'<div class="availableOmicsBox" title="otheromic"><h4><a href="javascript:void(0)"><i class="fa fa-plus-circle"></i></a> Other omics</h4></div>'
 						}, {

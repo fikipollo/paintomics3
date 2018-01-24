@@ -344,7 +344,7 @@ this.sendReportHandler = function(){
 				"<div style='margin-bottom:10px;'>We would love to hear from you! Please use this form if you have any question or suggestion about the application and we'll get back with you soon.<br><b>Note: </b>If you are using a guest account, please provide a valid email address that we can use to contact you if needed.</div>"
 			},
 			{xtype: 'textfield', itemId : 'nameTextField', fieldLabel: 'Your name', value: Ext.util.Cookies.get("userName")},
-			{xtype: 'textfield', itemId : 'emailTextField', fieldLabel: 'Your email',  value: (Ext.util.Cookies.get("lastEmail").indexOf("guest") !== -1?"":Ext.util.Cookies.get("lastEmail"))},
+			{xtype: 'textfield', itemId : 'emailTextField', fieldLabel: 'Your email',  value: (Ext.util.Cookies.get("lastEmail") == null || Ext.util.Cookies.get("lastEmail").indexOf("guest") !== -1?"":Ext.util.Cookies.get("lastEmail"))},
 			{xtype: 'textareafield', itemId : 'commentsTextArea', fieldLabel: 'Message', width: 500, height:100}
 		],
 		buttons: [

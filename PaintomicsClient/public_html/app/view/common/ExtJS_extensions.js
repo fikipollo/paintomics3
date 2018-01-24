@@ -136,6 +136,9 @@ Ext.define('Ext.grid.LiveSearchGridPanel', {
     databases: [],
     adjustedPvaluesMethods: [],
     combinedPvaluesMethods: [],
+    selectedAdjustedMethod: null,
+    selectedCombinedMethod: null,
+	enableConfigure: false,
     stripeRows: true,
     viewConfig: {
         markDirty: false,
@@ -216,10 +219,12 @@ Ext.define('Ext.grid.LiveSearchGridPanel', {
                   typeAhead: false,
                   queryMode: 'local',
                   store: ['None'].concat(me.adjustedPvaluesMethods),
-                  // TODO: this should be saved to visualOptions
-                  //value: 'None',
+                  value: me.selectedAdjustedMethod,
                   listeners: {
-                    'select': me.methodPvalueToggle,
+                    'select': function( combo, records, eOpts ) {
+                      me.methodPvalueToggle( combo, records, eOpts);
+                      me.fireEvent("adjustedMethodChanged", records);
+                    },
                     scope: me
                   }
               });
@@ -237,14 +242,38 @@ Ext.define('Ext.grid.LiveSearchGridPanel', {
                   typeAhead: false,
                   queryMode: 'local',
                   store: me.combinedPvaluesMethods,
-                  // TODO: this should be saved to visualOptions
-                  //value: 'None',
+                  value: me.selectedCombinedMethod,
                   listeners: {
                     'select': function( combo, records, eOpts ) {
                       me.methodPvalueToggle( combo, records, eOpts);
                       me.fireEvent("combinedMethodChanged", records);
                     }
                   }
+              });
+              
+              pvalue_filter_options.push({
+                  xtype: 'component',
+				  id: 'configureButton',
+                  autoEl: {
+                        tag: 'a',
+                        href: '#',
+                        html: ' Configure',
+                        cls: 'fa fa-cog',
+					  	title: 'Customize weights (only for Stouffer method)'
+                    },
+                  hidden: false,
+				  disabled: ! me.enableConfigure,
+                  listeners: {
+                        render: function(c){
+                            c.getEl().on({
+                                click: function() {
+									if (! c.isDisabled()) {
+										me.fireEvent("clickConfigure", c);
+									}
+                                }
+                            });
+                        }
+                    }
               });
           }
 
@@ -360,6 +389,9 @@ Ext.define('Ext.grid.LiveSearchGridPanel', {
      */
     methodPvalueToggle: function ( combo, records, eOpts ) {
         var me = this;
+        
+        // Store instance
+        var gridStore = me.down("gridview").getStore();
 
         // Selected record value (only one)
         var selectedFDR = records[0].raw[0];
@@ -368,19 +400,38 @@ Ext.define('Ext.grid.LiveSearchGridPanel', {
         var hideValues = combo.store.getRange().map(x => x.raw[0]).filter(option => option != 'None' && option != selectedFDR)
 
         // Iterate over all columns
-        var allColumns = me.query("gridcolumn");
-
+        // Position 6: "Significance tests"
+        var allColumns = me.initialConfig.columns[6].columns;
+        
+        // Avoid showing FDR of not selected combined p-values
+        var comboNames = ["combinedpvalue_select", "adjustedpvalue_select"].filter(name => name != combo.getName());
+        var otherCombo = me.down("[name=" + comboNames.toString() + "]");
+        
+        if (otherCombo) {
+            hideValues = hideValues.concat(otherCombo.store.getRange().map(x => x.raw[0]).filter(option => option != 'None' && option != otherCombo.getValue()));
+        }
+        
+        me.suspendLayouts();
+ 
         allColumns.forEach(function(column) {
           // If the column has the dataIndex attribute, search for patterns
           // to hide/show the column.
           if (column.dataIndex) {
             if (hideValues.length && column.dataIndex.match('(' + hideValues.join('|') + ')')) {
-              column.hide();
+               column.hidden = true;
             } else if (column.dataIndex.match(selectedFDR)) {
-              column.show();
+               column.hidden = false;
             }
           }
         });
+        
+        // Replace initial config
+        me.initialConfig.columns[6].columns = allColumns;
+       
+        me.reconfigure(gridStore, me.initialConfig.columns);
+        me.resumeLayouts();
+                
+        me.down("gridview").refresh();
     }
 });
 

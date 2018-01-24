@@ -52,8 +52,8 @@ def adjustPvalues(pvaluesList):
 
 
 def calculateStoufferCombinedPvalue(pvalues, weights):
-    # P-value in third position
-    combinedPvalue = combine_pvalues([pvalue[2] for pvalue in pvalues], 'stouffer', weights)
+    # P-value in third position ([nFeatures, nRelevantFeatures, pValue])
+    combinedPvalue = combine_pvalues([pvalue[2] if type(pvalue) is list else pvalue for pvalue in pvalues], 'stouffer', weights)
 
     return combinedPvalue[1]
 

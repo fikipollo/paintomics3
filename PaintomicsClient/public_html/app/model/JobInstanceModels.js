@@ -86,6 +86,11 @@ function JobInstance(jobID) {
 		//TODO: CHECK CLASSES?
 		this.pathways.push(pathway);
 	};
+    this.getOmicNames = function() {
+        var omicNames = this.getGeneBasedInputOmics().concat(this.getCompoundBasedInputOmics()).map(x => x.omicName);
+        
+        return omicNames;
+    };
 	this.getDatabases = function() {
 		if (this.databases === null || this.databases.length < 1) {
 			// Check databases present in pathways
@@ -109,6 +114,21 @@ function JobInstance(jobID) {
 		this.mappingSummary = mappingSummary;
 	};
 	this.getMappingSummary = function () {
+        
+        if (this.mappingSummary == null) {
+            var mappingSummary = {};
+            
+            this.getGeneBasedInputOmics().concat(this.getCompoundBasedInputOmics()).map(function(currentValue, index, omics) {
+                var mappedInfo = currentValue.omicSummary[0];
+                var mappedFeatures = Number.isInteger(mappedInfo) ? mappedInfo : (parseFloat(mappedInfo.Total || mappedInfo[Object.keys(mappedInfo)[0]]));
+                var unmappedFeatures = parseFloat(currentValue.omicSummary[1]);
+                
+                mappingSummary[currentValue.omicName] = {mapped: mappedFeatures, unmapped: unmappedFeatures};
+            });
+            
+            this.mappingSummary = mappingSummary;
+        }
+        
 		return this.mappingSummary;
 	};
 	this.setGeneBasedInputOmics = function (geneBasedInputOmics) {
@@ -166,7 +186,7 @@ function JobInstance(jobID) {
 		if (this.pathways.length && this.pathways[0].getAdjustedSignificanceValues) {
 			var omicPvalues = this.pathways[0].getAdjustedSignificanceValues();
 
-			multipleMethods = omicPvalues.length ? Object.keys(omicPvalues[Object.keys(omicPvalues)[0]]) : [];
+			multipleMethods = omicPvalues ? Object.keys(omicPvalues[Object.keys(omicPvalues)[0]]) : [];
 		}
 
 		return multipleMethods;
