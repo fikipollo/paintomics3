@@ -22,13 +22,18 @@ import logging.config
 
 import cairo
 import rsvg
+import re
+
+from collections import defaultdict
 
 from src.common.ServerErrorManager import handleException
 from src.common.UserSessionManager import UserSessionManager
 from src.common.JobInformationManager import JobInformationManager
+from src.common.Statistics import calculateSignificance, calculateCombinedSignificancePvalues, adjustPvalues, calculateStoufferCombinedPvalue
 from src.classes.JobInstances.PathwayAcquisitionJob import PathwayAcquisitionJob
 
 from src.conf.serverconf import CLIENT_TMP_DIR, KEGG_DATA_DIR
+from src.conf.organismDB import dicDatabases
 #************************************************************************
 #     _____ _______ ______ _____    __
 #    / ____|__   __|  ____|  __ \  /_ |
@@ -93,7 +98,13 @@ def pathwayAcquisitionStep1_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, EXA
             formFields   = REQUEST.form
             jobInstance.description=""
             specie = formFields.get("specie") #GET THE SPECIE NAME
+            databases = REQUEST.form.getlist('databases[]')
             jobInstance.setOrganism(specie)
+            # Check the available databases for species
+            organismDB = set(dicDatabases.get(specie, [{}])[0].keys())
+            # TODO: disabled multiple databases for the moment
+            # jobInstance.setDatabases(list(set([u'KEGG']) | set(databases).intersection(organismDB)))
+            jobInstance.setDatabases([u'KEGG'])
             logging.info("STEP1 - SELECTED SPECIE IS " + specie)
 
             logging.info("STEP1 - READING FILES....")
@@ -122,6 +133,7 @@ def pathwayAcquisitionStep1_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, EXA
 
             specie = "mmu"
             jobInstance.setOrganism(specie)
+            jobInstance.setDatabases(['KEGG'])
         else:
             raise NotImplementedError
 
@@ -204,9 +216,10 @@ def pathwayAcquisitionStep1_PART2(jobInstance, userID, exampleMode, RESPONSE):
             "success": True,
             "organism" : jobInstance.getOrganism(),
             "jobID":jobInstance.getJobID() ,
-            "matchedMetabolites": matchedMetabolites,
+            "matchedMetabolites": map(lambda foundFeature: foundFeature.toBSON(), matchedMetabolites),
             "geneBasedInputOmics":jobInstance.getGeneBasedInputOmics(),
-            "compoundBasedInputOmics": jobInstance.getCompoundBasedInputOmics()
+            "compoundBasedInputOmics": jobInstance.getCompoundBasedInputOmics(),
+            "databases": jobInstance.getDatabases()
         })
 
     except Exception as ex:
@@ -370,7 +383,8 @@ def pathwayAcquisitionStep2_PART2(jobID, userID, selectedCompounds, RESPONSE, RO
             "summary" : summary,
             "pathwaysInfo" : matchedPathwaysJSONList,
             "geneBasedInputOmics":jobInstance.getGeneBasedInputOmics(),
-            "compoundBasedInputOmics": jobInstance.getCompoundBasedInputOmics()
+            "compoundBasedInputOmics": jobInstance.getCompoundBasedInputOmics(),
+            "databases": jobInstance.getDatabases()
         })
 
     except Exception as ex:
@@ -449,7 +463,7 @@ def pathwayAcquisitionStep3(request, response):
     finally:
         return response
 
-def pathwayAcquisitionRecoverJob(request, response):
+def pathwayAcquisitionRecoverJob(request, response, QUEUE_INSTANCE):
     #VARIABLE DECLARATION
     jobInstance = None
     jobID=""
@@ -472,28 +486,40 @@ def pathwayAcquisitionRecoverJob(request, response):
 
         logging.info("RECOVER_JOB - LOADING JOB " + jobID + "...")
         jobInstance = JobInformationManager().loadJobInstance(jobID)
+        queueJob = QUEUE_INSTANCE.fetch_job(jobID)
+
+        if(queueJob is not None and not queueJob.is_finished()):
+            logging.info("RECOVER_JOB - JOB " + jobID + " HAS NOT FINISHED ")
+            response.setContent({"success": False, "message": "Your job " + jobID + " is still running in the queue. Please, try again later to check if it has finished."})
+            return response
 
         if(jobInstance == None):
             #TODO DIAS BORRADO?
             logging.info("RECOVER_JOB - JOB " + jobID + " NOT FOUND AT DATABASE.")
-            response.setContent({"success": False, "errorMessage":"Job " + jobID + " not found at database.<br>Please, note that jobs are automatically removed after 7 days for guests and 14 days for registered users."})
+            response.setContent({"success": False, "errorMessage": "Job " + jobID + " not found at database.<br>Please, note that jobs are automatically removed after 7 days for guests and 14 days for registered users."})
             return response
 
-        if(jobInstance.getUserID() != userID):
-            logging.info("RECOVER_JOB - JOB " + jobID + " DOES NOT BELONG TO USER " + userID)
+        # Allow "no user" jobs to be viewed by anyone, logged or not
+        if(str(jobInstance.getUserID()) != 'None' and jobInstance.getUserID() != userID):
+            logging.info("RECOVER_JOB - JOB " + jobID + " DOES NOT BELONG TO USER " + str(userID))
             response.setContent({"success": False, "errorMessage": "Invalid Job ID (" + jobID + ") for current user.<br>Please, check the Job ID and try again."})
             return response
 
         logging.info("RECOVER_JOB - JOB " + jobInstance.getJobID() + " LOADED SUCCESSFULLY.")
+
+        matchedCompoundsJSONList = map(lambda foundFeature: foundFeature.toBSON(), jobInstance.getFoundCompounds())
 
         matchedPathwaysJSONList = []
         for matchedPathway in jobInstance.getMatchedPathways().itervalues():
             matchedPathwaysJSONList.append(matchedPathway.toBSON())
         logging.info("RECOVER_JOB - GENERATING PATHWAYS INFORMATION...DONE")
 
-        if(len(matchedPathwaysJSONList) == 0):
+        if (len(matchedCompoundsJSONList) == 0 and jobInstance.getLastStep() == 2):
+            logging.info("RECOVER_JOB - JOB " + jobID + " DOES NOT CONTAINS FOUND COMPOUNDS (STEP 2: OLD FORMAT?).")
+            response.setContent({"success": False, "errorMessage": "Job " + jobID + " does not contains saved information about the found compounds, please run it again."})
+        elif(len(matchedPathwaysJSONList) == 0 and jobInstance.getLastStep() > 2):
             logging.info("RECOVER_JOB - JOB " + jobID + " DOES NOT CONTAINS PATHWAYS.")
-            response.setContent( {"success": False, "errorMessage":"Job " + jobID + " does not contains information about Pathways."})
+            response.setContent( {"success": False, "errorMessage":"Job " + jobID + " does not contains information about pathways. Please, run it again."})
         else:
             response.setContent({
                 "success": True,
@@ -503,11 +529,25 @@ def pathwayAcquisitionRecoverJob(request, response):
                 "compoundBasedInputOmics": jobInstance.getCompoundBasedInputOmics(),
                 "organism" : jobInstance.getOrganism(),
                 "summary" : jobInstance.summary,
-                "visualOptions" : JobInformationManager().getVisualOptions(jobID)
+                "visualOptions" : JobInformationManager().getVisualOptions(jobID),
+                "databases": jobInstance.getDatabases(),
+                "matchedMetabolites": matchedCompoundsJSONList,
+                "stepNumber": jobInstance.getLastStep()
             })
 
     except Exception as ex:
         handleException(response, ex, __file__ , "pathwayAcquisitionRecoverJob", userID=userID)
+    finally:
+        return response
+
+def pathwayAcquisitionTouchJob(request, response):
+    try:
+        jobID = request.form.get("jobID")
+        JobInformationManager().touchAccessDate(jobID)
+
+        response.setContent({"success": True})
+    except Exception as ex:
+        handleException(response, ex, __file__, "pathwayAcquisitionTouchJob", jobID=jobID)
     finally:
         return response
 
@@ -529,8 +569,8 @@ def pathwayAcquisitionSaveImage(request, response):
         fileName = "paintomics_" + request.form.get("fileName").replace(" ", "_") + "_" + jobID
         fileFormat = request.form.get("format")
 
-
-        path = CLIENT_TMP_DIR + userID + jobInstance.getOutputDir().replace(CLIENT_TMP_DIR + userID, "")
+        userDirID = userID if userID is not None else "nologin"
+        path = CLIENT_TMP_DIR + userDirID + jobInstance.getOutputDir().replace(CLIENT_TMP_DIR + userDirID, "")
 
         if(fileFormat == "png"):
             def createImage(svgData):
@@ -582,17 +622,28 @@ def pathwayAcquisitionSaveVisualOptions(request, response):
         #****************************************************************
         formFields = request.form
 
-        visualOptions = {}
+        visualOptions = defaultdict(dict)
         jobID  = formFields.get("jobID")
+
+        # Visual options are stored on a DB basis, with form info in the structure
+        # DB[option] or DB[option][] for lists
+        db_matcher = re.compile(r"^(\w+)\[(.+?)\](\Z|\[\])$")
 
         for key in formFields.keys():
             value = formFields.get(key)
-            if key == "pathwaysVisibility[]":
-                visualOptions["pathwaysVisibility"] = formFields.getlist(key)
-                continue
-            elif key == "pathwaysPositions[]":
-                visualOptions["pathwaysPositions"] = formFields.getlist(key)
-                continue
+
+            # If the regex matches, the option is specific for a DB
+            db_match = db_matcher.search(key)
+
+            # if key == "pathwaysVisibility[]":
+            #     visualOptions["pathwaysVisibility"] = formFields.getlist(key)
+            #     continue
+            # elif key == "pathwaysPositions[]":
+            #     visualOptions["pathwaysPositions"] = formFields.getlist(key)
+            #     continue
+            if "[]" in key:
+                value = formFields.getlist(key)
+                key = key.replace("[]", "")
             elif value == "true" or value == "false":
                 value = (value == "true")
             else:
@@ -600,18 +651,93 @@ def pathwayAcquisitionSaveVisualOptions(request, response):
                     value = float(value)
                 except:
                     pass
-            visualOptions[key] = value
+
+            if db_match:
+                db_name = db_match.group(1)
+                option = db_match.group(2)
+                is_list = (db_match.group(3) == "[]")
+
+                visualOptions[db_name][option] = value #formFields.getlist(key) if is_list else value
+            else:
+                visualOptions[key] = value
 
         #************************************************************************
         # Step 3. Save the visual Options in the MongoDB
         #************************************************************************
         logging.info("STEP 3 - SAVING VISUAL OPTIONS FOR JOB " + jobID + "..." )
-        JobInformationManager().storeVisualOptions(jobID, visualOptions)
+        JobInformationManager().storeVisualOptions(jobID, dict(visualOptions))
         logging.info("STEP 3 - SAVING VISUAL OPTIONS FOR JOB " + jobID + "...DONE" )
 
         response.setContent({"success": True})
 
     except Exception as ex:
         handleException(response, ex, __file__ , "pathwayAcquisitionStep3", userID=userID)
+    finally:
+        return response
+
+def pathwayAcquisitionAdjustPvalues(request, response):
+    try:
+        #****************************************************************
+        # Step 1.GET THE INFO
+        #****************************************************************
+        formFields = request.get_json() #request.form
+
+        # List of pathway => {pvalues}
+        pvalues = formFields.get("pValues")
+
+        # Check what kind of p-value we want to update
+        if "stoufferWeights" in formFields:
+            newStoufferWeights = formFields.get("stoufferWeights")
+            visiblePathways = formFields.get("visiblePathways")
+
+            newStoufferPvalues = defaultdict(dict)
+            newAdjustedStoufferPvalues = defaultdict(dict)
+
+            # Iterate over each database (adjusting it independently)
+            for db_name, db_pvalues in pvalues.iteritems():
+                # Each pathway has a different set of matching omics and thus, Stouffer weights.
+                # The new Stouffer p-value will be computed for each pathway, even those that are currently hidden.
+                for pathway_id, pathway_pvalues in db_pvalues.iteritems():
+                    # Select those with a proper p-value number and present in Stouffer weights
+                    valid_pvalues = {omic: pvalue for omic, pvalue in pathway_pvalues.iteritems() if pvalue != "-" and omic in newStoufferWeights.keys()}
+
+                    # Make sure to pass the Stouffer weights in the same order as the p-values
+                    newStoufferValue = calculateStoufferCombinedPvalue(valid_pvalues.values(), [newStoufferWeights[omicName] for omicName in valid_pvalues.keys()])
+
+                    newStoufferPvalues[db_name][pathway_id] = newStoufferValue
+
+                # Adjust the new Stouffer p-values passing only those pathways that are currently visible
+                newAdjustedStoufferPvalues[db_name] = adjustPvalues({pathway: pvalue for pathway, pvalue in newStoufferPvalues[db_name].iteritems() if pathway in visiblePathways})
+
+            response.setContent({
+                "success": True,
+                "stoufferPvalues": newStoufferPvalues,
+                "adjustedStoufferPvalues": newAdjustedStoufferPvalues
+            })
+        else:
+
+            # No new stouffer weights, just recalculate the provided p-values
+
+            # Iterate over each database (adjusting it independently)
+            adjustedPvaluesByOmic = defaultdict()
+
+            for db_name, db_pvalues in pvalues.iteritems():
+                pvaluesByOmic = defaultdict(dict)
+
+                for pathway, pathwayPvalues in db_pvalues.iteritems():
+                    for omic, omicPvalue in pathwayPvalues.iteritems():
+                        # Skip those in which there is no pValue (no matching in the pathway for that omic)
+                        if omicPvalue != '-':
+                            pvaluesByOmic[omic][pathway] = omicPvalue
+
+                adjustedPvaluesByOmic[db_name] = {omic: adjustPvalues(omic_pvalues) for omic, omic_pvalues in pvaluesByOmic.iteritems()}
+
+            response.setContent({
+                "success": True,
+                "adjustedPvalues": adjustedPvaluesByOmic
+            })
+
+    except Exception as ex:
+        handleException(response, ex, __file__ , "pathwayAcquisitionAdjustPvalues")
     finally:
         return response

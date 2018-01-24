@@ -34,6 +34,7 @@ class Feature(Model):
         self.url = ""
         self.featureType= ""
         self.omicsValues = []
+        self.matchingDB = ""
 
     #******************************************************************************************************************
     # GETTERS AND SETTER
@@ -68,6 +69,11 @@ class Feature(Model):
         for omicValue in omicValuesList:
             self.omicsValues.append(omicValue)
 
+    def setMatchingDB(self, matchingDB):
+        self.matchingDB = matchingDB
+    def getMatchingDB(self):
+        return self.matchingDB
+
     #******************************************************************************************************************
     # OTHER FUNCTIONS
     #******************************************************************************************************************
@@ -76,7 +82,7 @@ class Feature(Model):
             self.addOmicValues(otherFeature.getOmicsValues())
 
     def parseBSON(self, bsonData):
-        bsonData.pop("_id");
+        bsonData.pop("_id", None);
 
         for (attr, value) in bsonData.items():
             if(attr == "omicsValues"):

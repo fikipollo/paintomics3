@@ -137,10 +137,10 @@ function PA_Step4JobView() {
 		/********************************************************/
 		/* STEP 3: Update the History panel content             */
 		/********************************************************/
-		$("#pathwayHistoryContainer > div").prepend(this.createThumbnail(pathwayID, pathwayView.getModel().getName()))
-		.children("#" + pathwayID + '_thumb').click(function() {
+		$("#pathwayHistoryContainer > div").prepend(this.createThumbnail(pathwayID, pathwayView.getModel().getName(), pathwayView.getModel().getSource()))
+		.children("#" + pathwayID.replace(' ', '__') + '_thumb').click(function() {
 			$(this).prependTo($("#pathwayHistoryContainer > div"));
-			me.showPathwayView($(this).attr("id").replace("_thumb", ""));
+			me.showPathwayView($(this).attr("id").replace("_thumb", "").replace('__', ' '));
 			me.toogleHistoryPanel(true);
 		});
 
@@ -158,11 +158,13 @@ function PA_Step4JobView() {
 	* @param    {String} pathwayName
 	* @returns  {String} HTML code for the thumbnail
 	**/
-	this.createThumbnail = function(pathwayID, pathwayName) {
-		return '<div class="step4ThumbContainer" id="' + pathwayID + '_thumb">' +
+	this.createThumbnail = function(pathwayID, pathwayName, pathwaySource) {
+		thumbnail_suffix = (pathwaySource == 'undefined' || pathwaySource == 'KEGG') ? '_thumb' : '_' + pathwaySource + '_thumb'
+
+		return '<div class="step4ThumbContainer" id="' + pathwayID.replace(' ', '__') + '_thumb">' +
 		'    <div class="step4PathwayThumbnailHover">Open</div>' +
 		'    <div class="step4ThumbTitleContainer">' + pathwayName + '</div>' +
-		'    <div class="step4ThumbWrapper" style="background-image: url(\'' + location.pathname + "kegg_data/" + pathwayID + '_thumb\')"></div>' +
+		'    <div class="step4ThumbWrapper" style="background-image: url(\'' + location.pathname + "kegg_data/" + pathwayID + thumbnail_suffix + '\')"></div>' +
 		'   </div>';
 	};
 
@@ -340,9 +342,27 @@ function PA_Step4PathwayView() {
 		}
 
 		var update=false;
+		var me = this;
 		if(!this.visualOptions.colorReferences){
-			this.visualOptions.colorReferences = this.model.getGraphicalOptions().getColorReferences();
-			update=true;
+			/* Initialize new set of color references using the default colour */
+			this.visualOptions.colorReferences = {};
+			var defaultColorReference = this.model.getGraphicalOptions().getColorReferences();
+
+			$.each(me.getGeneBasedInputOmics().concat(me.getCompoundBasedInputOmics()), function(index, value) {
+				me.visualOptions.colorReferences[value.omicName] = defaultColorReference;
+				update=true;
+			});
+		}
+		if(this.visualOptions.customValues) {
+			/* If there are custom values set, update the data distribution summaries */
+			$.each(me.visualOptions.customValues, function(omicName, omicCustomValues) {
+					var omicDataDistribution = me.getDataDistributionSummaries(omicName);
+
+					omicDataDistribution.splice(11, 2, ...omicCustomValues);
+
+					/* TODO: remove this as the reference is the same? */
+					me.setDataDistributionSummaries(omicDataDistribution, omicName);
+			});
 		}
 		if(!this.visualOptions.visibleOmics){
 			this.visualOptions.visibleOmics = this.model.getGraphicalOptions().getVisibleOmics();
@@ -376,6 +396,12 @@ function PA_Step4PathwayView() {
 
 		return this.dataDistributionSummaries;
 	};
+
+	this.setDataDistributionSummaries = (function(dataDistributionSummaries, omicName) {
+		this.getParent().getModel().setDataDistributionSummaries(dataDistributionSummaries, omicName);
+
+		this.dataDistributionSummaries[omicName] = dataDistributionSummaries;
+	}).bind(this);
 
 	//TODO: DOCUMENTAR
 	this.getVisualOptions = function(propertyName) {
@@ -582,16 +608,36 @@ function PA_Step4PathwayView() {
 	//TODO: DOCUMENTAR
 	this.applyVisualSettings = function() {
 		var me = this;
+
 		/********************************************************/
-		/* STEP 1: UPDATE DIAGRAM PANEL		                    */
+		/* STEP 1: UPDATE DATA DISTRIBUTION	SUMMARIES           */
+		/********************************************************/
+		$('input[type=radio][name^=colorByCheckbox]:checked').each(function() {
+			if (this.value == "custom") {
+				var omicName = this.name.split(/_(.+)/)[1];
+				var omicDataDistribution = me.getDataDistributionSummaries(omicName);
+				var omicCustomValues = Ext.ComponentQuery.query('[name="customslider_' + omicName + '"]')[0].getValues();
+				var visualOptionsCustomValues = (me.visualOptions.customValues || {});
+
+				omicDataDistribution.splice(11, 2, ...omicCustomValues);
+
+				visualOptionsCustomValues[omicName] = omicCustomValues;
+
+				me.setVisualOptions("customValues", visualOptionsCustomValues)
+ 				me.setDataDistributionSummaries(omicDataDistribution, omicName);
+			}
+		});
+		/********************************************************/
+		/* STEP 2: UPDATE DIAGRAM PANEL		                    */
 		/********************************************************/
 		this.diagramPanel.updateObserver();
 		/********************************************************/
-		/* STEP 2: UPDATE HEATMAP PANEL		                    */
+		/* STEP 3: UPDATE HEATMAP  & FEATURE SET PANELS         */
 		/********************************************************/
 		(this.globalHeatmapView !== null && this.globalHeatmapView.updateObserver());
+		(this.featureSetDetailsPanel !== null && this.featureSetDetailsPanel.updateObserver());
 		/********************************************************/
-		/* STEP 3. UPDATE THE CACHE
+		/* STEP 4. UPDATE THE CACHE
 		/********************************************************/
 		this.getParent().getController().updateStoredVisualOptions(this.getParent().getModel().getJobID(), this.visualOptions);
 
@@ -876,7 +922,13 @@ function PA_Step4KeggDiagramView() {
 						height: imageHeight
 					});
 
-					canvas.image(location.pathname + "kegg_data/" + me.model.getID().replace(/\D/g, ''), imageWidth, imageHeight).addClass("keggImageBack");
+					// Background image
+					// For KEGG we only need to pass the digit code, but for MapMan
+					// the full ID is required.
+					var is_kegg = (me.model.getSource() == undefined || me.model.getSource() == "KEGG");
+					var canvas_dir = is_kegg ? me.model.getID().replace(/\D/g, '') : me.model.getID() + '_' + me.model.getSource();
+
+					canvas.image(location.pathname + "kegg_data/" + canvas_dir, imageWidth, imageHeight).addClass("keggImageBack");
 
 					//GENERATE THE SUBCOMPONETS VIEWS
 					try {
@@ -1076,6 +1128,10 @@ function PA_Step4KeggDiagramFeatureSetTooltip() {
 		this.forceHide = force;
 		this.getComponent().hide();
 	};
+	
+	this.stick = function() {
+		//this.getCompoment().stick();
+	};
 
 	//TODO: DOCUMENTAR
 	this.showFeatureSetDetails = function(targetID, feature) {
@@ -1216,6 +1272,7 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 	this.name = "PA_Step4KeggDiagramFeatureView";
 	this.collapsible = true;
 	this.closable = false;
+	this.sticky = false;
 	this.showButtons = (showButtons === true);
 
 	/***********************************************************************
@@ -1226,6 +1283,9 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 	};
 	this.setClosable = function(closable){
 		this.closable = closable;
+	};
+	this.setSticky = function(sticky){
+		this.sticky = sticky;	
 	};
 	/***********************************************************************
 	* OTHER FUNCTIONS
@@ -1437,14 +1497,18 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 
 			omicValues = feature.getOmicValues(omicName);
 			if (omicValues !== null) {
-				serie = {name: (omicValues.isRelevant() === true ? "* " : "") + omicName + "#" + omicValues.inputName};
-				yAxisCat.push((omicValues.isRelevant() === true ? "* " : "") + omicName + "#" + omicValues.inputName);
+				shownameValue = omicValues.inputName != omicValues.originalName && omicValues.originalName !== undefined ?
+					omicValues.originalName + ": " + omicValues.inputName :
+					omicValues.inputName
+
+				serie = {name: (omicValues.isRelevant() === true ? "* " : "") + omicName + "#" + shownameValue};
+				yAxisCat.push((omicValues.isRelevant() === true ? "* " : "") + omicName + "#" + shownameValue);
 
 				values = omicValues.getValues();
 				serie.data = [];
 				scaledValues = [];
 
-				var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences);
+				var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences[omicName]);
 
 				for (var j in values) {
 					serie.data.push({
@@ -1561,7 +1625,7 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 			if (omicValues !== null) {
 				scaledValues = [];
 
-				var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences);
+				var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences[omicName]);
 
 				values = omicValues.getValues();
 				for (var j in values) {
@@ -1635,6 +1699,7 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 			cls: "contentbox mainInfoPanel neverExpanded",
 			style:"margin:0;",
 			html:
+			((this.sticky)?'<a class="toolbarOption stickyOption" style="margin: 2px; "><i class="fa fa-fa-thumb-tack"></i></a>':'') +
 			((this.closable)?'<a class="toolbarOption hideOption" style="margin: 2px; "><i class="fa fa-times"></i></a>':'') +
 			"<h3 class='geneInfoTitle'>"+
 			((this.collapsible)?"<i class='fa fa-chevron-circle-right'></i>":"") +
@@ -1667,6 +1732,11 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 					$(this.el.dom).find(".hideOption").click(function () {
 						if(me.parent.hide !== undefined){
 							me.parent.hide(true);
+						}
+					});
+					$(this.el.dom).find(".stickyOption").click(function () {
+						if(me.parent.stick !== undefined){
+							me.parent.stick(true);
 						}
 					});
 				},
@@ -1736,6 +1806,41 @@ function PA_Step4KeggDiagramFeatureSetSVGBox() {
 		return this.initComponent(dataDistributionSummaries, visualOptions);
 	};
 
+	this.generatePoint = function(dataDistributionSummaries, visualOptions, pointSize) {
+		var canvas = $('<canvas>');
+		canvas.attr({width: pointSize,height: pointSize});
+
+		var context = canvas[0].getContext("2d");
+		var centerX = canvas[0].width / 2;
+		var centerY = canvas[0].height / 2;
+		var radius = pointSize/2;
+
+		var isRelevant = this.getModel().getFeature().isRelevant();
+
+		context.beginPath();
+		context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+		context.fillStyle = '#337ab7';
+		context.fill();
+		context.lineWidth = 1;
+		context.strokeStyle = '#bcbcbc';
+		context.stroke();
+
+		if (isRelevant === true) {
+			context.beginPath();
+			context.arc(centerX, centerY, 6, 0, 2 * Math.PI, false);
+			context.fillStyle = 'red';
+			context.fill();
+			context.lineWidth = 5;
+			context.strokeStyle = '#003300';
+			context.stroke();
+			context.font = "normal " + pointSize/4 + "px FontAwesome";
+			context.fillStyle = '#FFFFFF';
+			context.fillText('\uf005', centerX - (pointSize/8), centerY - (pointSize/8));
+		}
+
+		this.imageCode = canvas[0].toDataURL("image/png");
+		return this.imageCode;
+	};
 
 	//TODO: DOCUMENTAR
 	this.generateBox = function(dataDistributionSummaries, visualOptions) {
@@ -1784,7 +1889,7 @@ function PA_Step4KeggDiagramFeatureSetSVGBox() {
 				values = omicValues.getValues();
 				boxWidth = boxWidth / values.length;
 
-				var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences);
+				var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences[omicName]);
 
 				for (var j in values) {
 					context.beginPath();
@@ -1907,17 +2012,40 @@ function PA_Step4KeggDiagramFeatureSetSVGBox() {
 		//TODO: DELETE OBSERVER
 		//me.getModel().deleteObserver(me);
 		//TODO: SOME FEATURES HAS NaN FOR WIDTH AND POS
-		var width = (this.getModel().getFeatureGraphicalData().getBoxWidth() * visualOptions.adjustFactor || 20);
-		var height = (this.getModel().getFeatureGraphicalData().getBoxHeight() * visualOptions.adjustFactor || 20);
-		this.component = {
-			id: me.componentID,
-			type: "image",
-			src: this.generateBox(dataDistributionSummaries, visualOptions),
-			width: width,
-			height: height,
-			x: ((this.getModel().getFeatureGraphicalData().getX() * visualOptions.adjustFactor - width / 2) || 0),
-			y: ((this.getModel().getFeatureGraphicalData().getY() * visualOptions.adjustFactor - height / 2)  || 0),
-		};
+		var width = (this.getModel().getFeatureGraphicalData().getBoxWidth() * visualOptions.adjustFactor || 50);
+		var height = (this.getModel().getFeatureGraphicalData().getBoxHeight() * visualOptions.adjustFactor || 15);
+		// DEPRECATED: MapMan pathways do not have width or height set. For that, and those rare KEGG cases in which it isn't set,
+		// draw a circle instead
+		// var width = (this.getModel().getFeatureGraphicalData().getBoxWidth() * visualOptions.adjustFactor);
+		// var height = (this.getModel().getFeatureGraphicalData().getBoxHeight() * visualOptions.adjustFactor);
+		this.getModel().getFeatureGraphicalData().setBoxWidth(width);
+		this.getModel().getFeatureGraphicalData().setBoxHeight(height);
+
+		/* LEGACY CODE IN CASE WE WANT TO RESTORE POINT "BOXES" FOR OTHER DBS */
+		if (width == 0 || height == 0) {
+			var pointSize = 15;
+
+			this.component = {
+				id: me.componentID,
+				type: "image",
+				src: this.generatePoint(dataDistributionSummaries, visualOptions, pointSize),
+				width: pointSize,
+				height: pointSize,
+				x: ((this.getModel().getFeatureGraphicalData().getX() * visualOptions.adjustFactor - pointSize / 2) || 0),
+				y: ((this.getModel().getFeatureGraphicalData().getY() * visualOptions.adjustFactor - pointSize / 2)  || 0),
+			};
+		} else {
+			this.component = {
+				id: me.componentID,
+				type: "image",
+				src: this.generateBox(dataDistributionSummaries, visualOptions),
+				width: width,
+				height: height,
+				x: ((this.getModel().getFeatureGraphicalData().getX() * visualOptions.adjustFactor - width / 2) || 0),
+				y: ((this.getModel().getFeatureGraphicalData().getY() * visualOptions.adjustFactor - height / 2)  || 0),
+			};
+		}
+
 		return this.component;
 	};
 	return this;
@@ -1979,11 +2107,16 @@ function PA_Step4VisualOptionsView() {
 		/********************************************************/
 		/* STEP 2. UPDATE THE colorReferences OPTION               */
 		/********************************************************/
-		selectedOptions = $("div.lateralOptionsSelector input[name=colorByCheckbox]:checked").first().val();
+		selectedOptions = {};
+		$("div.lateralOptionsSelector input[name^=colorByCheckbox]:checked").each(function(index) {
+			var omicName = $(this).attr("name").split(/_(.+)/)[1];
+
+			selectedOptions[omicName] = $(this).val()
+		});
 		this.getParent().setVisualOptions("colorReferences" , selectedOptions);
 
 		/********************************************************/
-		/* STEP 3. UPDATE THE colorReferences OPTION            */
+		/* STEP 3. UPDATE THE colorScale OPTION            */
 		/********************************************************/
 		selectedOptions = $("div.lateralOptionsSelector input[name=colorScaleCheckbox]:checked").first().val();
 		this.getParent().setVisualOptions("colorScale" , selectedOptions);
@@ -2021,13 +2154,13 @@ function PA_Step4VisualOptionsView() {
 			' </div>';
 		}
 
-		omicsAux = me.getParent().getCompoundBasedInputOmics();
+		var omicsCompounds = me.getParent().getCompoundBasedInputOmics();
 		windowContent += '<h5>Compound based omics</h5>';
-		for (var i in omicsAux) {
+		for (var i in omicsCompounds) {
 			windowContent +=
 			' <div class="checkbox">'+
-			'  <input ' + ((visualOptions.visibleOmics.indexOf(omicsAux[i].omicName + "#compoundbased") > -1) ? "checked" : "") + ' type="checkbox" id="' + omicsAux[i].omicName + '#compoundbased' + '">'+
-			'  <label for="' + omicsAux[i].omicName + '#compoundbased">' + omicsAux[i].omicName + '</label>'+
+			'  <input ' + ((visualOptions.visibleOmics.indexOf(omicsCompounds[i].omicName + "#compoundbased") > -1) ? "checked" : "") + ' type="checkbox" id="' + omicsCompounds[i].omicName + '#compoundbased' + '">'+
+			'  <label for="' + omicsCompounds[i].omicName + '#compoundbased">' + omicsCompounds[i].omicName + '</label>'+
 			' </div>';
 		}
 
@@ -2038,12 +2171,26 @@ function PA_Step4VisualOptionsView() {
 		'</div>' + //CLOSE "CHOOSE OMICS TO DRAW" SECTION
 		'<div class="lateralOptionsSelector">' +
 		'  <h4>Coloring options</h4>' +
-		'  <h5>Reference values</h5>'+
-		'  <div>' +
-		'    <div class="radio"><input '+ ((visualOptions.colorReferences ==="p10p90")?"checked ":"") +'type="radio" id="colorByCheckbox1" name="colorByCheckbox" value="p10p90"><label for="colorByCheckbox1">Percentiles 10 and 90</label></div>' +
-		'    <div class="radio"><input '+ ((visualOptions.colorReferences ==="absoluteMinMax")?"checked ":"") +'type="radio" id="colorByCheckbox2" name="colorByCheckbox" value="absoluteMinMax"><label for="colorByCheckbox2">Global Min/Max (including outliers).</label></div>' +
-		'    <div class="radio"><input '+ ((visualOptions.colorReferences ==="riMinMax")?"checked ":"") +'type="radio" id="colorByCheckbox3" name="colorByCheckbox" value="riMinMax"><label for="colorByCheckbox3">Global Min/Max (without outliers).</label></div>' +
+		'  <h5>Reference values</h5>' +
+		'  <div>';
+
+		/* Add a fieldset for each omic */
+		 $.each(omicsAux.concat(omicsCompounds), function(index, omicObject) {
+			 var omic = omicObject.omicName;
+
+			 windowContent +=
+			 '<fieldset>' +
+			 '		<legend>' + omic + '</legend>' +
+			 '    <div class="radio"><input '+ ((visualOptions.colorReferences[omic] ==="p10p90")?"checked ":"") +'type="radio" id="colorByCheckbox1_' + omic + '" name="colorByCheckbox_' + omic + '" value="p10p90"><label for="colorByCheckbox1_' + omic + '">Percentiles 10 and 90</label></div>' +
+			 '    <div class="radio"><input '+ ((visualOptions.colorReferences[omic] ==="absoluteMinMax")?"checked ":"") +'type="radio" id="colorByCheckbox2_' + omic + '" name="colorByCheckbox_' + omic + '" value="absoluteMinMax"><label for="colorByCheckbox2_' + omic + '">Global Min/Max (including outliers).</label></div>' +
+			 '    <div class="radio"><input '+ ((visualOptions.colorReferences[omic] ==="riMinMax")?"checked ":"") +'type="radio" id="colorByCheckbox3_' + omic + '" name="colorByCheckbox_' + omic + '" value="riMinMax"><label for="colorByCheckbox3_' + omic + '">Global Min/Max (without outliers).</label></div>' +
+			 '    <div class="radio"><input '+ ((visualOptions.colorReferences[omic] ==="custom")?"checked ":"") +'type="radio" id="colorByCheckbox4_' + omic + '" name="colorByCheckbox_' + omic + '" value="custom"><label for="colorByCheckbox4_' + omic + '">Custom values</label></div>' +
+			 '	  <div class="radio" id="colorByCheckbox5_' + omic + '"></div>' +
+			 '</fieldset>';
+		 });
+
 		//'    <div class="radio"><input type="radio" id="colorByCheckbox4" name="colorByCheckbox" value="localMinMax"><label for="colorByCheckbox4">Local Min/Max (for current pathway).</label></div>' +
+		windowContent +=
 		'  </div>' +
 		'  <h5>Color scale</h5>' +
 		'  <div>' +
@@ -2054,31 +2201,70 @@ function PA_Step4VisualOptionsView() {
 		'</div>'; //advanceOptionsPanel
 
 		this.component = Ext.widget({
-			xtype: "box", cls: "lateralOptionsPanel", width: 300,  height: ($("#mainViewCenterPanel").height() - 100),
-			html:
-			"<div class='lateralOptionsPanel-header' style='background: #d9534f;'>" +
-			'  <div class="lateralOptionsPanel-toolbar">' +
-			'    <a href="javascript:void(0)" class="toolbarOption btn-danger helpTip" id="hideVisualSettingsPanelButton" title="Close this panel"><i class="fa fa-times"></i></a>' +
-			'  </div>' +
-			"  <h2>Visual settings</h2>" +
-			"</div>" +
-			"<div class='lateralOptionsPanel-body'>" +
-			windowContent + '    <a href="javascript:void(0)" class="button btn-success helpTip" id="applyVisualSettingsButton" style="margin-top: 20px;" title="Apply changes"><i class="fa fa-check"></i> Apply</a>' +
-			"</div>",
-			listeners: {
-				boxready: function() {
-					//SOME EVENT HANDLERS
-					$("#hideVisualSettingsPanelButton").click(function() {
-						me.toggle(false);
-					});
-					$("#applyVisualSettingsButton").click(function() {
-						me.applyVisualSettings();
-					});
-				},
-				beforedestroy: function() {
-					me.getModel().deleteObserver(me);
+			xtype: "container", cls: "lateralOptionsPanel",  width: 300, height: ($("#mainViewCenterPanel").height() - 100),
+			items:[{
+				xtype: "box",
+				html:
+				"<div class='lateralOptionsPanel-header' style='background: #d9534f;'>" +
+				'  <div class="lateralOptionsPanel-toolbar">' +
+				'    <a href="javascript:void(0)" class="toolbarOption btn-danger helpTip" id="hideVisualSettingsPanelButton" title="Close this panel"><i class="fa fa-times"></i></a>' +
+				'  </div>' +
+				"  <h2>Visual settings</h2>" +
+				"</div>" +
+				"<div class='lateralOptionsPanel-body'>" +
+				windowContent + '    <a href="javascript:void(0)" class="button btn-success helpTip" id="applyVisualSettingsButton" style="margin-top: 20px;margin-bottom: 20px;" title="Apply changes"><i class="fa fa-check"></i> Apply</a>' +
+				"</div>",
+				listeners: {
+					boxready: function() {
+						//SOME EVENT HANDLERS
+						$("#hideVisualSettingsPanelButton").click(function() {
+							me.toggle(false);
+						});
+						$("#applyVisualSettingsButton").click(function() {
+							me.applyVisualSettings();
+						});
+
+						// CREATE CUSTOM SLIDERS FOR EACH OMIC
+						var PA4View = me.getParent("PA_Step4PathwayView");
+						var omicDistributions = PA4View.getDataDistributionSummaries();
+
+						$.each(omicsAux.concat(omicsCompounds), function(index, omicObject) {
+							 var omic = omicObject.omicName;
+							 var omicValues = getMinMax(omicDistributions[omic], "absoluteMinMax");
+							 var defaultOmicValues = [omicValues.min, omicValues.max];
+							 var customOmicValues = (PA4View.visualOptions.hasOwnProperty("customValues") ?
+							 (PA4View.visualOptions.customValues[omic] || defaultOmicValues) : defaultOmicValues );
+
+							 var customSlider = Ext.create('Ext.slider.MultiCustom', {
+						        renderTo: "colorByCheckbox5_" + omic,
+										name: "customslider_" + omic,
+						        //hideLabel: false,
+						        width: 240,
+						        minValue: omicValues.min,
+						        maxValue: omicValues.max,
+										customValues: [customOmicValues[0], customOmicValues[1]],
+										disabled: ($('input[type=radio][name="colorByCheckbox_' + omic + '"]:checked').val() !== "custom"),
+						   	});
+
+								$('input[type=radio][name="colorByCheckbox_' + omic + '"]').change(function() {
+									 if (this.value !== "custom") {
+										 customSlider.disable();
+									 }	else {
+										 customSlider.enable();
+									 }
+								 });
+							});
+					},
+					resize: function( view, width, height, oldWidth, oldHeight, eOpts ){
+						var componentHeight = $(view.getEl().dom).outerHeight();
+						var headerHeight = $(view.getEl().dom).find(".lateralOptionsPanel-header").outerHeight() + 10;
+						$(view.getEl().dom).find(".lateralOptionsPanel-body").height($("#mainViewCenterPanel").height() - headerHeight - 100);
+					},
+					beforedestroy: function() {
+						me.getModel().deleteObserver(me);
+					}
 				}
-			}
+			}]
 		});
 		return this.component;
 	};
@@ -2570,17 +2756,22 @@ function PA_Step4GlobalHeatmapView() {
 		for (var i = omicsValues.length - 1; i >= 0; i--) {
 			//restart the x coordinate
 			x = 0;
-			var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences);
+			var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences[omicName]);
 
 			//Get the values and the name for the new serie
 			featureValues = omicsValues[i].values;
+
+			shownameValue = omicsValues[i].inputName != omicsValues[i].originalName && omicsValues[i].originalName !== undefined ?
+				omicsValues[i].originalName + ": " + omicsValues[i].inputName :
+				omicsValues[i].inputName
+
 			serie = {
-				name: (omicsValues[i].isRelevant === true ? "* " : "") + omicsValues[i].keggName + "#" + omicsValues[i].inputName,
+				name: (omicsValues[i].isRelevant === true ? "* " : "") + omicsValues[i].keggName + "#" + shownameValue,
 				data: [],
 				turboThreshold: Number.MAX_VALUE
 			};
 			//Add the name for the row (e.g. MagoHb or "miRNA my_mirnaid_1")
-			yAxisCat.push((omicsValues[i].isRelevant === true ? "* " : "") + omicsValues[i].keggName + "#" + omicsValues[i].inputName);
+			yAxisCat.push((omicsValues[i].isRelevant === true ? "* " : "") + omicsValues[i].keggName + "#" + shownameValue);
 
 			if (featureValues !== null) {
 				for (var j in featureValues) {
@@ -2916,11 +3107,11 @@ function PA_Step4DetailsView() {
 	***********************************************************************/
 	this.loadModel = function (model) {
 		//UNLINK THE PREVIOUS MODEL (IF ANY)
-		if (this.model !== null) {
-			this.model.deleteObserver(this);
-		}
+		// if (this.model !== null) {
+		// 	this.model.deleteObserver(this);
+		// }
 		this.model = model;
-		model.addObserver(this);
+		//model.addObserver(this);
 
 		var features = this.getModel().getFeatures();
 
@@ -2996,6 +3187,7 @@ function PA_Step4DetailsView() {
 				entriesTable[entrieName].push({
 					keggName: featureName + ((entrieName === omicValue.getOmicName()) ? "" : " " + omicValue.getOmicName()),
 					inputName: omicValue.inputName,
+					originalName: omicValue.originalName,
 					isRelevant: omicValue.isRelevant(),
 					values: omicValue.getValues()
 				});
@@ -3039,7 +3231,8 @@ function PA_Step4DetailsView() {
 		for (var i in this.items) {
 			components.push(this.items[i].getComponent());
 		}
-		this.getComponent().queryById("itemsContainer").removeAll(true);
+
+		this.getComponent().queryById("itemsContainer").removeAll(false);
 		this.getComponent().queryById("itemsContainer").add(components);
 
 		for(i in this.items){
@@ -3055,11 +3248,15 @@ function PA_Step4DetailsView() {
 			x = 0;
 			//Get the values and the name for the new serie
 			featureValues = omicsValues[i].values;
-			serie = {name: (omicsValues[i].isRelevant === true ? "* " : "") + omicsValues[i].keggName + "#" + omicsValues[i].inputName, data: []};
-			//Add the name for the row (e.g. MagoHb or "miRNA my_mirnaid_1")
-			yAxisCat.push((omicsValues[i].isRelevant === true ? "* " : "") + omicsValues[i].keggName + "#" + omicsValues[i].inputName);
+			shownameValue = omicsValues[i].inputName != omicsValues[i].originalName && omicsValues[i].originalName !== undefined ?
+				omicsValues[i].originalName + ": " + omicsValues[i].inputName :
+				omicsValues[i].inputName
 
-			var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences);
+			serie = {name: (omicsValues[i].isRelevant === true ? "* " : "") + omicsValues[i].keggName + "#" + shownameValue, data: []};
+			//Add the name for the row (e.g. MagoHb or "miRNA my_mirnaid_1")
+			yAxisCat.push((omicsValues[i].isRelevant === true ? "* " : "") + omicsValues[i].keggName + "#" + shownameValue);
+
+			var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences[omicName]);
 
 			for (var j in featureValues) {
 				serie.data.push({
@@ -3144,7 +3341,7 @@ function PA_Step4DetailsView() {
 		var series = [], maxX = -1;
 		var yAxisItem = {title: null}, omicsValue, auxValues;
 
-		var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences);
+		var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences[omicName]);
 
 
 		for (var i in omicsValues) {

@@ -61,7 +61,9 @@ function JobController() {
 			success: function (response) {
 				if (response.success === false) {
 					if (response.status === "JobStatus.STARTED" || response.status === "started") {
-						showInfoMessage("Running job " + jobID + "...", {logMessage: "Job " + jobID + " still running.", showSpin: true, append: other.multipleJobs, itemId: jobID, icon: "play"});
+						var jobURL = 'http://' + window.location.host + window.location.pathname + "?jobID=" + jobID;
+
+						showInfoMessage("Running job " + jobID + ".<br/> You will we able to access it from the URL: <br/><br /><a href=\"" + jobURL  + "\" target=\"_blank\">" + jobURL + "</a>", {logMessage: "Job " + jobID + " still running.", showSpin: true, append: other.multipleJobs, itemId: jobID, icon: "play"});
 					}
 					//Check again in N seconds
 					setTimeout(function () {
@@ -78,14 +80,14 @@ function JobController() {
 	};
 
 	/**
-	* This function gets a list of of RegionBasedOmicViews and send each item to
+	* This function gets a list of of RegionBasedOmicViews/miRNABasedOmicView and send each item to
 	* server for processing.
 	*
 	* @param {JobView} jobView
-	* @param {Array} regionBasedOmics
+	* @param {Array} specialOmics
 	* @returns {String} error message in case of invalid form.
 	*/
-	this.step1SubmitRegionBasedOmics = function (jobView, regionBasedOmics) {
+	this.step1ComplexFormSubmitHandler = function (jobView, specialOmics) {
 		//STEP 1. INITIALIZE THE COUNTERS
 		jobView.pendingRequests = 0;
 		jobView.runningRequests = 0;
@@ -95,9 +97,13 @@ function JobController() {
 
 		//CHECK FORM VALIDITY
 		if (jobView.checkForm() === true) {
-			var URL = SERVER_URL_DM_FROMBED2GENES;
+
+			var regionURL = SERVER_URL_DM_FROMBED2GENES;
+			var miRNAURL = SERVER_URL_DM_FROMMIRNA2GENES;
+
 			if (jobView.isExampleMode() === true) {
-				URL = SERVER_URL_DM_EXAMPLE_FROMBED2GENES;
+				regionURL = SERVER_URL_DM_EXAMPLE_FROMBED2GENES;
+				miRNAURL = SERVER_URL_DM_EXAMPLE_FROMMIRNA2GENES;
 			}
 
 			/**
@@ -116,11 +122,11 @@ function JobController() {
 			* call to the normal submission function step1OnFormSubmitHandler.
 			*
 			* @param jobView
-			* @param regionBasedOmics list of RegionBasedOmicViews elements.
+			* @param genericBasedOmic list of RegionBasedOmicViews/miRNABasedOmicView elements.
 			*/
-			var sendRequest = function (jobView, regionBasedOmics) {
+			var sendRequest = function (jobView, genericBasedOmic) {
 				//STEP1. TAKE THE ITEM THAT WILL BE SENT TO SERVER
-				var subview = regionBasedOmics.shift();
+				var subview = genericBasedOmic.shift();
 
 				//STEP2. SHOW WAITING MESSAGE INSIDE THE PANEL
 				subview.remove(subview.queryById("errorMessage"));
@@ -129,11 +135,14 @@ function JobController() {
 				var itemsContainer = subview.queryById("itemsContainer");
 				var temporalForm = Ext.widget({xtype: "form", items: [itemsContainer]});
 
+				// DEFINE THE URL BASED ON THE TYPE OF OMIC
+				var formURL = subview.cls.search("regionBasedOmic") != -1 ? regionURL : miRNAURL;
+
 				jobView.pendingRequests++;
 
 				temporalForm.getForm().submit({
 					method: 'POST',
-					url: URL,
+					url: formURL,
 					success: function (form, action) {
 						var response = JSON.parse(action.response.responseText);
 
@@ -162,7 +171,7 @@ function JobController() {
 								if (jobView.failedRequests === 0) {
 									me.step1OnFormSubmitHandler(jobView);
 								} else {
-									showErrorMessage("Ops!... Something went wrong during BED files processing.", {message: "One or more BED files were not succesfully processed.</br>Please check the form for more info."});
+									showErrorMessage("Ops!... Something went wrong during the request files processing.", {message: "One or more files were not succesfully processed.</br>Please check the form for more info."});
 								}
 							}
 						};
@@ -176,29 +185,29 @@ function JobController() {
 
 							var response = JSON.parse(action.response.responseText);
 
-							other.subview.add(Ext.widget({xtype: "box", itemId: "errorMessage", html: '<h3 style="color: #EC696E;  font-size: 20px;"><i class="fa fa-cog fa-spin"></i> Error when processing the BED file.<br><span style="font-size:14px;">' + response.message + '</span></h3>'}));
+							other.subview.add(Ext.widget({xtype: "box", itemId: "errorMessage", html: '<h3 style="color: #EC696E;  font-size: 20px;"><i class="fa fa-cog fa-spin"></i> Error when processing the request file.<br><span style="font-size:14px;">' + response.message + '</span></h3>'}));
 
 							if (jobView.pendingRequests === 0) {
-								showErrorMessage("Ops!... Something went wrong during BED files processing.", {
-									message: "One or more BED files were not succesfully processed.</br>Please check the form for more information."
+								showErrorMessage("Ops!... Something went wrong during the request files processing.", {
+									message: "One or more files were not succesfully processed.</br>Please check the form for more information."
 								});
 							}
 						};
 
 						me.checkJobStatus(response.jobID, jobView, callback, {subview: subview, errorHandler: errorHandler, multipleJobs: true});
 
-						if (regionBasedOmics.length > 0) {
-							sendRequest(jobView, regionBasedOmics);
+						if (genericBasedOmic.length > 0) {
+							sendRequest(jobView, genericBasedOmic);
 						}
-
 					},
 					failure: extJSErrorHandler
 				});
 			};
-			showInfoMessage("Uploading BED files... (" + jobView.pendingRequests + " pending)", {logMessage: "New Job created, submitting files...", showSpin: true});
+
+			showInfoMessage("Uploading BED/miRNA files... (" + jobView.pendingRequests + " pending)", {logMessage: "New Job created, submitting files...", showSpin: true});
 
 			//SEND ALL FORM TO THE QUEUE
-			sendRequest(jobView, regionBasedOmics);
+			sendRequest(jobView, specialOmics);
 		} else {
 			showErrorMessage("Invalid form. Please check form errors.", {height: 150, width: 400});
 			return false;
@@ -244,6 +253,7 @@ function JobController() {
 						jobModel.setStepNumber(2);         //UPDATE THE STEP NUMBER
 						jobModel.setJobID(response.jobID); //UPDATE THE foundCompounds FIELD WITH RESPONSE DATA+
 						jobModel.setOrganism(response.organism);  //UPDATE ORGANISM
+						jobModel.setDatabases(response.databases); //UPDATE DATABASES
 
 						jobModel.setCompoundBasedInputOmics(response.compoundBasedInputOmics);
 						jobModel.setGeneBasedInputOmics(response.geneBasedInputOmics);
@@ -303,6 +313,16 @@ function JobController() {
 			var me = this;
 			showInfoMessage("Obtaining Pathways list...", {logMessage: "Sending new request (get pathway list).", showSpin: true});
 
+			// TODO: disabled code, allow setting customValues from step2
+			// Get omicNames and customValues from view
+			// jobView.getModel().getCompoundBasedInputOmics().concat(jobView.getModel().getGeneBasedInputOmics());
+			// var omicNames = ...
+			// var omicValues = {};
+			//
+			// $(omicNames).each(function(omic) {
+			// 		omicValues[omic] = Ext.ComponentQuery.query('[name="customslider_' + omic + '"]')[0].getValues();
+			// });
+
 			$.ajax({
 				type: "POST",
 				headers: {"Content-Encoding": "gzip"},
@@ -310,6 +330,8 @@ function JobController() {
 				data: {
 					jobID: jobView.getModel().getJobID(),
 					selectedCompounds: jobView.getSelectedCompounds()
+					// omicNames: omicNames,
+					// customValues: omicValues
 				},
 				success: function (response) {
 					console.log("JOB " + response.jobID + " is queued ");
@@ -341,6 +363,7 @@ function JobController() {
 						jobModel.setGeneBasedInputOmics(response.geneBasedInputOmics);
 						jobModel.setSummary(response.summary);
 						jobModel.setOrganism(response.organism);  //UPDATE ORGANISM
+						jobModel.setDatabases(response.databases);
 
 						var pathways = response.pathwaysInfo;
 						var pathway = null;
@@ -424,6 +447,66 @@ function JobController() {
 			});
 		}
 	};
+    
+ 	/************************************************************
+	* This function...
+	* @param {type} jobView
+	*
+	************************************************************/   
+    this.step3GetUpdatedPvalues = function (pathwayTableView, pathwayPvalues, stouferrWeights = null, visiblePathways = null) {
+        var me = this;
+        var formData = {pValues: pathwayPvalues};
+        
+        if (stouferrWeights !== null) {
+            formData['stoufferWeights'] = stouferrWeights;
+			formData['visiblePathways'] = visiblePathways;
+        }
+        
+        showInfoMessage("Fetching new adjusted p-values...", {logMessage: "Sending new request (get new adjusted p-values after filtering).", showSpin: true});
+        
+        $.ajax({
+            data: JSON.stringify(formData),
+            method: 'POST', 
+			url: SERVER_URL_ADJUST_PVALUES,
+			dataType: "json",
+  			contentType : "application/json",
+            success: function (response) {
+				
+				if (response.success) {
+					/*
+						For new Stouffer values, update the visualOptions of each database
+						in both Stouffer and adjusted, otherwise only the adjusted p-values.
+						
+						The visual options databases objects should be initialized at this point.
+					*/	
+					var currentVisualOptions = pathwayTableView.getParent().getVisualOptions();
+					
+					if (response.stoufferPvalues) {
+						Object.keys(response.stoufferPvalues).forEach(function(db) {
+							currentVisualOptions[db]['Stouffer'] = response.stoufferPvalues[db];
+							
+							$.extend(true, currentVisualOptions[db], {
+								'adjustedPvalues': {
+									'Stouffer': response.adjustedStoufferPvalues[db]
+								}
+							});
+						});
+					} else {
+						Object.keys(response.adjustedPvalues).forEach(function(db) {
+							currentVisualOptions[db]['adjustedPvalues'] = response.adjustedPvalues[db];
+						});
+					}
+					
+					me.updateStoredVisualOptions(pathwayTableView.getParent().getModel().jobID, currentVisualOptions);
+                	showSuccessMessage("Done", {logMessage: "Adjusted p-values retrieved successfully", closeTimeout: 0.4});
+                	pathwayTableView.updatePvaluesFromStore();
+				}                
+            },
+            failure: extJSErrorHandler
+        });
+        
+        
+    };
 
 	/************************************************************
 	* This function recovers an instance of JOB from database by a given JobID.
@@ -444,19 +527,53 @@ function JobController() {
 					data: {jobID: jobID},
 					success: function (response) {
 						if (response.success === false) {
-							showErrorMessage(response.errorMessage);
+							if (response.message) {
+								showInfoMessage(response.message);
+							} else {
+								showErrorMessage(response.errorMessage);
+							}
 							return;
 						}
 						me.cleanStoredApplicationData();
 
 						var jobModel = new JobInstance(jobID);
 						//UPDATE THE STEP NUMBER
-						jobModel.setStepNumber(3);
+						jobModel.setStepNumber(response.stepNumber);
 						//TODO: NO ES NECESARIO DEVOLVER ESTO!!! MUY GRANDE! MEJOR CALCULARLO EN EL SERVER
 						jobModel.setCompoundBasedInputOmics(response.compoundBasedInputOmics);
 						jobModel.setGeneBasedInputOmics(response.geneBasedInputOmics);
 						jobModel.setSummary(response.summary);
 						jobModel.setOrganism(response.organism);  //UPDATE ORGANISM
+						jobModel.setDatabases(response.databases); //UPDATE DATABASES
+
+						jobModel.setFoundCompounds([]);
+						var matchedMetabolites = response.matchedMetabolites;
+						var matchedCompound = null;
+						for (var i in matchedMetabolites) {
+							matchedCompound = new CompoundSet();
+							matchedCompound.loadFromJSON(matchedMetabolites[i]);
+							jobModel.addFoundCompound(matchedCompound);
+						}
+
+						//UPDATE SELECTED METABOLITES IN ORDER TO AVOID REPEATED SELECTIONS
+						// e.g. if the user uploaded "Alanine" and "beta-Alanine" separately,
+						// the beta-Alanine proposed by the "Alanine" panel will be unselected
+						// by default
+						var selectedCompounds = {};
+						var auxCompound=null;
+						for(var i in jobModel.foundCompounds){
+							for(var j in jobModel.foundCompounds[i].mainCompounds){
+								matchedCompound = jobModel.foundCompounds[i].mainCompounds[j];
+								auxCompound = (selectedCompounds[matchedCompound.getID()] || matchedCompound) ;
+								if(matchedCompound.similarity >= auxCompound.similarity){
+									auxCompound.selected = false;
+									matchedCompound.selected = true;
+									selectedCompounds[matchedCompound.getID()] = matchedCompound;
+								}else{
+									matchedCompound.selected = false;
+								}
+							}
+						}
 
 						var pathways = response.pathwaysInfo;
 						var pathway = null;
@@ -625,7 +742,7 @@ function JobController() {
 			//location.reload();
 			return;
 		}
-		Ext.MessageBox.confirm('Confirm', 'Are you sure you want to reset the current job?', function (opcion) {
+		Ext.MessageBox.confirm('Confirm', 'Are you sure you want to exit the current job?', function (opcion) {
 			if (opcion === "yes") {
 				me.cleanStoredApplicationData();
 				me.showJobInstance(new JobInstance(null));
@@ -633,6 +750,7 @@ function JobController() {
 					callback();
 				}
 				// location.reload();
+				window.history.replaceState(null, null, window.location.pathname);
 			}
 		});
 	};
@@ -685,6 +803,26 @@ function JobController() {
 			console.info(Date.logFormat() + "JobController.js : Updating jobview...");
 			jobView.updateObserver();
 		}
+
+		// Update the URL adding the parameter with the jobID
+		if (jobModel.getJobID() !== null) {
+			window.history.replaceState(null, null, window.location.pathname + "?jobID=" + jobModel.getJobID());
+
+			// Call the server to update the job's access date even when it was
+			// loaded from session data.
+			$.ajax({
+				type: "POST",
+				url: SERVER_URL_PA_TOUCH_JOB,
+				data: {jobID: jobModel.getJobID()},
+				success: function (response) {
+					console.info(Date.logFormat() + " job's access date succesfully updated.");
+				},
+				error: function (response) {
+					console.error(Date.logFormat() + " failed when updating job's access date.");
+				},
+			});
+		}
+
 		return jobView;
 	};
 
@@ -704,10 +842,20 @@ function JobController() {
 		/********************************************************/
 		visualOptions.jobID = jobID;
 
+		// Avoid override of values
+		var visualOptionsClone = jQuery.extend(true, {}, visualOptions);
+
+		// Transform customValues to plain text JSON representation
+		/*if (visualOptionsClone.customValues) {
+			Object.keys(visualOptionsClone.customValues).map(function(key, index) {
+				visualOptionsClone.customValues[key] = JSON.stringify(visualOptionsClone.customValues[key]);
+			});
+		}*/
+
 		$.ajax({
 			method: "POST",
 			url: SERVER_URL_PA_SAVE_VISUAL_OPTIONS,
-			data: visualOptions,
+			data: visualOptionsClone,
 			success: function (response) {
 				console.info(Date.logFormat() + "Visual options saved succesfully.");
 			},

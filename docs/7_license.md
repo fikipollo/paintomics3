@@ -25,14 +25,4 @@ You should have received a copy of the GNU General Public License along with thi
 
 ** Ana Conesa, PhD. **, Head Genomics of Gene Expression Lab.
 
-For any question on STATegraEMS, users can send a mail to [paintomics@cipf.es](mailto:paintomics@cipf.es).
-
-
-<div class="imageContainer" style="text-align:center; font-size:10px; color:#898989" >
-    <img src="img/stategra_logo.png" title="The STATegra Project logo."/>
-    <img src="img/stategra_logo2.png" title="7th FRAMEWORK PROGRAMME, EUROPEAN COMMISSION"/>
-</div>
-
-<div class="imageContainer" style="margin-top:50px; text-align:center; font-size:10px; color:#898989" >
-    <img src="img/stategra_partners_logo.jpg" title="The STATegra Consorcium."/>
-</div>
+For any question on Paintomics, users can send a mail to [paintomics@cipf.es](mailto:paintomics@cipf.es).

@@ -29,6 +29,7 @@ function Pathway(ID) {
     this.ID = ID;
     this.name = "";
     this.classification = "";
+    this.source = "KEGG";
     this.pValue = 0;
     this.matchedCompounds = []; //IDENTIFIERS OF MATCHED COMPOUNDS, DATA IS AT JOBINSTANCE
     this.matchedGenes = []; //IDENTIFIERS OF MATCHED GENES, DATA IS AT JOBINSTANCE
@@ -36,8 +37,12 @@ function Pathway(ID) {
 
     //SIGNIFICANCE VALUES PER OMIC in format OmicName -> [totalFeatures, totalRelevantFeatures, pValue]
     this.significanceValues = null;
+    //ADJUSTED SIGNIFICANTE VALUES PER OMIC format OmicName -> {method: value, method2: value}
+    this.adjustedSignificanceValues = null;
     //SIGNIFICANCE COMBINED VALUE
-    this.combinedSignificancePvalue = 0;
+    this.combinedSignificancePvalues = null;
+    //SIGNIFICANCE ADJUSTED COMBINED VALUE
+    this.adjustedCombinedSignificanceValues = null;
     //GRAPHICAL INFORMATION
     this.graphicalOptions = null;
     this.totalFeatures = null;
@@ -63,7 +68,13 @@ function Pathway(ID) {
         this.url = classification;
     };
     this.getClassification = function () {
-        return this.classification;
+        return this.classification.toString();
+    };
+    this.setSource = function (source) {
+        this.source = source;
+    };
+    this.getSource = function () {
+        return this.source;
     };
     this.setPvalue = function (pValue) {
         this.pValue = pValue;
@@ -113,11 +124,29 @@ function Pathway(ID) {
     this.getSignificanceValues = function () {
         return this.significanceValues;
     };
-    this.setCombinedSignificanceValues = function (combinedSignificancePvalue) {
-        this.combinedSignificancePvalue = combinedSignificancePvalue;
+    this.setAdjustedSignificanceValues = function (adjustedSignificanceValues) {
+        this.adjustedSignificanceValues = adjustedSignificanceValues;
+    };
+    this.getAdjustedSignificanceValues = function () {
+        return this.adjustedSignificanceValues;
+    };
+    this.setCombinedSignificanceValues = function (combinedSignificancePvalues) {
+        this.combinedSignificancePvalues = combinedSignificancePvalues;
     };
     this.getCombinedSignificanceValues = function () {
-        return this.combinedSignificancePvalue;
+        return this.combinedSignificancePvalues;
+    };
+    this.getCombinedSignificanceValueByMethod = function (method) {
+        return this.combinedSignificancePvalues[method];
+    };
+    this.setAdjustedCombinedSignificanceValues = function (adjustedCombinedSignificanceValues) {
+        this.adjustedCombinedSignificanceValues = adjustedCombinedSignificanceValues;
+    };
+    this.getAdjustedCombinedSignificanceValues = function () {
+        return this.adjustedCombinedSignificanceValues;
+    };
+    this.getAdjustedCombinedSignificanceValueByMethod = function (method) {
+        return this.adjustedCombinedSignificanceValues[method];
     };
     this.setTotalFeatures = function (totalFeatures) {
         this.totalFeatures = totalFeatures;
@@ -144,6 +173,9 @@ function Pathway(ID) {
         }
         if (jsonObject.classification !== undefined) {
             this.classification = jsonObject.classification;
+        }
+        if (jsonObject.source !== undefined) {
+            this.source = jsonObject.source;
         }
         if (jsonObject.pValue !== undefined) {
             this.pValue = parseFloat(jsonObject.pValue);
@@ -172,8 +204,14 @@ function Pathway(ID) {
         if (jsonObject.significanceValues !== undefined) {
             this.significanceValues = jsonObject.significanceValues;
         }
-        if (jsonObject.combinedSignificancePvalue !== undefined) {
-            this.combinedSignificancePvalue = parseFloat(jsonObject.combinedSignificancePvalue);
+        if (jsonObject.adjustedSignificanceValues !== undefined) {
+            this.adjustedSignificanceValues = jsonObject.adjustedSignificanceValues;
+        }
+        if (jsonObject.combinedSignificancePvalues !== undefined) {
+            this.combinedSignificancePvalues = jsonObject.combinedSignificancePvalues;
+        }
+        if (jsonObject.adjustedCombinedSignificanceValues !== undefined) {
+            this.adjustedCombinedSignificanceValues = jsonObject.adjustedCombinedSignificanceValues;
         }
         if (jsonObject.graphicalOptions != null) {
             this.graphicalOptions = new PathwayGraphicalData().loadFromJSON(jsonObject.graphicalOptions);

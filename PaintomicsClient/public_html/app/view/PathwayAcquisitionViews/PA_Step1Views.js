@@ -86,7 +86,7 @@ function PA_Step1JobView() {
 				fileType: "DNAse-Seq quatification",
 				relevantFileType: "Relevant DNAse-Seq list"
 			});
-		} else if (type === "mirnaseq") {
+		} else if (type === "mirnabasedomic") {
 			newElem = new MiRNAOmicSubmittingPanel(this.nFiles);
 		} else if (type === "bedbasedomic") {
 			newElem = new RegionBasedOmicSubmittingPanel(this.nFiles);
@@ -98,7 +98,7 @@ function PA_Step1JobView() {
 		submitForm = this.getComponent().queryById("submittingPanelsContainer");
 		submitForm.insert(1, newElem.getComponent()).focus();
 
-		if (type !== "otheromic" && type !== "bedbasedomic") {
+		if (type !== "otheromic" && type !== "bedbasedomic" && type !== "mirnabasedomic") {
 			$("div.availableOmicsBox[title=" + type + "]").css("display", "none");
 		}
 
@@ -120,7 +120,8 @@ function PA_Step1JobView() {
 		var submitForm = this.getComponent().queryById("submittingPanelsContainer");
 		submitForm.remove(omicSubmittingPanel.getComponent());
 
-		if (omicSubmittingPanel.type !== "otheromic" && omicSubmittingPanel.type !== "bedbasedomic" && !this.exampleMode) {
+		if (omicSubmittingPanel.type !== "otheromic" && omicSubmittingPanel.type !== "bedbasedomic" &&
+		    omicSubmittingPanel.type !== "mirnabasedomic" && !this.exampleMode) {
 			$("div.availableOmicsBox[title=" + omicSubmittingPanel.type + "]").fadeIn();
 		}
 
@@ -183,18 +184,18 @@ function PA_Step1JobView() {
 	*
 	*/
 	this.submitFormHandler = function() {
-		var aux, regionBasedOmics;
+		var aux, omicBoxes;
 
-		regionBasedOmics = this.getComponent().queryById("submittingPanelsContainer").query("container[cls=omicbox regionBasedOmic]");
-		for (var i = regionBasedOmics.length; i--;) {
-			aux = regionBasedOmics[i].queryById("itemsContainer");
+		omicBoxes = this.getComponent().queryById("submittingPanelsContainer").query("container[cls=omicbox regionBasedOmic],[cls=omicbox miRNABasedOmic]");
+		for (var i = omicBoxes.length; i--;) {
+			aux = omicBoxes[i].queryById("itemsContainer");
 			if (aux === null || aux.isDisabled()) {
-				regionBasedOmics.splice(i, 1);
+				omicBoxes.splice(i, 1);
 			}
 		}
 
-		if (regionBasedOmics.length > 0) {
-			this.controller.step1SubmitRegionBasedOmics(this, regionBasedOmics);
+		if (omicBoxes.length > 0) {
+			this.controller.step1ComplexFormSubmitHandler(this, omicBoxes);
 		} else {
 			this.controller.step1OnFormSubmitHandler(this);
 		}
@@ -207,7 +208,7 @@ function PA_Step1JobView() {
 	this.checkForm = function() {
 		var items, valid, emptyFields;
 
-		items = this.getComponent().query("container[cls=omicbox], container[cls=omicbox regionBasedOmic]");
+		items = this.getComponent().query("container[cls=omicbox], container[cls=omicbox regionBasedOmic],[cls=omicbox miRNABasedOmic]");
 		valid = this.getComponent().queryById("speciesCombobox").isValid();
 		for (var i in items) {
 			valid = valid && items[i].isValid();
@@ -248,17 +249,21 @@ function PA_Step1JobView() {
 				html: '<div id="about">' +
 				' <h2>Welcome to PaintOmics (' + APP_VERSION + ')</h2>' +
 				' <p>' +
-				'   <b>Paintomics</b>  is a web tool for the integrative visualization of multiple omic datasets onto KEGG pathways.</br>' +
-				'   <b>Paintomics</b> consists of three simple steps:' +
+				'   <b>Paintomics</b>  is a web tool for the integrative visualization of multiple omic datasets onto KEGG pathways. Currently Paintomics supports integrated visualization of multiple species of different biological kingdoms and offers user the possibility to request any other organism present in the KEGG database.<br/><br/>' +
+				'   <b>Paintomics</b> is easy to run because the application itself guides you through the three different steps that are detailed next:' +
 				' </p>' +
 				' <ul> ' +
-				'   <li><b>Data uploading:</b> typically data matrices, containing, for example, gene expression, metabolite levels and metabolite levels for the same set of samples.</li> ' +
-				"   <li><b>Identifier and Name Matching and Metabolite assignment:</b> as Paintomics requires Entrez IDs for working with KEGG pathways, the tool will try to convert the names and identifiers from different sources and databases for the input data. Additionally, it's necessary to specify of metabolite assignments in ambiguity cases.</li>" +
-				'   <li><b>Pathway selection:</b> finally, Paintomics will obtain the list of KEGG Pathway that are ?.</li>' +
+				'   <li><b>Data uploading:</b>' +
+				'	<ol>' +
+				'		<li>Choose your organism (see selection box below).</li>' +
+				'		<li>Upload your multi-omic data (see form below). You can <a href="resources/paintomics_example_data.zip">download the example data from here</a> to check the format of the files. You can also load an example (<a class="button btn-secondary btn-inline btn-small" href="javascript:void(0)"><i class="fa fa-file-text-o"></i> Load example</a> button in the upper right corner of the screen) to explore Paintomics functionalities.</li>' +
+				'		<li>Click on <a class="button btn-success btn-inline btn-small" href="javascript:void(0)"><i class="fa fa-play"></i> Run PaintOmics</a> button.</li>' +
+				'	</ol><br/></li> ' +
+				'   <li><b>Identifier and Name Matching and Metabolite assignment:</b> Paintomics requires Entrez IDs for working with KEGG pathways, so the tool will convert the names and identifiers from different sources and databases in user’s the input data. This screen give users information about the number of features successfully mapped to KEGG pathways. It also shows the data distribution that will be used for pathway colouring, which can be modified when visualizing a pathway. Additionally, the metabolite names assignments are displayed and users can choose their favourite option in case of ambiguity. Click <a href="javascript:void(0)" class="button btn-success btn-inline btn-small"><i class="fa fa-play"></i> Next step</a> button when you are ready.<br/><br/></li>' +
+				'   <li><b>Results:</b> Pathways summary, Pathways classification, Pathways network, Pathways enrichment, Pathways visualization (by clicking <a href="javascript:void(0)" class="button btn-inline btn-small"  style="background-color:#ADA6A6;font-size: 14px;"><i class="fa fa-paint-brush"></i></a> for any of the displayed pathways in Pathways enrichment section). Read more about these analyses in <a href="http://paintomics.readthedocs.io/en/latest/" target="_blank">our documentation</a>.</li>' +
 				' </ul>' +
 				' <p>' +
-				'   Currently <b>Paintomics</b> supports integrated visualization of multipel species of different biological kingdoms and offers user the possibility to request any other organism present in the KEGG database.</br>' +
-				'   Please check the <b><a href="http://paintomics.readthedocs.org/en/latest/" target="_blank">User guide</a></b> for further information. For any question on <b>Paintomics</b>, users can send a mail to <a href="mailto:paintomics@cipf.es">paintomics@cipf.es</a>.' +
+				'   Please check the <b><a href="http://paintomics.readthedocs.org/en/latest/" target="_blank">User guide</a></b> for further information. For any question on <b>Paintomics</b>, you can send an e-mail to <a href="mailto:paintomics@cipf.es">paintomics@cipf.es</a>.' +
 				' </p>' +
 				'</div>'
 			}, {
@@ -268,39 +273,76 @@ function PA_Step1JobView() {
 				layout: {type: 'vbox', align: 'stretch'},
 				defaults: {labelAlign: "right", border: false},
 				items: [
-					{xtype: "box", flex: 1, html:'<h2>Data uploading</h2><h3>1. Organism selection </h3>'},
-					{
-						xtype: 'combo',fieldLabel: 'Organism', name: 'specie',
-						maxWidth: 450,
-						itemId: "speciesCombobox",
-						allowBlank: false,
-						forceSelection: true,
-						emptyText: 'Please choose an organism',
-						displayField: 'name',
-						valueField: 'value',
-						editable: false,
-						store: Ext.create('Ext.data.ArrayStore', {
-							fields: ['name', 'value'],
-							autoLoad: true,
-							proxy: {
-								type: 'ajax',
-								url: SERVER_URL_GET_AVAILABLE_SPECIES,
-								reader: {
-									type: 'json',
-									root: 'species',
-									successProperty: 'success'
+					{xtype: "box", flex: 1, html:'<h2>Data uploading</h2><h3>1. Organism and database selection </h3>'},
+					{xtype: "container", flex: 1, layout: {type: "hbox"}, items: [
+						{
+							xtype: "container", layout: { type: "vbox", align: "stretch" }, flex: 0.4, items: [
+							{
+								xtype: 'combo',fieldLabel: 'Organism', name: 'specie',
+								style: "margin: 10px 10px 10px 20px;",
+								flex: 1,
+								maxWidth: 450,
+								itemId: "speciesCombobox",
+								allowBlank: false,
+								forceSelection: true,
+								emptyText: 'Please choose an organism',
+								displayField: 'name',
+								valueField: 'value',
+								queryMode: 'local',
+								store: Ext.create('Ext.data.ArrayStore', {
+									fields: ['name', 'value'],
+									autoLoad: true,
+									sortOnLoad: true,
+									remoteSort: false,
+									sorters: [{
+							        property: 'name',
+							        direction: 'ASC'
+							    }],
+									proxy: {
+										type: 'ajax',
+										url: SERVER_URL_GET_AVAILABLE_SPECIES,
+										reader: {
+											type: 'json',
+											root: 'species',
+											successProperty: 'success'
+										}
+									}
+								})
+							},
+							{
+								xtype: "box", flex: 1, html:
+								'<span class="infoTip" style=" font-size: 12px; margin-left: 140px; margin-bottom: 10px;">'+
+								' Not your organism? Request new organisms <a href="javascript:void(0)" id="newOrganismRequest" style="color: rgb(211, 21, 108);">clicking here</a>.' +
+								'</span>'
+							}]
+						},
+						{xtype: "container", layout: { type: "vbox", align: "stretch" }, flex: 0.6, hidden: true, items: [
+								{
+									xtype: 'checkboxgroup', fieldLabel: 'Databases',
+									style: "margin: 10px 10px 10px 20px;",
+									maxWidth: 450,
+									allowBlank: false,
+									columns: 2,
+									disabled: true,
+									/* Hardcoded DBs (they can be considered static) */
+									items: [
+											/* Only for information, KEGG database is added always on server side */
+											{ boxLabel: 'KEGG (required)', name: 'databases[]', inputValue: 'KEGG', checked: true, disabled: true },
+											{ boxLabel: 'MapMan', name: 'databases[]', inputValue: 'MapMan', checked: false },
+									]
+								},
+								{
+									xtype: "box", flex: 1, html:
+									'<span class="infoTip" style=" font-size: 12px; margin-left: 140px; margin-bottom: 10px;">'+
+									' For <span style="color: rgb(211, 21, 108);">some</span> species more than one database might be available. Choose which ones do you want to include in the analysis.' +
+									'</span>'
 								}
-							}
-						})
+							]
+						}]
 					},
 					{
-						xtype: "box", flex: 1, html:
-						'<span class="infoTip" style=" font-size: 12px; margin-left: 120px; margin-bottom: 10px;">'+
-						' Not your organism? Request new organisms <a href="javascript:void(0)" id="newOrganismRequest" style="color: rgb(211, 21, 108);">clicking here</a>.' +
-						'</span>'
-					},{
 						xtype: "box",
-						html: '<h3>2. Choose the files to upload </h3>'
+						html: '<h3>2. Choose the files to upload <a class="button btn-right btn-small" href="http://bioinfo.cipf.es/paintomics/resources/paintomics_example_data.zip"><i class="fa fa-download"></i> Download example data</a></h3>'
 					}, {
 						xtype: "container",
 						layout: 'hbox',
@@ -314,6 +356,7 @@ function PA_Step1JobView() {
 							'<div class="availableOmicsBox" title="geneexpression"><h4><a href="javascript:void(0)"><i class="fa fa-plus-circle"></i></a> Gene Expression</h4></div>' +
 							'<div class="availableOmicsBox" title="metabolomics"><h4><a href="javascript:void(0)"><i class="fa fa-plus-circle"></i></a> Metabolomics</h4></div>' +
 							'<div class="availableOmicsBox" title="proteomics"><h4><a href="javascript:void(0)"><i class="fa fa-plus-circle"></i></a> Proteomics</h4></div>' +
+							'<div class="availableOmicsBox" title="mirnabasedomic"><h4><a href="javascript:void(0)"><i class="fa fa-plus-circle"></i></a> Regulatory omic</h4></div>' +
 							'<div class="availableOmicsBox" title="bedbasedomic"><h4><a href="javascript:void(0)"><i class="fa fa-plus-circle"></i></a> Region based omic</h4></div>' +
 							'<div class="availableOmicsBox" title="otheromic"><h4><a href="javascript:void(0)"><i class="fa fa-plus-circle"></i></a> Other omics</h4></div>'
 						}, {
@@ -698,6 +741,10 @@ function RegionBasedOmicSubmittingPanel(nElem, options) {
 
 		field = component.queryById("tertiaryFileSelector");
 		field.setValue("example/mmu_reference.gtf");
+		field.setDisabled(true);
+
+		field = component.queryById("omicNameField");
+		field.setValue("Region-omic");
 		field.setDisabled(true);
 
 		var otherFields = ["distanceField", "tssDistanceField", "promoterDistanceField", "geneAreaPercentageField", "regionAreaPercentageField", "gtfTagField", "summarizationMethodField", "reportSelector1","reportSelector2"];
@@ -1271,15 +1318,14 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 	this.setExampleMode = function(){
 		var component = this.getComponent();
 		//component.queryById("toogleMapRegions").setVisible(false);
-
 		component = component.queryById("itemsContainer");
 
 		var field = component.queryById("mainFileSelector");
-		field.setValue("example/" + this.type + "_example.tab");
+		field.setValue("example/mirna_unmapped.tab");
 		field.setDisabled(true);
 
 		field = component.queryById("secondaryFileSelector");
-		field.setValue("example/" + this.type + "_relevant_example");
+		field.setValue("example/mirna_unmapped_relevant.tab");
 		field.setDisabled(true);
 
 		field = component.queryById("mirnaTargetsFileSelector");
@@ -1290,10 +1336,17 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 		field.setValue("example/gene_expression_values.tab");
 		field.setDisabled(true);
 
+		field = component.queryById("omicNameField");
+		field.setValue("miRNA");
+		field.setDisabled(true);
+
 		var otherFields = ["summarizationMethodField"];
 		for(var i in otherFields){
 			field = component.queryById(otherFields[i]);
-			field.setReadOnly(true);
+
+			if (field != null) {
+			    field.setReadOnly(true);
+			}
 		}
 	};
 	this.setContent = function(target, values) {
@@ -1337,7 +1390,6 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 			flex: 1,
 			type: me.type,
 			cls: "omicbox miRNABasedOmic",
-			itemId: "itemsContainerAlt",
 			layout: {
 				align: 'stretch',
 				type: 'vbox'
@@ -1351,14 +1403,88 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 				'</h4>'
 			},
 			{
+				xtype: "box",
+				itemId: "toogleMapRegions",
+				hidden: !this.allowToogle,
+				html: '<div class="checkbox" style=" margin: 10px 50px; font-size: 16px; "><input type="checkbox" id="' + this.namePrefix + '_mapRegions"><label for="' + this.namePrefix + '_mapRegions">My miRNAs are already mapped to Gene IDs, skip this step.</label></div>'
+			},
+			{
 				xtype: "container",
 				itemId: "itemsContainerAlt",
 				layout: {
 					align: 'stretch',
 					type: 'vbox'
-				},//TODO
-				items:[],
-				hidden: true
+				},
+				disabled: true,
+				defaults: {
+					labelAlign: "right",
+					labelWidth: 150,
+					maxLength: 100,
+					maxWidth: 500
+				},
+				hidden: true,
+				items: [{
+					xtype: 'combo',
+					fieldLabel: 'Omic Name',
+					name: this.namePrefix + '_omic_name',
+					value: this.omicName,
+					itemId: "omicNameField",
+					displayField: 'name',
+					valueField: 'name',
+					emptyText: 'Type or choose the omic type',
+					queryMode: 'local',
+					hidden: this.omicName !== "",
+					editable: true,
+					allowBlank: false,
+					store: Ext.create('Ext.data.ArrayStore', {
+						fields: ['name'],
+						autoLoad: true,
+						proxy: {
+							type: 'ajax',
+							url: 'resources/data/all_omics.json',
+							reader: {
+								type: 'json',
+								root: 'omics',
+								successProperty: 'success'
+							}
+						}
+					})
+				}, {
+					xtype: "myFilesSelectorButton",
+					fieldLabel: 'Data file',
+					namePrefix: this.namePrefix,
+					itemId: "mainFileSelector",
+					helpTip: "Upload the feature quantification file (Gene expression, proteomics quantification,...) or choose it from your data folder."
+				}, {
+					xtype: 'textfield',
+					fieldLabel: 'File Type',
+					name: this.namePrefix + '_file_type',
+					itemId: "fileTypeSelector",
+					value: "Map file (miRNA mapped to Genes)",
+					hidden: true,
+					helpTip: "Specify the type of data for uploaded file (Gene Expression file, Proteomic quatification,...)."
+				}, {
+					xtype: "myFilesSelectorButton",
+					fieldLabel: 'Relevant features file',
+					namePrefix: this.namePrefix + '_relevant',
+					itemId: "secondaryFileSelector",
+					helpTip: "Upload the list of relevant features (relevant genes, relevant proteins,...)."
+				}, {
+					xtype: 'textfield',
+					fieldLabel: 'File Type',
+					name: this.namePrefix + '_relevant_file_type',
+					itemId: "relevantFileTypeSelector",
+					value: "Relevant miRNA list (mapped to Genes)",
+					hidden: true,
+					helpTip: "Specify the type of data for uploaded file (Relevant Genes list, Relevant proteins list,...)."
+				}, {
+					xtype: 'textfield',
+					fieldLabel: 'Map to',
+					name: this.namePrefix + '_match_type',
+					itemId: "mapToSelector",
+					value: this.mapTo,
+					hidden: true
+				}],
 			},
 			{
 				xtype: "container",
@@ -1639,6 +1765,10 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 		listeners: {
 			boxready: function() {
 				initializeTooltips(".helpTip");
+
+				$("#" + me.namePrefix + "_mapRegions").change(function() {
+					me.toogleContent();
+				});
 
 				$(this.getEl().dom).find("a.deleteOmicBox").click(function() {
 					me.removeOmicSubmittingPanel();

@@ -65,8 +65,10 @@ Ext.define('Ext.grid.column.ActionCustom', {
         for (; i < len; i++) {
             item = items[i];
 
+            item_tooltip = (typeof(item.tooltip) == "function") ? item.tooltip(v, meta, record, rowIdx, colIdx, store, view) : item.tooltip;
+
             disabled = item.disabled || (item.isDisabled ? item.isDisabled.call(item.scope || scope, view, rowIdx, colIdx, item, record) : false);
-            tooltip = disabled ? null : (item.tooltip || (item.getTip ? item.getTip.apply(item.scope || scope, arguments) : null));
+            tooltip = disabled ? null : (item_tooltip || (item.getTip ? item.getTip.apply(item.scope || scope, arguments) : null));
 
             // Only process the item action setup once.
             if (!item.hasActionConfiguration) {
@@ -76,9 +78,13 @@ Ext.define('Ext.grid.column.ActionCustom', {
                 item.enable = Ext.Function.bind(me.enableAction, me, [i], 0);
                 item.hasActionConfiguration = true;
             }
+
+            // If text is a function, call it and use the return value as text
+            var rowText = (typeof(item.text) == "function") ? item.text(v, meta, record, rowIdx, colIdx, store, view): item.text;
+
             ret += '<a href="' + ((item.href !== undefined) ? item.href : 'javascript:void(0)') + '" ' + ((item.style !== undefined) ? 'style="' + item.style + '"' : '') + ' class="helpTip ' + prefix + 'action-col-icon ' + prefix + 'action-col-' + String(i) + ' ' + (disabled ? prefix + 'item-disabled' : ' ') +
                     ' ' + (Ext.isFunction(item.getClass) ? item.getClass.apply(item.scope || scope, arguments) : (item.iconCls || me.iconCls || '')) + '"' +
-                    (tooltip ? ' title="' + tooltip + '"' : '') + '>' + '<i class="fa ' + item.icon + '"></i> ' + item.text + '</a>';
+                    (tooltip ? ' title="' + tooltip + '"' : '') + '>' + '<i class="fa ' + item.icon + '"></i> ' + rowText + '</a>';
         }
         return ret;
     },
@@ -127,6 +133,12 @@ Ext.define('Ext.grid.LiveSearchGridPanel', {
     tagsProtect: '\x0f', // DEL ASCII code
     download: false,
     multidelete: false,
+    databases: [],
+    adjustedPvaluesMethods: [],
+    combinedPvaluesMethods: [],
+    selectedAdjustedMethod: null,
+    selectedCombinedMethod: null,
+	enableConfigure: false,
     stripeRows: true,
     viewConfig: {
         markDirty: false,
@@ -166,10 +178,109 @@ Ext.define('Ext.grid.LiveSearchGridPanel', {
                 handler: me.caseSensitiveToggle,
                 scope: me
             }, 'Case sensitive',
+            /* Splice position: -3 */
             '->',
             ((me.download !== false) ? '<a class="downloadXLS" href="javascript:void(0)"><i class="fa fa-file-excel-o"></i> Download as XLS</a>' : ""),
             ((me.multidelete !== false) ? '<a class="multiDelete" style="color:rgb(242, 105, 105);" href="javascript:void(0)"><i class="fa fa-trash"></i> Delete selected</a>' : "")
         ];
+
+        if (me.databases.length > 1) {
+          /* Add a separator then the extra checkboxes */
+          var database_options = ['-', '<span style="margin: 0 5px 0 10px;font-weight: bold;">Databases to view:</span>'];
+
+          me.databases.forEach(function(source) {
+            database_options.push({
+              xtype: 'checkbox',
+              hideLabel: true,
+              margin: '0 0 0 4px',
+              handler: me.databaseToggle,
+              name: 'database',
+              scope: me,
+              inputValue: source,
+              checked: true
+            }, source);
+          });
+
+          me.tbar.splice(-3, 0, ...database_options);
+        }
+
+        if (me.adjustedPvaluesMethods.length || me.combinedPvaluesMethods.length) {
+          var pvalue_filter_options = ['-'];
+
+          if (me.adjustedPvaluesMethods.length) {
+              pvalue_filter_options.push('<span style="margin: 0 5px 0 10px;font-weight: bold;">Show FDR:</span>');
+
+              pvalue_filter_options.push({
+                  xtype: 'combobox',
+                  name: 'adjustedpvalue_select',
+                  allowBlank: false,
+                  editable: false,
+                  triggerAction: 'all',
+                  typeAhead: false,
+                  queryMode: 'local',
+                  store: ['None'].concat(me.adjustedPvaluesMethods),
+                  value: me.selectedAdjustedMethod,
+                  listeners: {
+                    'select': function( combo, records, eOpts ) {
+                      me.methodPvalueToggle( combo, records, eOpts);
+                      me.fireEvent("adjustedMethodChanged", records);
+                    },
+                    scope: me
+                  }
+              });
+          }
+
+          if (me.combinedPvaluesMethods.length > 1) {
+              pvalue_filter_options.push('<span style="margin: 0 5px 0 10px;font-weight: bold;">Show combined p-values:</span>');
+
+              pvalue_filter_options.push({
+                  xtype: 'combobox',
+                  name: 'combinedpvalue_select',
+                  allowBlank: false,
+                  editable: false,
+                  triggerAction: 'all',
+                  typeAhead: false,
+                  queryMode: 'local',
+                  store: me.combinedPvaluesMethods,
+                  value: me.selectedCombinedMethod,
+                  listeners: {
+                    'select': function( combo, records, eOpts ) {
+                      me.methodPvalueToggle( combo, records, eOpts);
+                      me.fireEvent("combinedMethodChanged", records);
+                    }
+                  }
+              });
+              
+              pvalue_filter_options.push({
+                  xtype: 'component',
+				  id: 'configureButton',
+                  autoEl: {
+                        tag: 'a',
+                        href: '#',
+                        html: ' Configure',
+                        cls: 'fa fa-cog',
+					  	title: 'Customize weights (only for Stouffer method)'
+                    },
+                  hidden: false,
+				  disabled: ! me.enableConfigure,
+                  listeners: {
+                        render: function(c){
+                            c.getEl().on({
+                                click: function() {
+									if (! c.isDisabled()) {
+										me.fireEvent("clickConfigure", c);
+									}
+                                }
+                            });
+                        }
+                    }
+              });
+          }
+
+          pvalue_filter_options.push('-')
+
+          me.tbar.splice(-2, 0, ...pvalue_filter_options);
+        }
 
         me.callParent(arguments);
     },
@@ -253,6 +364,74 @@ Ext.define('Ext.grid.LiveSearchGridPanel', {
     regExpToggle: function (checkbox, checked) {
         this.regExpMode = checked;
         this.onTextFieldChange();
+    },
+    /**
+     * Enable/disable source databases in the table view
+     * @private
+     */
+    databaseToggle: function (checkbox, checked) {
+        var me = this;
+        var db_cboxes = me.query('checkbox[name=database]').map(function(elem) {
+          if (elem.checked) {
+            return(elem.inputValue);
+          }
+        });
+
+        me.view.refresh();
+        me.store.addFilter({id: "database", filterFn: function(item) {
+          return(db_cboxes.indexOf(item.raw.source) !== -1);
+        }, root: 'data'});
+        me.getSelectionModel().deselectAll();
+    },
+    /**
+     * Enable/disable adjusted p-values method columns in the table view
+     * @private
+     */
+    methodPvalueToggle: function ( combo, records, eOpts ) {
+        var me = this;
+        
+        // Store instance
+        var gridStore = me.down("gridview").getStore();
+
+        // Selected record value (only one)
+        var selectedFDR = records[0].raw[0];
+
+        // Get values
+        var hideValues = combo.store.getRange().map(x => x.raw[0]).filter(option => option != 'None' && option != selectedFDR)
+
+        // Iterate over all columns
+        // Position 6: "Significance tests"
+        var allColumns = me.initialConfig.columns[6].columns;
+        
+        // Avoid showing FDR of not selected combined p-values
+        var comboNames = ["combinedpvalue_select", "adjustedpvalue_select"].filter(name => name != combo.getName());
+        var otherCombo = me.down("[name=" + comboNames.toString() + "]");
+        
+        if (otherCombo) {
+            hideValues = hideValues.concat(otherCombo.store.getRange().map(x => x.raw[0]).filter(option => option != 'None' && option != otherCombo.getValue()));
+        }
+        
+        me.suspendLayouts();
+ 
+        allColumns.forEach(function(column) {
+          // If the column has the dataIndex attribute, search for patterns
+          // to hide/show the column.
+          if (column.dataIndex) {
+            if (hideValues.length && column.dataIndex.match('(' + hideValues.join('|') + ')')) {
+               column.hidden = true;
+            } else if (column.dataIndex.match(selectedFDR)) {
+               column.hidden = false;
+            }
+          }
+        });
+        
+        // Replace initial config
+        me.initialConfig.columns[6].columns = allColumns;
+       
+        me.reconfigure(gridStore, me.initialConfig.columns);
+        me.resumeLayouts();
+                
+        me.down("gridview").refresh();
     }
 });
 
@@ -1242,3 +1421,132 @@ Ext.dom.Element.override((function () {
         }
     };
 }()));
+
+/**
+ * @class Ext.dom.Element
+ */
+Ext.define('Ext.slider.MultiCustom', {
+    // extend: 'Ext.form.FieldContainer',
+    extend: 'Ext.panel.Panel',
+    alias: 'widget.multicustomslider',
+    layout:  {
+      type: 'hbox',
+      align: 'stretch',
+      pack: 'center'
+    },
+
+    style: 'margin: 10px auto;',
+
+    config: {
+      // dataCallback: null,
+      // dataOmic: null,
+      // dataValues: null,
+      minValue: 0,
+      maxValue: 0,
+      customValues: [0, 0]
+      // idMinValue: null,
+      // idMaxValue: null
+    },
+
+    initComponent: function() {
+
+      var me = this;
+
+      // Force the values to be integers
+      // TODO: remove this limitation in the future?
+      me.minValue = Math.round(me.minValue);
+      me.maxValue = Math.round(me.maxValue);
+      me.customValues = [Math.round(me.customValues[0]), Math.round(me.customValues[1])];
+
+      //
+      me.idMinValue =
+
+      this.items = [
+          {
+            xtype: 'hiddenfield',
+            id: me.id + "_customMinValue",
+            name: me.id + "_customMinValue",
+            value: me.customValues[0]
+          },
+          {
+            xtype: 'hiddenfield',
+            id: me.id + "_customMaxValue",
+            name: me.id + "_customMaxValue",
+            value: me.customValues[1]
+          },
+          {
+              xtype: 'numberfield',
+              // hideTrigger: true,
+              // flex: 0.25,
+              // style: 'margin-right:10px',
+              width: 50,
+              name: 'minvalue',
+              // cls: 'unstyled',
+              value: this.customValues[0],
+              minValue: this.minValue,
+              maxValue: this.customValues[1],
+              hideLabel: true,
+              listeners: {
+                  change: function(numberField, newValue, oldValue, eOpts){
+                      this.up('panel').down("numberfield[name=maxvalue]").setMinValue(newValue);
+                      this.up('panel').down('multislider').setValue(0, newValue);
+                  }
+              }
+          },
+          {
+              xtype: 'multislider',
+              flex: 1,
+              values: this.customValues,
+              minValue: this.minValue,
+              maxValue: this.maxValue,
+              hideLabel: true,
+              listeners: {
+                  change: function(slider, newValue, thumb, eOpts){
+                      var newValues = slider.getValues();
+
+                      // Update min/max values
+                      this.up('panel').down('numberfield[name=maxvalue]').setValue(newValues[1]);
+                      this.up('panel').down('numberfield[name=minvalue]').setValue(newValues[0]);
+
+                      this.up('panel').down('hiddenfield[name="' + me.id + "_customMinValue" + '"]').setValue(newValues[0]);
+                      this.up('panel').down('hiddenfield[name="' + me.id + "_customMaxValue" + '"]').setValue(newValues[1]);
+
+                      // me.dataValues.splice(11, 2, ...newValues);
+
+                      // Callback must point to setDataDistributionSummaries(newDistribution, omicName)
+                      // me.dataCallback(me.dataValues, me.dataOmic);
+                  }
+              }
+          },
+          {
+              xtype: 'numberfield',
+              // hideTrigger: true,
+              // flex: 0.25,
+              // style: 'margin-left:10px',
+              width: 50,
+              name: 'maxvalue',
+              // cls: 'unstyled',
+              value: this.customValues[1],
+              minValue: this.customValues[0],
+              maxValue: this.maxValue,
+              listeners: {
+                  change: function(numberField, newValue, oldValue, eOpts){
+                    this.up('panel').down("numberfield[name=minvalue]").setMaxValue(newValue);
+                    this.up('panel').down('multislider').setValue(1, newValue);
+                  }
+              }
+          }
+      ];
+
+      this.callParent(arguments);
+    },
+
+    getValues: function() {
+        return [
+          parseInt(this.down('hiddenfield[name="' + this.id + "_customMinValue" + '"]').getValue()),
+          parseInt(this.down('hiddenfield[name="' + this.id + "_customMaxValue" + '"]').getValue())
+        ];
+    },
+
+
+});

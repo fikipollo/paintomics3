@@ -38,11 +38,15 @@ class Job(Model):
     def __init__(self, jobID, userID, CLIENT_TMP_DIR):
         self.jobID = jobID
         self.date = formatDate("%Y%m%d%H%M")
+        self.accessDate = formatDate("%Y%m%d%H%M")
         self.userID = userID
         self.lastStep = 1
         self.description=""
 
         self.organism = ""
+
+        # LIST OF DATABASES TO USE
+        self.databases = []
 
         #FIRST STEP GET THE DIRECTORIES FOR THE JOB
         self.setDirectories(CLIENT_TMP_DIR)
@@ -89,15 +93,23 @@ class Job(Model):
     def getOutputDir(self):
         return self.outputDir
     def setDirectories(self, CLIENT_TMP_DIR):
+        # Assign the userID as directory or "nologin" if is null
+        userDir = self.userID if self.userID is not None else "nologin"
+
         #FIRST STEP GET THE DIRECTORIES FOR THE JOB
-        self.inputDir    = CLIENT_TMP_DIR + self.userID + "/inputData/"
-        self.temporalDir = CLIENT_TMP_DIR + self.userID + "/tmp/" + self.jobID
-        self.outputDir   = CLIENT_TMP_DIR + self.userID + "/jobsData/" + self.jobID + "/output/"
+        self.inputDir    = CLIENT_TMP_DIR + userDir + "/inputData/"
+        self.temporalDir = CLIENT_TMP_DIR + userDir + "/tmp/" + self.jobID
+        self.outputDir   = CLIENT_TMP_DIR + userDir + "/jobsData/" + self.jobID + "/output/"
 
     def setOrganism(self, organism):
         self.organism = organism
     def getOrganism(self):
         return self.organism
+
+    def setDatabases(self, databases):
+        self.databases = databases
+    def getDatabases(self):
+        return self.databases
 
     def setReferenceInputs(self, referenceInputs):
         self.referenceInputs = referenceInputs
@@ -119,6 +131,7 @@ class Job(Model):
         return self.geneBasedInputOmics
     def addGeneBasedInputOmic(self, geneBasedInputOmic):
         self.geneBasedInputOmics.append(geneBasedInputOmic)
+
 
     def setInputCompoundsData(self, inputCompoundsData):
         self.inputCompoundsData = inputCompoundsData
@@ -252,15 +265,25 @@ class Job(Model):
                         #*************************************************************************
                         # STEP 2.C.1 CREATE A NEW OMIC VALUE WITH ROW DATA
                         #*************************************************************************
-                        omicValueAux = OmicValue(line[0])
+
+                        # Split the ID column as it might contain associated_gene:::original_name
+                        columnID = line[0].split(":::")
+
+                        omicValueAux = OmicValue(columnID[0])
                         omicValueAux.setOmicName(omicName)
-                        omicValueAux.setRelevant(relevantFeatures.has_key(omicValueAux.getInputName().lower()))
+                        # omicValueAux.setRelevant(relevantFeatures.has_key(omicValueAux.getInputName().lower()))
+                        # TODO: Relevant flag using whole line including original name?
+                        omicValueAux.setRelevant(relevantFeatures.has_key(line[0].lower()))
                         omicValueAux.setValues(map(float, line[1:len(line)]))
+
+                        if len(columnID) > 1:
+                            omicValueAux.setOriginalName(columnID[1])
+
                         #*************************************************************************
                         # STEP 2.C.2 CREATE A NEW TEMPORAL GENE INSTANCE
                         #*************************************************************************
                         geneAux = Gene("")
-                        geneAux.setName(line[0])
+                        geneAux.setName(columnID[0])
                         geneAux.addOmicValue(omicValueAux)
                         #*************************************************************************
                         # STEP 2.C.3 ADD THE TEMPORAL GENE INSTANCE TO THE LIST OF GENES
@@ -275,7 +298,7 @@ class Job(Model):
                 #*************************************************************************
                 # STEP 3. MAP TH FEATURE NAMES TO KEGG IDs
                 #*************************************************************************
-                foundFeatures, parsedFeatures, notMatchedFeatures = mapFeatureNamesToKeggIDs(self.getJobID(), self.getOrganism(), parsedFeatures)
+                foundFeatures, parsedFeatures, notMatchedFeatures = mapFeatureNamesToKeggIDs(self.getJobID(), self.getOrganism(), self.getDatabases(), parsedFeatures)
                 totalMappedFeatures = len(parsedFeatures)
                 matchedFeaturesFileContent =""
                 notMatchedFeaturesFileContent =""
@@ -283,7 +306,7 @@ class Job(Model):
                 #TODO: HACER ESTE METODO MULTITHREADING -> locker
                 for parsedFeature in parsedFeatures:
                     self.addInputGeneData(parsedFeature)
-                    matchedFeaturesFileContent += parsedFeature.getOmicsValues()[0].getInputName() + '\t' + parsedFeature.getName() + '\t' + parsedFeature.getID() + '\t' + '\t'.join(map(str,parsedFeature.getOmicsValues()[0].getValues())) + "\n"
+                    matchedFeaturesFileContent += parsedFeature.getOmicsValues()[0].getInputName() + '\t' + parsedFeature.getName() + '\t' + parsedFeature.getID() +  '\t' + '\t'.join(map(str,parsedFeature.getOmicsValues()[0].getValues())) + "\n"
 
                 for parsedFeature in notMatchedFeatures:
                     notMatchedFeaturesFileContent += parsedFeature.getName() + '\t' + '\t' + '\t'.join(map(str,parsedFeature.getOmicsValues()[0].getValues())) + "\n"
@@ -323,9 +346,13 @@ class Job(Model):
             logging.info("DISTRIBUTION FOR " + omicName  + "WITHOUT OUTLIERS: MIN: " + str(summary[7])  + "; MAX: " + str(summary[8])  + "; #OUTLIERS: " + str(len(outliers)))
 
             logging.info("PARSING USER GENE BASED FILE (" + omicName + ")... DONE" )
+
+            # Total unique mapped features. "Total" if there are more than one database
+            totalMapped = foundFeatures.get("Total", foundFeatures.values()[0])
+
             #   0        1       2    3    4    5     6,   7   8      9        10
             #[MAPPED, UNMAPPED, MIN, P10, Q1, MEDIAN, Q3, P90, MAX, MIN_IR, Max_IR]
-            return [omicName, [foundFeatures, totalInputFeatures - foundFeatures] + summary ]
+            return [omicName, [foundFeatures, totalInputFeatures - totalMapped] + summary ]
 
         else:
             logging.error("PARSING USER GENE BASED FILE (" + omicName + ")... FAILED. File " + valuesFileName + " NOT FOUND")
@@ -405,9 +432,9 @@ class Job(Model):
             foundFeatures, parsedFeatures, notMatchedFeatures = mapFeatureNamesToCompoundsIDs(self.getJobID(), inputCompounds)
             for parsedFeature in parsedFeatures:
                 #STEP 2.C.3 ADD THE TEMPORAL COMPOUND INSTANCE TO THE LIST OF COMPOUNDS
-                for compoundAux in parsedFeature["mainCompounds"]:
+                for compoundAux in parsedFeature.getMainCompounds():
                     self.addInputCompoundData(compoundAux)
-                for compoundAux in parsedFeature["otherCompounds"]:
+                for compoundAux in parsedFeature.getOtherCompounds():
                     self.addInputCompoundData(compoundAux)
 
             #GENERATE SOME STATISTICS
@@ -433,7 +460,9 @@ class Job(Model):
 
             logging.info("PARSING COMPOUND BASED FILE (" + omicName + ")... DONE" )
 
-            return [omicName, checkBoxesData  + list(parsedFeatures), [-1,-1] + summary ]
+            # TODO: changed to assign the foundFeatures/notMatchedFeatures but they are not the same as the raw data (duplicated compounds?)
+            # return [omicName, checkBoxesData  + list(parsedFeatures), [-1,-1] + summary ]
+            return [omicName, checkBoxesData + list(parsedFeatures), [foundFeatures, len(notMatchedFeatures)] + summary]
         else:
             logging.error("PARSING USER COMPOUND BASED FILE (" + omicName + ")... FAILED. File " + valuesFileName + " NOT FOUND")
 
@@ -451,10 +480,17 @@ class Job(Model):
             with open(fileName, 'rU') as inputDataFile:
                 for line in csv_reader(inputDataFile, delimiter="\t"):
                     if(isBedFormat == True):
-                        line = line[0] + "_" + line[1] + "_" + line[2]
+                        lineProc = line[0] + "_" + line[1] + "_" + line[2]
                     else:
-                        line = line[0]
-                    relevantFeatures[line.lower()] = 1
+                        lineProc = line[0]
+
+                    # If the relevants file is not in BED format and contains more than 1 column, it means
+                    # that the second one contains the original ID
+                    if len(line) > 1 and not isBedFormat:
+                        featureID = ":::".join([line[0], line[1]]).lower()
+                    else:
+                        featureID = lineProc.lower()
+                    relevantFeatures[featureID] = 1
             inputDataFile.close()
             logging.info("PARSING RELEVANT FEATURES FILE (" + fileName + ")... THE FILE CONTAINS " + str(len(relevantFeatures.keys())) + " RELEVANT FEATURES" );
         else:

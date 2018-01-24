@@ -253,6 +253,25 @@ def userManagementNewGuestSession(request, response):
             daoInstance.closeConnection()
         return response
 
+def userManagementNewNoLoginSession(request, response):
+
+    try :
+        #****************************************************************
+        # Step 1. INITIALIZE EMPTY USER INSTANCE
+        #****************************************************************
+        logging.info("STEP1 - START 'NO LOGIN' session..." )
+
+        initializeUserDirectories(None)
+
+        # sessionToken = UserSessionManager().registerNewUser("" + str(userID))
+
+        response.setContent({"success": True, "userID": None, "userName": None, "sessionToken" : None, "p": None})
+
+    except Exception as ex:
+        handleException(response, ex, __file__ , "userManagementNewNoLoginSession")
+    finally:
+        return response
+
 def userManagementChangePassword(request, response):
     # VARIABLE DECLARATION
     userInstance = None
@@ -310,12 +329,22 @@ def getRandowWord(minLength):
 
 def initializeUserDirectories(userID):
     import os.path
-    if os.path.isfile(CLIENT_TMP_DIR + userID):
-        import shutil
-        shutil.rmtree(CLIENT_TMP_DIR + 'userID') #THIS SHOULD NEVER HAPPEN!!!
 
-    os.mkdir(CLIENT_TMP_DIR + userID)
-    os.mkdir(CLIENT_TMP_DIR + userID + "/inputData")
-    os.mkdir(CLIENT_TMP_DIR + userID + "/jobsData")
-    os.mkdir(CLIENT_TMP_DIR + userID + "/tmp")
+    # If there is a "nologin" session create the "nologin" dir if it does not exists
+    if userID is None:
+        if not os.path.exists(CLIENT_TMP_DIR + "nologin"):
+            os.makedirs(CLIENT_TMP_DIR + "nologin")
+
+            os.mkdir(CLIENT_TMP_DIR + "/nologin/inputData")
+            os.mkdir(CLIENT_TMP_DIR + "/nologin/jobsData")
+            os.mkdir(CLIENT_TMP_DIR + "/nologin/tmp")
+    else:
+        if os.path.isfile(CLIENT_TMP_DIR + userID):
+            import shutil
+            shutil.rmtree(CLIENT_TMP_DIR + 'userID') #THIS SHOULD NEVER HAPPEN!!!
+
+        os.mkdir(CLIENT_TMP_DIR + userID)
+        os.mkdir(CLIENT_TMP_DIR + userID + "/inputData")
+        os.mkdir(CLIENT_TMP_DIR + userID + "/jobsData")
+        os.mkdir(CLIENT_TMP_DIR + userID + "/tmp")
 
