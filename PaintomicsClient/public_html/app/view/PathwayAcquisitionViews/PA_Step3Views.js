@@ -3403,20 +3403,19 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 									
 									// Calculate the original mapping ratio used as Stouffer weight.  
 									Object.keys(mappingInfo).map(function(omic) {
-										defaultValues[omic] = parseFloat((mappingInfo[omic].mapped / (mappingInfo[omic].mapped + mappingInfo[omic].unmapped)).toFixed(1))
+										defaultValues[omic] = parseFloat((mappingInfo[omic].mapped / (mappingInfo[omic].mapped + mappingInfo[omic].unmapped)).toFixed(1)) * 10
 									});
                                     
 									// Create an slider for each omic
-                                    var omicSliders = me.getModel().getOmicNames().map(function(omic) {                                                                       
+                                    var omicSliders = me.getModel().getOmicNames().map(function(omic) {    										
                                         return({
                                             xtype: 'slider',
                                             fieldLabel: omic,
                                             minValue: 0,
-                                            maxValue: 1,
-                                            increment: 0.1,
+                                            maxValue: 10,
+                                            increment: 1,
                                             value: me.getParent().getVisualOptions().stoufferWeights[omic] || defaultValues[omic],
-                                            width: '100%',
-                                            decimalPrecision: 2
+                                            width: '100%'
                                         })
                                     });
                                     
