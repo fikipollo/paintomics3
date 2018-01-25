@@ -1094,6 +1094,10 @@ i.relevantFeature:before {
 	background-position: center !important;
 }
 
+.otherFeaturesLabel {
+	margin: 10px 0;
+}
+
 /*PATHWAYS THUMBNAILS FOR HISTORY PANEL*/
 
 .step4HistoryBox {
