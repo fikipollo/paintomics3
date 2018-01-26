@@ -102,7 +102,8 @@ function PA_Step3JobView() {
 			//showEdgeLabels : false,
 			edgesClass : 'l',
 			minNodeSize: 1,
-			maxNodeSize: 8
+			maxNodeSize: 8,
+			networkPvalMethod: 'none'
 		};
         
         var globalDefaultVisualOptions = {
@@ -229,6 +230,13 @@ function PA_Step3JobView() {
 		/************************************************************/
 		/* STEP 3 CREATE THE SUBVIEWS                               */
 		/************************************************************/
+		if(this.pathwayTableView=== null){
+			this.pathwayTableView = new PA_Step3PathwayTableView();
+			this.pathwayTableView.setController(this.getController());
+			this.pathwayTableView.setParent(this);
+		}
+		this.pathwayTableView.loadModel(model);
+		
 		$.each(databases, (function(index, db) {
 			if(!(db in this.pathwayClassificationViews)){
 				this.pathwayClassificationViews[db] = new PA_Step3PathwayClassificationView(db);
@@ -247,13 +255,6 @@ function PA_Step3JobView() {
 			// Determine if the table for the DB is filtered or not
 			this.isFiltered[db] = (this.model.getPathwaysByDB(db).length != this.getTotalVisiblePathways(db).visible);
 		}).bind(this));
-
-		if(this.pathwayTableView=== null){
-			this.pathwayTableView = new PA_Step3PathwayTableView();
-			this.pathwayTableView.setController(this.getController());
-			this.pathwayTableView.setParent(this);
-		}
-		this.pathwayTableView.loadModel(model);
 
 		if (this.getModel().isRecoveredJob && this.getModel().getStepNumber() === 3) {
 			$(".backButton").hide();
@@ -1055,10 +1056,38 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 				/********************************************************/
 				/* STEP 1.A.2 EXCLUDE NODE IF:                           */
 				/*  - If number of total features * n% is bigger than   */
-				/*    the sum of matched features in the pathway,       */
+				/*    the sum of matched features in the pathway.		*/
+				/*  - If the pValue of the pathways is greater than 	*/
+				/*	  the maximum allowed.								*/
 				/********************************************************/
+				var pValue = 1;
+				try{
+					var selectedCombinedPvalueMethod = me.getParent().visualOptions.selectedCombinedMethod;
+					var selectedAdjustingMethod = visualOptions.networkPvalMethod;
+					var methodSelected =  (visualOptions.colorBy === "classification") ? selectedCombinedPvalueMethod : visualOptions.colorBy;
+
+					/*
+						The adjusted p-values are different in the job has been category filtered (number of tests decreases).
+						These new "filtered adjusted p-values" are kept on a layer inside visualOptions.
+					*/
+					if (selectedAdjustingMethod != 'none') {
+						var useLayer = visualOptions.adjustedPvalues && visualOptions.adjustedPvalues[methodSelected];
+						
+						if (useLayer) {
+							pValue = visualOptions.adjustedPvalues[methodSelected][selectedAdjustingMethod];
+						} else {
+							pValue = matchedPathway.getAllAdjustedSignificanceValues()[methodSelected][selectedAdjustingMethod];
+						}
+					} else {
+						pValue = matchedPathway.getAllSignificanceValues()[methodSelected];
+					}
+				} catch(error) {
+					//pass
+					pValue = 1;
+				}
+				
 				matchedPathway.setTotalFeatures(matchedPathway.getMatchedGenes().length + matchedPathway.getMatchedCompounds().length);
-				if (elem.data.total_features * visualOptions.minFeatures > matchedPathway.getTotalFeatures()){
+				if (elem.data.total_features * visualOptions.minFeatures > matchedPathway.getTotalFeatures() || pValue > visualOptions.minPValue){
 					ignoredPathways[elem.data.id] = true;
 					continue;
 				}
@@ -1086,16 +1115,8 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					/********************************************************/
 					/* STEP 1.B.2 SET NODE SIZE BASED ON PATHWAY RELEVANCE  */
 					/********************************************************/
-					var pValue = 1;
-					try{
-						var selectedCombinedPvalueMethod = me.getParent().visualOptions.selectedCombinedMethod;
-						
-						pValue = (visualOptions.colorBy === "classification")? matchedPathway.getCombinedSignificanceValueByMethod(selectedCombinedPvalueMethod) : matchedPathway.getSignificanceValues()[visualOptions.colorBy][2];
-					}catch(error){
-						//pass
-						pValue = 1;
-					}
-					elem.data.size = (pValue <= visualOptions.minPValue)? 20 + 2 * (visualOptions.minPValue - pValue):12;
+					//elem.data.size = (pValue <= visualOptions.minPValue)? 20 + 2 * (visualOptions.minPValue - pValue):12;
+					elem.data.size = 20 + 2 * (visualOptions.minPValue - pValue);
 
 					/********************************************************/
 					/* STEP 1.B.3 COLOR THE NODE BASED ON VISUAL OPTIONS    */
@@ -1864,13 +1885,17 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 				visualOptions[id] = newValue;
 			});
 
-			/********************************************************/
-			/* STEP 2. UPDATE THE VALUE FOR COLOR BY OPTION         */
-			/********************************************************/
+			/*******************************************************************/
+			/* STEP 2. UPDATE THE VALUE FOR COLOR BY OPTION AND OTHER SETTINGS */
+			/*******************************************************************/
 			newValue = $("#colorByContainer_" + me.dbid + " div.radio input:checked").val();
 			updateNeeded = updateNeeded || (visualOptions.colorBy !== newValue);
 			visualOptions.colorBy = newValue;
-
+			
+			pvalNewValue = $("#pvaluemethod_" + me.dbid + " div.radio input:checked").val();
+			updateNeeded = updateNeeded || (visualOptions.networkPvalMethod !== pvalNewValue);
+			visualOptions.networkPvalMethod = pvalNewValue;
+			
 			visualOptions.backgroundLayout =  $("#background-layout-check_" + me.dbid).is(":checked");
 			visualOptions.showNodeLabels =  $("#show-node-labels-check_" + me.dbid).is(":checked");
 			//visualOptions.showEdgeLabels =  $("#show-edge-labels-check").is(":checked");
@@ -1944,6 +1969,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 		* @returns {PA_Step3PathwayNetworkView}
 		*/
 		this.updateObserver = function() {
+			var me = this;
 			var visualOptions = this.getParent().getVisualOptions(this.database);
 
 			/********************************************************/
@@ -1982,6 +2008,26 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 			$("#show-node-labels-check_" + this.dbid).attr("checked", visualOptions.showNodeLabels===true);
 			//$("#show-edge-labels-check").attr("checked", visualOptions.showEdgeLabels===true);
 			$("#save-node-positions-check_" + this.dbid).attr("checked", visualOptions.pathwaysPositions!==undefined);
+			
+			var pvalHtmlContent = '<div class="radio"><input type="radio" ' + ((visualOptions.networkPvalMethod === "none")? "checked": "") + ' id="none-pvalcheck_' + this.dbid + '" name="pvaluemethodCheckbox_' + this.dbid + '" value="none">' +
+				'  <label for="none-pvalcheck_' + this.dbid + '">None</label>' + 
+				'</div>';
+			var adjustMethods = this.getModel().getMultiplePvaluesMethods();
+			
+			adjustMethods.forEach(function(i){
+				pvalHtmlContent +=
+				'<div class="radio">' +
+				'  <input type="radio" ' + ((visualOptions.networkPvalMethod === i)? "checked": "")+ ' id="' + i.replace(/ /g, "_").toLowerCase() + '-pvalcheck_' + me.dbid + '" name="pvaluemethodCheckbox_' + me.dbid + '" value="' + i + '">' +
+				'  <label for="' + i.replace(/ /g, "_").toLowerCase() + '-pvalcheck_' + me.dbid + '">' + i + '</label>' +
+				'</div>';
+			});
+			$("#pvaluemethod_" + this.dbid).html(pvalHtmlContent);
+			
+			// Adjust the height of the other panels
+			var currentHeight = this.getComponent().getHeight();
+			
+			//this.getComponent().items.getAt(0).setHeight(currentHeight);
+			this.getComponent().doLayout();
 
 			/********************************************************/
 			/* STEP 3. GENERATE THE NETWORK                         */
@@ -2008,9 +2054,17 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 
 			this.component = Ext.widget({
 				xtype: 'container', id: 'networkview_' + me.dbid,
+				/*autoHeight: true,
+				layout:
+				{
+				   type: "hbox",
+				   align: "stretch"
+				},*/
 				//style: "max-width:1800px; margin: 5px 10px; ",
 				items: [ {
-					xtype: 'box', id: 'networkDetailsPanel_' + me.dbid, cls: "contentbox lateralOptionsPanel", html:
+					xtype: 'box', id: 'networkDetailsPanel_' + me.dbid, 
+					//autoHeight: true, flex: 1,
+					cls: "contentbox lateralOptionsPanel", html:
 					//THE PANEL WITH THE CLUSTERS SUMMARY
 					'<div class="lateralOptionsPanel-toolbar"><a href="javascript:void(0)" class="toolbarOption helpTip hideOption" id="hideNetworkDetailsPanelButton_' + me.dbid + '" title="Hide this panel"><i class="fa fa-times"></i></a></div>'+
 					'<h2>Details</h2>' +
@@ -2025,7 +2079,9 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					'  <div id="patwaysDetailsContainer_' + me.dbid + '"></div>'+
 					'</div>'
 				},{
-					xtype: 'box',  id : 'networkSettingsPanel_' + me.dbid, cls: "contentbox lateralOptionsPanel", html:
+					xtype: 'box',  id : 'networkSettingsPanel_' + me.dbid, 
+					//autoHeight: true, flex: 1,
+					cls: "contentbox lateralOptionsPanel", html:
 					//THE PANEL WITH THE VISUAL OPTIONS
 					'<div class="lateralOptionsPanel-toolbar"><a href="javascript:void(0)" class="toolbarOption helpTip hideOption" id="hideNetworkSettingsPanelButton_' + me.dbid + '" title="Hide this panel"><i class="fa fa-times"></i></a></div>'+
 					'<h2>Tools<span class="helpTip" title="Some options may affect to the table below."></h2>' +
@@ -2069,10 +2125,14 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					'  <div class="slider-ui" style="margin:10px;" id="minSharedFeaturesSlider_' + me.dbid + '"></div>' +
 					'  <h5>Min p-value for the pathway (<span id="minPValue_' + me.dbid + '">0.05</span>)<span class="helpTip" style="float:right;" title="Pathways with lower p-value (more significant) will be represented with bigger nodes. Pathways with higher p-value (less significant), will be shown as small nodes."</span></h5>' +
 					'  <div class="slider-ui" style="margin:10px;" id="minPValueSlider_' + me.dbid + '"></div>' +
+					'  <h5>P-value selection criteria: <span class="helpTip" style="float:right;" title="Select which adjust method to choose the p-values from."></span></h5>' +
+					'  <div id="pvaluemethod_' + me.dbid + '"></div>' +
 					'  <a href="javascript:void(0)" class="button btn-success btn-right helpTip" id="applyNetworkSettingsButton_' + me.dbid + '" style="margin-top: 20px;" title="Apply changes"><i class="fa fa-check"></i> Apply</a>' +
 					'</div>'
 				},{
-					xtype: 'box', cls: "contentbox", style: 'overflow: hidden; margin:0;', html:
+					xtype: 'box', cls: "contentbox", 
+					//autoHeight: true, flex: 4,
+					style: 'overflow: hidden; margin:0;', html:
 					//THE PANEL WITH THE NETWORK
 					'<div class="lateralOptionsPanel-toolbar">'+
 					'  <a href="javascript:void(0)" class="toolbarOption downloadTool helpTip" id="downloadNetworkToolSVG_' + me.dbid + '" title="Download the network (SVG)" style="margin-top: 10px;"><i class="fa fa-download"></i> Download (SVG)</a>' +
@@ -2121,7 +2181,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					'  <a href="javascript:void(0)" class="toolbarOption resumeLayout helpTip" id="saveNodePositionsButton_' + me.dbid + '"  style="float:right"><i class="fa fa-floppy-o"></i> Save Node Positions</a>' +
 					'  <p id="step3-network-toolbar-message"></p>'+
 					'</div>' +
-					'<div id="pathwayNetworkBox_' + me.dbid + '" style="position: relative;overflow:hidden; height:700px; width: 100%;"><div id="pathwayNetworkWaitBox_' + me.dbid + '"><i class="fa fa-cog fa-spin"></i> Building network...</div></div>' +
+					'<div id="pathwayNetworkBox_' + me.dbid + '" style="position: relative;overflow:hidden; height:761px; width: 100%;"><div id="pathwayNetworkWaitBox_' + me.dbid + '"><i class="fa fa-cog fa-spin"></i> Building network...</div></div>' +
 					'<div id="pathwayNetworkBoxSVG_' + me.dbid + '" style="display: none;">'
 				}],
 				listeners: {
@@ -2146,7 +2206,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 							}
 						});
 						$("#minPValueSlider_" + me.dbid).slider({
-							value: 0,min: 0.005,max: 0.05,step: 0.005,
+							value: 0,min: 0.005,max: 1,step: 0.005,
 							slide: function(event, ui) {
 								$("#minPValue_" + me.dbid).html(ui.value);
 							}
@@ -3161,7 +3221,6 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 							var pathwayID = storeRecord.raw.pathwayID;
 
 							/* Iterate over all adjusted columns (omics and combined p-values methods) */
-							//Object.keys(visualOptions[db].adjustedPvalues)
 							omicNames.concat(combinedPvaluesMethods).forEach(function(adjustedColumn) {
 								var keyField;
 
@@ -3200,7 +3259,6 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 			
 			this.getPvaluesFromStore = function(includeHidden = false){
 				var store = this.getComponent().queryById("pathwaysGridPanel").getStore();
-				//var rawData = store.getProxy().getReader().rawData;
 				var selectedRecords = (includeHidden ? store.snapshot || store.data : store.data);
 				
 				var omicNames = this.getParent().getModel().getOmicNames();
