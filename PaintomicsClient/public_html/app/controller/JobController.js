@@ -254,6 +254,7 @@ function JobController() {
 						jobModel.setJobID(response.jobID); //UPDATE THE foundCompounds FIELD WITH RESPONSE DATA+
 						jobModel.setOrganism(response.organism);  //UPDATE ORGANISM
 						jobModel.setDatabases(response.databases); //UPDATE DATABASES
+						jobModel.setName(response.name);
 
 						jobModel.setCompoundBasedInputOmics(response.compoundBasedInputOmics);
 						jobModel.setGeneBasedInputOmics(response.geneBasedInputOmics);
@@ -545,6 +546,7 @@ function JobController() {
 						jobModel.setSummary(response.summary);
 						jobModel.setOrganism(response.organism);  //UPDATE ORGANISM
 						jobModel.setDatabases(response.databases); //UPDATE DATABASES
+						jobModel.setName(response.name);
 
 						jobModel.setFoundCompounds([]);
 						var matchedMetabolites = response.matchedMetabolites;

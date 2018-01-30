@@ -807,6 +807,9 @@ div.availableOmicsBox h4 {
 /********************************************************************************
 **STYLES FOR STEP 3
 *********************************************************************************/
+#jobName {
+	margin-left: 7px;
+}
 .contingencyTable {
 	border-collapse: collapse;
 	text-align: center;

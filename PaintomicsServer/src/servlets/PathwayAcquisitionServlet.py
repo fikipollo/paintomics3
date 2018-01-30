@@ -97,6 +97,7 @@ def pathwayAcquisitionStep1_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, EXA
             uploadedFiles  = REQUEST.files
             formFields   = REQUEST.form
             jobInstance.description=""
+            jobInstance.setName(formFields.get("jobDescription", "")[:100])
             specie = formFields.get("specie") #GET THE SPECIE NAME
             databases = REQUEST.form.getlist('databases[]')
             jobInstance.setOrganism(specie)
@@ -219,7 +220,8 @@ def pathwayAcquisitionStep1_PART2(jobInstance, userID, exampleMode, RESPONSE):
             "matchedMetabolites": map(lambda foundFeature: foundFeature.toBSON(), matchedMetabolites),
             "geneBasedInputOmics":jobInstance.getGeneBasedInputOmics(),
             "compoundBasedInputOmics": jobInstance.getCompoundBasedInputOmics(),
-            "databases": jobInstance.getDatabases()
+            "databases": jobInstance.getDatabases(),
+            "name": jobInstance.getName()
         })
 
     except Exception as ex:
@@ -452,7 +454,7 @@ def pathwayAcquisitionStep3(request, response):
 
         response.setContent({
             "success": True,
-            "jobID":jobInstance.getJobID(),
+            "jobID": jobInstance.getJobID(),
             "graphicalOptionsInstances" : graphicalOptionsInstancesBSON,
             "omicsValues" : omicsValuesSubset,
             "organism" : jobInstance.getOrganism()
@@ -523,16 +525,17 @@ def pathwayAcquisitionRecoverJob(request, response, QUEUE_INSTANCE):
         else:
             response.setContent({
                 "success": True,
-                "jobID":jobInstance.getJobID(),
+                "jobID": jobInstance.getJobID(),
                 "pathwaysInfo" : matchedPathwaysJSONList,
-                "geneBasedInputOmics":jobInstance.getGeneBasedInputOmics(),
+                "geneBasedInputOmics": jobInstance.getGeneBasedInputOmics(),
                 "compoundBasedInputOmics": jobInstance.getCompoundBasedInputOmics(),
                 "organism" : jobInstance.getOrganism(),
                 "summary" : jobInstance.summary,
                 "visualOptions" : JobInformationManager().getVisualOptions(jobID),
                 "databases": jobInstance.getDatabases(),
                 "matchedMetabolites": matchedCompoundsJSONList,
-                "stepNumber": jobInstance.getLastStep()
+                "stepNumber": jobInstance.getLastStep(),
+                "name": jobInstance.getName()
             })
 
     except Exception as ex:

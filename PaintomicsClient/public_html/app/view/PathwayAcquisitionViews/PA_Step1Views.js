@@ -289,6 +289,7 @@ function PA_Step1JobView() {
 								displayField: 'name',
 								valueField: 'value',
 								queryMode: 'local',
+								labelWidth: 150,
 								store: Ext.create('Ext.data.ArrayStore', {
 									fields: ['name', 'value'],
 									autoLoad: true,
@@ -311,12 +312,23 @@ function PA_Step1JobView() {
 							},
 							{
 								xtype: "box", flex: 1, html:
-								'<span class="infoTip" style=" font-size: 12px; margin-left: 140px; margin-bottom: 10px;">'+
+								'<span class="infoTip" style=" font-size: 12px; margin-left: 190px; margin-bottom: 10px;">'+
 								' Not your organism? Request new organisms <a href="javascript:void(0)" id="newOrganismRequest" style="color: rgb(211, 21, 108);">clicking here</a>.' +
 								'</span>'
 							}]
 						},
-						{xtype: "container", layout: { type: "vbox", align: "stretch" }, flex: 0.6, hidden: true, items: [
+						{
+							xtype: "textfield", 
+							fieldLabel: "Enter a job description", 
+							allowBlank: true,
+							name: 'jobDescription',
+							style: "margin: 10px 20px;",
+							labelWidth: 150,
+							width: 650,
+							flex: 0,
+							maxLength: 100
+						}
+						/*{xtype: "container", layout: { type: "vbox", align: "stretch" }, flex: 0.6, hidden: true, items: [
 								{
 									xtype: 'checkboxgroup', fieldLabel: 'Databases',
 									style: "margin: 10px 10px 10px 20px;",
@@ -324,9 +336,9 @@ function PA_Step1JobView() {
 									allowBlank: false,
 									columns: 2,
 									disabled: true,
-									/* Hardcoded DBs (they can be considered static) */
+									// Hardcoded DBs (they can be considered static) 
 									items: [
-											/* Only for information, KEGG database is added always on server side */
+											// Only for information, KEGG database is added always on server side 
 											{ boxLabel: 'KEGG (required)', name: 'databases[]', inputValue: 'KEGG', checked: true, disabled: true },
 											{ boxLabel: 'MapMan', name: 'databases[]', inputValue: 'MapMan', checked: false },
 									]
@@ -338,12 +350,28 @@ function PA_Step1JobView() {
 									'</span>'
 								}
 							]
-						}]
+						}*/]
 					},
+					/*{
+							xtype: "container",
+							layout: "hbox",
+							flex: 1,
+							items: [{
+								xtype: "textfield", 
+								fieldLabel: "Enter a job description", 
+								allowBlank: true,
+								name: 'jobDescription',
+								style: "margin: 20px 20px;",
+								labelWidth: 150,
+								width: 450,
+								flex: 0
+							}]
+					}*/,
 					{
 						xtype: "box",
 						html: '<h3>2. Choose the files to upload <a class="button btn-right btn-small" href="http://bioinfo.cipf.es/paintomics/resources/paintomics_example_data.zip"><i class="fa fa-download"></i> Download example data</a></h3>'
-					}, {
+					},
+					{
 						xtype: "container",
 						layout: 'hbox',
 						items: [{
@@ -373,8 +401,7 @@ function PA_Step1JobView() {
 								{xtype: 'box',html: '<p class="dragHerePanel">Drag and drop here your selected <i>omics</i></p>'}
 							]
 						}]
-					}
-
+					}							
 				]
 			}],
 			listeners: {

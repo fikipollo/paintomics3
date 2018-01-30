@@ -496,7 +496,9 @@ function DM_MyDataJobListView() {
 							name: 'lastStep'
 						}, {
 							name: 'date'
-						}, {
+						},{
+							name: 'name'
+						},{
 							name: 'description'
 						}],
 						sorters: [{
@@ -513,7 +515,7 @@ function DM_MyDataJobListView() {
 					}, {
 						text: 'Job ID',
 						dataIndex: 'jobID',
-						flex: 1
+						flex: .5
 					}, {
 						text: 'Type',
 						dataIndex: 'jobType',
@@ -521,24 +523,28 @@ function DM_MyDataJobListView() {
 					}, {
 						text: 'Last step',
 						dataIndex: 'lastStep',
-						flex: 1
+						flex: .4
 					}, {
 						text: 'Submission date',
 						dataIndex: 'date',
-						flex: 1,
+						flex: .6,
 						renderer: function(value) {
 							return value.substr(0, 4) + "-" + value.substr(4, 2) + "-" + value.substr(6, 2) + " " + value.substr(8, 2) + ":" + value.substr(10, 2);
 						}
 					}, {
 						text: 'Expiration date',
 						dataIndex: 'date',
-						flex: 1,
+						flex: .6,
 						renderer: function(value) {
 							var date = new Date(value.substr(0, 4) + "-" + value.substr(4, 2) + "-" + value.substr(6, 2));
 							date.setDate(date.getDate() + MAX_LIVE_JOB);
 							return date.toISOString().substr(0, 10);
 
 						}
+					}, {
+						text: 'Job name',
+						dataIndex: 'name',
+						flex: 1
 					}, {
 						text: 'Description',
 						dataIndex: 'description',

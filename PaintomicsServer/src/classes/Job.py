@@ -42,6 +42,7 @@ class Job(Model):
         self.userID = userID
         self.lastStep = 1
         self.description=""
+        self.name = ""
 
         self.organism = ""
 
@@ -80,6 +81,11 @@ class Job(Model):
         self.userID = userID
     def getUserID(self):
         return self.userID
+
+    def setName(self, name):
+        self.name = name
+    def getName(self):
+        return self.name
 
     def setLastStep(self, lastStep):
         self.lastStep = lastStep

@@ -347,6 +347,12 @@ function PA_Step3JobView() {
 		/********************************************************/
 		$("#jobIdField").html(this.getModel().getJobID());
 		$("#jobURL").html(window.location.href).attr('href', window.location.href);
+		
+		// Update Job name (description) if available
+		if (this.getModel().getName()) {
+			$("#jobName").html('[' + this.getModel().getName() + ']').show();
+		}
+		
 		/********************************************************/
 		/* STEP 2: GENERATE THE PATHWAYS CLASSIFICATION PLOT    */
 		/********************************************************/
@@ -514,7 +520,7 @@ function PA_Step3JobView() {
 							xtype: 'box',
 							cls: "contentbox omicSummaryBox",
 							html: '<h2>Pathways summary</h2>' +
-							'<h3 style="text-align:center;">Your Job ID is <b id="jobIdField">[JOB ID]</b><span class="infoTip" style=" font-size: 12px; ">You can access this job using the URL: <a id="jobURL" target="_blank" href="#">[JOBURL]</a></h3>' +
+							'<h3 style="text-align:center;">Your Job ID is <b id="jobIdField">[JOB ID]</b><span id="jobName" style="display: none">[JOB NAME]</span><span class="infoTip" style=" font-size: 12px; ">You can access this job using the URL: <a id="jobURL" target="_blank" href="#">[JOBURL]</a></h3>' +
 							'<div style="text-align:center;font-size: 25px;line-height: 120px;">' +
 							'  <span class="myDataSummaryCount" style=" margin: 0; padding-right: 0; "><i class="fa fa-sitemap"></i> </span>' +
 							'  <div id="foundPathwaysTag" class="odometer odometer-theme-default">000</div>  Found Pathways' +

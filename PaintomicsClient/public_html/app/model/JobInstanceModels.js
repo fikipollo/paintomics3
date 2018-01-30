@@ -28,6 +28,7 @@ function JobInstance(jobID) {
 	this.jobID = jobID;
 	this.stepNumber = 1;
 	this.organism = null;
+	this.name = null;
 
 	this.pathways = [];
 	this.databases = null;
@@ -50,6 +51,12 @@ function JobInstance(jobID) {
 	};
 	this.getJobID = function () {
 		return this.jobID;
+	};
+	this.setName = function (name) {
+		this.name = name;
+	};
+	this.getName = function () {
+		return this.name;
 	};
 	this.setStepNumber = function (stepNumber) {
 		this.stepNumber = stepNumber;
