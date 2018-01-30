@@ -238,6 +238,7 @@ function SignUpPanel() {
                                 {xtype: "textfield", name: 'affiliation', fieldLabel: 'Your Affiliation '},
                                 {xtype: "box", html: '<p class="formNode">Please let us know your university, research centre or company and the department or institute.</p>'},
                                 {xtype: "box", html: '<div style="color: #D22; font-size: 16px;" id="invalidSignUpMessage" style="display:none"></div>' +
+								 			'<span >By signing up, you declare to have read and accepted <a href="conditions.html" target="_blank" id="conditionsSignup">the terms</a>.</span>' +
                                             '<a class="button exampleButton" id="signUpButton" style=" width: 100%; text-align: center; margin: 10px 0px; "><i class="fa fa-sign-in"></i> Sign me up!</a>' +
                                             '<a id="signUpBackLink" href="javascript:void(0)"><i class="fa fa-arrow-circle-o-left"></i> Back</a>'
                                 }
