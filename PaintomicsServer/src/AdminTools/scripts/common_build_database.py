@@ -1415,44 +1415,31 @@ def generatePathwaysNetwork(ALL_PATHWAYS):
     #          mmu00102 -> [                             mmu00103 =20,...]
     #***********************************************************************************
     file_name = DATA_DIR + "gene2pathway.list"
-    previous_gene=""
-    associated_paths=set()
+
+    # Read the file into a dictionary to not rely on the KEGG
+    # return format.
+    gene2pathway = defaultdict(set)
+
     with open(file_name, "r") as csvfile:
         rows = csv.reader(csvfile, delimiter='\t')
 
         for row in rows:
-            gene_id = row[0]
-            path_id = row[1].replace("path:" + SPECIE, "")
+            gene2pathway[row[0]].add(row[1].replace("path:" + SPECIE, ""))
 
-            if gene_id != previous_gene:
-                associated_paths = sorted(associated_paths)
-                while len(associated_paths) > 0:
-                    current_path = associated_paths[0]
-                    del associated_paths[0]
-                    for other_path in  associated_paths:
-                        try:
-                            pathways_matrix[current_path][other_path] += 1
-                        except:
-                            stderr.write("Pathways " + current_path + " or " + other_path + " not found at pathways_all.list. Updating common KEGG information may solve this issue. Reinstall this specie after that.\n")
-
-
-                associated_paths=set([])
-
-            associated_paths.add(path_id)
-            previous_gene = gene_id
-
-        #LAST PATHWAY
-        associated_paths = sorted(associated_paths)
+    # Process the info
+    for gene, associated_paths in gene2pathway.iteritems():
         while len(associated_paths) > 0:
-            current_path = associated_paths[0]
-            del associated_paths[0]
-            for other_path in  associated_paths:
+            current_path = associated_paths.pop()
+            for other_path in associated_paths:
                 try:
                     pathways_matrix[current_path][other_path] += 1
                 except:
-                    stderr.write("Pathways " + current_path + " or " + other_path + " not found at pathways_all.list. Updating common KEGG information may solve this issue. Reinstall this specie after that.\n")
+                    stderr.write(
+                        "Pathways " + current_path + " or " + other_path + " not found at pathways_all.list. Updating common KEGG information may solve this issue. Reinstall this specie after that.\n")
 
-    csvfile.close()
+
+    # Free memory
+    del gene2pathway
 
     #***********************************************************************************
     #* STEP 4. GET THE NUMBER OF GENES FOR EACH PATHWAY

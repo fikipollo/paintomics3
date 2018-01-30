@@ -273,7 +273,7 @@ function PA_Step1JobView() {
 				layout: {type: 'vbox', align: 'stretch'},
 				defaults: {labelAlign: "right", border: false},
 				items: [
-					{xtype: "box", flex: 1, html:'<h2>Data uploading</h2><h3>1. Organism and database selection </h3>'},
+					{xtype: "box", flex: 1, html:'<h2>Data uploading</h2><h3>1. Organism selection </h3>'},
 					{xtype: "container", flex: 1, layout: {type: "hbox"}, items: [
 						{
 							xtype: "container", layout: { type: "vbox", align: "stretch" }, flex: 0.4, items: [
