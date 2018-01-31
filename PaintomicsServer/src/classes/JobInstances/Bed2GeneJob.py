@@ -288,7 +288,7 @@ class Bed2GeneJob(Job):
         logging.info("STARTING DHS_exon_association PROCESS.")
 
         from multiprocessing import Process
-        thread = Process(target=run_DHS_exon_association, args=(gtfFile, dataFile, tmpFile, self.getOptions()))
+        thread = Process(target=run_DHS_exon_association, args=(gtfFile, dataFile, tmpFile, None, self.getOptions()))
         thread.start()
         thread.join(MAX_WAIT_THREADS)
         del thread
