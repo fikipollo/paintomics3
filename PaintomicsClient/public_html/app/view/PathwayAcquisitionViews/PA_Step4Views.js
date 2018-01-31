@@ -2759,11 +2759,13 @@ function PA_Step4GlobalHeatmapView() {
 
 		//GENERATE THE MATRIX OF DATA GROUPED BY OMIC NAME
 		var matchedGenes = this.getModel().getMatchedGenes();
+		var matchedCompounds = this.getModel().getMatchedCompounds();
 		var omicsValues = this.getParent().getOmicsValues();
+		var matchedFeatures = matchedGenes.concat(matchedCompounds);
 
-		for (var i = matchedGenes.length; i--;) {
+		for (var i = matchedFeatures.length; i--;) {
 			//GET THE VALUES FOR CURRENT GENE
-			featureOmicValues = omicsValues[matchedGenes[i]].getOmicsValues();
+			featureOmicValues = omicsValues[matchedFeatures[i]].getOmicsValues();
 
 			for (var j = featureOmicValues.length; j--;) {
 				omicValue = featureOmicValues[j];
@@ -2779,8 +2781,8 @@ function PA_Step4GlobalHeatmapView() {
 				} else {
 					referenceOmics = otherDataMatrix;
 				}
-				referenceOmics[omicValue.omicName][omicsValues[matchedGenes[i]].getName()] = {
-					keggName: omicsValues[matchedGenes[i]].getName(),
+				referenceOmics[omicValue.omicName][omicsValues[matchedFeatures[i]].getName()] = {
+					keggName: omicsValues[matchedFeatures[i]].getName(),
 					inputName: omicValue.getInputName(),
 					isRelevant: omicValue.isRelevant(),
 					values: omicValue.getValues()
@@ -3079,8 +3081,7 @@ function PA_Step4GlobalHeatmapView() {
 		//1. GENERATE THE OMIC SELECTORS (WHICH OMIC SHOULD BE PAINTED)
 		for (var i in omicNames) {
 			//CHECK IF WE HAVE VALUES FOR THIS OMIC IN CURRENT PATHWAY
-			//TODO: allow metabolomics in the heatmap
-			if (omicNames[i].toLowerCase() !== "metabolomics" && this.getModel().getSignificanceValues()[omicNames[i]][0] !== 0) {
+			if (this.getModel().getSignificanceValues()[omicNames[i]][0] !== 0) {
 				divName = "lateralOptionsSelector-" + omicNames[i].toLowerCase().replace(/ /g, "-");
 				htmlCode +=
 				'<div class="lateralOptionsSelector omicSelection">' +
