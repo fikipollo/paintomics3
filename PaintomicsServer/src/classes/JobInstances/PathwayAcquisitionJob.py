@@ -87,8 +87,21 @@ class PathwayAcquisitionJob(Job):
 
             self.description+= "Input data:;"
 
+            # The client requires to have the config options inside double square brackets and separated by '!!'.
+            # The different omics must use ';' as separator, and the mainFile/relevantFiles should be inside the same
+            # simple square brackets, separated by '!!'.
             for omicAux in self.geneBasedInputOmics:
-                self.description+=omicAux.get("omicName") + " [" + basename(omicAux.get("inputDataFile")) + "]; "
+                omic_files = [basename(omicAux.get("inputDataFile"))]
+
+                self.description+=omicAux.get("omicName")
+
+                if omicAux.get("relevantFeaturesFile"):
+                    omic_files.append(basename(omicAux.get("relevantFeaturesFile")))
+
+                if omicAux.get("configOptions"):
+                    self.description+= " [[" + omicAux.get("configOptions").replace(";", "!!") + "]] "
+
+                self.description+= " [" + '!!'.join(omic_files) + "]; "
             for omicAux in self.compoundBasedInputOmics:
                 self.description+=omicAux.get("omicName") + " [" + basename(omicAux.get("inputDataFile")) + "]; "
 

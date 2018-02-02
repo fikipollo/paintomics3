@@ -718,6 +718,7 @@ def run(gtf, dhs, outputfile, match_table, options):
     ########################
     ## CODE ADDED BY RAFA (modified by Carlos) ##
     # Global variables
+    global rules
     global perc_area
     global perc_region
     global tss

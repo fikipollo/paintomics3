@@ -804,6 +804,9 @@ function RegionBasedOmicSubmittingPanel(nElem, options) {
 		if (values.toogleMapRegions) {
 			component.queryById("toogleMapRegions").setVisible(values.toogleMapRegions === true);
 		}
+		if (values.configVars) {
+			component.queryById("configVars").setValue(values.configVars);
+		}
 
 		if (!component.isVisible()) {
 			this.toogleContent();
@@ -914,6 +917,12 @@ function RegionBasedOmicSubmittingPanel(nElem, options) {
 					itemId: "mapToSelector",
 					value: this.mapTo,
 					hidden: true
+				},{
+					xtype: 'textfield',
+					name: this.namePrefix + '_config_args',
+					hidden: true,
+					itemId: 'configVars',
+					maxLength: 1000
 				}]
 			}, {
 				xtype: "container",
@@ -1511,7 +1520,13 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 					itemId: "mapToSelector",
 					value: this.mapTo,
 					hidden: true
-				}],
+				},{
+					xtype: 'textfield',
+					name: this.namePrefix + '_config_args',
+					hidden: true,
+					itemId: 'configVars',
+					maxLength: 1000
+				}]
 			},
 			{
 				xtype: "container",

@@ -516,7 +516,7 @@ def pathwayAcquisitionRecoverJob(request, response, QUEUE_INSTANCE):
             matchedPathwaysJSONList.append(matchedPathway.toBSON())
         logging.info("RECOVER_JOB - GENERATING PATHWAYS INFORMATION...DONE")
 
-        if (len(matchedCompoundsJSONList) == 0 and jobInstance.getLastStep() == 2):
+        if (len(matchedCompoundsJSONList) == 0 and jobInstance.getLastStep() == 2 and len(jobInstance.getCompoundBasedInputOmics()) > 0):
             logging.info("RECOVER_JOB - JOB " + jobID + " DOES NOT CONTAINS FOUND COMPOUNDS (STEP 2: OLD FORMAT?).")
             response.setContent({"success": False, "errorMessage": "Job " + jobID + " does not contains saved information about the found compounds, please run it again."})
         elif(len(matchedPathwaysJSONList) == 0 and jobInstance.getLastStep() > 2):

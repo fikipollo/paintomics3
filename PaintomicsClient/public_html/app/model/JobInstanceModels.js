@@ -193,7 +193,7 @@ function JobInstance(jobID) {
 		if (this.pathways.length && this.pathways[0].getAdjustedSignificanceValues) {
 			var omicPvalues = this.pathways[0].getAdjustedSignificanceValues();
 
-			multipleMethods = omicPvalues ? Object.keys(omicPvalues[Object.keys(omicPvalues)[0]]) : [];
+			multipleMethods = omicPvalues && Object.keys(omicPvalues).length ? Object.keys(omicPvalues[Object.keys(omicPvalues)[0]]) : [];
 		}
 
 		return multipleMethods;

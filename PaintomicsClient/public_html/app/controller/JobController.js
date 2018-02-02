@@ -164,7 +164,8 @@ function JobController() {
 							other.subview.setContent("itemsContainerAlt", {
 								mainFile: response.mainOutputFileName,
 								secondaryFile: response.secondOutputFileName,
-								title: itemsContainer.queryById("omicNameField").getValue()
+								title: itemsContainer.queryById("omicNameField").getValue(),
+								configVars: response.description
 							});
 
 							if (jobView.pendingRequests === 0) {

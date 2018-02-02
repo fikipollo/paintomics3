@@ -216,7 +216,8 @@ def fromBEDtoGenes_STEP2(jobInstance, userID, exampleMode, RESPONSE):
             "jobID":jobInstance.getJobID(),
             "compressedFileName": fileNames[0],
             "mainOutputFileName":  fileNames[1],
-            "secondOutputFileName":  fileNames[2]
+            "secondOutputFileName":  fileNames[2],
+            "description": jobInstance.description
         })
 
     except Exception as ex:

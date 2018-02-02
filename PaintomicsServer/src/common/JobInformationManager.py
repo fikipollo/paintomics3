@@ -220,6 +220,8 @@ class JobInformationManager:
             uploadedDataFile = uploadedFiles.get(uploadedFileName)
             uploadedRelevantFile = uploadedFiles.get(uploadedFileName.replace("file","relevant_file"), None)
 
+            configValues = formFields.get(uploadedFileName.replace("file", "config_args"), None)
+
             origin = formFields.get(uploadedFileName.replace("file","origin"))
             logging.info("SAVE FILES - ORIGIN FOR " + uploadedFileName + " IS " + origin)
 
@@ -258,7 +260,7 @@ class JobInformationManager:
 
                 fieldsRelevant={"omicType": omicType}
                 fieldsRelevant["dataType"]= formFields.get(uploadedFileName.replace("file","relevant_file_type")) ##GET THE FILE TYPE: GENE EXPRESSION, ETC.
-                fieldsRelevant["description"] =  formFields.get(uploadedFileName.replace("file","description"), "Uploaded using ")##GET THE FILE DESCRIPTION
+                fieldsRelevant["description"] =  formFields.get(uploadedFileName.replace("file","description"), "Uploaded using the submission form.")##GET THE FILE DESCRIPTION
 
                 logging.info("STEP1 - ORIGIN FOR " + uploadedFileName.replace("file","relevant") + " IS " + origin)
                 if(origin == 'client'):
@@ -271,9 +273,9 @@ class JobInformationManager:
 
             if(jobInstance != None):
                 if(matchingType.lower() == "gene"):
-                    jobInstance.addGeneBasedInputOmic({"omicName": omicType, "inputDataFile": dataFileName, "relevantFeaturesFile": relevantFileName})
+                    jobInstance.addGeneBasedInputOmic({"omicName": omicType, "inputDataFile": dataFileName, "relevantFeaturesFile": relevantFileName, "configOptions": configValues})
                 elif(matchingType.lower() == "compound"):
-                    jobInstance.addCompoundBasedInputOmic({"omicName": omicType, "inputDataFile": dataFileName, "relevantFeaturesFile": relevantFileName})
+                    jobInstance.addCompoundBasedInputOmic({"omicName": omicType, "inputDataFile": dataFileName, "relevantFeaturesFile": relevantFileName, "configOptions": configValues})
                 elif(matchingType.lower() == "reference_file"):
                     jobInstance.addReferenceInput({"omicName": omicType, "fileType": dataType, "inputDataFile": dataFileName})
 

@@ -362,7 +362,7 @@ function PA_Step4PathwayView() {
 
 		var update=false;
 		var me = this;
-		if(!this.visualOptions.colorReferences){
+		if(!this.visualOptions.colorReferences || typeof(this.visualOptions.colorReferences) === "string"){
 			/* Initialize new set of color references using the default colour */
 			this.visualOptions.colorReferences = {};
 			var defaultColorReference = this.model.getGraphicalOptions().getColorReferences();

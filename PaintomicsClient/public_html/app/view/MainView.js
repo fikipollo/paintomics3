@@ -166,7 +166,7 @@ function MainView() {
 				cls: "lateralMenu",
 				region: 'west',
 				html: "<ul class='lateralMenu-body'>" +
-				" <li class='menuOption' id='homeButton'><i class='fa fa-paint-brush'></i> Home</li>" + 
+				" <li class='menuOption' id='homeButton'><i class='fa fa-paint-brush'></i> Job view</li>" + 
 				" <li class='menuOption loggedOption' ><i class='fa fa-cloud'></i>  Personal storage" +
 				"  <ul class='submenu loggedOption'>" +
 				(noLogin != true ?

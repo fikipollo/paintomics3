@@ -315,12 +315,6 @@ function DM_MyDataFileListView() {
 						// }]
 					}),
 					columns: [{
-						xtype: 'customcheckcolumn',
-						dataIndex: 'selected',
-						header: '',
-						width: 30,
-						hidden: !this.multidelete
-					}, {
 						text: 'File Name',
 						dataIndex: 'fileName',
 						flex: 2
@@ -337,10 +331,27 @@ function DM_MyDataFileListView() {
 						dataIndex: 'description',
 						flex: 3,
 						renderer: function(value, metadata, record) {
-							value = ((value === '') ? "<i>No description for this file</i>" : value);
-							//TODO: MEJORAR
-							var myToolTipText = "<b style='display:block; width:200px'>" + metadata.column.text + "</b>" + "<br>" + value.replace(/;/g, "<br>");
-							metadata.tdAttr = 'data-qtip="' + myToolTipText + '"';
+							var tooltipContent = '';
+							
+							if (value === '') {
+								tooltipContent = "<b style='display:block; width:200px'><i>No description for this file.</i></b>";
+						  	} else {
+								var textLines = value.split(';').filter(x => $.trim(x).length);
+								
+								tooltipContent = "<b style='display:block; width:200px'>" + metadata.column.text + "</b>" + "<br>" + textLines[0];
+								
+								if (textLines.length > 1) {
+									var secondPart = textLines.indexOf("Params:");
+									
+									var inputData = textLines.slice(1, secondPart);
+									var paramsData = textLines.slice(secondPart + 1);
+									
+									tooltipContent += 'Input data: <ul><li>' + inputData.join('</li><li>') + '</li></ul>';
+									tooltipContent += 'Params: <ul><li>' + paramsData.join('</li><li>') + '</li></ul>';
+								}
+							}
+									 
+							metadata.tdAttr = 'data-qtip="' + tooltipContent + '"';
 							return value;
 						}
 					}, {
@@ -356,6 +367,24 @@ function DM_MyDataFileListView() {
 						width: 140,
 						renderer: function(value) {
 							return value.substr(6, 4) + "-" + value.substr(3, 2) + "-" + value.substr(0, 2) + " " + value.substr(11, 5);
+						},
+						doSort: function(state) {
+							var ds = this.up('tablepanel').store;
+							var field = this.getSortParam();
+							var parent = this.up('#myFilesGrid');
+							
+							ds.sort({
+								property: field,
+								direction: state,
+								sorterFn: function sorterFunction(o1, o2) {
+									return parent.sortCustomDate(o1, o2, 'submissionDate');
+								}
+							});
+						},
+						listeners:{
+							afterrender: function(col, eOpts){
+								col.setSortState('DESC');
+							}
 						}
 					}, {
 						xtype: 'customactioncolumn',
@@ -396,12 +425,7 @@ function DM_MyDataFileListView() {
 						}
 					},
 					multiDeleteHandler: function() {
-						var selected = [];
-						this.store.each(function(record) {
-							if (record.get("selected")) {
-								selected.push(record.get("fileName"));
-							}
-						});
+						var selected = this.getSelectionModel().getSelection().map(x => x.get("fileName"));
 
 						if (selected.length > 0) {
 							me.getController().deleteFilesHandler(me, selected.join(","));
@@ -450,7 +474,7 @@ function DM_MyDataJobListView() {
 
 	this.loadData = function(jobList, dataSummary) {
 		this.getComponent().setLoading(true);
-		var grid = this.getComponent().queryById("myFilesGrid");
+		var grid = this.getComponent().queryById("myJobsGrid");
 		grid.getStore().removeAll();
 		grid.getStore().loadData(jobList);
 
@@ -482,7 +506,7 @@ function DM_MyDataJobListView() {
 				html: '<h3>My jobs</h3>' + "<p>" + " As you run new jobs in Paintomics, this section will show the status of your Jobs.</br>" + " You can resume your Jobs and continue working or download the results after each process." + "</p>"
 			}, {
 				xtype: "livesearchgrid",
-				itemId: "myFilesGrid",
+				itemId: "myJobsGrid",
 				columnWidth: 300,
 				searchFor: "jobID",
 				border: 0,
@@ -496,6 +520,8 @@ function DM_MyDataJobListView() {
 							name: 'lastStep'
 						}, {
 							name: 'date'
+						}, {
+							name: 'accessDate'
 						},{
 							name: 'name'
 						},{
@@ -507,12 +533,6 @@ function DM_MyDataJobListView() {
 						}]
 					}),
 					columns: [{
-						xtype: 'customcheckcolumn',
-						dataIndex: 'selected',
-						header: '',
-						width: 30,
-						hidden: !this.multidelete
-					}, {
 						text: 'Job ID',
 						dataIndex: 'jobID',
 						flex: .5
@@ -530,16 +550,47 @@ function DM_MyDataJobListView() {
 						flex: .6,
 						renderer: function(value) {
 							return value.substr(0, 4) + "-" + value.substr(4, 2) + "-" + value.substr(6, 2) + " " + value.substr(8, 2) + ":" + value.substr(10, 2);
+						},
+						doSort: function(state) {
+							var ds = this.up('tablepanel').store;
+							var field = this.getSortParam();
+							var parent = this.up('#myJobsGrid');
+							
+							ds.sort({
+								property: field,
+								direction: state,
+								sorterFn: function sorterFunction(o1, o2) {
+									return parent.sortCustomDate(o1, o2, 'date');
+								}
+							});
+						},
+						listeners:{
+							afterrender: function(col, eOpts){
+								col.setSortState('DESC');
+							}
 						}
 					}, {
 						text: 'Expiration date',
-						dataIndex: 'date',
+						dataIndex: 'accessDate',
 						flex: .6,
 						renderer: function(value) {
 							var date = new Date(value.substr(0, 4) + "-" + value.substr(4, 2) + "-" + value.substr(6, 2));
 							date.setDate(date.getDate() + MAX_LIVE_JOB);
 							return date.toISOString().substr(0, 10);
 
+						},
+						doSort: function(state) {
+							var ds = this.up('tablepanel').store;
+							var field = this.getSortParam();
+							var parent = this.up('#myJobsGrid');
+							
+							ds.sort({
+								property: field,
+								direction: state,
+								sorterFn: function sorterFunction(o1, o2) {
+									return parent.sortCustomDate(o1, o2, 'accessDate');
+								}
+							});
 						}
 					}, {
 						text: 'Job name',
@@ -550,10 +601,55 @@ function DM_MyDataJobListView() {
 						dataIndex: 'description',
 						flex: 2,
 						renderer: function(value, metadata, record) {
-							value = ((value === '') ? "<i>No description for this file</i>" : value);
-							//TODO: MEJORAR
-							var myToolTipText = "<b style='display:block; width:200px'>" + metadata.column.text + "</b>" + value.replace(/;/g, "<br>");
-							metadata.tdAttr = 'data-qtip="' + myToolTipText + '"';
+							var tooltipContent = '';
+							
+							if (value === '') {
+								tooltipContent = "<b style='display:block; width:200px'><i>No description for this job</i></b>";
+						  	} else {
+								var textLines = value.split(';').filter(x => $.trim(x).length && !x.match("Example Job"));
+
+								if (textLines[0][textLines[0].length - 1] !== ':') {
+									tooltipContent += "<b style='display:block; width:200px'>Description</b><br/><ul><li>" + textLines.filter(x => !x.match("Params")).join('</li><li>') + '</li></ul>';
+								} else {
+									tooltipContent += '<b>Description:</b> <ul>';
+
+									// Other lines containing omics
+									for(var i = 1; i < textLines.length; i++) {
+
+										var omicText = textLines[i];
+										var omicName = /^(.*?)\[/g.exec(omicText);
+										var omicConfig = /\[\[(.*)\]\]/g.exec(omicText);
+										var omicFile = /(?<!\[)\[([^\[]*)?\]/g.exec(omicText);
+
+										tooltipContent += '<li><b>' + (omicName ? omicName[1] : "No name") + '</b>';
+										
+										if (omicFile) {
+											var omicFiles = omicFile[1].split('!!');
+											
+											tooltipContent += '<ul><li>File used: ' + omicFiles[0] + '</li>' + 
+												(omicFiles[1] ? '<li>Relevant file used: ' + omicFiles[1] + '</li>' : '');
+										}
+
+										// Check if it contains config options, inside double squared brackets
+										// and separated by double !
+										if (omicConfig) {
+											var configParams = omicConfig[1].split("!!").filter(x => !x.match("Params") && x.length);
+
+											tooltipContent += '<li>Config options:<ul><li>';
+
+											tooltipContent += configParams.join('</li><li>');
+
+											tooltipContent += '</li></ul></li>';
+										}
+
+										tooltipContent += '</li></ul></li>';
+									}
+
+									tooltipContent += '</ul>';
+								}
+							}
+									 
+							metadata.tdAttr = 'data-qtip="' + tooltipContent + '"';
 							return value;
 						}
 					}, {
@@ -578,14 +674,9 @@ function DM_MyDataJobListView() {
 						}]
 					}],
 					multiDeleteHandler: function() {
-						var selectedIDs = [];
-						var selectedTypes = [];
-						this.store.each(function(record) {
-							if (record.get("selected")) {
-								selectedIDs.push(record.get("jobID"));
-								selectedTypes.push(record.get("jobType"));
-							}
-						});
+						var selectedRows = this.getSelectionModel().getSelection();
+						var selectedIDs = selectedRows.map(x => x.get("jobID"));
+						var selectedTypes = selectedRows.map(x => x.get("jobType"));
 
 						if (selectedIDs.length > 0) {
 							me.getController().deleteJobsHandler(me, selectedIDs.join(","), selectedTypes.join(","));
