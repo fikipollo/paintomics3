@@ -43,6 +43,8 @@ function Application() {
     this.controllers = ['JobController', "PathwayController", "UserController", "DataManagementController"];
     this.controllerInstances = [];
     this.mainView = null;
+	/* Current timestamp for app */
+    this.timestamp = 1517826148;
 
     this.launch = function () {
         var modelsLocation = "app/model/";
@@ -69,7 +71,7 @@ function Application() {
         if (window.sessionStorage && sessionStorage.getItem("jobModel") != null) {
           var sessionJobJSON = JSON.parse(sessionStorage.getItem("jobModel"));
 
-          if (URLjobID == null || URLjobID == sessionJobJSON.jobID) {
+          if ((URLjobID == null || URLjobID == sessionJobJSON.jobID) && sessionJobJSON.timestamp && sessionJobJSON.timestamp >= this.timestamp) {
             jobInstanceModel.loadFromJSON(sessionJobJSON);
           }
         }

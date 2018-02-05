@@ -42,6 +42,7 @@ function JobInstance(jobID) {
 	this.foundCompounds = [];
 
 	this.selectedPathway = null;
+	this.timestamp = null;
 
 	/*****************************
 	** GETTERS AND SETTERS
@@ -51,6 +52,12 @@ function JobInstance(jobID) {
 	};
 	this.getJobID = function () {
 		return this.jobID;
+	};
+	this.setTimestamp = function(timestamp) {
+		this.timestamp = timestamp;
+	};
+	this.getTimestamp = function() {
+		return this.timestamp;	
 	};
 	this.setName = function (name) {
 		this.name = name;

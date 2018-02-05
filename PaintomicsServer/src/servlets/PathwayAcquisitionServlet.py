@@ -22,7 +22,7 @@ import logging.config
 
 import cairo
 import rsvg
-import re
+from time import time
 
 from collections import defaultdict
 
@@ -216,12 +216,13 @@ def pathwayAcquisitionStep1_PART2(jobInstance, userID, exampleMode, RESPONSE):
         RESPONSE.setContent({
             "success": True,
             "organism" : jobInstance.getOrganism(),
-            "jobID":jobInstance.getJobID() ,
+            "jobID": jobInstance.getJobID() ,
             "matchedMetabolites": map(lambda foundFeature: foundFeature.toBSON(), matchedMetabolites),
-            "geneBasedInputOmics":jobInstance.getGeneBasedInputOmics(),
+            "geneBasedInputOmics": jobInstance.getGeneBasedInputOmics(),
             "compoundBasedInputOmics": jobInstance.getCompoundBasedInputOmics(),
             "databases": jobInstance.getDatabases(),
-            "name": jobInstance.getName()
+            "name": jobInstance.getName(),
+            "timestamp": int(time())
         })
 
     except Exception as ex:
@@ -371,6 +372,10 @@ def pathwayAcquisitionStep2_PART2(jobID, userID, selectedCompounds, RESPONSE, RO
         JobInformationManager().storeJobInstance(jobInstance, 2)
         logging.info("STEP2 - SAVING NEW JOB DATA...DONE" )
 
+        logging.info("STEP2 - REMOVING OLD VISUAL OPTIONS...")
+        JobInformationManager().storeVisualOptions(jobID, {"jobID": jobID})
+        logging.info("STEP2 - REMOVING OLD VISUAL OPTIONS...DONE")
+
         #************************************************************************
         # Step 5. Update the response content
         #************************************************************************
@@ -386,7 +391,8 @@ def pathwayAcquisitionStep2_PART2(jobID, userID, selectedCompounds, RESPONSE, RO
             "pathwaysInfo" : matchedPathwaysJSONList,
             "geneBasedInputOmics":jobInstance.getGeneBasedInputOmics(),
             "compoundBasedInputOmics": jobInstance.getCompoundBasedInputOmics(),
-            "databases": jobInstance.getDatabases()
+            "databases": jobInstance.getDatabases(),
+            "timestamp": int(time())
         })
 
     except Exception as ex:
@@ -535,7 +541,8 @@ def pathwayAcquisitionRecoverJob(request, response, QUEUE_INSTANCE):
                 "databases": jobInstance.getDatabases(),
                 "matchedMetabolites": matchedCompoundsJSONList,
                 "stepNumber": jobInstance.getLastStep(),
-                "name": jobInstance.getName()
+                "name": jobInstance.getName(),
+                "timestamp": int(time())
             })
 
     except Exception as ex:
@@ -623,55 +630,19 @@ def pathwayAcquisitionSaveVisualOptions(request, response):
         #****************************************************************
         # Step 1.GET THE INSTANCE OF visual Options
         #****************************************************************
-        formFields = request.form
-
-        visualOptions = defaultdict(dict)
-        jobID  = formFields.get("jobID")
-
-        # Visual options are stored on a DB basis, with form info in the structure
-        # DB[option] or DB[option][] for lists
-        db_matcher = re.compile(r"^(\w+)\[(.+?)\](\Z|\[\])$")
-
-        for key in formFields.keys():
-            value = formFields.get(key)
-
-            # If the regex matches, the option is specific for a DB
-            db_match = db_matcher.search(key)
-
-            # if key == "pathwaysVisibility[]":
-            #     visualOptions["pathwaysVisibility"] = formFields.getlist(key)
-            #     continue
-            # elif key == "pathwaysPositions[]":
-            #     visualOptions["pathwaysPositions"] = formFields.getlist(key)
-            #     continue
-            if "[]" in key:
-                value = formFields.getlist(key)
-                key = key.replace("[]", "")
-            elif value == "true" or value == "false":
-                value = (value == "true")
-            else:
-                try:
-                    value = float(value)
-                except:
-                    pass
-
-            if db_match:
-                db_name = db_match.group(1)
-                option = db_match.group(2)
-                is_list = (db_match.group(3) == "[]")
-
-                visualOptions[db_name][option] = value #formFields.getlist(key) if is_list else value
-            else:
-                visualOptions[key] = value
+        visualOptions = request.get_json()
+        jobID  = visualOptions.get("jobID")
+        newTimestamp = int(time())
+        visualOptions["timestamp"] = newTimestamp
 
         #************************************************************************
         # Step 3. Save the visual Options in the MongoDB
         #************************************************************************
         logging.info("STEP 3 - SAVING VISUAL OPTIONS FOR JOB " + jobID + "..." )
-        JobInformationManager().storeVisualOptions(jobID, dict(visualOptions))
+        JobInformationManager().storeVisualOptions(jobID, visualOptions)
         logging.info("STEP 3 - SAVING VISUAL OPTIONS FOR JOB " + jobID + "...DONE" )
 
-        response.setContent({"success": True})
+        response.setContent({"success": True, "timestamp": newTimestamp})
 
     except Exception as ex:
         handleException(response, ex, __file__ , "pathwayAcquisitionStep3", userID=userID)

@@ -110,6 +110,7 @@ function PA_Step3JobView() {
             selectedCombinedMethod: 'Fisher',
             selectedAdjustedMethod: 'None',
             stoufferWeights: {}
+			//timestamp: this.model.getTimestamp()
         };
 
 		// Initialize dictionaries with databases used
@@ -119,35 +120,46 @@ function PA_Step3JobView() {
 			this.isFiltered[db] = false;
 		}).bind(this));
 
+		// Ensure that the visual options timestamp is on par with the model (could be new due to 'Go back' feature)
 		if (window.sessionStorage && sessionStorage.getItem("visualOptions") !== null) {
 			this.visualOptions = jQuery.extend(jQuery.extend({}, globalDefaultVisualOptions), 
                                                JSON.parse(sessionStorage.getItem("visualOptions")));
+			
+			// The visualOptions session info can come from an old job (after 'Go back') or updated
+			// by recovering the job. Check that the time stamps match or invalidate this block.
+			if (this.visualOptions.timestamp >= this.model.getTimestamp()) {
+				// If the visualOptions does not contain at least the key KEGG (mandatory)
+				// then it has the old format, convert it to the new one.
+				databases.map((function(db) {
+					if (!(db in this.visualOptions)) {
+						/* Avoid referencing to the same object */
+						var defaultDBsettings =  jQuery.extend(true, {}, defaultVisualOptions);
+						this.visualOptions[db] = {};
 
-			// If the visualOptions does not contain at least the key KEGG (mandatory)
-			// then it has the old format, convert it to the new one.
-			databases.map((function(db) {
-				if (!(db in this.visualOptions)) {
-					/* Avoid referencing to the same object */
-					var defaultDBsettings =  jQuery.extend(true, {}, defaultVisualOptions);
-					this.visualOptions[db] = {};
+						$.each(Object.keys(defaultVisualOptions), (function(index, option) {
+							this.visualOptions[db][option] = this.visualOptions[option] ||  defaultDBsettings[option];
+							delete this.visualOptions[option];
+						}).bind(this));
+					}
+				}).bind(this));
+			} else {
+				this.visualOptions = null;
+			}
+		}
+		/********************************************************/
+		/* STEP 2.1.B GENERATE DEFAULT VISUAL OPTIONS           */
+		/********************************************************/
+		if (this.visualOptions === null) {
 
-					$.each(Object.keys(defaultVisualOptions), (function(index, option) {
-						this.visualOptions[db][option] = this.visualOptions[option] ||  defaultDBsettings[option];
-						delete this.visualOptions[option];
-					}).bind(this));
-				}
-			}).bind(this));
-
-		}else{
-			/********************************************************/
-			/* STEP 2.1.B GENERATE DEFAULT VISUAL OPTIONS           */
-			/********************************************************/
 			this.visualOptions = jQuery.extend(true, {}, globalDefaultVisualOptions);
+				
 			databases.map((function(db) {this.visualOptions[db] = jQuery.extend(true, {}, defaultVisualOptions);}).bind(this));
 
 			for (var i in pathways) {
 				this.visualOptions[pathways[i].getSource()].pathwaysVisibility.push(pathways[i].getID());
 			}
+			
+			this.visualOptions['timestamp'] = this.model.getTimestamp();
 
 			this.getController().updateStoredApplicationData("visualOptions", this.visualOptions);
 		}
@@ -3110,6 +3122,11 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
                 
                 gridPanel.initialConfig.columns = columns;
 				gridPanel.reconfigure(tableStore, columns);
+				
+				// Make sure that the updated adjusted p-values layer exists 
+				// when at least one database is filtered.
+				
+				
 				this.updateVisiblePathways();
 			};
 			
@@ -3154,7 +3171,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 				// First load: update the grid contained p-values
 				this.updatePvaluesFromStore();
 				
-				if (adjustedPvalueMethods !== null && loadRemote) {
+				if (adjustedPvalueMethods !== null) {
 					/*
 						Check if any database is filtered. It that is the case we retrieve the new
 						p-values from server. 
@@ -3162,31 +3179,51 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 						If not filtered (or no longer filtered) remove the layer of "false" adjusted
 						p-values to restore the original, unless there are custom Stouffer weights
 						in which case we retrieve the new ones.
-
 					*/
-					if (Object.values(parent.isFiltered).includes(true)) {
-						parent.getController().step3GetUpdatedPvalues(this, this.getPvaluesFromStore());
+					var isFiltered = Object.values(parent.isFiltered).includes(true);
+					var customStouffer = ! Ext.Object.isEmpty(visualOptions.stoufferWeights);
+					var retrieveNewValues = false;
+					
+					if (loadRemote) {
+						if (isFiltered) {
+							retrieveNewValues = true;
+						} else {
+							/*
+								Unfiltered data: remove options and update grid.
+							*/	
+							this.model.getDatabases().forEach(function(db) {
+								delete visualOptions[db].adjustedPvalues;
+							});
+
+							this.updatePvaluesFromStore();
+
+							if (customStouffer) {
+								var visiblePathways = Object.keys(this.getAssociatedPathways(true));
+
+								console.log("Unfiltered pathways and custom Stouffer: removing old visualOptions and retrieving adjusted Stouffer.");
+
+								parent.getController().step3GetUpdatedPvalues(this, this.getPvaluesFromStore(), visualOptions.stoufferWeights, visiblePathways);
+							} else {
+								console.log("Unfiltered pathways: removing old visualOptions and updating the table.");
+
+								parent.getController().updateStoredApplicationData("visualOptions", visualOptions);
+							}
+						}
 					} else {
 						/*
-							Unfiltered data: remove options and update grid.
-						*/	
-						this.model.getDatabases().forEach(function(db) {
-							delete visualOptions[db].adjustedPvalues;
-						});
-						
-						this.updatePvaluesFromStore();
-						
-						if (! Ext.Object.isEmpty(visualOptions.stoufferWeights)) {
-							var visiblePathways = Object.keys(this.getAssociatedPathways(true));
-							
-							console.log("Unfiltered pathways and custom Stouffer: removing old visualOptions and retrieving adjusted Stouffer.");
-													
-							parent.getController().step3GetUpdatedPvalues(this, this.getPvaluesFromStore(), visualOptions.stoufferWeights, visiblePathways);
-						} else {
-							console.log("Unfiltered pathways: removing old visualOptions and updating the table.");
-							
-							parent.getController().updateStoredApplicationData("visualOptions", visualOptions);
+							If we are first loading from session, make sure that if filtered the layer exists
+							in the visual options or retrieve it.
+						*/
+						var layerAdjusted = ! Ext.Object.isEmpty(visualOptions[this.model.getDatabases()[0]].adjustedPvalues);
+						var layerStouffer = ! Ext.Object.isEmpty(visualOptions[this.model.getDatabases()[0]].Stouffer);
+
+						if ((isFiltered && ! layerAdjusted) || (customStouffer && ! layerStouffer)) {
+							retrieveNewValues = true;
 						}
+					}
+				
+					if (retrieveNewValues) {
+						parent.getController().step3GetUpdatedPvalues(this, this.getPvaluesFromStore());
 					}
 				}
 			};

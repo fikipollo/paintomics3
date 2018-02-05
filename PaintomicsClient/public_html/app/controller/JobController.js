@@ -366,6 +366,7 @@ function JobController() {
 						jobModel.setSummary(response.summary);
 						jobModel.setOrganism(response.organism);  //UPDATE ORGANISM
 						jobModel.setDatabases(response.databases);
+						jobModel.setTimestamp(response.timestamp);
 
 						var pathways = response.pathwaysInfo;
 						var pathway = null;
@@ -377,6 +378,7 @@ function JobController() {
 						}
 
 						me.updateStoredApplicationData("jobModel", jobModel);
+						
 						me.showJobInstance(jobModel);
 						showSuccessMessage("Done", {logMessage: "Updating Pathways list...DONE", showTimeout: 1, closeTimeout: 0.5});
 					};
@@ -548,6 +550,7 @@ function JobController() {
 						jobModel.setOrganism(response.organism);  //UPDATE ORGANISM
 						jobModel.setDatabases(response.databases); //UPDATE DATABASES
 						jobModel.setName(response.name);
+						jobModel.setTimestamp(response.timestamp);
 
 						jobModel.setFoundCompounds([]);
 						var matchedMetabolites = response.matchedMetabolites;
@@ -593,6 +596,7 @@ function JobController() {
 
 						var visualOptions = response.visualOptions;
 						if(visualOptions){
+							visualOptions.timestamp = response.timestamp;
 							me.updateStoredApplicationData("visualOptions", visualOptions);
 						}
 
@@ -808,7 +812,7 @@ function JobController() {
 		}
 
 		// Update the URL adding the parameter with the jobID
-		if (jobModel.getJobID() !== null) {
+		if (jobModel.getJobID() !== null && doUpdate) {
 			window.history.replaceState(null, null, window.location.pathname + "?jobID=" + jobModel.getJobID());
 
 			// Call the server to update the job's access date even when it was
@@ -838,6 +842,8 @@ function JobController() {
 		/********************************************************/
 		/* STEP 1. SAVE TO CACHE                                */
 		/********************************************************/
+		var me = this;
+		
 		this.updateStoredApplicationData("visualOptions", visualOptions);
 
 		/********************************************************/
@@ -845,21 +851,17 @@ function JobController() {
 		/********************************************************/
 		visualOptions.jobID = jobID;
 
-		// Avoid override of values
-		var visualOptionsClone = jQuery.extend(true, {}, visualOptions);
-
-		// Transform customValues to plain text JSON representation
-		/*if (visualOptionsClone.customValues) {
-			Object.keys(visualOptionsClone.customValues).map(function(key, index) {
-				visualOptionsClone.customValues[key] = JSON.stringify(visualOptionsClone.customValues[key]);
-			});
-		}*/
-
 		$.ajax({
 			method: "POST",
 			url: SERVER_URL_PA_SAVE_VISUAL_OPTIONS,
-			data: visualOptionsClone,
+			data: JSON.stringify(visualOptions),
+			dataType: "json",
+			contentType: "application/json",
 			success: function (response) {
+				// Update only the timestamp value when the server has properly saved the options.
+				visualOptions.timestamp = response.timestamp;
+				me.updateStoredApplicationData("visualOptions", visualOptions);
+				
 				console.info(Date.logFormat() + "Visual options saved succesfully.");
 			},
 			error: function (response) {
