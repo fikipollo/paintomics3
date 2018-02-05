@@ -184,6 +184,8 @@ Ext.define('Ext.grid.LiveSearchGridPanel', {
 			me.selType = 'checkboxmodel';
 		}
 		
+		me.viewConfig.stripeRows = this.stripeRows;
+		
         me.tbar = [
 			'Search', {
                 xtype: 'textfield',

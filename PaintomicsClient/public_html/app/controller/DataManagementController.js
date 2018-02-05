@@ -92,8 +92,8 @@ function DataManagementController() {
 	};
 
 	this.downloadFilesHandler = function (myDataFileListView, fileName, fileType, jobID) {
-		var elem = $("body").add("<a target='_blank' id='temporalLink' style='display:none' href='" + window.location.pathname + SERVER_URL_DM_DOWNLOAD_FILE + "?fileName=" + fileName + "&fileType=" + fileType + (jobID ? "&jobID=" + jobID : "") + "'></a>");
-		elem[1].click();
+		var elem = $("body").append("<a target='_blank' id='temporalLink' style='display:none' href='" + window.location.origin + window.location.pathname + SERVER_URL_DM_DOWNLOAD_FILE + "?fileName=" + fileName + "&fileType=" + fileType + (jobID ? "&jobID=" + jobID : "") + "'></a>");
+		$("#temporalLink")[0].click();
 		$("#temporalLink").remove();
 	};
 

@@ -346,7 +346,7 @@ function DM_MyDataFileListView() {
 									var inputData = textLines.slice(1, secondPart);
 									var paramsData = textLines.slice(secondPart + 1);
 									
-									tooltipContent += 'Input data: <ul><li>' + inputData.join('</li><li>') + '</li></ul>';
+									tooltipContent += '<br/>Input data: <ul><li>' + inputData.join('</li><li>') + '</li></ul>';
 									tooltipContent += 'Params: <ul><li>' + paramsData.join('</li><li>') + '</li></ul>';
 								}
 							}
@@ -619,7 +619,7 @@ function DM_MyDataJobListView() {
 										var omicText = textLines[i];
 										var omicName = /^(.*?)\[/g.exec(omicText);
 										var omicConfig = /\[\[(.*)\]\]/g.exec(omicText);
-										var omicFile = /(?<!\[)\[([^\[]*)?\]/g.exec(omicText);
+										var omicFile = /\s\[([^\[]*)?\]/g.exec(omicText);
 
 										tooltipContent += '<li><b>' + (omicName ? omicName[1] : "No name") + '</b>';
 										

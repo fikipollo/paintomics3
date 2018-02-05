@@ -401,7 +401,7 @@ function PA_Step1JobView() {
 								{xtype: 'box',html: '<p class="dragHerePanel">Drag and drop here your selected <i>omics</i></p>'}
 							]
 						}]
-					}							
+					}					
 				]
 			}],
 			listeners: {
