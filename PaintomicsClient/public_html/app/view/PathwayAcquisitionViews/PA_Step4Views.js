@@ -106,6 +106,7 @@ function PA_Step4JobView() {
 		var pathwaysPanelsContainer = this.getComponent().queryById("pathwaysPanelsContainer");
 		if (this.currentView !== null) {
 			pathwaysPanelsContainer.remove(this.currentView.getComponent(), false);  //remove from panel but do not destroy the component.
+			this.currentView.hideTooltips();
 		}
 		this.currentView = (this.getPathwayView(pathwayID) || this.addPathwayView(pathwayID));
 		pathwaysPanelsContainer.add(this.currentView.getComponent());
@@ -210,6 +211,11 @@ function PA_Step4JobView() {
 	this.backButtonHandler = function() {
 		//HIDE THE HISTORY PANEL
 		this.toogleHistoryPanel(true);
+		
+		if (this.currentView) {
+			this.currentView.hideTooltips();
+		}
+		
 		this.controller.showJobInstance(this.getModel(), {doUpdate: false});
 		return this;
 	};
@@ -610,6 +616,10 @@ function PA_Step4PathwayView() {
 		}
 
 	};
+	
+	this.hideTooltips = function() {
+		this.diagramPanel.hideTooltips();
+	};
 
 	//TODO: DOCUMENTAR
 	this.updateObserver = function() {
@@ -769,7 +779,18 @@ function PA_Step4KeggDiagramView() {
 	this.toggle = function(visible) {
 		visible = ((visible===undefined)? ! this.getComponent().isVisible():visible);
 		this.getComponent().setVisible(visible);
+		
+		if (! visible) {
+			this.hideTooltips();
+		}
+		
 		return this;
+	};
+	
+	this.hideTooltips = function() {
+		for (var i in this.items) {
+			this.items[i].hideTooltip(true);
+		}
 	};
 
 	//TODO: DOCUMENTAR
@@ -1007,6 +1028,9 @@ function PA_Step4KeggDiagramView() {
 					}
 
 					me.getModel().deleteObserver(me);
+				},
+				afterHide: function() {
+					console.log("AFTER HIDE DE KEGG DIAGRAM");
 				}
 			}
 		});
@@ -1066,10 +1090,10 @@ function PA_Step4KeggDiagramFeatureSetView() {
 		this.tooltipComponent.show(this.component.id, dataDistributionSummaries, visualOptions);
 	};
 	
-	this.hideTooltip = function() {
+	this.hideTooltip = function(force=false) {
 		// TODO: destroy this component when switching tooltips?
 		if (this.tooltipComponent != null) {
-			this.tooltipComponent.hide(false);
+			this.tooltipComponent.hide(force);
 		}
 	};
 	
@@ -1102,7 +1126,7 @@ function PA_Step4KeggDiagramFeatureSetView() {
 			
 			me.hideTimer = setTimeout(function() {
 				me.hideTimer = null;
-				me.hideTooltip();
+				me.hideTooltip(false);
 			}, 500);	
 		};
 
@@ -1130,6 +1154,12 @@ function PA_Step4KeggDiagramFeatureSetView() {
 		visualOptions.adjustFactor = this.adjustFactor;
 		this.component = this.featureView.initComponent(dataDistributionSummaries, visualOptions);
 		return this.component;
+	};
+	
+	this.beforeDestroy = function() {	
+		if (this.tooltipComponent) {
+			this.tooltipComponent.getComponent().destroy();
+		}
 	};
 
 	return this;
@@ -1172,7 +1202,7 @@ function PA_Step4KeggDiagramFeatureSetTooltip() {
 	};
 
 	this.hide = function(force) {
-		if (! this.isPinned) {
+		if (! this.isPinned || force) {
 			this.forceHide = force;
 			this.getComponent().close();		
 		}
