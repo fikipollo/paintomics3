@@ -606,6 +606,10 @@ select {
 /********************************************************************************
 **STYLES FOR ALL STEPS
 *********************************************************************************/
+td.whiteBackground {
+	border-color: none;
+	background: #FFF;
+}
 
 span.stepIndicatorItem {
 	width: 25%;

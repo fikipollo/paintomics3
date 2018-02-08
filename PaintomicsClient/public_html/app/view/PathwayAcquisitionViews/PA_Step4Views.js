@@ -421,6 +421,31 @@ function PA_Step4PathwayView() {
 
 		return this.dataDistributionSummaries;
 	};
+	
+	this.getMatchedFeatures = function() {
+		var foundFeatures = this.getModel().getMatchedGenes().concat(this.getModel().getMatchedCompounds());
+		var omicValues = this.getModel().getOmic
+		var omicsValues = this.getOmicsValues();
+		
+		var matchedFeatures = {};
+		this.getGeneBasedInputOmics().concat(this.getCompoundBasedInputOmics()).map(x => matchedFeatures[x.omicName] = []);
+		
+		foundFeatures.forEach(function(featureName) {
+			var keggName = omicsValues[featureName].getName();
+			
+			omicsValues[featureName].getOmicsValues().forEach(function(omicValue) {
+				
+				matchedFeatures[omicValue.omicName][keggName] = matchedFeatures[omicValue.omicName][keggName] || {isRelevant: false, inputNames: []};
+				
+				matchedFeatures[omicValue.omicName][keggName] = {
+					isRelevant: matchedFeatures[omicValue.omicName][keggName].isRelevant || omicValue.relevant,
+					inputNames: matchedFeatures[omicValue.omicName][keggName].inputNames.concat(omicValue.getInputName())
+				};
+			})
+		});
+		
+		return matchedFeatures;
+	};
 
 	this.setDataDistributionSummaries = (function(dataDistributionSummaries, omicName) {
 		this.getParent().getModel().setDataDistributionSummaries(dataDistributionSummaries, omicName);

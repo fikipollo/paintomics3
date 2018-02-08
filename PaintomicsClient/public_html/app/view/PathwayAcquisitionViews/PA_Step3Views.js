@@ -2534,13 +2534,47 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 				if(this.getParent().getName() !== "PA_Step3PathwayNetworkTooltipView"){
 					var htmlCode = '<tbody><tr><th></th><th>Matched<br>features</th><th>p-value</th></tr>';
 					var significanceValues = this.getModel().getSignificanceValues();
+					var foundFeatures = this.getParent("PA_Step4PathwayView").getMatchedFeatures();
 					var renderedValue;
 					for (var i in significanceValues) {
 						renderedValue = (significanceValues[i][2] > 0.001 || significanceValues[i][2] === 0) ? parseFloat(significanceValues[i][2]).toFixed(6) : parseFloat(significanceValues[i][2]).toExponential(4);
-						htmlCode += '<tr><td>' + i + '</td><td>' + significanceValues[i][0] + ' (' + significanceValues[i][1] + ')</td><td>' + renderedValue + '</td></tr>';
+						htmlCode += '<tr><td>' + i + '</td><td>' + significanceValues[i][0] + ' (' + significanceValues[i][1] + ')</td><td>' + renderedValue + '</td><td class="whiteBackground">' + (! Ext.Object.isEmpty(foundFeatures[i]) ? '<i class="fa fa-plus-square-o expandMatched" data-id="' + i.replace(/ /g, "_") + '"></i>' : '') + '</td></tr>';
 					}
 					htmlCode+='</tbody>';
 					$(componentID + " .pathwaySummaryTable").html('<table style="padding: 10px;text-align: center;">'+ htmlCode + '</table>');
+										
+					var detailedHTMLcode = '';
+					Object.keys(foundFeatures).forEach(function(omicName) {
+						detailedHTMLcode += '<div id="matchedlist_' + omicName.replace(/ /g, "_") + '" style="display: none;"><h5>Matched features: ' + omicName + '</h5>';
+						
+						if (! Ext.Object.isEmpty(foundFeatures[omicName])) {					
+							// Sort alphabetically
+							var omicFeatures = foundFeatures[omicName];
+							var sortKeys = Object.keys(omicFeatures);
+							sortKeys.sort();
+							
+							detailedHTMLcode += '<ul>';
+							
+							sortKeys.forEach(function(feature) {
+								detailedHTMLcode += '<li>' + feature + ' (' + Array.from(new Set(omicFeatures[feature].inputNames)).join(', ') + ')' +
+									(omicFeatures[feature].isRelevant ? '<i class="featureNameLabelRelevant relevantFeature" title="Relevant feature"></i>' : '') +
+									'</li>';
+							});
+							
+							detailedHTMLcode += '</ul></div>';
+						}
+					});
+					
+					$(componentID + " .pathwaySummaryTable").append(detailedHTMLcode);
+					
+					
+					$('i.expandMatched').click(function() {
+						var el = $(this);
+						var dataID = el.attr('data-id');
+						
+						el.toggleClass('fa-plus-square-o fa-minus-square-o');
+						$('#matchedlist_' + dataID).toggle();
+					});
 				}
 
 				/****************************************************************/

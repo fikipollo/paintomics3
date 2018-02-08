@@ -78,8 +78,8 @@ def findKeggIDByFeatureName(jobID, featureName, organism, db, databaseConvertion
 
     matchedFeatures=[]
     try:
-        mates = db.xref.find({"display_id": featureName}, {"item" :1, "mates":1, "qty":1})[0].get("mates") #Will fail if not matches
-        cursor=db.xref.find({"dbname_id" : databaseConvertion_id, "_id" : { "$in" : mates }}, {"display_id":1})
+        mates  = db.xref.find({"display_id": featureName}, {"item" :1, "mates":1, "qty":1})[0].get("mates") #Will fail if not matches
+        cursor = db.xref.find({"dbname_id" : databaseConvertion_id, "_id" : { "$in" : mates }}, {"display_id":1})
 
         if(cursor.count() > 0):
             for item in cursor:
@@ -272,9 +272,17 @@ def mapFeatureNamesToKeggIDs(jobID, organism, databases, featureList, mapGeneIDs
         for thread in threadsList:
             thread.join(MAX_WAIT_THREADS)
 
+        isFinished = True
         for thread in threadsList:
             if(thread.is_alive()):
+                # TODO: possible deadlock with KeggInformationManager lock? Raise an exception to force the release there?
+                isFinished = False
                 thread.terminate()
+                logging.info("THREAD TERMINATED IN mapFeatureNamesToKeggIDs")
+
+        if not isFinished:
+            raise Exception('Your data took too long to process and it was killed. Try it again later or upload smaller files if it persists.')
+
 
     except Exception as ex:
         raise ex
@@ -496,9 +504,15 @@ def mapFeatureNamesToCompoundsIDs(jobID, featureList):
         for thread in threadsList:
             thread.join(MAX_WAIT_THREADS)
 
+        isFinished = True
         for thread in threadsList:
             if(thread.is_alive()):
+                isFinished = False
                 thread.terminate()
+                logging.info("THREAD TERMINATED IN mapFeatureNamesToCompoundsIDs")
+
+        if not isFinished:
+            raise Exception('Your data took too long to process and it was killed. Try it again later or upload smaller files if it persists.')
 
     except Exception as ex:
         raise ex

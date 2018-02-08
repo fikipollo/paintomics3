@@ -26,7 +26,7 @@ from zipfile import ZipFile as zipFile
 from subprocess import check_call, STDOUT, CalledProcessError
 from src.common.Util import unifyAndSort
 
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 from src.common.Statistics import calculateSignificance, calculateCombinedSignificancePvalues, adjustPvalues
 from src.common.Util import chunks, getImageSize
@@ -477,9 +477,16 @@ class PathwayAcquisitionJob(Job):
         for thread in threadsList:
             thread.join(MAX_WAIT_THREADS)
 
+        isFinished = True
         for thread in threadsList:
             if(thread.is_alive()):
+                isFinished = False
                 thread.terminate()
+                logging.info("THREAD TERMINATED IN generatePathwaysList")
+
+
+        if not isFinished:
+            raise Exception('Your data took too long to process and it was killed. Try it again later or upload smaller files if it persists.')
 
         self.setMatchedPathways(dict(matchedPathways))
         totalMatchedKeggPathways=len(self.getMatchedPathways())
@@ -523,31 +530,18 @@ class PathwayAcquisitionJob(Job):
         @param {type}
         @returns
         """
-        totalFeaturesByOmic = {}
-        totalRelevantFeaturesByOmic = {}
+        totalFeaturesByOmic = Counter()
+        totalRelevantFeaturesByOmic = Counter()
 
-        originalNames = {}
-        for compound in self.getInputCompoundsData().values():
-            for omicValue in compound.getOmicsValues():
-                if omicValue.getOmicName() not in originalNames:
-                    originalNames[omicValue.getOmicName()] = {} #If the omics type is not in the table yet add it
-                originalNames[omicValue.getOmicName()][omicValue.getOriginalName()] = (originalNames.get(omicValue.getOmicName()).get(omicValue.getOriginalName(), False) or omicValue.isRelevant())
+        originalNames = defaultdict(lambda : defaultdict(bool))
+        for features in self.getInputCompoundsData().values() + self.getInputGenesData().values():
+            for omicValue in features.getOmicsValues():
+                originalNames[omicValue.getOmicName()][omicValue.getOriginalName()] = (originalNames[omicValue.getOmicName()][omicValue.getOriginalName()] or omicValue.isRelevant())
 
-        for omicName, compoundNames in originalNames.iteritems():
-            totalFeaturesByOmic[omicName] = len(compoundNames.keys())
-            totalRelevantFeaturesByOmic[omicName] = 0
-            for isRelevant in compoundNames.values():
-                if(isRelevant):
-                    totalRelevantFeaturesByOmic[omicName] = totalRelevantFeaturesByOmic.get(omicName) + 1
+        for omicName, featuresNames in originalNames.iteritems():
+            totalFeaturesByOmic[omicName] = len(featuresNames.keys())
+            totalRelevantFeaturesByOmic[omicName] = featuresNames.values().count(True)
 
-        for gene in self.getInputGenesData().values():
-            for omicValue in gene.getOmicsValues():
-                totalFeaturesByOmic[omicValue.getOmicName()] = totalFeaturesByOmic.get(omicValue.getOmicName(),0) + 1
-                sum = 0
-                if(omicValue.isRelevant()):
-                    sum = 1
-                if(omicValue.isRelevant()):
-                    totalRelevantFeaturesByOmic[omicValue.getOmicName()] = totalRelevantFeaturesByOmic.get(omicValue.getOmicName(),0) + sum
         return totalFeaturesByOmic, totalRelevantFeaturesByOmic
 
     def testPathwaySignificance(self, genesInPathway, compoundsInPathway, inputGenes, inputCompounds, totalFeaturesByOmic, totalRelevantFeaturesByOmic, mappedRatiosByOmic):
@@ -567,6 +561,8 @@ class PathwayAcquisitionJob(Job):
         """
         isValidPathway = False
         pathwayInstance= Pathway("")
+        # Keep track of the original names so as to only count them once, for both genes and compounds.
+        originalNames = defaultdict(lambda : defaultdict(bool))
         #TODO: RETURN AS A SET IN KEGG INFORMATION MANAGER
         genesInPathway=set([x.lower() for x in genesInPathway])
         for gene in inputGenes:
@@ -577,13 +573,12 @@ class PathwayAcquisitionJob(Job):
                     #SIGNIFICANCE-VALUES LIST STORES FOR EACH OMIC 3 VALUES: [TOTAL MATCHED, TOTAL RELEVANT, PVALUE]
                     #IN THIS LINE WE JUST ADD A NEW MATCH AND, IF RELEVANT, A NEW RELEVANT FEATURE, BUT KEEP PVALUE TO -1
                     #AS WE WILL CALCULATE IT LATER.
-                    pathwayInstance.addSignificanceValues(omicValue.getOmicName(), omicValue.isRelevant())
+                    originalNames[omicValue.getOmicName()][omicValue.getOriginalName()] = (originalNames[omicValue.getOmicName()][omicValue.getOriginalName()] or omicValue.isRelevant())
 
         #First we get the list of IDs for the compounds that participate in the pathway
         compoundsInPathway=set([x.lower() for x in compoundsInPathway])
         #Keeps a track of which compounds participates in the pathway, without counting twice compounds that come from the
         #same measurement (it occurs due to disambiguation step).
-        originalNames = {}
         #Now, for each compound in the input
         for compound in inputCompounds:
             #Check if the compound participates in the pathway
@@ -595,15 +590,13 @@ class PathwayAcquisitionJob(Job):
                 #Register the original name for the compound (to avoid duplicate counts for significance test)
 
                 for omicValue in compound.getOmicsValues():
-                    if omicValue.getOmicName() not in originalNames:
-                        originalNames[omicValue.getOmicName()] = {} #If the omics type is not in the table yet add it
                     #Add the original name to the table for the corresponding omics type, specifying if the feature is relevant or not.
                     # Metabolomics --> Glutamine --> [prev value for isRelevant] or [current feature isRelevant]
                     #TODO: what if L-Glutamine coming from "Glutamine" is in the list of relevants but Glutamine not? Now we consider Glutamine as relevant
-                    originalNames[omicValue.getOmicName()][omicValue.getOriginalName()] = (originalNames.get(omicValue.getOmicName()).get(omicValue.getOriginalName(), False) or omicValue.isRelevant())
+                    originalNames[omicValue.getOmicName()][omicValue.getOriginalName()] = (originalNames[omicValue.getOmicName()][omicValue.getOriginalName()] or omicValue.isRelevant())
 
-        for omicName, compoundNames in originalNames.iteritems():
-            for isRelevant in compoundNames.values():
+        for omicName, featureNames in originalNames.iteritems():
+            for isRelevant in featureNames.values():
                 #SIGNIFICANCE-VALUES LIST STORES FOR EACH OMIC 3 VALUES: [TOTAL MATCHED, TOTAL RELEVANT, PVALUE]
                 #IN THIS LINE WE JUST ADD A NEW MATCH AND, IF RELEVANT, A NEW RELEVANT FEATURE, BUT KEEP PVALUE TO -1
                 #AS WE WILL CALCULATE IT LATER.
@@ -612,7 +605,7 @@ class PathwayAcquisitionJob(Job):
         if(isValidPathway):
             for omicName in pathwayInstance.getSignificanceValues().keys():
                 values = pathwayInstance.getSignificanceValues().get(omicName)
-                #FOR EACH OMIC TYPE, SIGNIFICANCE IS CALCULATED TAKING IN ACCOUNT:
+                #FOR EACH OMIC TYPE, SIGNIFICANCE IS CALCULATED TAKING IN ACCOUNT, AND CONSIDERING ONLY THE ORIGINAL NAME:
                 #  - THE TOTAL NUMBER OF MATCHED FEATURES FOR CURRENT OMIC (i.e. IF WE INPUT PROTEINS, THE TOTAL NUMBER WILL BE
                 #    THE TOTAL OF PROTEINS THAT WE MANAGED TO MAP TO GENES.
                 #  - THE TOTAL NUMBER OF RELEVANT FEATURES FOR THE CURRENT OMIC
