@@ -142,7 +142,7 @@ def download_command(inputfile=None, specie=None, kegg=0, mapping=0, common=0, r
             version.write("# DOWNLOAD DATE:\t" + strftime("%Y%m%d %H%M"))
             version.close()
             DOWNLOADED_SPECIES.append("common")
-            summary.write(specie + '\tDOWNLOAD\tSUCCESS\tcommon\n')
+            summary.write('\tDOWNLOAD\tSUCCESS\tcommon\n')
             log("DOWNLOAD COMMON KEGG INFORMATION... SUCCESS\n")
 
         except Exception as e:
