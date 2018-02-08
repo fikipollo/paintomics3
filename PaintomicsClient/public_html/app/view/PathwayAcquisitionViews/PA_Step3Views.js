@@ -1223,7 +1223,6 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 				else {
 					// elem.data.label = '' + similarity;
 					elem.data.type = 'dotted';
-					elem.data.color = "#e2e2e2";
 					elem.data.size = similarity;
 					edgesAux.push(elem.data);
 				}
@@ -1252,6 +1251,8 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					batchEdgesDrawing: false,
 					hideEdgesOnMove: true,
 					defaultEdgeType: 'line',
+					defaultEdgeColor: '#A9A9A9',
+					edgeColor: 'default',
 					//glyph --------------------------------------------------------
 					drawGlyphs: false, //show after layout
 					glyphScale : 0.4,
@@ -2122,10 +2123,12 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					'  <div class="checkbox"><input type="checkbox" id="show-node-labels-check_' + me.dbid + '" name="showNodeLabelsCheckbox">' +
 					'    <label for="show-node-labels-check_' + me.dbid + '">Show all node labels <span class="helpTip" style="float:right;" title="Shows labels for nodes (reduces performance). By default labels are visible when zooming the network."</span></label>' +
 					'  </div>'+
+					'  <div style="display: none;">' +
 					'  <h5>Max node size (<span id="maxNodeSizeValue_' + me.dbid + '">8</span>)<span class="helpTip" style="float:right;" title="Determines the maximum size that a node can have, scaling the others to maintain the correct ratio."</span></h5>' +
 					'  <div class="slider-ui" style="margin:10px;" id="maxNodeSizeSlider_' + me.dbid + '"></div>' +
 					'  <h5>Min node size (<span id="minNodeSizeValue_' + me.dbid + '">1</span>)<span class="helpTip" style="float:right;" title="Determines the minimum size that a node can have, scaling the others to maintain the correct ratio."</span></h5>' +
 					'  <div class="slider-ui" style="margin:10px;" id="minNodeSizeSlider_' + me.dbid + '"></div>' +
+					' </div>' +
 					// '  <div class="checkbox"><input type="checkbox" id="show-edge-labels-check" name="showEdgeLabelsCheckbox">' +
 					// '    <label for="show-edge-labels-check">Show all edge labels <span class="helpTip" style="float:right;" title="Shows labels for edges (reduces performance). Edge labels indicate the percentage of shared features (genes + metabolites) shared between 2 pathways."</span></label>' +
 					// '  </div>'+
