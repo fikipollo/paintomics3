@@ -3385,7 +3385,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					metadata.style = "height: 33px; font-size:10px;"
 
 					//IF THERE IS NOT DATA FOR THIS PATHWAY, FOR THIS OMIC, PRINT A '-'
-					if (value === "-" || value == undefined) {
+					if (value === "-" || value == undefined || isNaN(value)) {
 						myToolTipText = myToolTipText + "<i>No data for this pathway</i>";
 						metadata.tdAttr = 'data-qtip="' + myToolTipText + '"';
 						metadata.style += "background-color:#D4D4D4;";
@@ -3457,7 +3457,8 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					};
 					rowModel['pValue' + omicName] = {
 						name: 'pValue' + omicName,
-						defaultValue: "-"
+						defaultValue: "-",
+						type: 'floatOrString'
 					};
 
 					//Apply only when there are adjusted p-values
@@ -3473,7 +3474,8 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 
 						rowModel['adjpval' + m + omicName] = {
 							name: 'adjpval' + m + omicName,
-							defaultValue: "-"
+							defaultValue: "-",
+							type: 'floatOrString'
 						};
 					});
 				}
