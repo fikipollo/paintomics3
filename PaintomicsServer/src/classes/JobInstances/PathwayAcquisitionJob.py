@@ -424,7 +424,9 @@ class PathwayAcquisitionJob(Job):
         pathwayIDsList = KeggInformationManager().getAllPathwaysByOrganism(self.getOrganism())
 
         #GET THE IDS FOR ALL PATHWAYS FOR CURRENT SPECIE
-        totalFeaturesByOmic, totalRelevantFeaturesByOmic = self.calculateTotalFeaturesByOmic()
+        enrichmentByOmic = {x.get("omicName"): x.get("featureEnrichment", False) for x in self.getGeneBasedInputOmics() + self.getCompoundBasedInputOmics()}
+
+        totalFeaturesByOmic, totalRelevantFeaturesByOmic = self.calculateTotalFeaturesByOmic(enrichmentByOmic)
         totalInputMatchedCompounds = len(self.getInputCompoundsData())
         totalInputMatchedGenes = len(self.getInputGenesData())
         totalKeggPathways = len(pathwayIDsList)
@@ -443,7 +445,7 @@ class PathwayAcquisitionJob(Job):
         nThreads = MAX_THREADS
         logging.info("USING " + str(nThreads) + " THREADS")
 
-        def matchPathways(jobInstance, pathwaysList, inputGenes, inputCompounds, totalFeaturesByOmic, totalRelevantFeaturesByOmic, matchedPathways, mappedRatiosByOmic):
+        def matchPathways(jobInstance, pathwaysList, inputGenes, inputCompounds, totalFeaturesByOmic, totalRelevantFeaturesByOmic, matchedPathways, mappedRatiosByOmic, enrichmentByOmic):
             #****************************************************************
             # Step 2.1. FOR EACH PATHWAY IN THE LIST, GET ALL FEATURE IDS
             #           AND CALCULATE THE SIGNIFICANCE FOR THE PATHWAY
@@ -453,7 +455,7 @@ class PathwayAcquisitionJob(Job):
             genesInPathway = compoundsInPathway = pathway = None
             for pathwayID in pathwaysList:
                 genesInPathway, compoundsInPathway = keggInformationManager.getAllFeatureIDsByPathwayID(jobInstance.getOrganism(), pathwayID)
-                isValidPathway, pathway = self.testPathwaySignificance(genesInPathway, compoundsInPathway, inputGenes, inputCompounds, totalFeaturesByOmic, totalRelevantFeaturesByOmic, mappedRatiosByOmic)
+                isValidPathway, pathway = self.testPathwaySignificance(genesInPathway, compoundsInPathway, inputGenes, inputCompounds, totalFeaturesByOmic, totalRelevantFeaturesByOmic, mappedRatiosByOmic, enrichmentByOmic)
                 if(isValidPathway):
                     pathway.setID(pathwayID)
                     pathway.setName(keggInformationManager.getPathwayNameByID(jobInstance.getOrganism(), pathwayID))
@@ -469,7 +471,7 @@ class PathwayAcquisitionJob(Job):
         threadsList = []
         #LAUNCH THE THREADS
         for pathwayIDsList in pathwaysListParts:
-            thread = Process(target=matchPathways, args=(self, pathwayIDsList, inputGenes, inputCompounds, totalFeaturesByOmic, totalRelevantFeaturesByOmic, matchedPathways, mappedRatiosByOmic))
+            thread = Process(target=matchPathways, args=(self, pathwayIDsList, inputGenes, inputCompounds, totalFeaturesByOmic, totalRelevantFeaturesByOmic, matchedPathways, mappedRatiosByOmic, enrichmentByOmic))
             threadsList.append(thread)
             thread.start()
 
@@ -523,7 +525,7 @@ class PathwayAcquisitionJob(Job):
         #TODO: REVIEW THE SUMMARY GENERATION
         return self.summary
 
-    def calculateTotalFeaturesByOmic(self):
+    def calculateTotalFeaturesByOmic(self, enrichmentByOmic):
         """
         This function...
 
@@ -533,18 +535,23 @@ class PathwayAcquisitionJob(Job):
         totalFeaturesByOmic = Counter()
         totalRelevantFeaturesByOmic = Counter()
 
-        originalNames = defaultdict(lambda : defaultdict(bool))
+        counterNames = defaultdict(lambda : defaultdict(bool))
         for features in self.getInputCompoundsData().values() + self.getInputGenesData().values():
             for omicValue in features.getOmicsValues():
-                originalNames[omicValue.getOmicName()][omicValue.getOriginalName()] = (originalNames[omicValue.getOmicName()][omicValue.getOriginalName()] or omicValue.isRelevant())
+                # Two enrichment methods avaible: gene and feature enrichment.
+                # By default use gene enrichment unless specified otherwise.
+                if enrichmentByOmic[omicValue.getOmicName()] is True:
+                    counterNames[omicValue.getOmicName()][omicValue.getOriginalName()] = (counterNames[omicValue.getOmicName()][omicValue.getOriginalName()] or omicValue.isRelevant())
+                else:
+                    counterNames[omicValue.getOmicName()][omicValue.getInputName()] = (counterNames[omicValue.getOmicName()][omicValue.getInputName()] or omicValue.isRelevant())
 
-        for omicName, featuresNames in originalNames.iteritems():
+        for omicName, featuresNames in counterNames.iteritems():
             totalFeaturesByOmic[omicName] = len(featuresNames.keys())
             totalRelevantFeaturesByOmic[omicName] = featuresNames.values().count(True)
 
         return totalFeaturesByOmic, totalRelevantFeaturesByOmic
 
-    def testPathwaySignificance(self, genesInPathway, compoundsInPathway, inputGenes, inputCompounds, totalFeaturesByOmic, totalRelevantFeaturesByOmic, mappedRatiosByOmic):
+    def testPathwaySignificance(self, genesInPathway, compoundsInPathway, inputGenes, inputCompounds, totalFeaturesByOmic, totalRelevantFeaturesByOmic, mappedRatiosByOmic, enrichmentByOmic):
         """
         This function takes a list of genes and compounds from the input and check if those features are at the
         list of feautures involved into a specific pathway.
@@ -562,7 +569,7 @@ class PathwayAcquisitionJob(Job):
         isValidPathway = False
         pathwayInstance= Pathway("")
         # Keep track of the original names so as to only count them once, for both genes and compounds.
-        originalNames = defaultdict(lambda : defaultdict(bool))
+        counterNames = defaultdict(lambda : defaultdict(bool))
         #TODO: RETURN AS A SET IN KEGG INFORMATION MANAGER
         genesInPathway=set([x.lower() for x in genesInPathway])
         for gene in inputGenes:
@@ -573,7 +580,10 @@ class PathwayAcquisitionJob(Job):
                     #SIGNIFICANCE-VALUES LIST STORES FOR EACH OMIC 3 VALUES: [TOTAL MATCHED, TOTAL RELEVANT, PVALUE]
                     #IN THIS LINE WE JUST ADD A NEW MATCH AND, IF RELEVANT, A NEW RELEVANT FEATURE, BUT KEEP PVALUE TO -1
                     #AS WE WILL CALCULATE IT LATER.
-                    originalNames[omicValue.getOmicName()][omicValue.getOriginalName()] = (originalNames[omicValue.getOmicName()][omicValue.getOriginalName()] or omicValue.isRelevant())
+                    if enrichmentByOmic[omicValue.getOmicName()] is True:
+                        counterNames[omicValue.getOmicName()][omicValue.getOriginalName()] = (counterNames[omicValue.getOmicName()][omicValue.getOriginalName()] or omicValue.isRelevant())
+                    else:
+                        counterNames[omicValue.getOmicName()][omicValue.getInputName()] = (counterNames[omicValue.getOmicName()][omicValue.getInputName()] or omicValue.isRelevant())
 
         #First we get the list of IDs for the compounds that participate in the pathway
         compoundsInPathway=set([x.lower() for x in compoundsInPathway])
@@ -593,9 +603,9 @@ class PathwayAcquisitionJob(Job):
                     #Add the original name to the table for the corresponding omics type, specifying if the feature is relevant or not.
                     # Metabolomics --> Glutamine --> [prev value for isRelevant] or [current feature isRelevant]
                     #TODO: what if L-Glutamine coming from "Glutamine" is in the list of relevants but Glutamine not? Now we consider Glutamine as relevant
-                    originalNames[omicValue.getOmicName()][omicValue.getOriginalName()] = (originalNames[omicValue.getOmicName()][omicValue.getOriginalName()] or omicValue.isRelevant())
+                    counterNames[omicValue.getOmicName()][omicValue.getOriginalName()] = (counterNames[omicValue.getOmicName()][omicValue.getOriginalName()] or omicValue.isRelevant())
 
-        for omicName, featureNames in originalNames.iteritems():
+        for omicName, featureNames in counterNames.iteritems():
             for isRelevant in featureNames.values():
                 #SIGNIFICANCE-VALUES LIST STORES FOR EACH OMIC 3 VALUES: [TOTAL MATCHED, TOTAL RELEVANT, PVALUE]
                 #IN THIS LINE WE JUST ADD A NEW MATCH AND, IF RELEVANT, A NEW RELEVANT FEATURE, BUT KEEP PVALUE TO -1

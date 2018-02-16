@@ -297,10 +297,9 @@ class MiRNA2GeneJob(Job):
                     if self.report == "DE" and not isRelevant:
                         continue
 
-                    #DEPRECATED: WE REPORT ALL MIRNAS BUT NOW THE RELEVANT DEPEND ON THE DE AND THE SCORE
                     #FILTER BY SELECTION METHODS, IF CORRELATION OR FC IS LOWER THAN THE CUTOFF, IGNORE ENTRY
-                    #if score < self.cutoff:
-                    #    continue
+                    if score < self.cutoff:
+                        continue
 
                     #STEP 5.3 CREATE A NEW OMIC VALUE WITH ROW DATA
                     omicValueAux = OmicValue(mirnaID)

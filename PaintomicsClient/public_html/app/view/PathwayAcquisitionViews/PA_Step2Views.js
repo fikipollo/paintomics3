@@ -96,10 +96,15 @@ function PA_Step2JobView() {
 			var totalFeatures = dataDistribution[omicName][1];
 
 			// Add the largest matched set of features or just KEGG if there is only 1 DB
+			
+			/*
+			
+			TODO: when re-enabling this code, make sure that the server returns 'KEGG' instead of 'Entrez Gene ID' as total
+			
 			if (dataDistribution[omicName][0].hasOwnProperty("Total")) {
 				totalFeatures += dataDistribution[omicName][0]["Total"];
 			} else {
-				totalFeatures += dataDistribution[omicName][0][0];
+				totalFeatures += dataDistribution[omicName][0][0] || dataDistribution[omicName][0][Object.keys(dataDistribution[omicName][0])[0]];
 			}
 
 			databases.forEach(function(dbname) {
@@ -111,7 +116,7 @@ function PA_Step2JobView() {
 						"matched": dataDistribution[omicName][0][featureTable],
 						"percentage": Math.ceil(dataDistribution[omicName][0][featureTable]/totalFeatures * 100)
 					}});
-			});
+			});*/
 
 			omicSummaryPanelComponents.push(new PA_OmicSummaryPanel(omicName, dataDistribution[omicName], (compoundOmics.indexOf(omicName) > -1)).getComponent());
 		}
@@ -478,7 +483,7 @@ function PA_OmicSummaryPanel(omicName, dataDistribution, isCompoundOmic) {
 	this.initComponent = function() {
 		var me = this;
 
-		var divName = this.omicName.replace(" ", "_").toLowerCase() + "_";
+		var divName = this.omicName.replace(/[^A-Z0-9]/ig, "_").toLowerCase() + "_";
 
 		this.component = Ext.widget({
 			xtype: "box",

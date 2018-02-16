@@ -261,7 +261,7 @@ class Application(object):
             jobInstance = self.queue.fetch_job(jobID)
 
             if jobInstance is None:
-                return Response().setContent({"success": False, "status" : "failed", "message": "Your job is not on the queue anymore. Check your job list, if is not there the process stopped and you must resend the data again."})
+                return Response().setContent({"success": False, "status" : "failed", "message": "Your job is not on the queue anymore. Check your job list, if it's not there the process stopped and you must resend the data again."})
             elif jobInstance.is_finished():
                 return self.queue.get_result(jobID).getResponse()
             elif jobInstance.is_failed():

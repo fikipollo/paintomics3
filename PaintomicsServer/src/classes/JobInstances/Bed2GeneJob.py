@@ -49,6 +49,7 @@ class Bed2GeneJob(Job):
         self.regionAreaPercentage = 50
         self.rules                = ["TSS","1st_EXON","PROMOTER","INTRON","GENE_BODY","UPSTREAM","DOWNSTREAM"]
         self.geneIDtag            = "gene_id"
+        self.ignoreMissing        = True
 
         self.summarizationMethod  = "mean"
         self.reportRegions        = ["all"]
@@ -76,7 +77,8 @@ class Bed2GeneJob(Job):
             "promoter": self.promoter,
             "perc_area": self.geneAreaPercentage,
             "perc_region": self.regionAreaPercentage,
-            "gene": self.geneIDtag
+            "gene": self.geneIDtag,
+            "ignore_missing": self.ignoreMissing
         }
 
     def getJobDescription(self, generate=False, dataFile="", relevantFile="", gtfFile=""):
@@ -89,6 +91,7 @@ class Bed2GeneJob(Job):
             self.description += "Overlapped region area(%)=" + str(self.regionAreaPercentage)+ ";"
             self.description += "Summarization method=" + self.summarizationMethod + ";"
             self.description += "Report=" + ",".join(self.reportRegions) + ";"
+            self.description += "Ignore Missing=" + str(self.ignoreMissing) + ";"
         return self.description
 
 
@@ -287,14 +290,26 @@ class Bed2GeneJob(Job):
         #STEP 2. CALL TO DHS_exon_association SCRIPT AND GENERATE ASSOCIATION BETWEEN REGIONS AND GENES
         logging.info("STARTING DHS_exon_association PROCESS.")
 
-        from multiprocessing import Process
-        thread = Process(target=run_DHS_exon_association, args=(gtfFile, dataFile, tmpFile, None, self.getOptions()))
+        from multiprocessing import Process, Queue
+
+        # Create a queue to catch the subprocess errors
+        managed_queue = Queue()
+
+        # Initialize the process
+        thread = Process(target=run_DHS_exon_association, args=(gtfFile, dataFile, tmpFile, None, self.getOptions(), managed_queue))
         thread.start()
+
+        # Retrieve the possible errors (or else the queue will block it)
+        queue_content = managed_queue.get(True, MAX_WAIT_THREADS)
+
         thread.join(MAX_WAIT_THREADS)
+
         del thread
 
-        logging.info("STARTING DHS_exon_association PROCESS...Done")
+        if queue_content is not None:
+            raise queue_content
 
+        logging.info("STARTING DHS_exon_association PROCESS...Done")
 
         #STEP 3. PARSE RELEVANT FILE
         logging.info("PROCESSING RELEVANT FEATURES FILE...")
@@ -311,14 +326,14 @@ class Bed2GeneJob(Job):
                 #IGNORE THE HEADER
                 line = csvReader.next()
                 #SAVE THE NAME OF THE CONDITIONS (e.g. COND1, COND2,...)
-                header = "\t".join(line[9:])
+                header = "\t".join(line[11:])
 
                 for line in csvReader:
                     #STEP 5.1 GET THE REGION ID, THE ASSOCIATED GENE ID, THE GENE REGION AND THE QUANTIFICATION VALUES
                     regionID  = line[0]
                     geneID    = line[2]
                     geneRegion= line[5]
-                    values    =  map(float, line[9:])
+                    values    =  map(float, line[11:])
 
                     #STEP 5.2 CHECK IF GENE REGION IS VALID OR IGNORE ENTRY
                     if self.reportRegions.count("all") == 0 and self.reportRegions.count(geneRegion) == 0:
@@ -330,6 +345,7 @@ class Bed2GeneJob(Job):
                     omicValueAux.setOmicName(regionID)
                     omicValueAux.setRelevant(relevantRegions.has_key(regionID))
                     omicValueAux.setValues(values)
+                    omicValueAux.setOriginalName(geneRegion)
 
                     #STEP 5.4 CREATE A NEW TEMPORAL GENE INSTANCE
                     geneAux = Gene(geneID)
@@ -367,9 +383,9 @@ class Bed2GeneJob(Job):
                         #WRITE RESULTS TO genesToRegions FILE -->   region_1  gen_id
                         regionsToGeneFile.write(omicValue.getOmicName() + "\t" + geneID + "\t" + ("*" if omicValue.isRelevant() else "") +"\n")
 
-                        allRegionsValues.append(omicValue.getValues())
+                        allRegionsValues.append({omicValue.getOmicName(): omicValue.getValues()})
                         if omicValue.isRelevant():
-                            relevantRegionsValues.append(omicValue.getValues())
+                            relevantRegionsValues.append({omicValue.getOmicName(): omicValue.getValues()})
 
                     genesToRegionsFile.write(geneID + "\t" + ("*" if len(relevantRegionsValues) > 0 else "") +  "\t" + regionsAux +"\n")
 
@@ -379,13 +395,19 @@ class Bed2GeneJob(Job):
                         if self.summarizationMethod != "none":
                             selectedRegions = relevantRegionsValues
                         #TODO: REMOVE REPEATED GENES
+                        # TODO: write the region name also on features file?
                         bed2genesRelevant.write(geneID + "\n")
 
                     #SUMMARIZE THE QUANTIFICATION FOR CURRENT GENE
                     summarizedValues = self.summarizeValues(selectedRegions) #MUST BE A LIST OF LISTS
 
-                    for values in summarizedValues:
-                        bed2genesOutput.write(geneID + "\t" + '\t'.join(map(str, values)) + "\n")
+                    for dictValue in summarizedValues:
+                        if self.summarizationMethod == 'none':
+                            geneName = geneID + ':::' + dictValue.keys()[0]
+                        else:
+                            geneName = geneID
+
+                        bed2genesOutput.write(geneName + "\t" + '\t'.join(map(str, dictValue.values()[0])) + "\n")
 
 
                     #TODO: OMIC NAME??
@@ -426,10 +448,12 @@ class Bed2GeneJob(Job):
                 self.cleanDirectories()
                 return [fileName + ".zip", mainOutputFileName, secondOutputFileName]
 
-    def summarizeValues(self, selectedRegions):
+    def summarizeValues(self, dictSelectedRegions):
+        selectedRegions = [region.values()[0] for region in dictSelectedRegions]
+
         if(self.summarizationMethod == "mean"):
             from numpy import mean as npmean
-            return [npmean(selectedRegions, axis=0).tolist()]
+            return [{'mean': npmean(selectedRegions, axis=0).tolist()}]
         elif(self.summarizationMethod == "max"):
             import numpy as np
             #1. CALCULATE THE SUM OF THE ABS VALUES FOR EACH REGION
@@ -439,9 +463,9 @@ class Bed2GeneJob(Job):
             #3. FIND THE POSITION OF MAX VALUE
             #TODO: WHAT IF MORE THAN 1 MAX??
             indices = [i for i, x in enumerate(valuesSum) if x == maxSum]
-            return [selectedRegions[indices[0]]]
+            return [{'max': selectedRegions[indices[0]]}]
         else:
-            return selectedRegions
+            return dictSelectedRegions
 
 
 

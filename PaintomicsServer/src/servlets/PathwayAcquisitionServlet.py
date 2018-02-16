@@ -119,8 +119,8 @@ def pathwayAcquisitionStep1_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, EXA
             logging.info("STEP1 - EXAMPLE MODE SELECTED")
             logging.info("STEP1 - COPYING FILES....")
 
-            exampleOmics = ["Gene expression", "Metabolomics", "Proteomics", "miRNA-seq", "DNase-seq"]
-            for omicName in exampleOmics:
+            exampleOmics = {"Gene expression": False, "Metabolomics": True, "Proteomics": True, "miRNA-seq": False, "DNase-seq": False}
+            for omicName, featureEnrichment in exampleOmics.iteritems():
                 dataFileName = omicName.replace(" ", "_").replace("-seq", "").lower() + "_values.tab"
                 logging.info("STEP1 - USING ALREADY SUBMITTED FILE (data file) " + EXAMPLE_FILES_DIR + dataFileName + " FOR  " + omicName)
 
@@ -128,9 +128,9 @@ def pathwayAcquisitionStep1_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, EXA
                 logging.info("STEP1 - USING ALREADY SUBMITTED FILE (relevant features file) " + EXAMPLE_FILES_DIR + relevantFileName + " FOR  " + omicName)
 
                 if(["Metabolomics"].count(omicName)):
-                    jobInstance.addCompoundBasedInputOmic({"omicName": omicName, "inputDataFile": EXAMPLE_FILES_DIR + dataFileName, "relevantFeaturesFile": EXAMPLE_FILES_DIR + relevantFileName, "isExample" : True})
+                    jobInstance.addCompoundBasedInputOmic({"omicName": omicName, "inputDataFile": EXAMPLE_FILES_DIR + dataFileName, "relevantFeaturesFile": EXAMPLE_FILES_DIR + relevantFileName, "isExample" : True, "featureEnrichment": featureEnrichment})
                 else:
-                    jobInstance.addGeneBasedInputOmic({"omicName": omicName, "inputDataFile": EXAMPLE_FILES_DIR + dataFileName, "relevantFeaturesFile": EXAMPLE_FILES_DIR + relevantFileName,  "isExample" : True})
+                    jobInstance.addGeneBasedInputOmic({"omicName": omicName, "inputDataFile": EXAMPLE_FILES_DIR + dataFileName, "relevantFeaturesFile": EXAMPLE_FILES_DIR + relevantFileName,  "isExample" : True, "featureEnrichment": featureEnrichment})
 
             specie = "mmu"
             jobInstance.setOrganism(specie)

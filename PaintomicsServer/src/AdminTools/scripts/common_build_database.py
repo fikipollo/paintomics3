@@ -1668,7 +1668,7 @@ def downloadFile(URL, fileName, outputName, delay, maxTries):
     while nTry <= maxTries:
         wait(delay)
         try:
-            check_call(["curl", "--connect-timeout", "300", "--max-time", "900",  URL + fileName, "-o", outputName])
+            check_call(["curl", "--connect-timeout", "300", "--max-time", "1800",  URL + fileName, "-o", outputName])
             return True
         except Exception as e:
             nTry+=1

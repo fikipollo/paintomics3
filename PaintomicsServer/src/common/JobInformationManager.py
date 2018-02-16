@@ -221,6 +221,7 @@ class JobInformationManager:
             uploadedRelevantFile = uploadedFiles.get(uploadedFileName.replace("file","relevant_file"), None)
 
             configValues = formFields.get(uploadedFileName.replace("file", "config_args"), None)
+            featureEnrichment = formFields.get(uploadedFileName.replace("file", "feature_enrichment"), 'false') != 'false'
 
             origin = formFields.get(uploadedFileName.replace("file","origin"))
             logging.info("SAVE FILES - ORIGIN FOR " + uploadedFileName + " IS " + origin)
@@ -273,9 +274,9 @@ class JobInformationManager:
 
             if(jobInstance != None):
                 if(matchingType.lower() == "gene"):
-                    jobInstance.addGeneBasedInputOmic({"omicName": omicType, "inputDataFile": dataFileName, "relevantFeaturesFile": relevantFileName, "configOptions": configValues})
+                    jobInstance.addGeneBasedInputOmic({"omicName": omicType, "inputDataFile": dataFileName, "relevantFeaturesFile": relevantFileName, "configOptions": configValues, "featureEnrichment": featureEnrichment})
                 elif(matchingType.lower() == "compound"):
-                    jobInstance.addCompoundBasedInputOmic({"omicName": omicType, "inputDataFile": dataFileName, "relevantFeaturesFile": relevantFileName, "configOptions": configValues})
+                    jobInstance.addCompoundBasedInputOmic({"omicName": omicType, "inputDataFile": dataFileName, "relevantFeaturesFile": relevantFileName, "configOptions": configValues, "featureEnrichment": featureEnrichment})
                 elif(matchingType.lower() == "reference_file"):
                     jobInstance.addReferenceInput({"omicName": omicType, "fileType": dataType, "inputDataFile": dataFileName})
 

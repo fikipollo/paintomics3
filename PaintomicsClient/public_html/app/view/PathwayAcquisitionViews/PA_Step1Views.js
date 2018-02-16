@@ -66,13 +66,15 @@ function PA_Step1JobView() {
 			newElem = new OmicSubmittingPanel(this.nFiles, {
 				type: "Proteomics",
 				fileType: "Proteomic quatification",
-				relevantFileType: "Relevant proteins list"
+				relevantFileType: "Relevant proteins list",
+				featureEnrichment: true
 			});
 		} else if (type === "metabolomics") {
 			newElem = new OmicSubmittingPanel(this.nFiles, {
 				type: "Metabolomics",
 				fileType: "Metabolomic quatification",
-				relevantFileType: "Relevant Compound list"
+				relevantFileType: "Relevant Compound list",
+				featureEnrichment: true
 			});
 		} else if (type === "mirnaseq") {
 			newElem = new OmicSubmittingPanel(this.nFiles, {
@@ -504,6 +506,7 @@ function OmicSubmittingPanel(nElem, options) {
 	this.mapTo = "Gene";
 	this.fileType = null;
 	this.relevantFileType = null;
+	this.featureEnrichment = false;
 
 	this.class = "otherFileBox";
 
@@ -521,6 +524,7 @@ function OmicSubmittingPanel(nElem, options) {
 		this.relevantFileType = options.relevantFileType;
 		this.type = this.title.replace(" ", "").toLowerCase();
 		this.class = this.type + "FileBox";
+		this.featureEnrichment = options.featureEnrichment || false;
 	}
 	/*********************************************************************
 	* GETTERS AND SETTERS
@@ -662,6 +666,11 @@ function OmicSubmittingPanel(nElem, options) {
 								]
 							}),
 							helpTip: "Defines whether the data can be assigned to Genes or to Metabolites, for example  the values of concentration for proteins that can be mapped to the corresponding codifying gene."
+						},
+						{
+							xtype: 'hiddenfield',
+							name: this.namePrefix + '_feature_enrichment',
+							value: this.featureEnrichment
 						}
 					]
 				}
@@ -728,6 +737,7 @@ function RegionBasedOmicSubmittingPanel(nElem, options) {
 	this.mapTo = "Gene";
 	this.fileType = null;
 	this.relevantFileType = null;
+	this.featureEnrichment = false;
 
 	this.allowToogle = options.allowToogle !== false;
 	this.removable = options.removable !== false;
@@ -1047,6 +1057,16 @@ function RegionBasedOmicSubmittingPanel(nElem, options) {
 					fieldLabel: 'Report',
 					value: "gene"
 				},
+				// allow missing
+				{
+					xtype: 'checkbox',
+					itemId: "ignoreMissing",
+					name: this.namePrefix + '_ignoremissing',
+					fieldLabel: 'Ignore missing entries',
+					checked: true,
+					allowBlank: false,
+					helpTip: "Allow those BED regions with chromosome names not present in the GTF file to be ignored instead of throwing an error."					
+				},
 				//distance
 				{
 					xtype: 'numberfield',
@@ -1327,6 +1347,7 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 	this.mapTo = "Gene";
 	this.fileType = null;
 	this.relevantFileType = null;
+	this.featureEnrichment = false;
 
 	this.allowToogle = options.allowToogle !== false;
 	this.removable = options.removable !== false;

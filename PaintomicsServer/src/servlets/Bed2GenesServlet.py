@@ -131,6 +131,8 @@ def fromBEDtoGenes_STEP1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, EXAMPLE_FILE
         logging.info("  - geneAreaPercentage   :" + str(jobInstance.geneAreaPercentage))
         jobInstance.regionAreaPercentage= formFields.get(namePrefix + "_regionAreaPercentage", 50)
         logging.info("  - regionAreaPercentage :" + str(jobInstance.regionAreaPercentage))
+        jobInstance.ignoreMissing = True if namePrefix + "_ignoremissing" in formFields.keys() else False
+        logging.info("  - ignore missing       :" + str(jobInstance.ignoreMissing))
         #rules
         jobInstance.geneIDtag= formFields.get(namePrefix + "_geneIDtag", "gene_id")
         logging.info("  - geneIDtag            :" + str(jobInstance.geneIDtag))
