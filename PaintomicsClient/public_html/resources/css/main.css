@@ -787,7 +787,7 @@ div.availableOmicsBox h4 {
 .contentbox.metaboliteBox {
 	margin: 5px 0;
 }
-#download_mapping_file {
+#download_mapping_file, #paint_link {
 	text-align: center;
 	display: block;
 	margin: 10px;
