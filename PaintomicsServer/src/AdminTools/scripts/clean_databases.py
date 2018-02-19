@@ -20,6 +20,9 @@ def cleanDatabases(force=False):
     # STEP 1. GET ALL USERS BY DIRECTORY
     user_dirs = os.listdir(CLIENT_TMP_DIR)
 
+    if "nologin" in user_dirs:
+        user_dirs.remove("nologin")
+
     # STEP 2. GET ALL USERS IN DB
     users_list = connection[MONGODB_DATABASE]['userCollection'].find()
 

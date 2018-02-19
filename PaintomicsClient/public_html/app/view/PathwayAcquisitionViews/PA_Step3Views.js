@@ -26,6 +26,7 @@
 * - PA_Step3PathwayNetworkTooltipView
 * - PA_Step3PathwayDetailsView
 * - PA_Step3PathwayTableView
+* - PA_Step3StatsView
 *
 */
 
@@ -56,6 +57,7 @@ function PA_Step3JobView() {
 	this.pathwayClassificationViews = {};
 	this.pathwayNetworkViews = {};
 	this.pathwayTableView = null;
+	this.statsView = null;
 	this.significativePathways = 0;
 	this.significativePathwaysByDB = {};
 	this.isFiltered = {};
@@ -248,6 +250,9 @@ function PA_Step3JobView() {
 			this.pathwayTableView.setParent(this);
 		}
 		this.pathwayTableView.loadModel(model);
+		
+		this.statsView = new PA_Step3StatsView();
+		this.statsView.loadModel(model);
 		
 		$.each(databases, (function(index, db) {
 			if(!(db in this.pathwayClassificationViews)){
@@ -513,7 +518,8 @@ function PA_Step3JobView() {
 				{ //THE TOOLBAR
 					xtype: "box",cls: "toolbar secondTopToolbar", html:
 					'<a href="javascript:void(0)" class="button btn-danger btn-right" id="resetButton"><i class="fa fa-refresh"></i> Reset view</a>' +
-					'<a href="javascript:void(0)" class="button btn-default btn-right backButton"><i class="fa fa-arrow-left"></i> Go back</a>'
+					//'<a href="javascript:void(0)" class="button btn-default btn-right backButton"><i class="fa fa-arrow-left"></i> Go back</a>'
+					'<a href="javascript:void(0)" class="button btn-default btn-right mappingButton"><i class="fa fa-database"></i> Hide mapping info</a>'
 				},{ //THE SUMMARY PANEL
 					xtype: 'container', itemId: "pathwaysSummaryPanel",
 					layout: 'column', style: "max-width:1900px; margin: 5px 10px; margin-top:50px;", items: [
@@ -526,7 +532,7 @@ function PA_Step3JobView() {
 							'     those values are calculated based on the total number of features (compounds and genes) for each Pathway as well as the number of features from the input involved on that Pathway.<br>' +
 							'     Additionally, when the input includes 2 or more different omic types, we provide a Combined Significance Value, which allow us to identify those Pathways that are potentially more relevant.' +
 							'  </p>' +
-							'  <a id="download_mapping_file"><i class="fa fa-paint-brush-o"></i> Choose the pathways below and  Paint!</a> ' +
+							'  <a id="paint_link"><i class="fa fa-paint-brush-o"></i> Choose the pathways below and  Paint!</a> ' +
 							'</div>'
 						}, {
 							xtype: 'box',
@@ -557,6 +563,7 @@ function PA_Step3JobView() {
 					'  </p>' +
 					'</div>'
 				}),
+				me.statsView.getComponent(),
 				{
 						xtype: 'tabpanel', id: 'tabcontainer_network', plain: true,
 						deferredRender: false, items: tabContent, border: false,
@@ -582,9 +589,20 @@ function PA_Step3JobView() {
 			listeners: {
 				boxready: function() {
 					//SOME EVENT HANDLERS
-					$(".backButton").click(function() {
-						me.backButtonHandler();
-					});
+//					$(".backButton").click(function() {
+//						me.backButtonHandler();
+//					});
+					$(".mappingButton").click(function() {
+						var cmp = Ext.getCmp('statsViewContainer');
+						cmp.getEl().toggle();
+						
+						var buttonHTML = $(this).html();
+						
+						$(this).html(buttonHTML.includes('Hide') ? buttonHTML.replace(/Hide/g, 'Show') : buttonHTML.replace(/Show/g, 'Hide'));
+						
+						$('#mainViewCenterPanel').scrollTop(cmp.getEl().dom.offsetTop - 60);
+					}).trigger('click');
+					
 					$("#resetButton").click(function() {
 						me.resetViewHandler();
 					});
@@ -3637,6 +3655,64 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 			return this;
 		}
 		PA_Step3PathwayTableView.prototype = new View();
+
+	function PA_Step3StatsView() {
+		/*********************************************************************
+		* ATTRIBUTES
+		***********************************************************************/
+		this.name = "PA_Step3StatsView";
+
+		/***********************************************************************
+		* GETTER AND SETTERS
+		***********************************************************************/
+		//TODO: DOCUMENTAR
+		this.loadModel= function(model){
+			var me = this;
+
+			me.model = model;
+		};
+		
+		/**
+		* This function generates the component (EXTJS) using the content of the model
+		* @param {String}  renderTo  the ID for the DOM element where this component should be rendered
+		* @returns {Ext.ComponentView} The visual component
+		*/
+		this.initComponent = function() {
+			var me = this;
+			
+			var omicSummaryPanelComponents = [];
+			var dataDistribution = me.getModel().getDataDistributionSummaries();
+			
+			for (var omicName in dataDistribution) {
+				omicSummaryPanelComponents.push(new PA_OmicSummaryPanel(omicName, dataDistribution[omicName], false).getComponent());
+			}
+			
+			this.component = Ext.widget({					
+				xtype: 'container', cls: "contentbox", id: 'statsViewContainer', hidden: false, items: [
+					{xtype: 'box', flex: 1, 
+					 html: '<h2>Mapping and data statistics</h2>' + (omicSummaryPanelComponents.length ? '<a href="javascript:void(0)" id="download_mapping_file"><i class="fa fa-download"></i> Download ID/Name mapping results.</a>' : "")},
+					{
+							xtype: 'container', itemId: "omicSummaryPanelStep3",
+							cls: "omicSummaryContainer",
+							layout: 'column',  style: "margin-top:20px;width: 100%;",
+							items: omicSummaryPanelComponents
+					}
+				],
+				listeners: {
+						boxready: function() {
+							$('#download_mapping_file').click(function() {
+								application.getController("DataManagementController").downloadFilesHandler(me, "mapping_results_" + me.getModel().getJobID() + ".zip", "job_result", me.getModel().getJobID());
+							});
+						}
+					}
+			});
+			
+			return this.component;
+		};
+		
+		return this;
+	}
+	PA_Step3StatsView.prototype = new View();
 
 		/**
 		* This function returns the MIN/MAX values that will be used as references

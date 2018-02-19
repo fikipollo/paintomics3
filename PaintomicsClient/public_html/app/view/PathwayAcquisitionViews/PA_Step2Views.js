@@ -501,15 +501,19 @@ function PA_OmicSummaryPanel(omicName, dataDistribution, isCompoundOmic) {
 						// Mapped features can differ between used databases
 						mappedInfo = me.dataDistribution[0];
 
-						if ("Total" in mappedInfo) {
-							mappedFeatures = mappedInfo["Total"];
-
-							added_info = Object.keys(mappedInfo).map(function(db) {
-								return("• " + db + ": " + mappedInfo[db]);
-							}).join('<br />');
+						if (! Object.keys(mappedInfo).length) {
+							mappedFeatures = mappedInfo;
 						} else {
-							mappedFeatures = mappedInfo[Object.keys(mappedInfo)[0]];
-							added_info = "(KEGG database)";
+							if ("Total" in mappedInfo) {
+								mappedFeatures = mappedInfo["Total"];
+
+								added_info = Object.keys(mappedInfo).map(function(db) {
+									return("• " + db + ": " + mappedInfo[db]);
+								}).join('<br />');
+							} else {
+								mappedFeatures = mappedInfo[Object.keys(mappedInfo)[0]];
+								added_info = "(KEGG database)";
+							}
 						}
 
 						//WHEN THE BOX IS READY, CALL HIGHCHARTS AND CREATE THE PIE WITH MAPPING SUMMARY AND THE BOXPLOT FOR DATA DISTRIBUTION

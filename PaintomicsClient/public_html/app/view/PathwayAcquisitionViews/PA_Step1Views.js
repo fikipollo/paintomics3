@@ -429,7 +429,6 @@ function PA_Step1JobView() {
 						me.addNewOmicSubmittingPanel(type);
 					});
 
-
 					var containers = [$("#availableOmicsContainer")[0], $("#submittingPanelsContainer-targetEl")[0]];
 
 					//INITIALIZE THE DRAG AND DROP
@@ -653,7 +652,7 @@ function OmicSubmittingPanel(nElem, options) {
 							name: this.namePrefix + '_match_type',
 							hidden: this.omicName !== "",
 							itemId: "mapToSelector",
-							displayField: 'name', valueField: ' value',
+							displayField: 'name', valueField: 'value',
 							emptyText: 'Choose the file type',
 							value: this.mapTo,
 							editable: false,
@@ -668,9 +667,22 @@ function OmicSubmittingPanel(nElem, options) {
 							helpTip: "Defines whether the data can be assigned to Genes or to Metabolites, for example  the values of concentration for proteins that can be mapped to the corresponding codifying gene."
 						},
 						{
-							xtype: 'hiddenfield',
+							xtype: 'combo',
+							fieldLabel: 'Enrichment type',
 							name: this.namePrefix + '_feature_enrichment',
-							value: this.featureEnrichment
+							hidden: this.omicName !== "",
+							value: this.featureEnrichment.toString(),
+							displayField: 'name', valueField: 'value',
+							editable: false,
+							allowBlank: false,
+							store: Ext.create('Ext.data.ArrayStore', {
+								fields: ['name', 'value'],
+								data: [
+									['Genes', 'false'],
+									['Features', 'true']
+								]
+							}),
+							helpTip: "Define how the Fisher contingency table must be done: counting genes or features (i.e: microRNA, proteins...)."
 						}
 					]
 				}
@@ -817,6 +829,9 @@ function RegionBasedOmicSubmittingPanel(nElem, options) {
 		if (values.configVars) {
 			component.queryById("configVars").setValue(values.configVars);
 		}
+		if (values.ignoreMissing) {
+			component.queryById("ignoreMissing").setValue(values.ignoreMissing);
+		}
 
 		if (!component.isVisible()) {
 			this.toogleContent();
@@ -933,6 +948,24 @@ function RegionBasedOmicSubmittingPanel(nElem, options) {
 					hidden: true,
 					itemId: 'configVars',
 					maxLength: 1000
+				}, {
+					xtype: 'combo',
+					itemId: 'enrichmentType',
+					fieldLabel: 'Enrichment type',
+					name: this.namePrefix + '_feature_enrichment',
+					hidden: this.omicName !== "",
+					value: this.featureEnrichment.toString(),
+					displayField: 'name', valueField: 'value',
+					editable: false,
+					allowBlank: false,
+					store: Ext.create('Ext.data.ArrayStore', {
+						fields: ['name', 'value'],
+						data: [
+							['Genes', 'false'],
+							['Features', 'true']
+						]
+					}),
+					helpTip: "Define how the Fisher contingency table must be done: counting genes or features (i.e: microRNA, proteins...)."
 				}]
 			}, {
 				xtype: "container",
@@ -1161,7 +1194,24 @@ function RegionBasedOmicSubmittingPanel(nElem, options) {
 						]
 					}),
 					helpTip: "Choose the strategy used to resolve regions mapping to the same gen region. Default: 'Mean'"
-				}, {
+				},{
+					xtype: 'combo',
+					fieldLabel: 'Enrichment type',
+					name: this.namePrefix + '_feature_enrichment_pre',
+					hidden: this.omicName !== "",
+					value: this.featureEnrichment.toString(),
+					displayField: 'name', valueField: 'value',
+					editable: false,
+					allowBlank: false,
+					store: Ext.create('Ext.data.ArrayStore', {
+						fields: ['name', 'value'],
+						data: [
+							['Genes', 'false'],
+							['Features', 'true']
+						]
+					}),
+					helpTip: "Define how the Fisher contingency table must be done: counting genes or features (i.e: microRNA, proteins...)."
+				},{
 					xtype: 'fieldcontainer',
 					fieldLabel: 'Report',
 					defaultType: 'radiofield',
@@ -1341,7 +1391,7 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 	***********************************************************************/
 	options = (options || {});
 
-	this.title = "miRNA based omic";
+	this.title = "Regulatory omic";
 	this.namePrefix = "omic" + nElem;
 	this.omicName = "";
 	this.mapTo = "Gene";
@@ -1517,7 +1567,7 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 					fieldLabel: 'File Type',
 					name: this.namePrefix + '_file_type',
 					itemId: "fileTypeSelector",
-					value: "Map file (miRNA mapped to Genes)",
+					value: "Map file (features mapped to Genes)",
 					hidden: true,
 					helpTip: "Specify the type of data for uploaded file (Gene Expression file, Proteomic quatification,...)."
 				}, {
@@ -1531,7 +1581,7 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 					fieldLabel: 'File Type',
 					name: this.namePrefix + '_relevant_file_type',
 					itemId: "relevantFileTypeSelector",
-					value: "Relevant miRNA list (mapped to Genes)",
+					value: "Relevant regulators list (mapped to Genes)",
 					hidden: true,
 					helpTip: "Specify the type of data for uploaded file (Relevant Genes list, Relevant proteins list,...)."
 				}, {
@@ -1547,6 +1597,25 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 					hidden: true,
 					itemId: 'configVars',
 					maxLength: 1000
+				},
+				{
+					xtype: 'combo',
+					itemId: 'enrichmentType',
+					fieldLabel: 'Enrichment type',
+					name: this.namePrefix + '_feature_enrichment',
+					hidden: this.omicName !== "",
+					value: this.featureEnrichment.toString(),
+					displayField: 'name', valueField: 'value',
+					editable: false,
+					allowBlank: false,
+					store: Ext.create('Ext.data.ArrayStore', {
+						fields: ['name', 'value'],
+						data: [
+							['Genes', 'false'],
+							['Features', 'true']
+						]
+					}),
+					helpTip: "Define how the Fisher contingency table must be done: counting genes or features (i.e: microRNA, proteins...)."
 				}]
 			},
 			{
@@ -1606,7 +1675,7 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 				/*miRNA FILE*/
 				{
 					xtype: "myFilesSelectorButton",
-					fieldLabel: 'miRNA seq file <br>(miRNA expression)',
+					fieldLabel: 'Regulators expression file <br>(ie: miRNA expression)',
 					namePrefix: this.namePrefix,
 					itemId: "mainFileSelector",
 					helpTip: "Upload the quantification file (miRNA Quantification) or choose it from your data folder. See above the accepted format for the file."
@@ -1621,10 +1690,10 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 				/*RELEVANT miRNA FILE*/
 				{
 					xtype: "myFilesSelectorButton",
-					fieldLabel: "Relevant miRNA file<br> (optional)",
+					fieldLabel: "Relevant regulators file<br> (optional)",
 					namePrefix: this.namePrefix + '_relevant',
 					itemId: "secondaryFileSelector",
-					helpTip: "Upload the list of relevant (differentially expressed) miRNAs (TAB format) or choose it from your data folder. See above the accepted format for the file."
+					helpTip: "Upload the list of relevant (differentially expressed) features (TAB format) or choose it from your data folder. See above the accepted format for the file."
 				}, {
 					xtype: 'textfield',
 					fieldLabel: 'File Type',
@@ -1777,6 +1846,24 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 					allowDecimals: true,
 					allowBlank: false,
 					helpTip: "The value for the threadhold. All miRNAs with a lower value of correlation or FC will be filterd out from the results. Default: 0.5"
+				},
+				{
+					xtype: 'combo',
+					fieldLabel: 'Enrichment type',
+					name: this.namePrefix + '_feature_enrichment_pre',
+					hidden: this.omicName !== "",
+					value: this.featureEnrichment.toString(),
+					displayField: 'name', valueField: 'value',
+					editable: false,
+					allowBlank: false,
+					store: Ext.create('Ext.data.ArrayStore', {
+						fields: ['name', 'value'],
+						data: [
+							['Genes', 'false'],
+							['Features', 'true']
+						]
+					}),
+					helpTip: "Define how the Fisher contingency table must be done: counting genes or features (i.e: microRNA, proteins...)."
 				}
 			]
 		}],

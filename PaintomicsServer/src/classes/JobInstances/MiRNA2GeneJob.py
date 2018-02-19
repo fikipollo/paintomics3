@@ -49,6 +49,7 @@ class MiRNA2GeneJob(Job):
         self.score_method         = "kendall" #fc OR kendall OR spearman OR pearson
         self.selection_method     = "negative_correlation" #max_fc OR similar_fc OR abs_correlation OR positive_correlation OR negative_correlation
         self.cutoff               = -0.6
+        self.featureEnrichment    = False
 
     def getOptions(self):
         return {
