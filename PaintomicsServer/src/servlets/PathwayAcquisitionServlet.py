@@ -228,6 +228,8 @@ def pathwayAcquisitionStep1_PART2(jobInstance, userID, exampleMode, RESPONSE):
     except Exception as ex:
         jobInstance.cleanDirectories(remove_output=True)
 
+        # TODO: at this point we should notify the queue system about the error, or else
+        # will keep returning success to the job.
         handleException(RESPONSE, ex, __file__ , "pathwayAcquisitionStep1_PART2", userID=userID)
     finally:
         return RESPONSE
@@ -372,10 +374,6 @@ def pathwayAcquisitionStep2_PART2(jobID, userID, selectedCompounds, RESPONSE, RO
         JobInformationManager().storeJobInstance(jobInstance, 2)
         logging.info("STEP2 - SAVING NEW JOB DATA...DONE" )
 
-        logging.info("STEP2 - REMOVING OLD VISUAL OPTIONS...")
-        JobInformationManager().storeVisualOptions(jobID, {"jobID": jobID})
-        logging.info("STEP2 - REMOVING OLD VISUAL OPTIONS...DONE")
-
         #************************************************************************
         # Step 5. Update the response content
         #************************************************************************
@@ -509,7 +507,7 @@ def pathwayAcquisitionRecoverJob(request, response, QUEUE_INSTANCE):
 
         # Allow "no user" jobs to be viewed by anyone, logged or not
         if(str(jobInstance.getUserID()) != 'None' and jobInstance.getUserID() != userID):
-            logging.info("RECOVER_JOB - JOB " + jobID + " DOES NOT BELONG TO USER " + str(userID))
+            logging.info("RECOVER_JOB - JOB " + jobID + " DOES NOT BELONG TO USER " + str(userID) + " JOB HAS USER " + str(jobInstance.getUserID()))
             response.setContent({"success": False, "errorMessage": "Invalid Job ID (" + jobID + ") for current user.<br>Please, check the Job ID and try again."})
             return response
 
