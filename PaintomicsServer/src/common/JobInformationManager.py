@@ -267,6 +267,10 @@ class JobInformationManager:
                 if(origin == 'client'):
                     #TODO: GENERATE AUTOMATICALLY THE DATA TYPE (Gene exp, Gene list, etc.) AND THE DESCRIPTION
                     ##SAVE THE FILE, GET THE NEW NAME IS ALREADY EXISTS
+                    # If no user is provided, prepend the jobID to avoid possible conflictions
+                    if userID is None:
+                        relevantFileName = jobInstance.getJobID() + '_' + relevantFileName
+
                     relevantFileName = saveFile(userID, relevantFileName, fieldsRelevant, uploadedRelevantFile, CLIENT_TMP_DIR)
                 else:
                     relevantFileName = formFields.get(uploadedFileName.replace("file","relevant_filelocation")).replace("[MyData]/","")
