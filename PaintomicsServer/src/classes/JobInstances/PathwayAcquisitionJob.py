@@ -724,7 +724,7 @@ class PathwayAcquisitionJob(Job):
 
 
     #GENERATE METAGENES LIST FUNCTIONS -----------------------------------------------------------------------------------------
-    def generateMetagenesList(self, ROOT_DIRECTORY):
+    def generateMetagenesList(self, ROOT_DIRECTORY, clusterNumber):
         """
         This function obtains the metagenes for each pathway in KEGG based on the input values.
 
@@ -739,8 +739,10 @@ class PathwayAcquisitionJob(Job):
         for inputOmic in self.geneBasedInputOmics:
             try:
                 # STEP 2.1 EXECUTE THE R SCRIPT
-                logging.info("GENERATING METAGENES INFORMATION...DONE")
+                logging.info("GENERATING METAGENES INFORMATION...CALLING")
                 inputFile = self.getTemporalDir() +  "/" + inputOmic.get("omicName") + '_matched.txt'
+                # Select number of clusters, default to dynamic
+                kClusters = clusterNumber.get(inputOmic.get("omicName"), "dynamic")
                 check_call([
                     ROOT_DIRECTORY + "common/bioscripts/generateMetaGenes.R",
                     '--specie="' + self.getOrganism() +'"',
@@ -748,7 +750,8 @@ class PathwayAcquisitionJob(Job):
                     '--output_prefix="'+ inputOmic.get("omicName") + '"',
                     '--data_dir="'+ self.getTemporalDir() + '"',
                     '--kegg_dir="'+ KEGG_DATA_DIR + '"',
-                    '--sources_dir="' + ROOT_DIRECTORY + '/common/bioscripts/"'], stderr=STDOUT)
+                    '--sources_dir="' + ROOT_DIRECTORY + '/common/bioscripts/"',
+                    '--kclusters="' + kClusters + '"' if kClusters.isdigit() else ''], stderr=STDOUT)
                 # STEP 2.2 PROCESS THE RESULTING FILE
                 with open(self.getTemporalDir() + "/" + inputOmic.get("omicName") + "_metagenes.tab", 'rU') as inputDataFile:
                     for line in csv_reader(inputDataFile, delimiter="\t"):

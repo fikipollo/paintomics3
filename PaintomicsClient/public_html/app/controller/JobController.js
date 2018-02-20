@@ -325,17 +325,17 @@ function JobController() {
 			// $(omicNames).each(function(omic) {
 			// 		omicValues[omic] = Ext.ComponentQuery.query('[name="customslider_' + omic + '"]')[0].getValues();
 			// });
+			var form = jobView.getComponent().down("form");
+			var formData = $.extend(form ? form.getForm().getValues() : {}, {
+				jobID: jobView.getModel().getJobID(),
+				selectedCompounds: jobView.getSelectedCompounds()
+			});
 
 			$.ajax({
 				type: "POST",
 				headers: {"Content-Encoding": "gzip"},
 				url: SERVER_URL_PA_STEP2,
-				data: {
-					jobID: jobView.getModel().getJobID(),
-					selectedCompounds: jobView.getSelectedCompounds()
-					// omicNames: omicNames,
-					// customValues: omicValues
-				},
+				data: formData,
 				success: function (response) {
 					console.log("JOB " + response.jobID + " is queued ");
 

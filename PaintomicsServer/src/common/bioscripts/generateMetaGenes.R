@@ -137,16 +137,16 @@ for (i in 1:length(row.names(metagenes)) ) {
 }
 
 # CLUSTERIZE ----------------------------------------------------------------------------------------------------
+data <- metagenes
 
 if(is.null(args$kclusters)) {
-  
   library(cluster)
   library(amap) 
   
   ## cutoff default
   #data <- scale(metagenes)
-  data <- metagenes
-  # Compute pairewise distance matrices
+
+  # Compute pairwise distance matrices
   dist.res <- Dist(data, method = "pearson")
   k.max <- round(sqrt(length(row.names(data))/2)) + 1
   sil <- rep(0, k.max)
@@ -168,7 +168,7 @@ if(is.null(args$kclusters)) {
       sil[i] <- mean(ss[, 3])
     }
   }
-  
+
   #args$kclusters <- which.max(sil)
   valid <- which(sil > 0.7)
   if(length(valid) == 0){
@@ -181,6 +181,8 @@ if(is.null(args$kclusters)) {
     args$kclusters <- max(valid)
   }
   
+} else {
+  args$kclusters = as.integer(args$kclusters)
 }
 
 if(args$cluster=="hierarchical"){

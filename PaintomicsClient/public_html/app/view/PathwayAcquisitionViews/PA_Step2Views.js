@@ -90,10 +90,12 @@ function PA_Step2JobView() {
 		var databases = me.getModel().getDatabases();
 		var compoundOmics = me.getModel().getCompoundBasedInputOmics().map(x => x.omicName);
 		var matchingPerDB = {};
+		var numberOfClusters = [];
 
 		for (var omicName in dataDistribution) {
 			// Get total features
 			var totalFeatures = dataDistribution[omicName][1];
+			var isCompoundBased = (compoundOmics.indexOf(omicName) > -1);
 
 			// Add the largest matched set of features or just KEGG if there is only 1 DB
 			
@@ -117,8 +119,62 @@ function PA_Step2JobView() {
 						"percentage": Math.ceil(dataDistribution[omicName][0][featureTable]/totalFeatures * 100)
 					}});
 			});*/
+			
+			if ( ! isCompoundBased) {
+				numberOfClusters.push({
+					xtype: 'combo',
+					fieldLabel: omicName,
+					name: 'clusterNumber:' + omicName,
+					value: 'dynamic',
+					displayField: 'name', valueField: 'value',
+					editable: false,
+					allowBlank: false,
+					labelWidth: 300,
+					width: 300,
+					store: Ext.create('Ext.data.ArrayStore', {
+						fields: ['name', 'value'],
+						data: [
+							['Generate automatically', 'dynamic'],
+							['One cluster', 1],
+							['Two clusters', 2],
+							['Three clusters', 3],
+							['Four clusters', 4],
+							['Five clusters', 5],
+							['Six clusters', 6],
+							['Seven clusters', 7],
+							['Eight clusters', 8],
+							['Nine clusters', 9],
+							['Ten clusters', 10],
+						]
+					}),
+					helpTip: "Define the number of clusters per omic or let the program calculate them dynamically using silhouette."
+				});
+			}
 
-			omicSummaryPanelComponents.push(new PA_OmicSummaryPanel(omicName, dataDistribution[omicName], (compoundOmics.indexOf(omicName) > -1)).getComponent());
+			omicSummaryPanelComponents.push(new PA_OmicSummaryPanel(omicName, dataDistribution[omicName], isCompoundBased).getComponent());
+		}
+		
+		
+		if (numberOfClusters.length) {
+			/* Add an empty container to restore "odd" position of next sibling elements */
+			omicSummaryPanelComponents.splice(2, 0, {
+				xtype: 'container',
+				layout: {type: 'vbox', align: 'stretch'},
+				cls: "contentbox", minHeight: 240, id: "clusternumber_box",
+				items: [{
+					html: '<h2 style="width: 100%;">Configure the number of clusters</h2>'
+				}, {
+					html: '<p>In the next step Paintomics will calculate the clusters present in the data provided for each omic. It will use the method k-means using a automatically calculated number of cluster or the ones you define here. At this time this choice can only be done here, but we are working to allow setting it later so if you need to change it please, resend your job using the start form.<br><br></p>'
+				},{
+					xtype: 'form',
+					maxWidth: 600,
+					bodyCls: "divForm",
+					style: "margin: 0 auto 20px auto;",
+					layout: {type: 'vbox', align: 'stretch'},
+					defaults: {labelAlign: "right", border: false},
+					items: numberOfClusters
+				}]
+			}, {xtype: 'container', html:'<div style="display: none;"></div>'});
 		}
 
 		if (databases.length > 1) {

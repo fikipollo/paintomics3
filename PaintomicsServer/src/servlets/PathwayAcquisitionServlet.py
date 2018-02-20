@@ -282,13 +282,16 @@ def pathwayAcquisitionStep2_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE, ROOT_DIRECT
         formFields = REQUEST.form
         jobID  = formFields.get("jobID")
         selectedCompounds= REQUEST.form.getlist("selectedCompounds[]")
+        # Retrieve the number of cluster on a per omic basis
+        # Note: this will contain the omic name transformed to remove spaces and special chars
+        clusterNumber = {key.replace("clusterNumber:", ""): value for key, value in formFields.iteritems() if key.startswith("clusterNumber:")}
 
         #************************************************************************
         # Step 3. Queue job
         #************************************************************************
         QUEUE_INSTANCE.enqueue(
             fn=pathwayAcquisitionStep2_PART2,
-            args=(jobID, userID, selectedCompounds, RESPONSE, ROOT_DIRECTORY,),
+            args=(jobID, userID, selectedCompounds, clusterNumber, RESPONSE, ROOT_DIRECTORY,),
             timeout=600,
             job_id= jobID
         )
@@ -306,7 +309,7 @@ def pathwayAcquisitionStep2_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE, ROOT_DIRECT
     finally:
         return RESPONSE
 
-def pathwayAcquisitionStep2_PART2(jobID, userID, selectedCompounds, RESPONSE, ROOT_DIRECTORY):
+def pathwayAcquisitionStep2_PART2(jobID, userID, selectedCompounds, clusterNumber, RESPONSE, ROOT_DIRECTORY):
     """
     This function corresponds to SECOND PART of the SECOND step in the Pathways acquisition process.
     Given a JOB INSTANCE, first processes the uploaded files (identifiers matching and compound list generation)
@@ -362,7 +365,7 @@ def pathwayAcquisitionStep2_PART2(jobID, userID, selectedCompounds, RESPONSE, RO
         # Step 3. GENERATING METAGENES INFORMATION
         #****************************************************************
         logging.info("STEP2 - GENERATING METAGENES INFORMATION...")
-        jobInstance.generateMetagenesList(ROOT_DIRECTORY)
+        jobInstance.generateMetagenesList(ROOT_DIRECTORY, clusterNumber)
         logging.info("STEP2 - GENERATING METAGENES INFORMATION...DONE")
 
         jobInstance.setLastStep(3)

@@ -395,7 +395,7 @@ ul.ui-menu.ui-widget.ui-widget-content {
 	margin: 5px 10px;
 	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
 }
-div.contentbox h2, div.contentbox h3 {
+div.contentbox h2, div.contentbox h3, #clusternumber_box h2 {
 	background-color: #f6f6f6;
 	border-color: #e9e9e9;
 	padding: 6px;
@@ -793,12 +793,24 @@ div.availableOmicsBox h4 {
 	margin: 10px;
 	font-size: 18px;
 }
-#dbs_message {
+#dbs_message, #clusternumber_box {
 	margin: 10px 0;
 	width: 100% !important;
 }
 #dbs_message div {
 	padding: 0 5px 5px 5px;
+}
+#clusternumber_box div, #clusternumber_box span {
+	border: 0 !important;
+	background-color: white !important;
+	width: 100% !important;
+}
+#clusternumber_box .divForm {
+	width: 60% !important;
+	margin: 0 auto !important;
+}
+#clusternumber_box p {
+	margin: 20px;
 }
 #dbs_message dt {
 	font-weight: bold;
