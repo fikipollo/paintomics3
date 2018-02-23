@@ -720,7 +720,7 @@ Ext.define('Ext.view.override.Grid', {
         debugger
         for (var i = 0; i < colCount; i++) {
             //ADJUST TITLE (REMOVE SPECIAL CHARACTERS, HTML,...)
-            colTitle = cm[i].text.replace("</br>", "");
+            colTitle = cm[i].text.replace(/<\/br>/g, "");
 
             //NOTE IF YOU USE A CULUMN TYPE NOT VALID(e.g. actioncolumn) YOU MUST EDIT THIS LINE
             if (cm[i].xtype != 'actioncolumn' && cm[i].xtype != 'customactioncolumn'
@@ -828,7 +828,7 @@ Ext.define('Ext.view.override.Grid', {
                     } else if (v === "-" && celltype === "Number") {
                         celltype = "String";
                     } else if (v) {
-                        v = v.replace("</br>", "");
+                        v = v.replace(/<\/br>/g, "");
                     } else {
                         v = "";
                     }
