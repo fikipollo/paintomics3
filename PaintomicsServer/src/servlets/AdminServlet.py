@@ -599,14 +599,20 @@ def adminServletSendReport(request, response, ROOT_DIRECTORY):
         #sessionToken  = request.cookies.get('sessionToken')
         #UserSessionManager().isValidUser(userID, sessionToken)
 
-        userEmail = UserDAO().findByID(userID)
-        userName = userEmail.getUserName()
-        userEmail = userEmail.getEmail()
+
 
         #****************************************************************
         # Step 1.GET THE SPECIE CODE AND THE UPDATE OPTION
         #****************************************************************
         formFields = request.form
+
+        if userID is not None:
+            userEmail = UserDAO().findByID(userID)
+            userName = userEmail.getUserName()
+            userEmail = userEmail.getEmail()
+        else:
+            userEmail = formFields.get("fromEmail", smpt_sender)
+            userName = formFields.get("fromName", "No name provided")
 
         type = formFields.get("type")
         _message = formFields.get("message")

@@ -439,7 +439,7 @@ function sendReportMessage(type, message, fromEmail, fromName){
 	$.ajax({
 		type: "POST", headers: {"Content-Encoding": "gzip"},
 		url: SERVER_URL_DM_SEND_REPORT,
-		data: {type: type, message: message, fromEmail: fromEmail, fromEmail: fromName},
+		data: {type: type, message: message, fromEmail: fromEmail, fromName: fromName},
 		success: function (response) {
 			if (response.success === false) {
 				showErrorMessage(response.errorMessage);

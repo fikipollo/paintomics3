@@ -352,9 +352,11 @@ this.sendReportHandler = function(){
 				text: 'Send request',
 				handler : function() {
 					var type = "other";
-					var message= "<p><b>From:</b> " + messageDialog.queryById('nameTextField').getValue() + "<" + messageDialog.queryById('emailTextField').getValue() +">" + "</p><p><b>Message:</b>" +  messageDialog.queryById('commentsTextArea').getValue() + "</p>";
+					var userName = messageDialog.queryById('nameTextField').getValue();
+					var userEmail = messageDialog.queryById('emailTextField').getValue();
+					var message= "<p><b>From:</b> " + userName + "<" + userEmail +">" + "</p><p><b>Message:</b>" +  messageDialog.queryById('commentsTextArea').getValue() + "</p>";
 					messageDialog.close();
-					sendReportMessage(type, message);
+					sendReportMessage(type, message, userEmail, userName);
 				}
 			},
 			{text: 'Close', handler : function() {messageDialog.close();}}
