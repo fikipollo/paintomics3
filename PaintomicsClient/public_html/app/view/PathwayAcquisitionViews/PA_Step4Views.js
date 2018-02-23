@@ -424,7 +424,6 @@ function PA_Step4PathwayView() {
 	
 	this.getMatchedFeatures = function() {
 		var foundFeatures = this.getModel().getMatchedGenes().concat(this.getModel().getMatchedCompounds());
-		var omicValues = this.getModel().getOmic
 		var omicsValues = this.getOmicsValues();
 		
 		var matchedFeatures = {};
@@ -439,7 +438,7 @@ function PA_Step4PathwayView() {
 				
 				matchedFeatures[omicValue.omicName][keggName] = {
 					isRelevant: matchedFeatures[omicValue.omicName][keggName].isRelevant || omicValue.relevant,
-					inputNames: matchedFeatures[omicValue.omicName][keggName].inputNames.concat(omicValue.getInputName())
+					inputNames: matchedFeatures[omicValue.omicName][keggName].inputNames.concat(omicValue.originalName || omicValue.getInputName())
 				};
 			})
 		});
@@ -2135,7 +2134,8 @@ function PA_Step4KeggDiagramFeatureSetSVGBox() {
 			context.stroke();
 			context.font = "normal " + (fontSize * scaleFactor) + "px serif";
 			context.fillStyle = 'black';
-			context.fillText(feature.getName(), 0, fontSize * scaleFactor);
+			// TODO: remove added space?
+			context.fillText(' ' + feature.getName(), 0, fontSize * scaleFactor);
 		}
 
 		//Add start glyph if relevant
@@ -2212,14 +2212,14 @@ function PA_Step4KeggDiagramFeatureSetSVGBox() {
 		//TODO: DELETE OBSERVER
 		//me.getModel().deleteObserver(me);
 		//TODO: SOME FEATURES HAS NaN FOR WIDTH AND POS
-		var width = (this.getModel().getFeatureGraphicalData().getBoxWidth() * visualOptions.adjustFactor || 50);
-		var height = (this.getModel().getFeatureGraphicalData().getBoxHeight() * visualOptions.adjustFactor || 15);
+		var width = (this.getModel().getFeatureGraphicalData().getBoxWidth() * visualOptions.adjustFactor || 20);
+		var height = (this.getModel().getFeatureGraphicalData().getBoxHeight() * visualOptions.adjustFactor || 20);
 		// DEPRECATED: MapMan pathways do not have width or height set. For that, and those rare KEGG cases in which it isn't set,
 		// draw a circle instead
 		// var width = (this.getModel().getFeatureGraphicalData().getBoxWidth() * visualOptions.adjustFactor);
 		// var height = (this.getModel().getFeatureGraphicalData().getBoxHeight() * visualOptions.adjustFactor);
-		this.getModel().getFeatureGraphicalData().setBoxWidth(width);
-		this.getModel().getFeatureGraphicalData().setBoxHeight(height);
+		//this.getModel().getFeatureGraphicalData().setBoxWidth(width);
+		//this.getModel().getFeatureGraphicalData().setBoxHeight(height);
 
 		/* LEGACY CODE IN CASE WE WANT TO RESTORE POINT "BOXES" FOR OTHER DBS */
 		if (width == 0 || height == 0) {
@@ -2838,7 +2838,7 @@ function PA_Step4GlobalHeatmapView() {
 				}
 				referenceOmics[omicValue.omicName][omicsValues[matchedFeatures[i]].getName()] = {
 					keggName: omicsValues[matchedFeatures[i]].getName(),
-					inputName: omicValue.getInputName(),
+					inputName: omicValue.originalName || omicValue.getInputName(),
 					isRelevant: omicValue.isRelevant(),
 					values: omicValue.getValues()
 				};

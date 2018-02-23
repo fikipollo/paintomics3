@@ -695,6 +695,15 @@ div.checkbox label, div.radio label {
 	padding-left: 0;
 }
 
+.ui-slider-horizontal {
+	height: .5em !important;
+}
+
+.ui-slider-horizontal .ui-slider-handle {
+	width: 1em !important;
+	height: 1em !important;
+}
+
 /********************************************************************************
 **STYLES FOR STEP 1
 *********************************************************************************/
@@ -877,11 +886,11 @@ max-height: 600px;
 }*/
 div[id ^= "pathwayNetworkWaitBox_"] {
 	position: absolute;
-	height: 600px;
+	height: 775px;
 	width: 100%;
 	background-color: rgba(255, 255, 255, 0.76);
 	z-index: 2;
-	padding-top: 250px;
+	padding-top: 350px;
 	text-align: center;
 	font-size: 40px;
 	color: #D26430;
@@ -958,7 +967,7 @@ div[id ^= "step3-network-toolbar_"]{
 	text-align: center;
 	height: 30px;
 }
-div[id ^= "step3-network-toolbar-message_"]{
+p[id ^= "step3-network-toolbar-message_"]{
 	display: none;
 	position: absolute;
 	text-align: center;
@@ -966,10 +975,11 @@ div[id ^= "step3-network-toolbar-message_"]{
 	background: rgba(255, 255, 255, 0.85);
 	line-height: 40px;
 	font-size: 18px;
-	margin: 20px 30%;
+	margin: 40px 30%;
 	color: #3C9AF5;
 	border: 1px solid #3C9AF5;
 	border-radius: 5px;
+	text-align: center;
 }
 div[id ^= "step3-network-toolbar-message_"].successMessage{color: #12A22F !important;border: 1px solid #12A22F !important;}
 div[id ^= "step3-network-toolbar_"] a{float:left !important;font-size: 12px !important;}
