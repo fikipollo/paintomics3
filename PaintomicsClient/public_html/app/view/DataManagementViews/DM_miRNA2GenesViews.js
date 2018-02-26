@@ -45,6 +45,23 @@ function DM_miRNA2GenesJobView() {
 	this.submitFormHandler = function () {
 		this.controller.fromMiRNA2GenesOnFormSubmitHandler(this);
 	};
+	
+	this.setExampleModeHandler = function() {
+		var panel, fileField, omicSubmittingPanels;
+		var omicForm = this.getComponent().queryById("omicSubmittingForm");
+		var mirnaPanel = new MiRNAOmicSubmittingPanel(0, {removable: false, allowToogle: false});
+
+		this.exampleMode = true;
+		mirnaPanel.setExampleMode();
+		
+		// Delete old element
+		omicForm.remove(omicForm.items.get(1));
+		omicForm.remove(omicForm.items.get(1));
+		omicForm.add(mirnaPanel.getComponent(), {xtype: "box", html: '<div style="height:150px"></div>'});
+		omicForm.doLayout();
+		
+		$('#mainViewCenterPanel').scrollTop(omicForm.getEl().dom.offsetTop - 60);
+	};
 
 	this.checkForm = function () {
 		var items = this.getComponent().query("container[cls=omicbox miRNABasedOmic]");
@@ -69,7 +86,8 @@ function DM_miRNA2GenesJobView() {
 			items: [{
 				xtype: "box", cls: "toolbar secondTopToolbar", html:
 				'<a class="button btn-danger btn-right" id="resetButton"><i class="fa fa-refresh"></i> Reset</a>' +
-				'<a class="button btn-success btn-right" id="runButton"><i class="fa fa-play"></i> Run miRNA2Genes</a>'
+				'<a class="button btn-success btn-right" id="runButton"><i class="fa fa-play"></i> Run miRNA2Genes</a>' + 
+				'<a class="button btn-secondary btn-right" id="exampleButton"><i class="fa fa-file-text-o"></i> Load example</a>'
 			},{
 				xtype: "container", style: "margin-top:50px;  max-width:1300px;",
 				items: [
@@ -128,6 +146,9 @@ function DM_miRNA2GenesJobView() {
 				});
 				$("#resetButton").click(function () {
 					me.resetViewHandler();
+				});
+				$("#exampleButton").click(function() {
+					me.setExampleModeHandler();
 				});
 			},
 			beforedestroy: function () {

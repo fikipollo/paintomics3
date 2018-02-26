@@ -573,7 +573,7 @@ function PA_Step3JobView() {
 						xtype: 'tabpanel', id: 'tabcontainer_network', plain: true,
 						deferredRender: false, items: tabContent, border: false,
 						cls: ((me.getModel().getDatabases().length < 2) ? 'onedatabase' : ''),
-						style: "max-width:1900px; margin: 5px 10px; margin-top:20px;",
+						style: "max-width:1900px; margin: 5px 10px; margin-top:20px; height: auto;",
 						tabBar: {
 							/* Hide tab bar when there is only one database */
 							hidden: (me.getModel().getDatabases().length < 2),
@@ -2198,6 +2198,9 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					'  <h4>TheName For AnOmic</h4><span class="infoTip">Click on each cluster to hide/show the nodes in the network</span>' +
 					'  <h5>N Clusters founds</h5>' +
 					'  <div style="text-align: center;"> </div>' +
+//					'  <hr/>' +
+//					'  <h5>Modify number of clusters</h5>' +
+//					'  <span class="infoTip">Change the number of the desired clusters and apply the results. Be aware that this is an <b>intensive</b> process that will use the queue system so the results may take some time to...</span>' + 
 					'</div>' +
 					//THE PANEL WITH THE PATHWAY DETAILS
 					'<div id="patwaysDetailsWrapper_' + me.dbid + '" style="display:none;">'+

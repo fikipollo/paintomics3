@@ -671,7 +671,7 @@ function JobController() {
 	* @returns {undefined}
 	************************************************************/
 	this.fromMiRNA2GenesOnFormSubmitHandler = function (jobView) {
-		var URL = SERVER_URL_DM_FROMMIRNA2GENES;
+		var URL = jobView.isExampleMode() === true ? SERVER_URL_DM_EXAMPLE_FROMMIRNA2GENES : SERVER_URL_DM_FROMMIRNA2GENES;
 
 		if (jobView.checkForm() === true) {
 			var me = this;

@@ -84,14 +84,14 @@ class MiRNA2GeneJob(Job):
         # Look using the name instead of relying in the dictionary order
         geneDataInputs = self.getGeneBasedInputOmics()
 
-        miRNAdataInput = next((x for x in geneDataInputs if x["omicName"] != "Gene Expression"))
+        miRNAdataInput = next((x for x in geneDataInputs if x["omicName"].lower() != "gene expression"))
 
         logging.info("VALIDATING miRNA-seq BASED FILES..." )
         nConditions, error = self.validateFile(miRNAdataInput, -1, error)
 
         if len(geneDataInputs) > 1:
             logging.info("VALIDATING RNA-seq BASED FILES..." )
-            RNAdataInput = next((x for x in geneDataInputs if x["omicName"] == "Gene Expression"))
+            RNAdataInput = next((x for x in geneDataInputs if x["omicName"].lower() == "gene expression"))
             nConditions, error = self.validateFile(RNAdataInput, -1, error)
 
         if error != "":
@@ -228,13 +228,13 @@ class MiRNA2GeneJob(Job):
 
         geneDataInputs = self.getGeneBasedInputOmics()
 
-        miRNAinputOmic = next((x for x in geneDataInputs if x["omicName"] != "Gene Expression"))
+        miRNAinputOmic = next((x for x in geneDataInputs if x["omicName"].lower() != "gene expression"))
         dataFile = miRNAinputOmic.get("inputDataFile")
         relevantFile = miRNAinputOmic.get("relevantFeaturesFile")
 
         geneExpressionFile =  None
         if len(geneDataInputs) > 1:
-            RNAinputOmic = next((x for x in geneDataInputs if x["omicName"] == "Gene Expression"))
+            RNAinputOmic = next((x for x in geneDataInputs if x["omicName"].lower() == "gene expression"))
             geneExpressionFile = RNAinputOmic.get("inputDataFile")
 
         if(miRNAinputOmic.get("isExample", False) == False):
@@ -331,7 +331,7 @@ class MiRNA2GeneJob(Job):
                 filePrefix = '' if self.getUserID() is not None else self.getJobID() + '_'
                 genesToMiRNAFile = open(self.getTemporalDir() + '/' + filePrefix + 'genesToMiRNAFile.tab', 'w')
                 mirna2genesOutput = open(self.getTemporalDir() + '/' + filePrefix + "miRNA2Gene_output_" + self.date + ".tab", 'w')
-                mirna2genesRelevant = open(self.getTemporalDir() +  '/' + filePrefix + "miRNA2Gene_relevant_" + self.date + ".tab", 'w')
+                mirna2genesRelevant = open(self.getTemporalDir() + '/' + filePrefix + "miRNA2Gene_relevant_" + self.date + ".tab", 'w')
 
                 # PRINT HEADER
                 genesToMiRNAFile.write("# Gene name\tmiRNA ID\tDE\tScore\tSelection\n")
