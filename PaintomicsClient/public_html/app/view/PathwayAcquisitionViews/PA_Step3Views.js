@@ -664,6 +664,8 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 	this.name = "PA_Step3PathwayClassificationView";
 	this.database = db;
 	this.dbid = this.database.replace(' ', '__');
+	this.highcharts = null;
+	this.OTHER_COLORS = ["#FF9500", "#E0F8D8", "#55EFCB", "#FFD3E0"];
 
 	/*********************************************************************
 	* OTHER FUNCTIONS
@@ -681,7 +683,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 		/* STEP 1. INITIALIZE VARIABLES                         */
 		/********************************************************/
 		var me = this;
-		var OTHER_COLORS = ["#FF9500", "#E0F8D8", "#55EFCB", "#FFD3E0"];
+		var OTHER_COLORS = $.extend(true, [], me.OTHER_COLORS);
 		var classificationData = this.getParent().getClassificationData(this.database);
 		var indexedPathways = this.getParent().getIndexedPathways(this.database);
 		var pathways = this.getModel().getPathwaysByDB(this.database);
@@ -720,7 +722,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 			secondClassifications.push(drilldownAux);
 		}
 
-		$('#pathwayDistributionsContainer_' + me.dbid).highcharts({
+		me.highcharts = Highcharts.chart('pathwayDistributionsContainer_' + me.dbid, {
 			chart: {type: 'pie'},
 			title: null, credits: {enabled: false},
 			plotOptions: {
@@ -730,9 +732,9 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 						enabled: true,  useHTML:true,
 						formatter: function(){
 							if(this.point.drilldown !== undefined){
-								return '<i class="classificationNameBox" style="line-height: 20px;border-color:' + this.point.color + '; color:' + this.point.color + ';">' + this.point.name.charAt(0).toUpperCase() + '</i>' + this.percentage.toFixed(2) + "%";
+								return '<i class="classificationNameBox" style="line-height: 20px;border-color:' + this.point.color + '; color:' + this.point.color + ';">' + this.point.name.charAt(0).toUpperCase() + '</i>' + this.y.toFixed(2) + "%";
 							}else{
-								return "<b>" + this.point.name + "</b><br>" + this.percentage.toFixed(2) + "%";
+								return "<b>" + this.point.name + "</b><br>" + this.y.toFixed(2) + "%";
 							}
 						}
 					}
@@ -904,6 +906,8 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 			$("#pathwayClassificationContainer_" + me.dbid + " .step3ClassificationsPathway > input").change(function(){
 				updateStatus(this);
 			});
+		
+			this.applyVisualSettings(false);
 
 			return this;
 		};
@@ -916,7 +920,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 		* @chainable
 		* @returns {PA_Step3PathwayClassificationView}
 		*/
-		this.applyVisualSettings =  function() {
+		this.applyVisualSettings =  function(updateSettings=true) {
 			var me = this;
 
 			/********************************************************/
@@ -932,36 +936,63 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 				}
 			});
 
-			// TODO: UPDATE CLASSIFICATION DISTRIBUTION AND HIDE SECTOS AT THE PIE CHART
-			//
-			// var classificationData = me.getParent().getClassificationData();
-			// var indexedPathways = me.getParent().getIndexedPathways();
-			// var pathways = me.getModel().getPathways();
-			// var mainClassificationID, secClassificationID;
-			//
-			// //RESET CLASSIFICATION COUNTERS
-			// for(var i in classificationData){
-			// 	classificationData[i].count=0;
-			// 	for(var j in classificationData[i].children){
-			// 		classificationData[i].children[j].count=0
-			// 	}
-			// }
-			//
-			// for(var i in pathways){
-			// 	mainClassificationID = pathways[i].getClassification().split(";")[0].toLowerCase().replace(/ /g,"_")
-			// 	secClassificationID = pathways[i].getClassification().split(";")[1].toLowerCase().replace(/ /g,"_")
-			// 	if(!pathways[i].visible){
-			// 		classificationData[mainClassificationID].count++;
-			// 		classificationData[mainClassificationID].children[secClassificationID].count++;
-			// 	}
-			// }
+			var classificationData = me.getParent().getClassificationData(me.database);
+			var mainClassificationID, secClassificationID;
+			var mainClassifications = [], secondClassifications = [];
+			
+			// Avoid this when no pathways are visible.
+			if (pathwaysVisibility.length) {
+				Object.keys(classificationData).forEach(function(classificationID) {
+					var mainClassificationInstance = classificationData[classificationID];
+					var mainVisiblePathways = 0;
 
-			me.getParent().setVisualOptions("pathwaysVisibility", pathwaysVisibility, me.database);
+					drilldownAux = {
+						name: mainClassificationInstance.name,
+						id: classificationID,
+						data: []
+					};
 
-			/********************************************************/
-			/* STEP 2. NOTIFY THE CHANGES TO PARENT                 */
-			/********************************************************/
-			me.getParent().applyVisualSettings(me.getName(), me.database);
+					for (secondClassificationID in mainClassificationInstance.children){
+						var secClassificationInstance = mainClassificationInstance.children[secondClassificationID];
+						var secVisiblePathways = secClassificationInstance.children.filter(x => pathwaysVisibility.includes(x));
+
+						// Check if there are visible pathways in this classification
+						if (secVisiblePathways.length) {
+							mainVisiblePathways += secVisiblePathways.length;
+							drilldownAux.data.push([secClassificationInstance.name, (secVisiblePathways.length/pathwaysVisibility.length) * 100]);
+						}
+					}
+
+					if (mainVisiblePathways) {
+						secondClassifications.push(drilldownAux);
+
+						mainClassifications.push({
+							name: mainClassificationInstance.name,
+							y: (mainVisiblePathways/pathwaysVisibility.length) * 100,
+							color: me.getParent().getClassificationColor(classificationID, me.OTHER_COLORS),
+							drilldown: classificationID
+						});					
+					}
+				});
+				
+				me.highcharts.series[0].setData(mainClassifications);
+				me.highcharts.options.drilldown.series[0] = secondClassifications;
+			} else {
+				me.highcharts.series[0].setData([{
+						name: 'No pathways',
+						y: 100,
+						color: "#FF0000"
+				}]);					
+			}
+
+			if (updateSettings) {
+				me.getParent().setVisualOptions("pathwaysVisibility", pathwaysVisibility, me.database);
+
+				/********************************************************/
+				/* STEP 2. NOTIFY THE CHANGES TO PARENT                 */
+				/********************************************************/
+				me.getParent().applyVisualSettings(me.getName(), me.database);
+			}
 
 			return this;
 		};
