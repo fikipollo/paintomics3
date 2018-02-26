@@ -623,7 +623,7 @@ function JobController() {
 	* @returns {undefined}
 	************************************************************/
 	this.fromBed2GenesOnFormSubmitHandler = function (jobView) {
-		var URL = SERVER_URL_DM_FROMBED2GENES;
+		var URL = jobView.isExampleMode() === true ? SERVER_URL_DM_EXAMPLE_FROMBED2GENES : SERVER_URL_DM_FROMBED2GENES;
 
 		if (jobView.checkForm() === true) {
 			var me = this;

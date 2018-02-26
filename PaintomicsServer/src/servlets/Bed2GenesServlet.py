@@ -103,7 +103,7 @@ def fromBEDtoGenes_STEP1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, EXAMPLE_FILE
 
                 jobInstance.addGeneBasedInputOmic({"omicName": omicName, "inputDataFile": EXAMPLE_FILES_DIR + dataFileName, "relevantFeaturesFile": EXAMPLE_FILES_DIR + relevantFileName,  "isExample" : True})
 
-                jobInstance.addReferenceInput({"omicName": omicName, "fileType":  "Reference file", "inputDataFile": EXAMPLE_FILES_DIR + "sorted_mmu.gtf"})
+                jobInstance.addReferenceInput({"omicName": omicName, "fileType":  "Reference file", "inputDataFile": EXAMPLE_FILES_DIR + "GTF/sorted_mmu.gtf"})
 
             specie = "mmu"
             jobInstance.setOrganism(specie)
