@@ -1294,7 +1294,12 @@ function PA_Step4KeggDiagramFeatureSetTooltip() {
 		/*         SAME POSITION                                */
 		/********************************************************/
 		var nOtherItems = this.model.getFeatures().length-1;
-		var domEl = me.getComponent().el.dom;
+		var domEl = me.getComponent();
+		
+		if (! domEl.rendered) {
+			domEl.doLayout();
+		}
+		domEl = domEl.el.dom;
 		
 		if (nOtherItems > 0) {
 			$(domEl).find(".otherFeaturesMessage").html(nOtherItems + " more " + featureType + (nOtherItems > 1 ? "s" : "") + " at this position.");
@@ -1702,31 +1707,38 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 			x = 0;
 			omicName = visibleOmics[i].split("#")[0];
 
-			omicValues = feature.getOmicValues(omicName);
-			if (omicValues !== null) {
-				shownameValue = omicValues.inputName != omicValues.originalName && omicValues.originalName !== undefined ?
-					omicValues.originalName + ": " + omicValues.inputName :
-					omicValues.inputName
+			// Retrieve all omic values
+			allOmicValues = feature.getOmicValues(omicName, true);
+			
+			if (allOmicValues !== null) {
+				allOmicValues.forEach(function(omicValues) {
+					x = 0;
+					
+					shownameValue = omicValues.inputName != omicValues.originalName && omicValues.originalName !== undefined ?
+						omicValues.originalName + ": " + omicValues.inputName :
+						omicValues.inputName
 
-				serie = {name: (omicValues.isRelevant() === true ? "* " : "") + omicName + "#" + shownameValue};
-				yAxisCat.push((omicValues.isRelevant() === true ? "* " : "") + omicName + "#" + shownameValue);
+					serie = {name: (omicValues.isRelevant() === true ? "* " : "") + omicName + "#" + shownameValue};
+					yAxisCat.push((omicValues.isRelevant() === true ? "* " : "") + omicName + "#" + shownameValue);
 
-				values = omicValues.getValues();
-				serie.data = [];
-				scaledValues = [];
+					values = omicValues.getValues();
+					serie.data = [];
+					scaledValues = [];
 
-				var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences[omicName]);
+					var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences[omicName]);
 
-				for (var j in values) {
-					serie.data.push({
-						x: x, y: y,
-						value: values[j],
-						color: getColor(limits, values[j], visualOptions.colorScale)
-					});
-					x++;
-					maxX = Math.max(maxX, x);
-				}
-				series.push(serie);
+					for (var j in values) {
+						serie.data.push({
+							x: x, y: y,
+							value: values[j],
+							color: getColor(limits, values[j], visualOptions.colorScale)
+						});
+						x++;
+						maxX = Math.max(maxX, x);
+					}
+					series.push(serie);	
+					y++;
+				});
 			} else {
 				/* IF THERE IS NOT DATA FOR THIS OMIC FOR THIS FEATURE, WE WILL ADD
 				* A GRAY ROW, BUT FIRST WE NEED SOME INFORMATION (MAX X), SO WE WILL ADD
@@ -1737,8 +1749,8 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 				});
 				yAxisCat.push(omicName);
 				series.push(null);
+				y++;
 			}
-			y++;
 		}
 
 		for (var i in later) {
@@ -1828,36 +1840,41 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 		//1.FILL THE STORE DATA [{name:"timepoint 1", "Gene Expression": -0.8, "Proteomics":-1.2,... },{name:"timepoint2", ...}]
 		for (var i in visibleOmics) {
 			omicName = visibleOmics[i].split("#")[0];
-			omicValues = feature.getOmicValues(omicName);
-			if (omicValues !== null) {
-				scaledValues = [];
+			allOmicValues = feature.getOmicValues(omicName, true);
+			
+			if (allOmicValues !== null) {
+				for (var t = 0; t < allOmicValues.length; t++) {
+					omicValues = allOmicValues[t];
+					scaledValues = [];
 
-				var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences[omicName]);
+					var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences[omicName]);
+					var showName =  omicValues.originalName !== undefined && omicValues.originalName !== omicValues.inputName ? omicValues.originalName : null;
 
-				values = omicValues.getValues();
-				for (var j in values) {
-					//SCALE THE VALUE
-					tmpValue = scaleValue(values[j], limits.min, limits.max);
-					//UPDATE MIN MAX (TO ADJUST THE AXIS)
-					maxVal = Math.max(tmpValue, maxVal);
-					minVal = Math.min(tmpValue, minVal);
-					//ADD THE VALUE (CUSTOM MARKER IF OUTLIER)
-					scaledValues.push({
-						y: tmpValue,
-						marker: ((tmpValue > 1 || tmpValue < -1) ? {
-							fillColor: '#ff6e00'
-						} : null)
-					});
-				}
+					values = omicValues.getValues();
+					for (var j in values) {
+						//SCALE THE VALUE
+						tmpValue = scaleValue(values[j], limits.min, limits.max);
+						//UPDATE MIN MAX (TO ADJUST THE AXIS)
+						maxVal = Math.max(tmpValue, maxVal);
+						minVal = Math.min(tmpValue, minVal);
+						//ADD THE VALUE (CUSTOM MARKER IF OUTLIER)
+						scaledValues.push({
+							y: tmpValue,
+							marker: ((tmpValue > 1 || tmpValue < -1) ? {
+								fillColor: '#ff6e00'
+							} : null)
+						});
+					}
 
-				series.push({
-					name: omicName,
-					type: 'spline',
-					startOnTick: false,
-					endOnTick: false,
-					data: scaledValues,
-					yAxis: 0
-				});
+					series.push({
+						name: allOmicValues.length > 1 ? omicName + " [" + (showName ? showName : omicValues.inputName + ' - ' + (t + 1)) + "]" : omicName,
+						type: 'spline',
+						startOnTick: false,
+						endOnTick: false,
+						data: scaledValues,
+						yAxis: 0
+					});				
+				};
 			}
 		}
 
@@ -2829,6 +2846,8 @@ function PA_Step4GlobalHeatmapView() {
 				if (selectedOmics[omicValue.omicName] === undefined) {
 					continue;
 				}
+				
+				var featureName = omicsValues[matchedFeatures[i]].getName();
 
 				//PUSH IF USER CHOOSE all OR IF FEATURE IS RELEVANT
 				if (selectedOmics[omicValue.omicName] === "all" || omicValue.isRelevant()) {
@@ -2836,12 +2855,14 @@ function PA_Step4GlobalHeatmapView() {
 				} else {
 					referenceOmics = otherDataMatrix;
 				}
-				referenceOmics[omicValue.omicName][omicsValues[matchedFeatures[i]].getName()] = {
+				referenceOmics[omicValue.omicName][featureName] = referenceOmics[omicValue.omicName][featureName] || [];
+				
+				referenceOmics[omicValue.omicName][featureName].push({
 					keggName: omicsValues[matchedFeatures[i]].getName(),
 					inputName: omicValue.originalName || omicValue.getInputName(),
 					isRelevant: omicValue.isRelevant(),
 					values: omicValue.getValues()
-				};
+				});
 			}
 		}
 
@@ -2884,7 +2905,7 @@ function PA_Step4GlobalHeatmapView() {
 		}
 		//*********************************************************************************
 		//STEP 1. GENERATE THE HEATMAP FOR REFERENCE OMIC
-		var omicValues = Object.values(dataMatrix[referenceOmic]);
+		var omicValues = Array.prototype.concat.apply([], Object.values(dataMatrix[referenceOmic]));
 		var showLabels = true;
 		var divName = "globalHeatmapContainer-" + referenceOmic.toLowerCase().replace(/ /g, "-");
 		var divWidth = 200;
@@ -2915,11 +2936,10 @@ function PA_Step4GlobalHeatmapView() {
 				featureName = orderedGenes[i].split("#")[0].replace("* ", "");
 
 				if (dataMatrix[omicName][featureName] !== undefined) {
-					omicValues.push(dataMatrix[omicName][featureName]);
-					delete dataMatrix[omicName][featureName]
-					;
+					dataMatrix[omicName][featureName].map(x => omicValues.push(x));
+					delete dataMatrix[omicName][featureName];
 				} else if (otherDataMatrix && otherDataMatrix[omicName][featureName] !== undefined) {
-					omicValues.push(otherDataMatrix[omicName][featureName]);
+					otherDataMatrix[omicName][featureName].map(x => omicValues.push(x));
 				} else {
 					omicValues.push({
 						keggName: featureName,

@@ -161,9 +161,15 @@ function PA_Step3JobView() {
 			// jQuery extend with deep copy will merge the arrays, so if we are creating the 
 			// visual options from scratch we assign all the DB pathways and if not, the very
 			// same filtered pathways already saved so the merge won t do anything wrong.
-			var dbPathways = $.isEmptyObject(this.visualOptions[db].pathwaysVisibility) ? 
-				this.getModel().getPathwaysByDB(db).map(x => x.getID()) :
-				this.visualOptions[db].pathwaysVisibility;
+			var dbPathways;
+			
+			if (this.visualOptions[db]) {
+				dbPathways = $.isEmptyObject(this.visualOptions[db].pathwaysVisibility) ? 
+					this.getModel().getPathwaysByDB(db).map(x => x.getID()) :
+					this.visualOptions[db].pathwaysVisibility;
+			} else {
+				dbPathways = this.getModel().getPathwaysByDB(db).map(x => x.getID());
+			}				
 			
 			this.visualOptions[db] = jQuery.extend(true, {}, defaultVisualOptions, {pathwaysVisibility: dbPathways}, this.visualOptions[db]);
 		}).bind(this));
