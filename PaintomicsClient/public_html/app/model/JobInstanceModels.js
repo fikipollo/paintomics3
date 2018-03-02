@@ -32,6 +32,7 @@ function JobInstance(jobID) {
 
 	this.pathways = [];
 	this.databases = null;
+	this.clusters = null;
 	this.summary = null;
 	this.mappingSummary = null;
 
@@ -117,6 +118,36 @@ function JobInstance(jobID) {
 	}
 	this.setDatabases = function (databases) {
 		this.databases = databases;
+	};
+	this.getClusterNumber = function() {
+		if (this.clusters === null) {
+			this.clusters = {};
+			
+			// For each database initialize a new set containing all omic names
+			this.getDatabases().forEach(function(db) {
+				this.clusters[db] = {};
+				
+				this.getOmicNames().map(x => this.clusters[db][x] = new Set());
+				
+				// For each pathway and each omic present in its metagene info,
+				// add to the set the different clusters found.
+				this.getPathwaysByDB(db).forEach(function(pathway) {
+					var metagenes = pathway.getMetagenes();
+					
+					Object.keys(metagenes).forEach(function(omicName) {
+						metagenes[omicName].map(x => this.clusters[db][omicName].add(x.cluster));
+					}, this);
+				}, this);
+			}, this);
+		}
+		
+		return this.clusters;
+	};
+	this.getClusterNumberByDbAndOmic = function(database, omic) {
+		return this.getClusterNumber()[database][omic];
+	};
+	this.setClusterNumber = function(clusters) {
+		this.clusters = clusters;
 	};
 	this.setSummary = function (summary) {
 		this.summary = summary;

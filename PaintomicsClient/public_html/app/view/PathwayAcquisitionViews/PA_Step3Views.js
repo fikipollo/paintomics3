@@ -179,23 +179,7 @@ function PA_Step3JobView() {
 		/********************************************************/
 		/* STEP 2.2 GENERATE THE INDEX FOR PATHWAYS             */
 		/********************************************************/
-		var pathwayInstance;
-		for (var i in pathways) {
-			pathwayInstance =  pathways[i];
-			pathwayInstance.setVisible(this.visualOptions[pathwayInstance.getSource()].pathwaysVisibility.indexOf(pathwayInstance.getID()) !== -1);
-			this.indexedPathways[pathwayInstance.getSource()][pathwayInstance.getID()] = pathwayInstance;
-		}
-		$.each(databases, (function(index, db) {
-			if(this.visualOptions[db].pathwaysPositions !== undefined){
-				var data;
-				for(var i in this.visualOptions[db].pathwaysPositions){
-					data = this.visualOptions[db].pathwaysPositions[i].split("#");
-					this.indexedPathways[db][data[0]].networkCoordX = Number.parseFloat(data[1]);
-					this.indexedPathways[db][data[0]].networkCoordY = Number.parseFloat(data[2]);
-				}
-			}
-		}).bind(this));
-
+		this.indexPathways(pathways);
 
 		/************************************************************/
 		/* STEP 2.3 GENERATE THE TABLE WITH PATHWAY CLASSIFICATIONS */
@@ -291,6 +275,7 @@ function PA_Step3JobView() {
 
 		return this;
 	};
+	
 
 	this.getVisualOptions = function(db = null){
 		return (db == null) ? this.visualOptions : this.visualOptions[db];
@@ -307,6 +292,25 @@ function PA_Step3JobView() {
 	};
 	this.getIndexedPathways = function(db = null){
 		return (db == null) ? this.indexedPathways : this.indexedPathways[db];
+	};
+	
+	this.indexPathways = function(pathways) {
+		var pathwayInstance;
+		for (var i in pathways) {
+			pathwayInstance =  pathways[i];
+			pathwayInstance.setVisible(this.visualOptions[pathwayInstance.getSource()].pathwaysVisibility.indexOf(pathwayInstance.getID()) !== -1);
+			this.indexedPathways[pathwayInstance.getSource()][pathwayInstance.getID()] = pathwayInstance;
+		}
+		$.each(this.getModel().getDatabases(), (function(index, db) {
+			if(this.visualOptions[db].pathwaysPositions !== undefined){
+				var data;
+				for(var i in this.visualOptions[db].pathwaysPositions){
+					data = this.visualOptions[db].pathwaysPositions[i].split("#");
+					this.indexedPathways[db][data[0]].networkCoordX = Number.parseFloat(data[1]);
+					this.indexedPathways[db][data[0]].networkCoordY = Number.parseFloat(data[2]);
+				}
+			}
+		}).bind(this));		
 	};
 
 	this.getTotalVisiblePathways = function(db){
@@ -1086,6 +1090,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 			var visualOptions = this.getParent().getVisualOptions(this.database);
 			var indexedPathways = this.getParent().getIndexedPathways(this.database);
 			var CLUSTERS = {};
+			var TOTAL_CLUSTERS = this.getModel().getClusterNumber()[this.database];
 
 			/* The old format data does not have keys */
 			if (me.database in data) {
@@ -1488,8 +1493,17 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					htmlCode += '<div style="text-align:left;"><i class="classificationNameBox" style="border-color:' + color + '; color:' + color + ';">' + classification.name.charAt(0).toUpperCase() + '</i>' +  classification.name + "</div>";
 				}
 				$("#networkClustersContainer_" + me.dbid + " div").html(htmlCode);
+				$("#sliderClusterNumberContainer_" + me.dbid).hide();
 			}else{
-				$("#networkClustersContainer_" + me.dbid + " h5").text(Object.keys(CLUSTERS).length + " Clusters found.");
+				var clusterNumber = Object.keys(CLUSTERS).length;
+				var totalClusters = TOTAL_CLUSTERS[visualOptions.colorBy].size;
+				
+				// Update the cluster number slider value
+				$("#sliderClusterNumberContainer_" + me.dbid).show();
+				$("#sliderClusterNumberShow_" + me.dbid).html(totalClusters);
+				$("#sliderClusterNumber_" + me.dbid).slider("option", "value", totalClusters);
+				
+				$("#networkClustersContainer_" + me.dbid + " h5").text(clusterNumber + " Clusters found from " + totalClusters + " in total.");
 				//Generate the images and the containers
 				var img_path;
 				for(var cluster in CLUSTERS){
@@ -1789,6 +1803,18 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 
 			return this;
 		};
+		
+				
+		this.getNewClusters = function() {
+			var me = this;
+			var numberClusters = $("#sliderClusterNumberShow_" + me.dbid).html();
+			var omicName = me.getParent().visualOptions[me.dbid].colorBy;
+			
+			if (numberClusters && omicName !== "classification") {
+				me.getParent().controller.updateMetagenesSubmitHandler(me, numberClusters, omicName);
+			}
+		};
+
 
 		/**
 		* This function selects nodes from the network following different approaches
@@ -2204,9 +2230,14 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					'  <h4>TheName For AnOmic</h4><span class="infoTip">Click on each cluster to hide/show the nodes in the network</span>' +
 					'  <h5>N Clusters founds</h5>' +
 					'  <div style="text-align: center;"> </div>' +
-//					'  <hr/>' +
-//					'  <h5>Modify number of clusters</h5>' +
-//					'  <span class="infoTip">Change the number of the desired clusters and apply the results. Be aware that this is an <b>intensive</b> process that will use the queue system so the results may take some time to...</span>' + 
+					'  <hr/>' +
+					'</div>' +
+					'<div style="padding: 10px;" id="sliderClusterNumberContainer_' + me.dbid + '" style="display: none;">' +
+					'  <h5>Modify number of clusters</h5>' +
+					'  <span class="infoTip">Change the number of the desired clusters and apply the results. Be aware that this is an <b>intensive</b> process that will use the queue system so the results may take some time to be retrieved.</span>' + 
+					'  <p style="margin:10px;">Generate <span id="sliderClusterNumberShow_' + me.dbid + '"></span> clusters.</p>' +
+					'  <div class="slider-ui" style="margin:10px;" id="sliderClusterNumber_' + me.dbid + '"></div>' +
+					'  <a href="javascript:void(0)" class="button btn-success btn-right helpTip" id="applyClusterNumber_' + me.dbid + '" style="margin: 20px auto;"><i class="fa fa-check"></i> Apply</a>' + 
 					'</div>' +
 					//THE PANEL WITH THE PATHWAY DETAILS
 					'<div id="patwaysDetailsWrapper_' + me.dbid + '" style="display:none;">'+
@@ -2375,8 +2406,17 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 								$("#fontSizeValue_" + me.dbid).html(ui.value);
 							}
 						});
+						$("#sliderClusterNumber_" + me.dbid).slider({
+							value: 0,min: 1,max: 20,step: 1,
+							slide: function(event, ui) {
+								$("#sliderClusterNumberShow_" + me.dbid).html(ui.value);
+							}
+						});
 						$("#applyNetworkSettingsButton_" + me.dbid).click(function() {
 							me.applyVisualSettings();
+						});
+						$("#applyClusterNumber_" + me.dbid).click(function() {
+							me.getNewClusters();
 						});
 
 						//HANDLERS FOR BUTTONS IN THE NETWORK TOOLBAR

@@ -724,7 +724,7 @@ class PathwayAcquisitionJob(Job):
 
 
     #GENERATE METAGENES LIST FUNCTIONS -----------------------------------------------------------------------------------------
-    def generateMetagenesList(self, ROOT_DIRECTORY, clusterNumber):
+    def generateMetagenesList(self, ROOT_DIRECTORY, clusterNumber, omicList=None):
         """
         This function obtains the metagenes for each pathway in KEGG based on the input values.
 
@@ -735,14 +735,18 @@ class PathwayAcquisitionJob(Job):
         zipFile(self.getOutputDir() + "/mapping_results_" + self.getJobID() + ".zip").extractall(path=self.getTemporalDir())
 
         # STEP 2. GENERATE THE DATA FOR EACH OMIC DATA TYPE
+        filtered_omics = self.geneBasedInputOmics
 
-        for inputOmic in self.geneBasedInputOmics:
+        if omicList:
+            filtered_omics = [inputOmic for inputOmic in self.geneBasedInputOmics if inputOmic.get("omicName") in omicList]
+
+        for inputOmic in filtered_omics:
             try:
                 # STEP 2.1 EXECUTE THE R SCRIPT
                 logging.info("GENERATING METAGENES INFORMATION...CALLING")
                 inputFile = self.getTemporalDir() +  "/" + inputOmic.get("omicName") + '_matched.txt'
                 # Select number of clusters, default to dynamic
-                kClusters = clusterNumber.get(inputOmic.get("omicName"), "dynamic")
+                kClusters = str(dict(clusterNumber).get(inputOmic.get("omicName"), "dynamic"))
                 check_call([
                     ROOT_DIRECTORY + "common/bioscripts/generateMetaGenes.R",
                     '--specie="' + self.getOrganism() +'"',
@@ -753,6 +757,10 @@ class PathwayAcquisitionJob(Job):
                     '--sources_dir="' + ROOT_DIRECTORY + '/common/bioscripts/"',
                     '--kclusters="' + kClusters + '"' if kClusters.isdigit() else ''], stderr=STDOUT)
                 # STEP 2.2 PROCESS THE RESULTING FILE
+
+                # Reset all pathways metagenes for the omic
+                map(lambda pathway: pathway.resetMetagenes(inputOmic.get("omicName")), self.matchedPathways.values())
+
                 with open(self.getTemporalDir() + "/" + inputOmic.get("omicName") + "_metagenes.tab", 'rU') as inputDataFile:
                     for line in csv_reader(inputDataFile, delimiter="\t"):
                         if self.matchedPathways.has_key(line[0]):
@@ -805,6 +813,8 @@ class PathwayAcquisitionJob(Job):
                     geneInstance = Gene(geneID)
                     geneInstance.parseBSON(genData)
                     self.addInputGeneData(geneInstance)
+            elif(attr == "userID"):
+                setattr(self, attr, value if value != 'None' else None)
             elif not isinstance(value, dict) :
                 setattr(self, attr, value)
 

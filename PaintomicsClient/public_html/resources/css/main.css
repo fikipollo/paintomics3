@@ -926,8 +926,8 @@ span.networkClusterImage.disabled > i {display:block;}
 .mainInfoPanel {font-size: 12px;}
 .pathwayPlotwrappers h4{color: #D16949;font-size: 13px;margin: 0;margin-top: 5px;}
 div[id ^= "networkview_"] { max-width:1800px; margin: 5px 10px; }
-div[id ^= "networkClustersContainer_"], div[id ^= "patwaysDetailsWrapper_"]{overflow-y:auto; overflow-x: hidden; min-height: 722px; height: 100%; padding: 2px 10px;}
-div[id ^= "networkSettingsPanel_"], div[id ^= "networkDetailsPanel_"] {width:260px; float:right; margin:0; margin-left:10px;}
+div[id ^= "networkClustersContainer_"], div[id ^= "patwaysDetailsWrapper_"]{overflow-y:auto; overflow-x: hidden; padding: 2px 10px;}
+div[id ^= "networkSettingsPanel_"], div[id ^= "networkDetailsPanel_"] {width:260px; float:right; margin:0; margin-left:10px;height: 843px;overflow: auto;}
 div[id ^= "networkDetailsPanel_"] {width:270px;}
 
 i.classificationNameBox {

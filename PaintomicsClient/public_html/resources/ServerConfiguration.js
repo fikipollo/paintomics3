@@ -19,6 +19,7 @@ SERVER_URL_JOB_STATUS= SERVER_URL + "check_job_status";
 SERVER_URL_GET_CLUSTER_IMAGE= SERVER_URL + "get_cluster_image";
 SERVER_URL_GET_MESSAGE = SERVER_URL + "um_get_message";
 SERVER_URL_ADJUST_PVALUES = SERVER_URL + "pa_adjust_pvalues";
+SERVER_URL_UPDATE_METAGENES = SERVER_URL + "pa_get_clusters";
 
 /*********************************************************************
  * DATA MANIPULATION SERVICES URLS         ***************************

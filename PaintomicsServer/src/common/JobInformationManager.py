@@ -300,3 +300,10 @@ class JobInformationManager:
     def touchAccessDate(self, jobID):
         jobInstanceDAO = PathwayAcquisitionJobDAO()
         jobInstanceDAO.touch(jobID)
+
+    def storePathways(self, jobInstance):
+        daoInstance = PathwayDAO()
+        logging.info("STORE PATHWAYS - REMOVING PATHWAYS TO DATABASE...")
+        daoInstance.removeAll({"jobID": jobInstance.getJobID()})
+        logging.info("STORE PATHWAYS - SAVING PATHWAYS TO DATABASE...")
+        daoInstance.insertAll(jobInstance.getMatchedPathways().values(), {"jobID": jobInstance.getJobID()})

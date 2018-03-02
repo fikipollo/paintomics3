@@ -5,6 +5,8 @@ from src.common.DAO.PathwayDAO import PathwayDAO
 from src.classes.JobInstances.PathwayAcquisitionJob import PathwayAcquisitionJob
 from time import strftime as formatDate
 
+from src.conf.serverconf import CLIENT_TMP_DIR
+
 class PathwayAcquisitionJobDAO(DAO):
     #******************************************************************************************************************
     # CONSTRUCTORS
@@ -24,6 +26,7 @@ class PathwayAcquisitionJobDAO(DAO):
             match = self.adaptBSON(match)
             jobInstance = PathwayAcquisitionJob(id, "", "")
             jobInstance.parseBSON(match)
+            jobInstance.setDirectories(CLIENT_TMP_DIR)
 
             auxDAO = FoundFeatureDAO(dbManager=self.dbManager)
             match = auxDAO.findAll({"jobID": id})

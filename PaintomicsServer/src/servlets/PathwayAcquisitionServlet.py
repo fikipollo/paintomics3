@@ -646,9 +646,93 @@ def pathwayAcquisitionSaveVisualOptions(request, response):
         response.setContent({"success": True, "timestamp": newTimestamp})
 
     except Exception as ex:
-        handleException(response, ex, __file__ , "pathwayAcquisitionStep3", userID=userID)
+        handleException(response, ex, __file__ , "pathwayAcquisitionSaveVisualOptions", userID=userID)
     finally:
         return response
+
+def pathwayAcquisitionMetagenes_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, ROOT_DIRECTORY):
+        # ****************************************************************
+        # Step 0. VARIABLE DECLARATION
+        # The following variables are defined:
+        #  - jobInstance: instance of the PathwayAcquisitionJob class.
+        #                 Contains all the information for the current job.
+        #  - userID: the ID for the user
+        # ****************************************************************
+        jobInstance = None
+        userID = None
+
+        try:
+            # ****************************************************************
+            # Step 1. CHECK IF VALID USER SESSION
+            # ****************************************************************
+            logging.info("STEP0 - CHECK IF VALID USER....")
+            userID = REQUEST.cookies.get('userID')
+            sessionToken = REQUEST.cookies.get('sessionToken')
+            UserSessionManager().isValidUser(userID, sessionToken)
+
+            # ****************************************************************
+            # Step 2. LOAD THE JOB INSTANCE AND RETRIEVE FORM INFO
+            # ****************************************************************
+            savedJobID = REQUEST.form.get("jobID")
+            savedJobInstance = JobInformationManager().loadJobInstance(savedJobID)
+
+            omicName = REQUEST.form.get("omic")
+            clusterNumber = int(REQUEST.form.get("number"))
+
+            # Make sure the number of clusters is inside [1, 20]
+            clusterNumber = 1 if clusterNumber < 1 else 20 if clusterNumber > 20 else clusterNumber
+
+            # ************************************************************************
+            # Step 4. Queue job
+            # ************************************************************************
+            QUEUE_INSTANCE.enqueue(
+                fn=pathwayAcquisitionMetagenes_PART2,
+                args=(ROOT_DIRECTORY, userID, savedJobInstance, omicName, clusterNumber, RESPONSE),
+                timeout=600,
+                job_id=JOB_ID
+            )
+
+            # ************************************************************************
+            # Step 5. Return the Job ID
+            # ************************************************************************
+            RESPONSE.setContent({
+                "success": True,
+                "jobID": JOB_ID
+            })
+        except Exception as ex:
+            handleException(RESPONSE, ex, __file__, "pathwayAcquisitionMetagenes_PART1", userID=userID)
+        finally:
+            return RESPONSE
+
+def pathwayAcquisitionMetagenes_PART2(ROOT_DIRECTORY, userID, savedJobInstance, omicName, clusterNumber, RESPONSE):
+    #VARIABLE DECLARATION
+    jobID  = ""
+    userID = ""
+
+    try :
+        #************************************************************************
+        # Step 3. Save the visual Options in the MongoDB
+        #************************************************************************
+        logging.info("UPDATE METAGENES - STEP 2 FOR JOB " + jobID + "..." )
+        savedJobInstance.generateMetagenesList(ROOT_DIRECTORY, {omicName: clusterNumber}, [omicName])
+        logging.info("UPDATE METAGENES - STEP 2 FOR JOB " + jobID + "...DONE")
+        JobInformationManager().storePathways(savedJobInstance)
+
+        matchedPathwaysJSONList = []
+        for matchedPathway in savedJobInstance.getMatchedPathways().itervalues():
+            matchedPathwaysJSONList.append(matchedPathway.toBSON())
+
+        RESPONSE.setContent({
+            "success": True,
+            "jobID": jobID,
+            # "timestamp": newTimestamp,
+            "pathwaysInfo": matchedPathwaysJSONList
+        })
+
+    except Exception as ex:
+        handleException(RESPONSE, ex, __file__ , "pathwayAcquisitionMetagenes_PART2", userID=userID)
+    finally:
+        return RESPONSE
 
 def pathwayAcquisitionAdjustPvalues(request, response):
     try:
