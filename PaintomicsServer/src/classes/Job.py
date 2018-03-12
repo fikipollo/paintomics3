@@ -236,7 +236,9 @@ class Job(Model):
             valuesFileName = self.getInputDir() + valuesFileName
             relevantFileName = self.getInputDir() + relevantFileName
 
-        totalInputFeatures= totalMappedFeatures = foundFeatures = 0
+        totalInputFeatures  = set()
+        totalMappedFeatures = foundFeatures = 0
+        featureEnrichment   = inputOmic.get("featureEnrichment", False)
 
         #*************************************************************************
         # STEP 1. PARSE THE RELEVANT FEATURES FILE FOR THE CURRENT OMIC (IF UPLOADED)
@@ -298,13 +300,15 @@ class Job(Model):
 
                         allValues += omicValueAux.getValues()
 
-                totalInputFeatures = len(parsedFeatures)
+                        totalInputFeatures.add(omicValueAux.getOriginalName() if featureEnrichment else omicValueAux.getInputName())
+
+                totalInputFeatures = len(totalInputFeatures)
                 logging.info("PARSING USER USER GENE BASED FILE (" + omicName + ")... FINISHED. " + str(totalInputFeatures) + " FEATURES PROCESSED.")
 
                 #*************************************************************************
                 # STEP 3. MAP TH FEATURE NAMES TO KEGG IDs
                 #*************************************************************************
-                foundFeatures, parsedFeatures, notMatchedFeatures = mapFeatureNamesToKeggIDs(self.getJobID(), self.getOrganism(), self.getDatabases(), parsedFeatures)
+                foundFeatures, parsedFeatures, notMatchedFeatures = mapFeatureNamesToKeggIDs(self.getJobID(), self.getOrganism(), self.getDatabases(), parsedFeatures, featureEnrichment)
                 totalMappedFeatures = len(parsedFeatures)
                 matchedFeaturesFileContent =""
                 notMatchedFeaturesFileContent =""
