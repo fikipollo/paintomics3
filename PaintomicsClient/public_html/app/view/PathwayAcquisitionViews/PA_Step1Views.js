@@ -1513,7 +1513,7 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 				xtype: "box",
 				itemId: "toogleMapRegions",
 				hidden: !this.allowToogle,
-				html: '<div class="checkbox" style=" margin: 10px 50px; font-size: 16px; "><input type="checkbox" id="' + this.namePrefix + '_mapRegions"><label for="' + this.namePrefix + '_mapRegions">My miRNAs are already mapped to Gene IDs, skip this step.</label></div>'
+				html: '<div class="checkbox" style=" margin: 10px 50px; font-size: 16px; "><input type="checkbox" id="' + this.namePrefix + '_mapRegions"><label for="' + this.namePrefix + '_mapRegions">My features are already mapped to Gene IDs, skip this step.</label></div>'
 			},
 			{
 				xtype: "container",
@@ -1678,7 +1678,7 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 					fieldLabel: 'Regulators expression file <br>(ie: miRNA expression)',
 					namePrefix: this.namePrefix,
 					itemId: "mainFileSelector",
-					helpTip: "Upload the quantification file (miRNA Quantification) or choose it from your data folder. See above the accepted format for the file."
+					helpTip: "Upload the quantification file (i.e. miRNA Quantification) or choose it from your data folder. See above the accepted format for the file."
 				}, {
 					xtype: 'textfield',
 					fieldLabel: 'File Type',
@@ -1705,17 +1705,17 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 				/*TARGETS FILE*/
 				{
 					xtype: "myFilesSelectorButton",
-					fieldLabel: "miRNA targets<br>reference file",
+					fieldLabel: "Features targets<br>reference file",
 					namePrefix: this.namePrefix + '__annotations',
 					itemId: "mirnaTargetsFileSelector",
-					helpTip: "Upload the reference file that relates each miRNA with its potential targets. This information is usually extracted from popular databases such as miRbase. See above the accepted format for the file."
+					helpTip: "Upload the reference file that relates each feature (i.e. miRNA) with its potential targets. This information is usually extracted from popular databases such as miRbase for miRNAs. See above the accepted format for the file."
 				}, {
 					xtype: 'textfield',
 					fieldLabel: 'File Type',
 					name: this.namePrefix + '_annotations_file_type',
 					hidden: true,
 					itemId: "mirnaTargetsFileTypeSelector",
-					value: "miRNA targets reference"
+					value: "Features targets reference"
 				},
 				/*RNA-SEQ FILE*/
 				{
@@ -1731,7 +1731,7 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 					fieldLabel: "Gene expression"/*<br> (optional)"*/,
 					namePrefix: this.namePrefix + '_rnaseqaux',
 					itemId: "rnaseqauxFileSelector",
-					helpTip: "Upload the quantification file for the gene expression. This file is used to calculate the correlation of the expression of the genes and their associated miRNAs. Using this correlation we can filter and order the miRNAs that will be assigned to each gene. See above the accepted format for the file."
+					helpTip: "Upload the quantification file for the gene expression. This file is used to calculate the correlation of the expression of the genes and their associated features. Using this correlation we can filter and order the features that will be assigned to each gene. See above the accepted format for the file."
 				}, {
 					xtype: 'textfield',
 					fieldLabel: 'File Type',
@@ -1765,11 +1765,11 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 					store: Ext.create('Ext.data.ArrayStore', {
 						fields: ['label', 'value'],
 						data: [
-							["All miRNAs", "all"],
-							["Only relevant miRNAs (e.g. DE)", "DE"]
+							["All features", "all"],
+							["Only relevant features (e.g. DE)", "DE"]
 						]
 					}),
-					helpTip: "Choose between consider all miRNAs in the quantification file or just those miRNAs that are differentially expressed. Default: 'All miRNAs'"
+					helpTip: "Choose between consider all features in the quantification file or just those features that are differentially expressed. Default: 'All features'"
 				},
 				{
 					xtype: 'combo',
@@ -1791,7 +1791,7 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 						]
 					}),
 					helpTip:
-					"Usually a single miRNA has multiple potential target genes, but not all targets are being " +
+					"As en example in miRNA, usually a single miRNA has multiple potential target genes, but not all targets are being " +
 					"regulated by a certain miRNA at certain moment. Consequently, we need to discriminate the real targets for a miRNA."+
 					"If Gene expression (GE) data is available, then we calculate the correlation between each miRNA " +
 					"and each target gene and filter out all those miRNAs that has a lower correlation value than a given threadhold." +
@@ -1811,7 +1811,7 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 					store: Ext.create('Ext.data.ArrayStore', {
 						fields: ['label', 'value'],
 						data: [
-							["by max. fold-change of miRNA expression", "fc"],
+							["by max. fold-change of feature expression", "fc"],
 							["by absolute correlation with gene expression", "abs_correlation"],
 							["by positive correlation with gene expression", "positive_correlation"],
 							["by negative correlation with gene expression", "negative_correlation"]
@@ -1819,8 +1819,8 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 					}),
 					//TODO: THIS HELP TOOL IS NOT DISPLAYED, WHY??
 					helpTip:
-					"Determines how we select the potential miRNAs that are regulating a certain gene. " +
-					"Usually miRNA act as inhibitors of gene expression so we should expect an opposite behavior " +
+					"Determines how we select the potential features that are regulating a certain gene. " +
+					"For instance, usually miRNA act as inhibitors of gene expression so we should expect an opposite behavior " +
 					"to the regulated gene. A negative correlation will fit better to this expected profile. " +
 					"Default: If gene expression (GE) if avilable, select and order by 'negative correlation'. 'Max fold-change' in other case.",
 					listeners:{
@@ -1845,7 +1845,7 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 					step: 0.1,
 					allowDecimals: true,
 					allowBlank: false,
-					helpTip: "The value for the threadhold. All miRNAs with a lower value of correlation or FC will be filterd out from the results. Default: 0.5"
+					helpTip: "The value for the threadhold. All features with a lower value of correlation or FC will be filterd out from the results. Default: 0.5"
 				},
 				{
 					xtype: 'combo',
@@ -1888,7 +1888,7 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 			}
 			if (component.queryById("mirnaTargetsFileSelector") && component.queryById("mirnaTargetsFileSelector").getValue() === "") {
 				valid = false;
-				component.queryById("mirnaTargetsFileSelector").markInvalid("Please, provide a miRNA targets reference file.");
+				component.queryById("mirnaTargetsFileSelector").markInvalid("Please, provide a features targets reference file.");
 			}
 			//TODO: REMOVE
 			if (component.queryById("rnaseqauxFileSelector") && component.queryById("rnaseqauxFileSelector").getValue() === "") {
