@@ -301,7 +301,7 @@ function JobController() {
 						showSuccessMessage("Done", {logMessage: "Generating Metabolites list...DONE", showTimeout: 1, closeTimeout: 0.5});
 					};
 
-					me.checkJobStatus(response.jobID, jobView, callback, true);
+					me.checkJobStatus(response.jobID, jobView, callback, {}, true);
 				},
 				failure: extJSErrorHandler
 			});

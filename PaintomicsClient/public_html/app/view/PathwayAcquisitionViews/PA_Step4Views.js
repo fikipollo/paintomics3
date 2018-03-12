@@ -1294,18 +1294,21 @@ function PA_Step4KeggDiagramFeatureSetTooltip() {
 		/*         SAME POSITION                                */
 		/********************************************************/
 		var nOtherItems = this.model.getFeatures().length-1;
-		var domEl = me.getComponent();
+		var domEl = this.getComponent();
 		
 		if (! domEl.rendered) {
 			domEl.doLayout();
 		}
-		domEl = domEl.el.dom;
 		
-		if (nOtherItems > 0) {
-			$(domEl).find(".otherFeaturesMessage").html(nOtherItems + " more " + featureType + (nOtherItems > 1 ? "s" : "") + " at this position.");
-			$(domEl).find(".otherFeaturesLabel").show();
-		} else {
-			$(domEl).find(".otherFeaturesLabel").hide();
+		if (domEl.el) {
+			domEl = domEl.el.dom;
+
+			if (nOtherItems > 0) {
+				$(domEl).find(".otherFeaturesMessage").html(nOtherItems + " more " + featureType + (nOtherItems > 1 ? "s" : "") + " at this position.");
+				$(domEl).find(".otherFeaturesLabel").show();
+			} else {
+				$(domEl).find(".otherFeaturesLabel").hide();
+			}
 		}
 		/********************************************************/
 		/* STEP 3. UPDATE SUBCOMPONENTS                         */
@@ -1547,7 +1550,7 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 			'      <a href="javascript:void(0)" class="button twoOptionsButton" name="line-chart">Line chart</a>'+
 			"  </div>" +
 			"  <div class='step4-tooltip-plot-container selected' name='heatmap-chart'>" +
-			"    <div id='" + this.getComponent().getId() + "_heatmapcontainer' name='heatmap-chart' style='height:"+ divHeight+ "px;width: 230px;'></div>" +
+			"    <div id='" + this.getComponent().getId() + "_heatmapcontainer' name='heatmap-chart' style='height:"+ divHeight+ "px;width: 230px;overflow:hidden;overflow-y:auto;'></div>" +
 			"  </div>" +
 			"  <div class='step4-tooltip-plot-container' name='line-chart' style='display:none;'>" +
 			"    <div id='" + this.getComponent().getId() + "_plotcontainer' style='height:"+ divHeight+ "px;width: 230px;'></div>" +
@@ -1773,9 +1776,12 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 		for (var i = 0; i < maxX; i++) {
 			xAxisCat.push("Timepoint " + (i + 1));
 		}
+			
+		// Calculate the height based on number of Y elements
+		var chartHeight = Math.max(y * 40, 80);
 
 		var heatmap = new Highcharts.Chart({
-			chart: {type: 'heatmap',renderTo: divID},
+			chart: {type: 'heatmap',renderTo: divID, height: chartHeight},
 			title: null,
 			credits: {enabled: false},
 			legend: {enabled: false},
@@ -1797,10 +1803,14 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 				title: null,
 				labels: {
 					formatter: function() {
-						var title = this.value.split("#");
-						title[1] = (title.length > 1) ? title[1] : "No data";
-						return ((title[0].length > 10) ? title[0].substring(0, 10) + "..." : title[0]).replace("*", '<i class="relevantFeature"></i>') +
-						'</br><i class="tooltipInputName yAxisLabel">' + ((title[1].length > 10) ? title[1].substring(0, 10) + "..." : title[1]) + '</i>';
+						if (this.value.split) {
+							var title = this.value.split("#");
+							title[1] = (title.length > 1) ? title[1] : "No data";
+							return ((title[0].length > 10) ? title[0].substring(0, 10) + "..." : title[0]).replace("*", '<i class="relevantFeature"></i>') +
+						'</br><i class="tooltipInputName yAxisLabel">' + ((title[1].length > 10) ? title[1].substring(0, 10) + "..." : title[1]) + '</i>';					
+						}
+						
+						return null;
 					},
 					style: {fontSize: "9px"},
 					useHTML: true

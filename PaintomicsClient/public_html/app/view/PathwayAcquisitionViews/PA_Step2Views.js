@@ -164,7 +164,7 @@ function PA_Step2JobView() {
 				items: [{
 					html: '<h2 style="width: 100%;">Configure the number of clusters</h2>'
 				}, {
-					html: '<p>In the next step Paintomics will calculate the clusters present in the data provided for each omic. It will use the method k-means using a automatically calculated number of cluster or the ones you define here. At this time this choice can only be done here, but we are working to allow setting it later so if you need to change it please, resend your job using the start form.<br><br></p>'
+					html: '<p>In the next step Paintomics will calculate the clusters present in the data provided for each omic. It will use the method k-means using a automatically calculated number of cluster or the ones you define here. In the next step you will also be able to modify them by selecting individual omics in the network.<br><br></p>'
 				},{
 					xtype: 'form',
 					maxWidth: 600,
