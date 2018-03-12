@@ -568,10 +568,10 @@ def pathwayAcquisitionSaveImage(request, response):
         #****************************************************************
         # Step 0.CHECK IF VALID USER SESSION
         #****************************************************************
-        logging.info("STEP0 - CHECK IF VALID USER....")
-        userID  = request.cookies.get('userID')
-        sessionToken  = request.cookies.get('sessionToken')
-        UserSessionManager().isValidUser(userID, sessionToken)
+        # logging.info("STEP0 - CHECK IF VALID USER....")
+        # userID  = request.cookies.get('userID')
+        # sessionToken  = request.cookies.get('sessionToken')
+        # UserSessionManager().isValidUser(userID, sessionToken)
 
         jobID = request.form.get("jobID")
         jobInstance = JobInformationManager().loadJobInstance(jobID)
@@ -580,6 +580,7 @@ def pathwayAcquisitionSaveImage(request, response):
         fileName = "paintomics_" + request.form.get("fileName").replace(" ", "_") + "_" + jobID
         fileFormat = request.form.get("format")
 
+        userID = jobInstance.getUserID()
         userDirID = userID if userID is not None else "nologin"
         path = CLIENT_TMP_DIR + userDirID + jobInstance.getOutputDir().replace(CLIENT_TMP_DIR + userDirID, "")
 
