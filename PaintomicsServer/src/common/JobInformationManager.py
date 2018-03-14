@@ -297,6 +297,10 @@ class JobInformationManager:
         daoInstance.closeConnection()
         return success
 
+    def storeSharingOptions(self, jobInstance):
+        daoInstance = PathwayAcquisitionJobDAO()
+        daoInstance.update(jobInstance, {"fieldList": ["allowSharing", "readOnly"]})
+
     def touchAccessDate(self, jobID):
         jobInstanceDAO = PathwayAcquisitionJobDAO()
         jobInstanceDAO.touch(jobID)

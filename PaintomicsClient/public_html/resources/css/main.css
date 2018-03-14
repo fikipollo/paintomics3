@@ -1490,6 +1490,16 @@ div.omicSelection div.omicPosition + div {
 #msg-div .msg p, #msg-div .error_msg p, #msg-div .warning_msg p {
 	margin: 0;
 }
+#warningMessage {
+	background: #ffedc4;
+	border: 2px solid #fec643;
+	display: inline-block;
+	margin-left: 65px !important;
+	margin-top: -5px !important;
+	padding: 10px;
+	font-size: 16px;
+	font-weight: bold;
+}
 
 /***********************************************************/
 

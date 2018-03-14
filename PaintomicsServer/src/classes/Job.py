@@ -69,6 +69,10 @@ class Job(Model):
         #Indexes by gene ID
         self.inputGenesData = {}
 
+        # Sharing options
+        self.allowSharing = False
+        self.readOnly = False
+
     #******************************************************************************************************************
     # GETTERS AND SETTER
     #******************************************************************************************************************
@@ -160,6 +164,16 @@ class Job(Model):
             self.inputGenesData[inputGeneData.getID()] = inputGeneData
         else:
             currentData.addOmicValues(inputGeneData.getOmicsValues())
+
+    def setAllowSharing(self, allowSharing):
+        self.allowSharing = allowSharing
+    def getAllowSharing(self):
+        return self.allowSharing
+
+    def setReadOnly(self, readOnly):
+        self.readOnly = readOnly
+    def getReadOnly(self):
+        return self.readOnly
 
     #******************************************************************************************************************
     # OTHER FUNCTIONS

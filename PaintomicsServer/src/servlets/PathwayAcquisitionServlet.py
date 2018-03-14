@@ -216,7 +216,8 @@ def pathwayAcquisitionStep1_PART2(jobInstance, userID, exampleMode, RESPONSE):
         RESPONSE.setContent({
             "success": True,
             "organism" : jobInstance.getOrganism(),
-            "jobID": jobInstance.getJobID() ,
+            "jobID": jobInstance.getJobID(),
+            "userID": jobInstance.getUserID(),
             "matchedMetabolites": map(lambda foundFeature: foundFeature.toBSON(), matchedMetabolites),
             "geneBasedInputOmics": jobInstance.getGeneBasedInputOmics(),
             "compoundBasedInputOmics": jobInstance.getCompoundBasedInputOmics(),
@@ -509,7 +510,7 @@ def pathwayAcquisitionRecoverJob(request, response, QUEUE_INSTANCE):
             return response
 
         # Allow "no user" jobs to be viewed by anyone, logged or not
-        if(str(jobInstance.getUserID()) != 'None' and jobInstance.getUserID() != userID):
+        if(str(jobInstance.getUserID()) != 'None' and jobInstance.getUserID() != userID and not jobInstance.getAllowSharing()):
             logging.info("RECOVER_JOB - JOB " + jobID + " DOES NOT BELONG TO USER " + str(userID) + " JOB HAS USER " + str(jobInstance.getUserID()))
             response.setContent({"success": False, "errorMessage": "Invalid Job ID (" + jobID + ") for current user.<br>Please, check the Job ID and try again."})
             return response
@@ -533,6 +534,7 @@ def pathwayAcquisitionRecoverJob(request, response, QUEUE_INSTANCE):
             response.setContent({
                 "success": True,
                 "jobID": jobInstance.getJobID(),
+                "userID": jobInstance.getUserID(),
                 "pathwaysInfo" : matchedPathwaysJSONList,
                 "geneBasedInputOmics": jobInstance.getGeneBasedInputOmics(),
                 "compoundBasedInputOmics": jobInstance.getCompoundBasedInputOmics(),
@@ -543,7 +545,9 @@ def pathwayAcquisitionRecoverJob(request, response, QUEUE_INSTANCE):
                 "matchedMetabolites": matchedCompoundsJSONList,
                 "stepNumber": jobInstance.getLastStep(),
                 "name": jobInstance.getName(),
-                "timestamp": int(time())
+                "timestamp": int(time()),
+                "allowSharing": jobInstance.getAllowSharing(),
+                "readOnly": jobInstance.getReadOnly()
             })
 
     except Exception as ex:
@@ -634,6 +638,12 @@ def pathwayAcquisitionSaveVisualOptions(request, response):
         #****************************************************************
         visualOptions = request.get_json()
         jobID  = visualOptions.get("jobID")
+
+        jobInstance = JobInformationManager().loadJobInstance(jobID)
+
+        if jobInstance.getReadOnly() and str(jobInstance.getUserID()) != str(userID):
+            raise Exception("Invalid user for the job saving visual options")
+
         newTimestamp = int(time())
         visualOptions["timestamp"] = newTimestamp
 
@@ -648,6 +658,45 @@ def pathwayAcquisitionSaveVisualOptions(request, response):
 
     except Exception as ex:
         handleException(response, ex, __file__ , "pathwayAcquisitionSaveVisualOptions", userID=userID)
+    finally:
+        return response
+
+def pathwayAcquisitionSaveSharingOptions(request, response):
+    #VARIABLE DECLARATION
+    jobID  = ""
+    userID = ""
+
+    try :
+        #****************************************************************
+        # Step 0.CHECK IF VALID USER SESSION
+        #****************************************************************
+        logging.info("STEP0 - CHECK IF VALID USER....")
+        userID  = request.cookies.get('userID')
+        sessionToken  = request.cookies.get('sessionToken')
+        UserSessionManager().isValidUser(userID, sessionToken)
+
+        #****************************************************************
+        # Step 1.GET THE INSTANCE OF sharing options
+        #****************************************************************
+        jobID = request.form.get("jobID")
+        jobInstance = JobInformationManager().loadJobInstance(jobID)
+
+        if str(jobInstance.getUserID()) != str(userID):
+            raise Exception("Invalid user for this jobID")
+
+        #************************************************************************
+        # Step 3. Save the visual Options in the MongoDB
+        #************************************************************************
+        jobInstance.setAllowSharing(request.form.get("allowSharing", 'false') == 'true')
+        jobInstance.setReadOnly(request.form.get("readOnly", 'false') == 'true')
+
+        logging.info("STEP 3 - SAVING SHARING OPTIONS FOR JOB " + jobID + "..." )
+        JobInformationManager().storeSharingOptions(jobInstance)
+        logging.info("STEP 3 - SAVING SHARING OPTIONS FOR JOB " + jobID + "...DONE" )
+
+        response.setContent({"success": True})
+    except Exception as ex:
+        handleException(response, ex, __file__ , "pathwayAcquisitionSaveSharingOptions", userID=userID)
     finally:
         return response
 
@@ -676,6 +725,9 @@ def pathwayAcquisitionMetagenes_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID,
             # ****************************************************************
             savedJobID = REQUEST.form.get("jobID")
             savedJobInstance = JobInformationManager().loadJobInstance(savedJobID)
+
+            if savedJobInstance.getReadOnly() and str(savedJobInstance.getUserID()) != str(userID):
+                raise Exception("Invalid user for the job generating metagenes.")
 
             omicName = REQUEST.form.get("omic")
             clusterNumber = int(REQUEST.form.get("number"))

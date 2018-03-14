@@ -258,7 +258,8 @@ function JobController() {
 
 						var jobModel = jobView.getModel();
 						jobModel.setStepNumber(2);         //UPDATE THE STEP NUMBER
-						jobModel.setJobID(response.jobID); //UPDATE THE foundCompounds FIELD WITH RESPONSE DATA+
+						jobModel.setJobID(response.jobID); //UPDATE THE foundCompounds FIELD WITH RESPONSE DATA
+						jobModel.setUserID(response.userID);
 						jobModel.setOrganism(response.organism);  //UPDATE ORGANISM
 						jobModel.setDatabases(response.databases); //UPDATE DATABASES
 						jobModel.setName(response.name);
@@ -550,6 +551,7 @@ function JobController() {
 						//UPDATE THE STEP NUMBER
 						jobModel.setStepNumber(response.stepNumber);
 						//TODO: NO ES NECESARIO DEVOLVER ESTO!!! MUY GRANDE! MEJOR CALCULARLO EN EL SERVER
+						jobModel.setUserID(response.userID);
 						jobModel.setCompoundBasedInputOmics(response.compoundBasedInputOmics);
 						jobModel.setGeneBasedInputOmics(response.geneBasedInputOmics);
 						jobModel.setSummary(response.summary);
@@ -557,6 +559,8 @@ function JobController() {
 						jobModel.setDatabases(response.databases); //UPDATE DATABASES
 						jobModel.setName(response.name);
 						jobModel.setTimestamp(response.timestamp);
+						jobModel.setAllowSharing(response.allowSharing);
+						jobModel.setReadOnly(response.readOnly);
 
 						jobModel.setFoundCompounds([]);
 						var matchedMetabolites = response.matchedMetabolites;
@@ -915,6 +919,39 @@ function JobController() {
 		}
 
 		return jobView;
+	};
+	
+	/**
+	*
+	* @param {type} jobModel
+	* @returns {undefined}
+	*/
+	this.updateSharingOptions = function (jobModel, allowSharing, readOnly) {
+		var me = this;
+
+		$.ajax({
+			method: "POST",
+			url: SERVER_URL_PA_SAVE_SHARING_OPTIONS,
+			data: {
+				"jobID": jobModel.getJobID(),
+				"allowSharing": allowSharing,
+				"readOnly": readOnly
+			},
+			success: function (response) {
+				// Update only the timestamp value when the server has properly saved the options.
+				if (response.success) {
+					jobModel.setAllowSharing(allowSharing);
+					jobModel.setReadOnly(readOnly);
+					
+					me.updateStoredApplicationData("jobModel", jobModel);
+				
+					console.info(Date.logFormat() + "Sharing options saved succesfully.");
+				}
+			},
+			error: function (response) {
+				console.error(Date.logFormat() + "failed when saving sharing options.");
+			},
+		});
 	};
 
 	/**

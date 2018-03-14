@@ -115,14 +115,13 @@ class Application(object):
 
         @self.app.route(SERVER_SUBDOMAIN + '/get_cluster_image/<path:filename>')
         def get_cluster_image(filename):
-            UserSessionManager().isValidUser(request.cookies.get('userID'), request.cookies.get('sessionToken'))
+            jobID = filename.split('/')[0]
+            jobInstance = JobInformationManager().loadJobInstance(jobID)
 
             # Check if the file really exist, if not, then we are probably accessing a public job from a logged
             # account.
-            image_path = CLIENT_TMP_DIR + request.cookies.get('userID', 'nologin') + "/jobsData/"
-
-            if not os.path.isfile(os.path.join(image_path, filename)):
-                image_path = CLIENT_TMP_DIR + "nologin/jobsData/"
+            userDir = "nologin" if jobInstance.getUserID() is None else jobInstance.getUserID()
+            image_path = CLIENT_TMP_DIR + userDir + "/jobsData/"
 
             return send_from_directory(image_path, filename)
         ##*******************************************************************************************
@@ -319,7 +318,12 @@ class Application(object):
         @self.app.route(SERVER_SUBDOMAIN + '/pa_save_visual_options', methods=['OPTIONS', 'POST'])
         def saveVisualOptionsHandler():
             return pathwayAcquisitionSaveVisualOptions(request, Response()).getResponse()
-
+        #*******************************************************************************************
+        # SAVE SHARING OPTIONS HANDLER
+        #*******************************************************************************************
+        @self.app.route(SERVER_SUBDOMAIN + '/pa_save_sharing_options', methods=['OPTIONS', 'POST'])
+        def saveSharingOptionsHandler():
+            return pathwayAcquisitionSaveSharingOptions(request, Response()).getResponse()
         # *******************************************************************************************
         # RETRIEVE NEW P-VALUES HANDLER
         # *******************************************************************************************

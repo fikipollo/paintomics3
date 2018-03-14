@@ -26,6 +26,7 @@
 
 function JobInstance(jobID) {
 	this.jobID = jobID;
+	this.userID;
 	this.stepNumber = 1;
 	this.organism = null;
 	this.name = null;
@@ -44,6 +45,9 @@ function JobInstance(jobID) {
 
 	this.selectedPathway = null;
 	this.timestamp = null;
+	
+	this.readOnly = false;
+	this.allowSharing = false;
 
 	/*****************************
 	** GETTERS AND SETTERS
@@ -53,6 +57,12 @@ function JobInstance(jobID) {
 	};
 	this.getJobID = function () {
 		return this.jobID;
+	};
+	this.setUserID = function (userID) {
+		this.userID = userID;
+	};
+	this.getUserID = function () {
+		return this.userID;
 	};
 	this.setTimestamp = function(timestamp) {
 		this.timestamp = timestamp;
@@ -65,6 +75,18 @@ function JobInstance(jobID) {
 	};
 	this.getName = function () {
 		return this.name;
+	};
+	this.setReadOnly = function(readOnly) {
+		this.readOnly = readOnly;
+	};
+	this.getReadOnly = function() {
+		return this.readOnly;	
+	};
+	this.setAllowSharing = function(allowSharing) {
+		this.allowSharing = allowSharing;
+	};
+	this.getAllowSharing = function() {
+		return this.allowSharing;	
 	};
 	this.setStepNumber = function (stepNumber) {
 		this.stepNumber = stepNumber;
@@ -120,7 +142,11 @@ function JobInstance(jobID) {
 		this.databases = databases;
 	};
 	this.getClusterNumber = function() {
-		if (this.clusters === null) {
+		// Double check in case they are empty.
+		var me = this;
+		
+		if (this.clusters === null || me.getDatabases().every(function(db) {
+			return Object.keys(me.clusters[db]).every(function(x) { return !me.clusters[db][x].size; })})) {
 			this.clusters = {};
 			
 			// For each database initialize a new set containing all omic names

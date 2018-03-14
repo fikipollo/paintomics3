@@ -61,6 +61,7 @@ function PA_Step3JobView() {
 	this.significativePathways = 0;
 	this.significativePathwaysByDB = {};
 	this.isFiltered = {};
+	this.isOwner = false;
 
 	/*********************************************************************
 	* GETTERS AND SETTERS
@@ -80,7 +81,10 @@ function PA_Step3JobView() {
 		}
 		this.model = model;
 		this.model.addObserver(this);
-
+		
+		// Assign the 
+		this.isOwner = (String(Ext.util.Cookies.get("userID")) ==  String(this.model.getUserID()));
+		
 		/********************************************************/
 		/* STEP 2: PROCESS DATA AND GENERATE THE TABLES         */
 		/********************************************************/
@@ -277,6 +281,11 @@ function PA_Step3JobView() {
 	};
 	
 
+	
+	this.canEdit = function() {
+		return (this.isOwner || ! this.model.getReadOnly());
+	};
+	
 	this.getVisualOptions = function(db = null){
 		return (db == null) ? this.visualOptions : this.visualOptions[db];
 	};
@@ -501,6 +510,70 @@ function PA_Step3JobView() {
 		this.getController().step3OnFormSubmitHandler(this, pathwayID);
 		return this;
 	};
+	
+	this.shareHandler = function(){
+		var me = this;
+		var model = me.getModel();
+		var userID = Ext.util.Cookies.get("userID");
+		var isOwner = (userID !== undefined && String(model.getUserID()) == String(userID));
+		
+		var messageDialog = Ext.create('Ext.window.Window', {
+			title: "Sharing options",
+			height: 350, width: 600, modal: true, bodyPadding:10,
+			defaults: {
+				labelAlign: "right",
+				border: false
+			},
+			items: [
+				{
+					xtype:"box", html:
+					"<h2>Job sharing options</h2>"+
+					"<div style='margin-bottom:10px;'>By default all jobs created by an user account are private and the others publics.<br><br><b>Note: </b> keep in mind when sharing a job with other people that filtering and visual options are stored in the server side, so you might wanna restrict that option to avoid inconsistencies.</div>" +
+					"<div>The link to this job is: <a href='" + window.location.href + "' target='_blank'>" + window.location.href +"</a></div><br><br>"
+				},
+				(isOwner ?
+				 {
+					xtype: 'fieldcontainer',
+            		defaultType: 'checkboxfield',
+            		items: [
+						{
+							boxLabel  : 'Allow link sharing',
+							name      : 'linksharing',
+							checked   : model.getAllowSharing(),
+							id        : 'linksharing'
+                		},
+						{
+							boxLabel  : 'Read-only (for others)',
+							name      : 'readonly',
+							checked   : model.getReadOnly(),
+							id        : 'readonly'
+                		},
+						
+					]
+				 }
+				 :
+				 {xtype: "box", html: "<br><div style='text-align: center;'><b>You are not the owner or the job does not have an owner account so sharing options cannot be modified.</b></div>"}
+				)
+			],
+			buttons: [
+				(isOwner ?
+				{
+					text: 'Save options',
+					handler : function() {
+						var allowSharing = messageDialog.queryById('linksharing').getValue();
+						var readOnly = messageDialog.queryById('readonly').getValue();
+						
+						messageDialog.close();
+						me.getController().updateSharingOptions(model, allowSharing, readOnly);
+					}
+				} : {}),
+				{text: 'Close', handler : function() {messageDialog.close();}}
+			]
+		});
+
+		messageDialog.center();
+		messageDialog.show();
+	};
 
 	/**
 	* This function generates the component (EXTJS) using the content of the
@@ -534,7 +607,9 @@ function PA_Step3JobView() {
 					xtype: "box",cls: "toolbar secondTopToolbar", html:
 					'<a href="javascript:void(0)" class="button btn-danger btn-right" id="resetButton"><i class="fa fa-refresh"></i> Reset view</a>' +
 					//'<a href="javascript:void(0)" class="button btn-default btn-right backButton"><i class="fa fa-arrow-left"></i> Go back</a>'
-					'<a href="javascript:void(0)" class="button btn-default btn-right mappingButton"><i class="fa fa-database"></i> Hide mapping info</a>'
+					'<a href="javascript:void(0)" class="button btn-default btn-right mappingButton"><i class="fa fa-database"></i> Hide mapping info</a>' +
+					'<a href="javascript:void(0)" class="button btn-default btn-right" id="sharingButton"><i class="fa fa-share-alt"></i> Sharing options</a>' +
+					'<div id="warningMessage" style="display: none;"></div>'
 				},{ //THE SUMMARY PANEL
 					xtype: 'container', itemId: "pathwaysSummaryPanel",
 					layout: 'column', style: "max-width:1900px; margin: 5px 10px; margin-top:50px;", items: [
@@ -621,6 +696,14 @@ function PA_Step3JobView() {
 					$("#resetButton").click(function() {
 						me.resetViewHandler();
 					});
+					$("#sharingButton").click(function() {
+						me.shareHandler();
+					});
+					
+					// Show a warning if it is read only
+					if (! me.canEdit()) {
+						$('#warningMessage').text("The current job is read-only, changes will not be saved in the server.").show();		
+					}
 					//INITIALIZE THE COUNTERS IN SUMMARY PANEL
 					new Odometer({el: $("#foundPathwaysTag")[0],value: 0});
 					new Odometer({el: $("#significantPathwaysTag")[0],value: 0});
@@ -1498,11 +1581,9 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 				var clusterNumber = Object.keys(CLUSTERS).length;
 				var totalClusters = TOTAL_CLUSTERS[visualOptions.colorBy].size;
 				
-				// Update the cluster number slider value
-				$("#sliderClusterNumberContainer_" + me.dbid).show();
 				$("#sliderClusterNumberShow_" + me.dbid).html(totalClusters);
 				$("#sliderClusterNumber_" + me.dbid).slider("option", "value", totalClusters);
-				
+
 				$("#networkClustersContainer_" + me.dbid + " h5").text(clusterNumber + " Clusters found from " + totalClusters + " in total.");
 				//Generate the images and the containers
 				var img_path;
@@ -1510,7 +1591,14 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					img_path = SERVER_URL_GET_CLUSTER_IMAGE + "/" + this.getModel().getJobID() + "/output/" + visualOptions.colorBy + "_cluster_" + cluster + ".png";
 					htmlCode+= '<span class="networkClusterImage" name="'+ cluster + '"><i class="fa fa-eye-slash fa-2x"></i><img src="' + img_path +'"><p><i class="fa fa-square" style="color:' + CLUSTERS[cluster] +'"></i> Cluster ' + cluster + '</p></span>';
 				}
-				$("#networkClustersContainer_" + me.dbid + " div").html(htmlCode);
+				$("#networkClustersContainer_" + me.dbid + " div").html(htmlCode);			
+				
+				// Update the cluster number slider value
+				if (me.getParent().canEdit()) {
+					$("#sliderClusterNumberContainer_" + me.dbid).show();
+				} else {
+					$("#sliderClusterNumberContainer_" + me.dbid).hide();
+				}
 
 				//Initialize the events when clicking a cluster images (filter)
 				$("#networkClustersContainer_" + me.dbid + " .networkClusterImage").click(function(){
