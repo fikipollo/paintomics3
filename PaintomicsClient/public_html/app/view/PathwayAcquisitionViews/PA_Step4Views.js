@@ -1103,7 +1103,7 @@ function PA_Step4KeggDiagramFeatureSetView() {
 	* OTHER FUNCTIONS
 	***********************************************************************/
 	//TODO: DOCUMENTAR
-	this.showTooltip = function(dataDistributionSummaries, visualOptions) {
+	this.showTooltip = function(dataDistributionSummaries, visualOptions, pinned) {
 		/* Create only when there is no instance */
 		if (this.tooltipComponent == null) {
 			this.tooltipComponent = new PA_Step4KeggDiagramFeatureSetTooltip();
@@ -1111,7 +1111,7 @@ function PA_Step4KeggDiagramFeatureSetView() {
 			this.tooltipComponent.setParent(this);
 		}
 		
-		this.tooltipComponent.show(this.component.id, dataDistributionSummaries, visualOptions);
+		this.tooltipComponent.show(this.component.id, dataDistributionSummaries, visualOptions, pinned);
 	};
 	
 	this.hideTooltip = function(force=false) {
@@ -1133,16 +1133,21 @@ function PA_Step4KeggDiagramFeatureSetView() {
 
 		var featureShape = canvas.image(featureAux.src, featureAux.width, featureAux.height).move(featureAux.x, featureAux.y).attr("id", featureAux.id);
 
-		var displayTooltip = function() {
+		var displayTooltip = function(event, pinned=false) {
 			/* If in the process of closing the tooltip, remove the timer */
 			if (me.hideTimer) {
 				clearTimeout(me.hideTimer);
 			}
 			
+			// Remove the timer if we are trying to pin (click instead of mouseenter)
+			if (me.timer && pinned) {
+				clearTimeout(me.timer);
+			} 
+	
 			me.timer = setTimeout(function() {
 				me.timer = null;
-				me.showTooltip(dataDistributionSummaries, visualOptions);
-			}, 500)
+				me.showTooltip(dataDistributionSummaries, visualOptions, pinned);
+			}, pinned ? 0 : 500)			
 		};
 		
 		var removeTooltip = function() {
@@ -1154,7 +1159,7 @@ function PA_Step4KeggDiagramFeatureSetView() {
 			}, 500);	
 		};
 
-		featureShape.on("mouseover", displayTooltip).on("click", displayTooltip).on("mouseleave", removeTooltip);
+		featureShape.on("mouseover", displayTooltip).on("click", function(event) { console.log("click");displayTooltip(event, true); }).on("mouseleave", removeTooltip);
 
 		return featureShape;
 	};
@@ -1217,11 +1222,15 @@ function PA_Step4KeggDiagramFeatureSetTooltip() {
 	* OTHER FUNCTIONS
 	***********************************************************************/
 	//TODO: DOCUMENTAR
-	this.show = function(targetID) {
+	this.show = function(targetID, dataDistributionSummaries=null, visualOptions=null, pinned=false) {
 		if ( ! this.isPinned) {
 			this.getComponent().showBy(targetID);
 			this.targetID = targetID;
 			this.updateObserver();	
+			
+			if (pinned) {
+				this.pin();
+			}
 		}
 	};
 
