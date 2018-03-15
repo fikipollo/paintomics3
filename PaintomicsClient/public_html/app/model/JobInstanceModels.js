@@ -129,7 +129,7 @@ function JobInstance(jobID) {
         return omicNames;
     };
 	this.getDatabases = function() {
-		if (this.databases === null || this.databases.length < 1) {
+		if (! this.databases || ! this.databases.length) {
 			// Check databases present in pathways
 			var pathways = this.getPathways();
 

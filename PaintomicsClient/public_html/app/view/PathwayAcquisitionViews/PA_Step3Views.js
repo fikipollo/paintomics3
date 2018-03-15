@@ -3166,6 +3166,23 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 				var defaultCombinedPvaluesMethod = me.getParent().visualOptions.selectedCombinedMethod;
 
 				var significativePathways = 0;
+				
+				var getIdentifiersFromMatched = function(matchedIds) {
+					var allIdentifiers = new Set([]);
+					
+					matchedIds.map(function(matchID) {
+						if (me.model.omicsValues[matchID]) {
+							allIdentifiers.add(me.model.omicsValues[matchID].name);
+
+							me.model.omicsValues[matchID].omicsValues.map(function(omicValue) {
+								allIdentifiers.add(omicValue.inputName);
+								allIdentifiers.add(omicValue.originalName);
+							});
+						}
+					});
+					
+					return(Array.from(allIdentifiers).join('|'));
+				};
 
 				for (var i in pathways) {
 					pathwayModel = pathways[i];
@@ -3174,6 +3191,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					if (pathwayModel.getID() === this.getModel().getOrganism() + "01100") {
 						continue;
 					}
+					
 					pathwayData = {
 						// selected: pathwayModel.isSelected(),
 						pathwayID: pathwayModel.getID(),
@@ -3184,7 +3202,8 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 						mainCategory: pathwayModel.getClassification().split(";")[0],
 						secCategory: pathwayModel.getClassification().split(";")[1],
 						visible: pathwayModel.isVisible(),
-						source: pathwayModel.getSource()
+						source: pathwayModel.getSource(),
+						identifiers: getIdentifiersFromMatched(pathwayModel.getMatchedGenes().concat(pathwayModel.getMatchedCompounds()))
 					};
 
 					significanceValues = pathwayModel.getSignificanceValues();
@@ -3319,7 +3338,8 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					mainCategory: {name: "mainCategory",defaultValue: ''},
 					secCategory: {name: "secCategory",defaultValue: ''},
 					visible: {name: "visible", defaultValue: true},
-					source: {name: "source", defaultValue: "KEGG"}
+					source: {name: "source", defaultValue: "KEGG"},
+					identifiers: {name: "identifiers", defaultValue: ''}
 				};
 
 				//CALL THE PREVIOUS FUNCTION ADDING THE INFORMATION FOR GENE BASED OMIC AND COMPOUND BASED OMICS

@@ -213,7 +213,13 @@ Ext.define('Ext.grid.LiveSearchGridPanel', {
                 margin: '0 0 0 4px',
                 handler: me.caseSensitiveToggle,
                 scope: me
-            }, 'Case sensitive',
+            }, 'Case sensitive', {
+                xtype: 'checkbox',
+                hideLabel: true,
+                margin: '0 0 0 4px',
+                handler: me.searchByIDToggle,
+                scope: me
+            }, 'Search by gene/compound',
             /* Splice position: -3 */
             '->',
             ((me.download !== false) ? '<a class="downloadXLS" href="javascript:void(0)"><i class="fa fa-file-excel-o"></i> Download as XLS</a>' : ""),
@@ -384,6 +390,14 @@ Ext.define('Ext.grid.LiveSearchGridPanel', {
         }
         me.getSelectionModel().deselectAll();
         me.textField.focus();
+    },
+    /**
+     * Switch to case sensitive mode.
+     * @private
+     */
+    searchByIDToggle: function (checkbox, checked) {
+        this.searchFor = checked ? 'identifiers' : 'title';
+        this.onTextFieldChange();
     },
     /**
      * Switch to case sensitive mode.

@@ -600,6 +600,14 @@ function JobController() {
 							jobModel.addPathway(pathway);
 						}
 						jobModel.isRecoveredJob = true;
+						
+						var omicsValues = response.omicsValues;
+						var feature = null;
+						for (var i in omicsValues) {
+							feature = new Feature(i);
+							feature.loadFromJSON(omicsValues[i]);
+							jobModel.addOmicValue(feature);
+						}
 
 						me.cleanStoredApplicationData();
 						me.updateStoredApplicationData("jobModel", jobModel);
