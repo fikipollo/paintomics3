@@ -216,7 +216,7 @@ function PA_Step4JobView() {
 			this.currentView.hideTooltips();
 		}
 		
-		this.controller.showJobInstance(this.getModel(), {doUpdate: false});
+		this.controller.showJobInstance(this.getModel(), {doUpdate: false, callback: function() {initializeTooltips(".helpTip");}});
 		return this;
 	};
 
@@ -878,6 +878,7 @@ function PA_Step4KeggDiagramView() {
 				//ADD THE ENTRY TO THE SEARCH TABLE (INPUT NAME -> featureSetElem)
 				for (var j in omicsValues[featuresIDs[i]].omicsValues) {
 					searchFeatureIndex[omicsValues[featuresIDs[i]].omicsValues[j].inputName] = featureSetElem;
+					searchFeatureIndex[omicsValues[featuresIDs[i]].omicsValues[j].originalName] = featureSetElem;
 				}
 
 				pos = data[k].getX() + "#" + data[k].getY();
@@ -1509,7 +1510,7 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 	* @param {type} hideLinks
 	* @returns {undefined}
 	*/
-	this.updateObserver = function(hideLinks) {
+	this.updateObserver = function(hideLinks=false, callback=null) {
 		var me = this;
 
 		var dataDistributionSummaries = this.getParent("PA_Step4PathwayView").getDataDistributionSummaries();
@@ -1523,7 +1524,8 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 
 		//Do not render if the component was never expanded (lazy rendering)
 		if($(componentID).hasClass("neverExpanded")){
-			if(me.collapsible){
+			// If callback was provided a rendering is required.
+			if(me.collapsible && ! callback){
 				return;
 			}
 			$(componentID).find(".geneInfoContainer").show(); //if it is not collapsible but is first call, expand
@@ -1581,7 +1583,7 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 		if (hideLinks === true) {
 			$(componentID + " .extraInfoPanel").hide();
 		}else{
-			this.generateExtraInfoPanelContent(componentID + " .extraInfoPanel", specie, componentNames, this.getModel().getFeature().getID(), featureType);
+			this.generateExtraInfoPanelContent(componentID + " .extraInfoPanel", specie, componentNames, this.getModel().getFeature().getID(), featureType, callback);
 		}
 	};
 	
@@ -1596,7 +1598,7 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 	};
 
 	//TODO: DOCUMENTAR
-	this.generateExtraInfoPanelContent = function(target, specie, componentNames, featureID, featureType) {
+	this.generateExtraInfoPanelContent = function(target, specie, componentNames, featureID, featureType, callback=null) {
 		var me = this;
 		var renderFunction = function(data){
 			var htmlCode = "";
@@ -1670,24 +1672,21 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 						}
 					}
 				}
-				//For each found feature, show a popup indicating the location of the feature
-				$(matches).data('powertip', me.model.feature.name.split(",")[0]);
-				$(matches).powerTip({
-					smartPlacement: true,
-					placement: 's',
-				});
-				//For the tooltips sequencially
-				var showAllPositions = function(){
-					if(matches.length > 0){
-						var elem = $(matches.shift());
-						$.powerTip.show(elem);
-						$.powerTip.destroy(elem);
-						setTimeout(showAllPositions, 1700);
-					}else{
-						$.powerTip.hide();
+				//For each found feature, show a popup indicating the location of the feature				
+				$(matches).data('tooltipstercontent', me.model.feature.name.split(",")[0]);
+				$(matches).tooltipster({
+					side: 'bottom',
+					trigger: 'custom',
+					functionInit: function(instance, helper){
+						var dataContent = $(helper.origin).data('tooltipstercontent');
+						instance.content(dataContent);
 					}
-				};
-				showAllPositions();
+				});
+				
+				matches.map(x => $(x).tooltipster('open'));
+				setTimeout(function() {
+					matches.map(x => $(x).tooltipster('close'));
+				}, 1700);
 			});
 
 			$(target).find(".moreDetailsButton").click( function(){
@@ -1695,6 +1694,11 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 			});
 			
 			me.parent.getComponent().doLayout();
+			
+			// Call callback when completing all rendering.
+			if (callback) {
+				callback();
+			}
 		};
 		
 		this.getParent("PA_Step4JobView").downloadSpeciesInfo(renderFunction);
@@ -2593,9 +2597,14 @@ function PA_Step4FindFeaturesView() {
 		this.searchResultsView.setVisible(true);
 
 		for(i in this.items){
-			this.items[i].updateObserver();
+			this.items[i].updateObserver(false, function() {
+				$('#resultsContainer .findInMapButton').click();
+			});
 		}
-
+		
+		// Raise click event in each result
+		//$("#resultsContainer .geneInfoTitle").click();
+		
 	};
 
 	/**

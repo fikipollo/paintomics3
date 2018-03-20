@@ -925,6 +925,10 @@ function JobController() {
 				},
 			});
 		}
+		
+		if (options.callback) {
+			options.callback();
+		}
 
 		return jobView;
 	};

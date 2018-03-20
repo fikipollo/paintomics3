@@ -371,8 +371,8 @@ function showErrorMessage(title, data) {
 }
 
 function initializeTooltips(query, options) {
-	options = (options || {placement: 's', mouseOnToPopup: true});
-	$(query).powerTip(options);
+	options = (options || {side: 'bottom', interactive: true, maxWidth: 350});
+	$(query).tooltipster(options);
 }
 
 ignoreOtherErrors = false;
