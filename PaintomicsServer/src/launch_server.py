@@ -24,4 +24,5 @@ from paintomicsserver import Application
 application = Application()
 app = application.app
 
-application.launch()
+if __name__ == "__main__":
+    application.launch()
