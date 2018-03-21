@@ -375,6 +375,15 @@ function initializeTooltips(query, options) {
 	$(query).tooltipster(options);
 }
 
+function deleteCredentials() {
+	ignoreOtherErrors = false;
+	Ext.util.Cookies.clear("sessionToken", location.pathname);
+	Ext.util.Cookies.clear("userID", location.pathname);
+	Ext.util.Cookies.clear("userName", location.pathname);
+	Ext.util.Cookies.clear("nologin", location.pathname);
+	setTimeout(function(){location.reload(); }, 2000);
+}
+
 ignoreOtherErrors = false;
 function ajaxErrorHandler(responseObj) {
 	if (debugging === true)
@@ -398,14 +407,7 @@ function ajaxErrorHandler(responseObj) {
 	if(err.message && err.message.indexOf("User not valid") !== -1){
 		showErrorMessage("Invalid session", {
 			message: "<b>Your session is not valid.</b> Please sign-in again to continue.",
-			callback: function () {
-				ignoreOtherErrors = false;
-					Ext.util.Cookies.clear("sessionToken", location.pathname);
-					Ext.util.Cookies.clear("userID", location.pathname);
-					Ext.util.Cookies.clear("userName", location.pathname);
-					Ext.util.Cookies.clear("nologin", location.pathname);
-					setTimeout(function(){location.reload(); }, 2000);
-			},
+			callback: deleteCredentials,
 			showButton: false,
 			showReportButton: false
 		});
@@ -428,6 +430,16 @@ function extJSErrorHandler(form, responseObj) {
 		err = JSON.parse(responseObj.response.responseText);
 	} catch (error) {
 		err = {message: "Unable to parse the error message."};
+	}
+	
+	if(err.message && err.message.indexOf("User not valid") !== -1){
+		showErrorMessage("Invalid session", {
+			message: "<b>Your session is not valid.</b> Please sign-in again to continue.",
+			callback: deleteCredentials,
+			showButton: false,
+			showReportButton: false
+		});
+		return;
 	}
 
 	showErrorMessage("Oops..Internal error!", {message: err.message + "</br>Please try again later.</br>If the error persists, please contact your web <a href='mailto:paintomics@cipf.es' target='_blank'> administrator</a>.", showButton: true});
