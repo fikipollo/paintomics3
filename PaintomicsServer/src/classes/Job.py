@@ -143,6 +143,22 @@ class Job(Model):
         self.geneBasedInputOmics.append(geneBasedInputOmic)
 
 
+    def getValueIdTable(self):
+        # {ID: values.toBSON() }
+        valueTable = {}
+
+        for ID, feature in dict(self.getInputGenesData(), **self.getInputCompoundsData()).iteritems():
+            valueTable[ID] = set([feature.getName()])
+
+            for omicValue in feature.getOmicsValues():
+                valueTable[ID].add(omicValue.getOriginalName())
+                valueTable[ID].add(omicValue.getInputName())
+
+            valueTable[ID] = '|'.join(valueTable[ID])
+
+        return valueTable
+
+
     def setInputCompoundsData(self, inputCompoundsData):
         self.inputCompoundsData = inputCompoundsData
     def getInputCompoundsData(self):

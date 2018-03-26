@@ -698,6 +698,23 @@ class PathwayAcquisitionJob(Job):
             #          pathway and add them to the list of features that will be send
             #          to the client side with the expression values
             #************************************************************************
+            # TODO: MEJORABLE, MULTHREADING U OTRAS OPCIONES
+            auxDict = self.getInputGenesData()
+
+            for geneID in pathwayInstance.getMatchedGenes():
+                if (toBSON == True):
+                    omicsValuesSubset[geneID] = auxDict.get(geneID).toBSON()
+                else:
+                    omicsValuesSubset[geneID] = auxDict.get(geneID)
+
+            auxDict = self.getInputCompoundsData()
+
+            for compoundID in pathwayInstance.getMatchedCompounds():
+                if (toBSON == True):
+                    omicsValuesSubset[compoundID] = auxDict.get(compoundID).toBSON()
+                else:
+                    omicsValuesSubset[compoundID] = auxDict.get(compoundID)
+
             if(toBSON == True):
                 bsonAux = pathwayInstance.getGraphicalOptions().toBSON()
                 bsonAux["pathwayID"] = pathwayID
@@ -705,7 +722,7 @@ class PathwayAcquisitionJob(Job):
             #Add the pathway to the list
             selectedPathwayInstances.append(pathwayInstance)
 
-        return [selectedPathwayInstances, graphicalOptionsInstancesBSON]
+        return [selectedPathwayInstances, graphicalOptionsInstancesBSON, omicsValuesSubset]
 
 
     #GENERATE METAGENES LIST FUNCTIONS -----------------------------------------------------------------------------------------

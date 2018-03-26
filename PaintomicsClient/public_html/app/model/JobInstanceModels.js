@@ -41,6 +41,7 @@ function JobInstance(jobID) {
 	this.compoundBasedInputOmics = null;
 
 	this.omicsValues = null;
+	this.omicsValuesID = null;
 	this.foundCompounds = [];
 
 	this.selectedPathway = null;
@@ -247,6 +248,12 @@ function JobInstance(jobID) {
 			this.omicsValues = {};
 		}
 		return this.omicsValues;
+	};
+	this.setOmicsValuesID = function (omicsValuesID) {
+		this.omicsValuesID = omicsValuesID;
+	};
+	this.getOmicsValuesID = function () {
+		return this.omicsValuesID;
 	};
 	this.addOmicValue = function (omicsValue) {
 		this.getOmicsValues()[omicsValue.getID()] = omicsValue;

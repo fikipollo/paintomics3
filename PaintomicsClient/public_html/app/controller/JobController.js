@@ -383,6 +383,10 @@ function JobController() {
 							pathway.loadFromJSON(pathways[i]);
 							jobModel.addPathway(pathway);
 						}
+						
+						if (response.omicsValuesID) {
+							jobModel.setOmicsValuesID(response.omicsValuesID);
+						}
 
 						me.updateStoredApplicationData("jobModel", jobModel);
 						
@@ -601,12 +605,8 @@ function JobController() {
 						}
 						jobModel.isRecoveredJob = true;
 						
-						var omicsValues = response.omicsValues;
-						var feature = null;
-						for (var i in omicsValues) {
-							feature = new Feature(i);
-							feature.loadFromJSON(omicsValues[i]);
-							jobModel.addOmicValue(feature);
+						if (response.omicsValuesID) {
+							jobModel.setOmicsValuesID(response.omicsValuesID);
 						}
 
 						me.cleanStoredApplicationData();

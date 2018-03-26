@@ -394,6 +394,7 @@ def pathwayAcquisitionStep2_PART2(jobID, userID, selectedCompounds, clusterNumbe
             "geneBasedInputOmics":jobInstance.getGeneBasedInputOmics(),
             "compoundBasedInputOmics": jobInstance.getCompoundBasedInputOmics(),
             "databases": jobInstance.getDatabases(),
+            "omicsValuesID": jobInstance.getValueIdTable(),
             "timestamp": int(time())
         })
 
@@ -450,7 +451,7 @@ def pathwayAcquisitionStep3(request, response):
         logging.info("STEP3 - GENERATING PATHWAYS INFORMATION...")
         selectedPathways= formFields.getlist("selectedPathways")
         #TODO: SOLO GENERAR INFO PARA LAS QUE NO LA TENGAN YA GUARDADA EN LA BBDD
-        [selectedPathwayInstances, graphicalOptionsInstancesBSON] = jobInstance.generateSelectedPathwaysInformation(selectedPathways, visibleOmics, True)
+        [selectedPathwayInstances, graphicalOptionsInstancesBSON, omicsValuesSubset] = jobInstance.generateSelectedPathwaysInformation(selectedPathways, visibleOmics, True)
 
         logging.info("STEP3 - GENERATING PATHWAYS INFORMATION...DONE")
 
@@ -465,6 +466,7 @@ def pathwayAcquisitionStep3(request, response):
             "success": True,
             "jobID": jobInstance.getJobID(),
             "graphicalOptionsInstances" : graphicalOptionsInstancesBSON,
+            "omicsValues": omicsValuesSubset,
             "organism" : jobInstance.getOrganism()
         })
 
@@ -531,8 +533,6 @@ def pathwayAcquisitionRecoverJob(request, response, QUEUE_INSTANCE):
             logging.info("RECOVER_JOB - JOB " + jobID + " DOES NOT CONTAINS PATHWAYS.")
             response.setContent( {"success": False, "errorMessage":"Job " + jobID + " does not contains information about pathways. Please, run it again."})
         else:
-            # Retrieve all omicValues in genes & compounds
-            omicsValues = {ID: values.toBSON() for ID, values in dict(jobInstance.getInputGenesData(), **jobInstance.getInputCompoundsData()).iteritems()}
 
             response.setContent({
                 "success": True,
@@ -551,7 +551,7 @@ def pathwayAcquisitionRecoverJob(request, response, QUEUE_INSTANCE):
                 "timestamp": int(time()),
                 "allowSharing": jobInstance.getAllowSharing(),
                 "readOnly": jobInstance.getReadOnly(),
-                "omicsValues": omicsValues
+                "omicsValuesID": jobInstance.getValueIdTable()
             })
 
     except Exception as ex:
