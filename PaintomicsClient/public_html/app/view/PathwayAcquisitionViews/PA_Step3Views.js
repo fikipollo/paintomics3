@@ -1307,8 +1307,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					}
 
 					// Assign "color" attribute for svg renderer
-					// TODO: this will only color the first cluster
-					elem.data.color = elem.data.colors[0];
+					elem.data.color = elem.data.colors;
 
 					/*********************************************************/
 					/* STEP 1.B.4 ADD GLYP INDICATING THE MAIN CLASSIFICATION*/
@@ -3166,12 +3165,22 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 				var defaultCombinedPvaluesMethod = me.getParent().visualOptions.selectedCombinedMethod;
 
 				var significativePathways = 0;
-				
+				/*
+					Currently browsers have a limit on the amount of space available for
+					sessionStorage. In jobs with multiple omics the "omicsValue" property can
+					be large enough to produce a JSON string too big to be saved.
+					
+					As an alternative be keep a list of identifiers already parsed.
+								*/
 				var getIdentifiersFromMatched = function(matchedIds) {
+					var parsedIDs = me.model.getOmicsValuesID();
 					var allIdentifiers = new Set([]);
 					
 					matchedIds.map(function(matchID) {
-						if (me.model.omicsValues[matchID]) {
+						if (parsedIDs[matchID]) {
+							allIdentifiers.add(parsedIDs[matchID]);
+						}
+						else if (me.model.omicsValues[matchID]) {
 							allIdentifiers.add(me.model.omicsValues[matchID].name);
 
 							me.model.omicsValues[matchID].omicsValues.map(function(omicValue) {

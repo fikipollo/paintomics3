@@ -1482,6 +1482,7 @@
         color,
         style,
         styleText = '',
+		gradient,
         f,
         i,
         l;
@@ -1496,20 +1497,65 @@
     var nodes = svg.querySelectorAll('[id="' + prefix + '-group-nodes"] > [class="' + prefix + '-node"]');
 
     for (i = 0, l = nodes.length, f = true; i < l; i++) {
-      color = nodes[i].getAttribute('fill');
+      color = [].concat(nodes[i].getAttribute('fill').split(","));
 
       if (!params.data)
         nodes[i].removeAttribute('data-node-id');
 
       if (params.classes) {
+		// Create gradients when there are many colors
+		if (color.length > 1) {
+			var color_id = color.join('_').replace(/#/g, '');
+			
+			// If not present, create the proper linear gradient
+			if (!(color_id in nodeColorIndex)) {
+				gradient = document.createElementNS(XMLNS, 'linearGradient');
+				gradient.setAttribute('x1', 0);
+				gradient.setAttribute('x2', 0);
+				gradient.setAttribute('y1', 0);
+				gradient.setAttribute('y2', 1);
+				gradient.setAttribute('id', color_id);
+				
+				var increment = Math.ceil(100/color.length);
+				
+				for (var k = 0; k < color.length; k++) {
+					var stopNodeStart = document.createElementNS(XMLNS, 'stop'),
+						stopNodeEnd = document.createElementNS(XMLNS, 'stop');
+					
+					// Set the start node
+					stopNodeStart.setAttribute('offset', (k * increment) + '%');
+					stopNodeStart.setAttribute('stop-opacity', 1);
+					stopNodeStart.setAttribute('stop-color', color[k]);
+					
+					// Set the start node
+					stopNodeEnd.setAttribute('offset', Math.min(100, (k + 1) * increment) + '%');
+					stopNodeEnd.setAttribute('stop-opacity', 1);
+					stopNodeEnd.setAttribute('stop-color', color[k]);
+					
+					gradient.appendChild(stopNodeStart);
+					gradient.appendChild(stopNodeEnd);
+				}
+				
+				svg.insertBefore(gradient, svg.firstChild);
+				
+				nodeColorIndex[color_id] = (f ? prefix + '-node' : 'c-' + (count++));
+				styleText += '.' + nodeColorIndex[color_id] + '{fill: url(#' + color_id + ')}';
+			}
+			
+			color = color_id;
+		} else {
+			// Extract only element of array
+			color = color[0];
+			
+			if (!(color in nodeColorIndex)) {
+			  nodeColorIndex[color] = (f ? prefix + '-node' : 'c-' + (count++));
+			  styleText += '.' + nodeColorIndex[color] + '{fill: ' + color + '}';
+			}
+		}
 
-        if (!(color in nodeColorIndex)) {
-          nodeColorIndex[color] = (f ? prefix + '-node' : 'c-' + (count++));
-          styleText += '.' + nodeColorIndex[color] + '{fill: ' + color + '}';
-        }
-
-        if (nodeColorIndex[color] !== prefix + '-node')
-          nodes[i].setAttribute('class', nodes[i].getAttribute('class') + ' ' + nodeColorIndex[color]);
+		if (nodeColorIndex[color] !== prefix + '-node')
+		  nodes[i].setAttribute('class', nodes[i].getAttribute('class') + ' ' + nodeColorIndex[color]);
+		  
         nodes[i].removeAttribute('fill');
       }
 
