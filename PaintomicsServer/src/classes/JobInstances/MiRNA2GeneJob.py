@@ -49,6 +49,7 @@ class MiRNA2GeneJob(Job):
         self.score_method         = "kendall" #fc OR kendall OR spearman OR pearson
         self.selection_method     = "negative_correlation" #max_fc OR similar_fc OR abs_correlation OR positive_correlation OR negative_correlation
         self.cutoff               = -0.6
+        self.featureEnrichment    = False
 
     def getOptions(self):
         return {
@@ -83,14 +84,14 @@ class MiRNA2GeneJob(Job):
         # Look using the name instead of relying in the dictionary order
         geneDataInputs = self.getGeneBasedInputOmics()
 
-        miRNAdataInput = next((x for x in geneDataInputs if x["omicName"] != "Gene Expression"))
+        miRNAdataInput = next((x for x in geneDataInputs if x["omicName"].lower() != "gene expression"))
 
         logging.info("VALIDATING miRNA-seq BASED FILES..." )
         nConditions, error = self.validateFile(miRNAdataInput, -1, error)
 
         if len(geneDataInputs) > 1:
             logging.info("VALIDATING RNA-seq BASED FILES..." )
-            RNAdataInput = next((x for x in geneDataInputs if x["omicName"] == "Gene Expression"))
+            RNAdataInput = next((x for x in geneDataInputs if x["omicName"].lower() == "gene expression"))
             nConditions, error = self.validateFile(RNAdataInput, -1, error)
 
         if error != "":
@@ -227,13 +228,13 @@ class MiRNA2GeneJob(Job):
 
         geneDataInputs = self.getGeneBasedInputOmics()
 
-        miRNAinputOmic = next((x for x in geneDataInputs if x["omicName"] != "Gene Expression"))
+        miRNAinputOmic = next((x for x in geneDataInputs if x["omicName"].lower() != "gene expression"))
         dataFile = miRNAinputOmic.get("inputDataFile")
         relevantFile = miRNAinputOmic.get("relevantFeaturesFile")
 
         geneExpressionFile =  None
         if len(geneDataInputs) > 1:
-            RNAinputOmic = next((x for x in geneDataInputs if x["omicName"] == "Gene Expression"))
+            RNAinputOmic = next((x for x in geneDataInputs if x["omicName"].lower() == "gene expression"))
             geneExpressionFile = RNAinputOmic.get("inputDataFile")
 
         if(miRNAinputOmic.get("isExample", False) == False):
@@ -297,10 +298,9 @@ class MiRNA2GeneJob(Job):
                     if self.report == "DE" and not isRelevant:
                         continue
 
-                    #DEPRECATED: WE REPORT ALL MIRNAS BUT NOW THE RELEVANT DEPEND ON THE DE AND THE SCORE
                     #FILTER BY SELECTION METHODS, IF CORRELATION OR FC IS LOWER THAN THE CUTOFF, IGNORE ENTRY
-                    #if score < self.cutoff:
-                    #    continue
+                    if score < self.cutoff:
+                        continue
 
                     #STEP 5.3 CREATE A NEW OMIC VALUE WITH ROW DATA
                     omicValueAux = OmicValue(mirnaID)
@@ -331,7 +331,7 @@ class MiRNA2GeneJob(Job):
                 filePrefix = '' if self.getUserID() is not None else self.getJobID() + '_'
                 genesToMiRNAFile = open(self.getTemporalDir() + '/' + filePrefix + 'genesToMiRNAFile.tab', 'w')
                 mirna2genesOutput = open(self.getTemporalDir() + '/' + filePrefix + "miRNA2Gene_output_" + self.date + ".tab", 'w')
-                mirna2genesRelevant = open(self.getTemporalDir() +  '/' + filePrefix + "miRNA2Gene_relevant_" + self.date + ".tab", 'w')
+                mirna2genesRelevant = open(self.getTemporalDir() + '/' + filePrefix + "miRNA2Gene_relevant_" + self.date + ".tab", 'w')
 
                 # PRINT HEADER
                 genesToMiRNAFile.write("# Gene name\tmiRNA ID\tDE\tScore\tSelection\n")

@@ -48,6 +48,14 @@ Ext.define('Ext.grid.column.CheckColumnCustom', {
     }
 });
 
+Ext.data.Types.FLOATORSTRING = {
+    sortType: function(v) {
+        v = Ext.isNumber(v) ? v : parseFloat(String(v), 10);
+        return isNaN(v) ? 999999 : v;
+    },
+    type: 'floatOrString'
+};
+
 Ext.define('Ext.grid.column.ActionCustom', {
     extend: 'Ext.grid.column.Action',
     alias: ['widget.customactioncolumn'],
@@ -155,11 +163,39 @@ Ext.define('Ext.grid.LiveSearchGridPanel', {
         console.error("multiDeleteHandler: Not implemented!");
         return this;
     },
+	sortCustomDate: function sorterFunction(o1, o2, colname) {
+		var dateVal1 = o1.get(colname);
+		var dateVal2 = o2.get(colname);
+		
+		if (dateVal1.length > 12) {
+			var parsedVal1 = new Date(dateVal1.substr(6, 4) + "-" + dateVal1.substr(3, 2) + "-" + dateVal1.substr(0, 2) + "T" + dateVal1.substr(11, 5));
+			var parsedVal2 = new Date(dateVal2.substr(6, 4) + "-" + dateVal2.substr(3, 2) + "-" + dateVal2.substr(0, 2) + "T" + dateVal2.substr(11, 5));
+		} else {
+			var parsedVal1 = new Date(dateVal1.substr(0, 4) + "-" + dateVal1.substr(4, 2) + "-" + dateVal1.substr(6, 2) + " " + dateVal1.substr(8, 2) + ":" + dateVal1.substr(10, 2));
+			var parsedVal2 = new Date(dateVal2.substr(0, 4) + "-" + dateVal2.substr(4, 2) + "-" + dateVal2.substr(6, 2) + " " + dateVal2.substr(8, 2) + ":" + dateVal2.substr(10, 2));
+		}
+
+		if (parsedVal1 === parsedVal2) {
+			return 0;
+		}
+
+		return parsedVal1 < parsedVal2 ? -1 : 1;
+	},
     initComponent: function () {
         var me = this;
-        me.viewConfig.stripeRows = this.stripeRows;
-
-        me.tbar = ['Search', {
+		
+		if (me.multidelete) {
+			me.selModel = {   
+				checkOnly : true,   
+				mode:'MULTI'  
+			};
+			me.selType = 'checkboxmodel';
+		}
+		
+		me.viewConfig.stripeRows = this.stripeRows;
+		
+        me.tbar = [
+			'Search', {
                 xtype: 'textfield',
                 name: 'searchField',
                 hideLabel: true,
@@ -177,7 +213,13 @@ Ext.define('Ext.grid.LiveSearchGridPanel', {
                 margin: '0 0 0 4px',
                 handler: me.caseSensitiveToggle,
                 scope: me
-            }, 'Case sensitive',
+            }, 'Case sensitive', {
+                xtype: 'checkbox',
+                hideLabel: true,
+                margin: '0 0 0 4px',
+                handler: me.searchByIDToggle,
+                scope: me
+            }, 'Search by gene/compound',
             /* Splice position: -3 */
             '->',
             ((me.download !== false) ? '<a class="downloadXLS" href="javascript:void(0)"><i class="fa fa-file-excel-o"></i> Download as XLS</a>' : ""),
@@ -348,6 +390,14 @@ Ext.define('Ext.grid.LiveSearchGridPanel', {
         }
         me.getSelectionModel().deselectAll();
         me.textField.focus();
+    },
+    /**
+     * Switch to case sensitive mode.
+     * @private
+     */
+    searchByIDToggle: function (checkbox, checked) {
+        this.searchFor = checked ? 'identifiers' : 'title';
+        this.onTextFieldChange();
     },
     /**
      * Switch to case sensitive mode.
@@ -684,7 +734,7 @@ Ext.define('Ext.view.override.Grid', {
         debugger
         for (var i = 0; i < colCount; i++) {
             //ADJUST TITLE (REMOVE SPECIAL CHARACTERS, HTML,...)
-            colTitle = cm[i].text.replace("</br>", "");
+            colTitle = cm[i].text.replace(/<\/br>/g, "");
 
             //NOTE IF YOU USE A CULUMN TYPE NOT VALID(e.g. actioncolumn) YOU MUST EDIT THIS LINE
             if (cm[i].xtype != 'actioncolumn' && cm[i].xtype != 'customactioncolumn'
@@ -792,7 +842,7 @@ Ext.define('Ext.view.override.Grid', {
                     } else if (v === "-" && celltype === "Number") {
                         celltype = "String";
                     } else if (v) {
-                        v = v.replace("</br>", "");
+                        v = v.replace(/<\/br>/g, "");
                     } else {
                         v = "";
                     }

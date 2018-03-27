@@ -48,7 +48,7 @@ function JobController() {
 	* @param {type} other
 	* @returns {undefined}
 	*/
-	this.checkJobStatus = function (jobID, jobView, callback, other) {
+	this.checkJobStatus = function (jobID, jobView, callback, other, showURL = false) {
 		other = (other || {});
 		var errorHandler = (other.errorHandler || ajaxErrorHandler);
 		var me = this;
@@ -61,13 +61,18 @@ function JobController() {
 			success: function (response) {
 				if (response.success === false) {
 					if (response.status === "JobStatus.STARTED" || response.status === "started") {
-						var jobURL = 'http://' + window.location.host + window.location.pathname + "?jobID=" + jobID;
+						var message = "Running job " + jobID;
+						
+						if (showURL) {
+							var jobURL = 'http://' + window.location.host + window.location.pathname + "?jobID=" + jobID;
+							message += ".<br/> You will we able to access it from the URL: <br/><br /><a href=\"" + jobURL  + "\" target=\"_blank\">" + jobURL + "</a>";
+						}
 
-						showInfoMessage("Running job " + jobID + ".<br/> You will we able to access it from the URL: <br/><br /><a href=\"" + jobURL  + "\" target=\"_blank\">" + jobURL + "</a>", {logMessage: "Job " + jobID + " still running.", showSpin: true, append: other.multipleJobs, itemId: jobID, icon: "play"});
+						showInfoMessage(message, {logMessage: "Job " + jobID + " still running.", showSpin: true, append: other.multipleJobs, itemId: jobID, icon: "play"});
 					}
 					//Check again in N seconds
 					setTimeout(function () {
-						me.checkJobStatus(jobID, jobView, callback, other);
+						me.checkJobStatus(jobID, jobView, callback, other, showURL);
 					}, CHECK_STATUS_TIMEOUT);
 				} else {
 					callback(response, jobID, jobView, other);
@@ -164,7 +169,9 @@ function JobController() {
 							other.subview.setContent("itemsContainerAlt", {
 								mainFile: response.mainOutputFileName,
 								secondaryFile: response.secondOutputFileName,
-								title: itemsContainer.queryById("omicNameField").getValue()
+								title: itemsContainer.queryById("omicNameField").getValue(),
+								configVars: response.description,
+								enrichmentType: response.featureEnrichment
 							});
 
 							if (jobView.pendingRequests === 0) {
@@ -251,9 +258,11 @@ function JobController() {
 
 						var jobModel = jobView.getModel();
 						jobModel.setStepNumber(2);         //UPDATE THE STEP NUMBER
-						jobModel.setJobID(response.jobID); //UPDATE THE foundCompounds FIELD WITH RESPONSE DATA+
+						jobModel.setJobID(response.jobID); //UPDATE THE foundCompounds FIELD WITH RESPONSE DATA
+						jobModel.setUserID(response.userID);
 						jobModel.setOrganism(response.organism);  //UPDATE ORGANISM
 						jobModel.setDatabases(response.databases); //UPDATE DATABASES
+						jobModel.setName(response.name);
 
 						jobModel.setCompoundBasedInputOmics(response.compoundBasedInputOmics);
 						jobModel.setGeneBasedInputOmics(response.geneBasedInputOmics);
@@ -293,7 +302,7 @@ function JobController() {
 						showSuccessMessage("Done", {logMessage: "Generating Metabolites list...DONE", showTimeout: 1, closeTimeout: 0.5});
 					};
 
-					me.checkJobStatus(response.jobID, jobView, callback);
+					me.checkJobStatus(response.jobID, jobView, callback, {}, true);
 				},
 				failure: extJSErrorHandler
 			});
@@ -322,17 +331,17 @@ function JobController() {
 			// $(omicNames).each(function(omic) {
 			// 		omicValues[omic] = Ext.ComponentQuery.query('[name="customslider_' + omic + '"]')[0].getValues();
 			// });
+			var form = jobView.getComponent().down("form");
+			var formData = $.extend(form ? form.getForm().getValues() : {}, {
+				jobID: jobView.getModel().getJobID(),
+				selectedCompounds: jobView.getSelectedCompounds()
+			});
 
 			$.ajax({
 				type: "POST",
 				headers: {"Content-Encoding": "gzip"},
 				url: SERVER_URL_PA_STEP2,
-				data: {
-					jobID: jobView.getModel().getJobID(),
-					selectedCompounds: jobView.getSelectedCompounds()
-					// omicNames: omicNames,
-					// customValues: omicValues
-				},
+				data: formData,
 				success: function (response) {
 					console.log("JOB " + response.jobID + " is queued ");
 
@@ -364,6 +373,7 @@ function JobController() {
 						jobModel.setSummary(response.summary);
 						jobModel.setOrganism(response.organism);  //UPDATE ORGANISM
 						jobModel.setDatabases(response.databases);
+						jobModel.setTimestamp(response.timestamp);
 
 						var pathways = response.pathwaysInfo;
 						var pathway = null;
@@ -373,13 +383,18 @@ function JobController() {
 							pathway.loadFromJSON(pathways[i]);
 							jobModel.addPathway(pathway);
 						}
+						
+						if (response.omicsValuesID) {
+							jobModel.setOmicsValuesID(response.omicsValuesID);
+						}
 
 						me.updateStoredApplicationData("jobModel", jobModel);
+						
 						me.showJobInstance(jobModel);
 						showSuccessMessage("Done", {logMessage: "Updating Pathways list...DONE", showTimeout: 1, closeTimeout: 0.5});
 					};
 
-					me.checkJobStatus(response.jobID, jobView, callback);
+					me.checkJobStatus(response.jobID, jobView, callback, true);
 				},
 				error: ajaxErrorHandler
 			});
@@ -422,7 +437,7 @@ function JobController() {
 					showSuccessMessage("Done", {logMessage: "Pathway information retrieved successfully", closeTimeout: 0.4});
 					me.showJobInstance(jobModel, {stepNumber: 4}).showPathwayView(pathwayID);
 				},
-				failure: extJSErrorHandler
+				failure: ajaxErrorHandler
 			});
 		} else {
 			me.showJobInstance(jobModel, {stepNumber: 4}).showPathwayView(pathwayID);
@@ -502,7 +517,7 @@ function JobController() {
                 	pathwayTableView.updatePvaluesFromStore();
 				}                
             },
-            failure: extJSErrorHandler
+            failure: ajaxErrorHandler
         });
         
         
@@ -540,11 +555,16 @@ function JobController() {
 						//UPDATE THE STEP NUMBER
 						jobModel.setStepNumber(response.stepNumber);
 						//TODO: NO ES NECESARIO DEVOLVER ESTO!!! MUY GRANDE! MEJOR CALCULARLO EN EL SERVER
+						jobModel.setUserID(response.userID);
 						jobModel.setCompoundBasedInputOmics(response.compoundBasedInputOmics);
 						jobModel.setGeneBasedInputOmics(response.geneBasedInputOmics);
 						jobModel.setSummary(response.summary);
 						jobModel.setOrganism(response.organism);  //UPDATE ORGANISM
 						jobModel.setDatabases(response.databases); //UPDATE DATABASES
+						jobModel.setName(response.name);
+						jobModel.setTimestamp(response.timestamp);
+						jobModel.setAllowSharing(response.allowSharing);
+						jobModel.setReadOnly(response.readOnly);
 
 						jobModel.setFoundCompounds([]);
 						var matchedMetabolites = response.matchedMetabolites;
@@ -584,12 +604,17 @@ function JobController() {
 							jobModel.addPathway(pathway);
 						}
 						jobModel.isRecoveredJob = true;
+						
+						if (response.omicsValuesID) {
+							jobModel.setOmicsValuesID(response.omicsValuesID);
+						}
 
 						me.cleanStoredApplicationData();
 						me.updateStoredApplicationData("jobModel", jobModel);
 
 						var visualOptions = response.visualOptions;
 						if(visualOptions){
+							visualOptions.timestamp = response.timestamp;
 							me.updateStoredApplicationData("visualOptions", visualOptions);
 						}
 
@@ -615,7 +640,7 @@ function JobController() {
 	* @returns {undefined}
 	************************************************************/
 	this.fromBed2GenesOnFormSubmitHandler = function (jobView) {
-		var URL = SERVER_URL_DM_FROMBED2GENES;
+		var URL = jobView.isExampleMode() === true ? SERVER_URL_DM_EXAMPLE_FROMBED2GENES : SERVER_URL_DM_FROMBED2GENES;
 
 		if (jobView.checkForm() === true) {
 			var me = this;
@@ -663,7 +688,7 @@ function JobController() {
 	* @returns {undefined}
 	************************************************************/
 	this.fromMiRNA2GenesOnFormSubmitHandler = function (jobView) {
-		var URL = SERVER_URL_DM_FROMMIRNA2GENES;
+		var URL = jobView.isExampleMode() === true ? SERVER_URL_DM_EXAMPLE_FROMMIRNA2GENES : SERVER_URL_DM_FROMMIRNA2GENES;
 
 		if (jobView.checkForm() === true) {
 			var me = this;
@@ -701,6 +726,84 @@ function JobController() {
 			});
 		} else {
 			showErrorMessage("Invalid form. Please check form errors.", {height: 150, width: 400, showReportButton:false});
+			return false;
+		}
+	};
+	
+	/************************************************************
+	* This function...
+	* @param {type} jobView
+	* @returns {undefined}
+	************************************************************/
+	this.updateMetagenesSubmitHandler = function (jobView, numberClusters, omicName) {
+		if (parseInt(numberClusters) > 0) {
+			var me = this;
+			var jobModel = jobView.getModel();
+
+			showInfoMessage("Sending information to generate new clusters...", {logMessage: "New Metagenes Job created...", showSpin: true});
+			
+			$.ajax({
+				type: "POST",
+				url: SERVER_URL_UPDATE_METAGENES,
+				data: {
+					jobID: jobModel.getJobID(),
+					number: numberClusters,
+					omic: omicName
+				},
+				success: function (response) {
+					if (response.success) {
+						/**
+						* Execute this code after the job finished at the QUEUE
+						* @param {type} jobID
+						* @param {type} jobView
+						* @param {type} response
+						* @returns {undefined}
+						*/
+						var callback = function (response, jobID, jobView) {
+							if (response.success) {
+								console.log("MetaGenes JOB " + response.jobID + " is queued ");
+
+								showInfoMessage("Waiting at job queue...", {logMessage: "Now Job is in the queue...", showSpin: true});
+
+								var jobId = response.jobID;
+								
+								// Override the pathway info and update stored session data
+								var pathways = response.pathwaysInfo;
+								var pathway = null
+								jobModel.setClusterNumber(null);
+								jobModel.setPathways([]);
+								
+								for (var i in pathways) {
+									pathway = new Pathway(i);
+									pathway.loadFromJSON(pathways[i]);
+									jobModel.addPathway(pathway);
+								}
+
+								me.updateStoredApplicationData("jobModel", jobModel);
+
+								// Notify to other components
+								jobView.getParent().indexPathways(jobModel.getPathways());
+								jobModel.setChanged();
+								jobModel.notifyObservers();
+
+								showSuccessMessage("New clusters retrieved successfully", {
+									message: "The new clusters were generated for the selected omic and information was updated in the pathways",
+									closeTimeout: 0.7
+								});
+							} else {
+								showErrorMessage(response.errorMessage || response.message);
+							}
+						};
+
+						me.checkJobStatus(response.jobID, jobView, callback);	
+					} else {
+						showErrorMessage(response.errorMessage || response.message);
+					}
+				},
+				error: ajaxErrorHandler
+			});
+		} else {
+			showErrorMessage("Invalid number of clusters.", {height: 150, width: 400, showReportButton:false});
 			return false;
 		}
 	};
@@ -805,7 +908,7 @@ function JobController() {
 		}
 
 		// Update the URL adding the parameter with the jobID
-		if (jobModel.getJobID() !== null) {
+		if (jobModel.getJobID() !== null && doUpdate) {
 			window.history.replaceState(null, null, window.location.pathname + "?jobID=" + jobModel.getJobID());
 
 			// Call the server to update the job's access date even when it was
@@ -822,8 +925,45 @@ function JobController() {
 				},
 			});
 		}
+		
+		if (options.callback) {
+			options.callback();
+		}
 
 		return jobView;
+	};
+	
+	/**
+	*
+	* @param {type} jobModel
+	* @returns {undefined}
+	*/
+	this.updateSharingOptions = function (jobModel, allowSharing, readOnly) {
+		var me = this;
+
+		$.ajax({
+			method: "POST",
+			url: SERVER_URL_PA_SAVE_SHARING_OPTIONS,
+			data: {
+				"jobID": jobModel.getJobID(),
+				"allowSharing": allowSharing,
+				"readOnly": readOnly
+			},
+			success: function (response) {
+				// Update only the timestamp value when the server has properly saved the options.
+				if (response.success) {
+					jobModel.setAllowSharing(allowSharing);
+					jobModel.setReadOnly(readOnly);
+					
+					me.updateStoredApplicationData("jobModel", jobModel);
+				
+					console.info(Date.logFormat() + "Sharing options saved succesfully.");
+				}
+			},
+			error: function (response) {
+				console.error(Date.logFormat() + "failed when saving sharing options.");
+			},
+		});
 	};
 
 	/**
@@ -835,6 +975,8 @@ function JobController() {
 		/********************************************************/
 		/* STEP 1. SAVE TO CACHE                                */
 		/********************************************************/
+		var me = this;
+		
 		this.updateStoredApplicationData("visualOptions", visualOptions);
 
 		/********************************************************/
@@ -842,21 +984,17 @@ function JobController() {
 		/********************************************************/
 		visualOptions.jobID = jobID;
 
-		// Avoid override of values
-		var visualOptionsClone = jQuery.extend(true, {}, visualOptions);
-
-		// Transform customValues to plain text JSON representation
-		/*if (visualOptionsClone.customValues) {
-			Object.keys(visualOptionsClone.customValues).map(function(key, index) {
-				visualOptionsClone.customValues[key] = JSON.stringify(visualOptionsClone.customValues[key]);
-			});
-		}*/
-
 		$.ajax({
 			method: "POST",
 			url: SERVER_URL_PA_SAVE_VISUAL_OPTIONS,
-			data: visualOptionsClone,
+			data: JSON.stringify(visualOptions),
+			dataType: "json",
+			contentType: "application/json",
 			success: function (response) {
+				// Update only the timestamp value when the server has properly saved the options.
+				visualOptions.timestamp = response.timestamp;
+				me.updateStoredApplicationData("visualOptions", visualOptions);
+				
 				console.info(Date.logFormat() + "Visual options saved succesfully.");
 			},
 			error: function (response) {

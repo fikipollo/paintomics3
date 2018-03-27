@@ -78,8 +78,8 @@ def findKeggIDByFeatureName(jobID, featureName, organism, db, databaseConvertion
 
     matchedFeatures=[]
     try:
-        mates = db.xref.find({"display_id": featureName}, {"item" :1, "mates":1, "qty":1})[0].get("mates") #Will fail if not matches
-        cursor=db.xref.find({"dbname_id" : databaseConvertion_id, "_id" : { "$in" : mates }}, {"display_id":1})
+        mates  = db.xref.find({"display_id": featureName}, {"item" :1, "mates":1, "qty":1})[0].get("mates") #Will fail if not matches
+        cursor = db.xref.find({"dbname_id" : databaseConvertion_id, "_id" : { "$in" : mates }}, {"display_id":1})
 
         if(cursor.count() > 0):
             for item in cursor:
@@ -117,7 +117,7 @@ def findGeneSymbolByFeatureID(jobID, featureID, organism, db, databaseConvertion
     except Exception as ex:
         return None, False
 
-def mapFeatureIdentifiers(jobID, organism, databases, featureList, matchedFeatures, notMatchedFeatures, foundFeatures, matchedGeneIDsTablesList, matchedGeneSymbolsTablesList):
+def mapFeatureIdentifiers(jobID, organism, databases, featureList, matchedFeatures, notMatchedFeatures, foundFeatures, matchedGeneIDsTablesList, matchedGeneSymbolsTablesList, featureEnrichment):
     """
     This function is used to query the database in different threads.
 
@@ -149,7 +149,7 @@ def mapFeatureIdentifiers(jobID, organism, databases, featureList, matchedFeatur
     try:
 
         # Save the found features for each database, plus the unique between them
-        matches = dict.fromkeys(databaseConvertion_names + ["Total"], 0)
+        matches = dict.fromkeys(databaseConvertion_names + ["Total"], set())
         matchedGeneIDsTable = defaultdict(dict)
         matchedGeneSymbolsTable = defaultdict(dict)
 
@@ -158,7 +158,6 @@ def mapFeatureIdentifiers(jobID, organism, databases, featureList, matchedFeatur
         prev = -1
         aux=0
         for feature in featureList:
-            counted = False
             current+=1
             if  (current*100/total) % 20 == 0:
                 aux= (current*100/total)
@@ -174,10 +173,11 @@ def mapFeatureIdentifiers(jobID, organism, databases, featureList, matchedFeatur
                     if(found == True):
                         # matches+=1
                         # Increase the counter on the matching database, and keep track of the total
-                        # counting only once the features.
-                        matches[databaseConvertion_name] += 1
-                        matches["Total"] += int(counted == False)
-                        counted = True
+                        # counting only once the features. In this scenario the feature does only have one omic value
+                        # containing the original name.
+                        matches[databaseConvertion_name].add(feature.getOmicsValues()[0].getOriginalName() if featureEnrichment else feature.getName())
+                        matches["Total"].add(feature.getOmicsValues()[0].getOriginalName() if featureEnrichment else feature.getName())
+
                         matchedGeneIDsTable[databaseConvertion_id][feature.getName()] = matchedGeneIDsTable[databaseConvertion_id].get(feature.getName(), []) + featureIDs
 
                         for featureID in featureIDs:
@@ -215,7 +215,7 @@ def mapFeatureIdentifiers(jobID, organism, databases, featureList, matchedFeatur
     finally:
         client.close()
 
-def mapFeatureNamesToKeggIDs(jobID, organism, databases, featureList, mapGeneIDs=True):
+def mapFeatureNamesToKeggIDs(jobID, organism, databases, featureList, featureEnrichment, mapGeneIDs=True):
     """
     This function match the provided list of features
     to KEGG accepted feature ID (e.g. entrez gene ID for mmu)
@@ -263,7 +263,7 @@ def mapFeatureNamesToKeggIDs(jobID, organism, databases, featureList, mapGeneIDs
         threadsList = []
         i=0
         for genesListPart in genesListParts:
-            thread = Process(target=mapFeatureIdentifiers, args=(jobID, organism, databases, genesListPart, matchedFeatures, notMatchedFeatures, foundFeatures, matchedGeneIDsTablesList, matchedGeneSymbolsTablesList))
+            thread = Process(target=mapFeatureIdentifiers, args=(jobID, organism, databases, genesListPart, matchedFeatures, notMatchedFeatures, foundFeatures, matchedGeneIDsTablesList, matchedGeneSymbolsTablesList, featureEnrichment))
             threadsList.append(thread)
             thread.start()
             i+=1
@@ -272,9 +272,17 @@ def mapFeatureNamesToKeggIDs(jobID, organism, databases, featureList, mapGeneIDs
         for thread in threadsList:
             thread.join(MAX_WAIT_THREADS)
 
+        isFinished = True
         for thread in threadsList:
             if(thread.is_alive()):
+                # TODO: possible deadlock with KeggInformationManager lock? Raise an exception to force the release there?
+                isFinished = False
                 thread.terminate()
+                logging.info("THREAD TERMINATED IN mapFeatureNamesToKeggIDs")
+
+        if not isFinished:
+            raise Exception('Your data took too long to process and it was killed. Try it again later or upload smaller files if it persists.')
+
 
     except Exception as ex:
         raise ex
@@ -288,10 +296,9 @@ def mapFeatureNamesToKeggIDs(jobID, organism, databases, featureList, mapGeneIDs
     for matchedGeneSymbolsTable in matchedGeneSymbolsTablesList:
         map(lambda dbId: KeggInformationManager().updateTranslationCache(jobID, matchedGeneSymbolsTable[dbId], "symbol", dbId), matchedGeneSymbolsTable.keys())
 
-    # foundFeatures = sum(foundFeatures)
     sumFoundFeatures = dict.fromkeys(foundFeatures[0].keys())
     for dbname in sumFoundFeatures.keys():
-        sumFoundFeatures[dbname] = sum(dbmatches[dbname] for dbmatches in foundFeatures)
+        sumFoundFeatures[dbname] = len(set(itertools.chain.from_iterable(dbmatches[dbname] for dbmatches in foundFeatures)))
 
     #***********************************************************************************
     #* STEP 4. RETURN THE RESULTS
@@ -496,9 +503,15 @@ def mapFeatureNamesToCompoundsIDs(jobID, featureList):
         for thread in threadsList:
             thread.join(MAX_WAIT_THREADS)
 
+        isFinished = True
         for thread in threadsList:
             if(thread.is_alive()):
+                isFinished = False
                 thread.terminate()
+                logging.info("THREAD TERMINATED IN mapFeatureNamesToCompoundsIDs")
+
+        if not isFinished:
+            raise Exception('Your data took too long to process and it was killed. Try it again later or upload smaller files if it persists.')
 
     except Exception as ex:
         raise ex

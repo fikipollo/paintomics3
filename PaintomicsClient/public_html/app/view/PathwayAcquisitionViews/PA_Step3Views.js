@@ -26,6 +26,7 @@
 * - PA_Step3PathwayNetworkTooltipView
 * - PA_Step3PathwayDetailsView
 * - PA_Step3PathwayTableView
+* - PA_Step3StatsView
 *
 */
 
@@ -56,9 +57,11 @@ function PA_Step3JobView() {
 	this.pathwayClassificationViews = {};
 	this.pathwayNetworkViews = {};
 	this.pathwayTableView = null;
+	this.statsView = null;
 	this.significativePathways = 0;
 	this.significativePathwaysByDB = {};
 	this.isFiltered = {};
+	this.isOwner = false;
 
 	/*********************************************************************
 	* GETTERS AND SETTERS
@@ -78,7 +81,10 @@ function PA_Step3JobView() {
 		}
 		this.model = model;
 		this.model.addObserver(this);
-
+		
+		// Assign the 
+		this.isOwner = (String(Ext.util.Cookies.get("userID")) ==  String(this.model.getUserID()));
+		
 		/********************************************************/
 		/* STEP 2: PROCESS DATA AND GENERATE THE TABLES         */
 		/********************************************************/
@@ -99,16 +105,21 @@ function PA_Step3JobView() {
 			colorBy : "classification",
 			backgroundLayout : false,
 			showNodeLabels : true,
+			useCombinedPvalCheckbox: true,
+			autoSaveNodePositions: false,
 			//showEdgeLabels : false,
 			edgesClass : 'l',
 			minNodeSize: 1,
-			maxNodeSize: 8
+			maxNodeSize: 8,
+			networkPvalMethod: 'none',
+			fontSize: 14
 		};
         
         var globalDefaultVisualOptions = {
             selectedCombinedMethod: 'Fisher',
             selectedAdjustedMethod: 'None',
-            stoufferWeights: {}
+            stoufferWeights: {},
+			timestamp: this.model.getTimestamp()
         };
 
 		// Initialize dictionaries with databases used
@@ -118,58 +129,61 @@ function PA_Step3JobView() {
 			this.isFiltered[db] = false;
 		}).bind(this));
 
+		// Ensure that the visual options timestamp is on par with the model (could be new due to 'Go back' feature)
 		if (window.sessionStorage && sessionStorage.getItem("visualOptions") !== null) {
 			this.visualOptions = jQuery.extend(jQuery.extend({}, globalDefaultVisualOptions), 
                                                JSON.parse(sessionStorage.getItem("visualOptions")));
+			
+			// The visualOptions session info can come from an old job (after 'Go back') or updated
+			// by recovering the job. Check that the time stamps match or invalidate this block.
+			if (this.visualOptions.timestamp >= this.model.getTimestamp()) {
+				// If the visualOptions does not contain at least the key KEGG (mandatory)
+				// then it has the old format, convert it to the new one.
+				databases.map((function(db) {
+					if (!(db in this.visualOptions)) {
+						/* Avoid referencing to the same object */
+						var defaultDBsettings =  jQuery.extend(true, {}, defaultVisualOptions);
+						this.visualOptions[db] = {};
 
-			// If the visualOptions does not contain at least the key KEGG (mandatory)
-			// then it has the old format, convert it to the new one.
-			databases.map((function(db) {
-				if (!(db in this.visualOptions)) {
-					/* Avoid referencing to the same object */
-					var defaultDBsettings =  jQuery.extend(true, {}, defaultVisualOptions);
-					this.visualOptions[db] = {};
-
-					$.each(Object.keys(defaultVisualOptions), (function(index, option) {
-						this.visualOptions[db][option] = this.visualOptions[option] ||  defaultDBsettings[option];
-						delete this.visualOptions[option];
-					}).bind(this));
-				}
-			}).bind(this));
-
-		}else{
-			/********************************************************/
-			/* STEP 2.1.B GENERATE DEFAULT VISUAL OPTIONS           */
-			/********************************************************/
-			this.visualOptions = jQuery.extend(true, {}, globalDefaultVisualOptions);
-			databases.map((function(db) {this.visualOptions[db] = jQuery.extend(true, {}, defaultVisualOptions);}).bind(this));
-
-			for (var i in pathways) {
-				this.visualOptions[pathways[i].getSource()].pathwaysVisibility.push(pathways[i].getID());
+						$.each(Object.keys(defaultVisualOptions), (function(index, option) {
+							this.visualOptions[db][option] = this.visualOptions[option] ||  defaultDBsettings[option];
+							delete this.visualOptions[option];
+						}).bind(this));
+					}
+				}).bind(this));
+			} else {
+				this.visualOptions = null;
 			}
-
-			this.getController().updateStoredApplicationData("visualOptions", this.visualOptions);
 		}
+		/********************************************************/
+		/* STEP 2.1.B GENERATE DEFAULT VISUAL OPTIONS           */
+		/********************************************************/
+
+		this.visualOptions = jQuery.extend(true, {}, globalDefaultVisualOptions, this.visualOptions);
+
+		databases.map((function(db) {
+			// jQuery extend with deep copy will merge the arrays, so if we are creating the 
+			// visual options from scratch we assign all the DB pathways and if not, the very
+			// same filtered pathways already saved so the merge won t do anything wrong.
+			var dbPathways;
+			
+			if (this.visualOptions[db]) {
+				dbPathways = $.isEmptyObject(this.visualOptions[db].pathwaysVisibility) ? 
+					this.getModel().getPathwaysByDB(db).map(x => x.getID()) :
+					this.visualOptions[db].pathwaysVisibility;
+			} else {
+				dbPathways = this.getModel().getPathwaysByDB(db).map(x => x.getID());
+			}				
+			
+			this.visualOptions[db] = jQuery.extend(true, {}, defaultVisualOptions, {pathwaysVisibility: dbPathways}, this.visualOptions[db]);
+		}).bind(this));
+
+		this.getController().updateStoredApplicationData("visualOptions", this.visualOptions);
+
 		/********************************************************/
 		/* STEP 2.2 GENERATE THE INDEX FOR PATHWAYS             */
 		/********************************************************/
-		var pathwayInstance;
-		for (var i in pathways) {
-			pathwayInstance =  pathways[i];
-			pathwayInstance.setVisible(this.visualOptions[pathwayInstance.getSource()].pathwaysVisibility.indexOf(pathwayInstance.getID()) !== -1);
-			this.indexedPathways[pathwayInstance.getSource()][pathwayInstance.getID()] = pathwayInstance;
-		}
-		$.each(databases, (function(index, db) {
-			if(this.visualOptions[db].pathwaysPositions !== undefined){
-				var data;
-				for(var i in this.visualOptions[db].pathwaysPositions){
-					data = this.visualOptions[db].pathwaysPositions[i].split("#");
-					this.indexedPathways[db][data[0]].networkCoordX = Number.parseFloat(data[1]);
-					this.indexedPathways[db][data[0]].networkCoordY = Number.parseFloat(data[2]);
-				}
-			}
-		}).bind(this));
-
+		this.indexPathways(pathways);
 
 		/************************************************************/
 		/* STEP 2.3 GENERATE THE TABLE WITH PATHWAY CLASSIFICATIONS */
@@ -229,6 +243,16 @@ function PA_Step3JobView() {
 		/************************************************************/
 		/* STEP 3 CREATE THE SUBVIEWS                               */
 		/************************************************************/
+		if(this.pathwayTableView=== null){
+			this.pathwayTableView = new PA_Step3PathwayTableView();
+			this.pathwayTableView.setController(this.getController());
+			this.pathwayTableView.setParent(this);
+		}
+		this.pathwayTableView.loadModel(model);
+		
+		this.statsView = new PA_Step3StatsView();
+		this.statsView.loadModel(model);
+		
 		$.each(databases, (function(index, db) {
 			if(!(db in this.pathwayClassificationViews)){
 				this.pathwayClassificationViews[db] = new PA_Step3PathwayClassificationView(db);
@@ -248,13 +272,6 @@ function PA_Step3JobView() {
 			this.isFiltered[db] = (this.model.getPathwaysByDB(db).length != this.getTotalVisiblePathways(db).visible);
 		}).bind(this));
 
-		if(this.pathwayTableView=== null){
-			this.pathwayTableView = new PA_Step3PathwayTableView();
-			this.pathwayTableView.setController(this.getController());
-			this.pathwayTableView.setParent(this);
-		}
-		this.pathwayTableView.loadModel(model);
-
 		if (this.getModel().isRecoveredJob && this.getModel().getStepNumber() === 3) {
 			$(".backButton").hide();
 		}
@@ -262,7 +279,13 @@ function PA_Step3JobView() {
 
 		return this;
 	};
+	
 
+	
+	this.canEdit = function() {
+		return (this.isOwner || ! this.model.getReadOnly());
+	};
+	
 	this.getVisualOptions = function(db = null){
 		return (db == null) ? this.visualOptions : this.visualOptions[db];
 	};
@@ -278,6 +301,25 @@ function PA_Step3JobView() {
 	};
 	this.getIndexedPathways = function(db = null){
 		return (db == null) ? this.indexedPathways : this.indexedPathways[db];
+	};
+	
+	this.indexPathways = function(pathways) {
+		var pathwayInstance;
+		for (var i in pathways) {
+			pathwayInstance =  pathways[i];
+			pathwayInstance.setVisible(this.visualOptions[pathwayInstance.getSource()].pathwaysVisibility.indexOf(pathwayInstance.getID()) !== -1);
+			this.indexedPathways[pathwayInstance.getSource()][pathwayInstance.getID()] = pathwayInstance;
+		}
+		$.each(this.getModel().getDatabases(), (function(index, db) {
+			if(this.visualOptions[db].pathwaysPositions !== undefined){
+				var data;
+				for(var i in this.visualOptions[db].pathwaysPositions){
+					data = this.visualOptions[db].pathwaysPositions[i].split("#");
+					this.indexedPathways[db][data[0]].networkCoordX = Number.parseFloat(data[1]);
+					this.indexedPathways[db][data[0]].networkCoordY = Number.parseFloat(data[2]);
+				}
+			}
+		}).bind(this));		
 	};
 
 	this.getTotalVisiblePathways = function(db){
@@ -346,6 +388,12 @@ function PA_Step3JobView() {
 		/********************************************************/
 		$("#jobIdField").html(this.getModel().getJobID());
 		$("#jobURL").html(window.location.href).attr('href', window.location.href);
+		
+		// Update Job name (description) if available
+		if (this.getModel().getName()) {
+			$("#jobName").html('[' + this.getModel().getName() + ']').show();
+		}
+		
 		/********************************************************/
 		/* STEP 2: GENERATE THE PATHWAYS CLASSIFICATION PLOT    */
 		/********************************************************/
@@ -462,6 +510,70 @@ function PA_Step3JobView() {
 		this.getController().step3OnFormSubmitHandler(this, pathwayID);
 		return this;
 	};
+	
+	this.shareHandler = function(){
+		var me = this;
+		var model = me.getModel();
+		var userID = Ext.util.Cookies.get("userID");
+		var isOwner = (userID !== undefined && String(model.getUserID()) == String(userID));
+		
+		var messageDialog = Ext.create('Ext.window.Window', {
+			title: "Sharing options",
+			height: 350, width: 600, modal: true, bodyPadding:10,
+			defaults: {
+				labelAlign: "right",
+				border: false
+			},
+			items: [
+				{
+					xtype:"box", html:
+					"<h2>Job sharing options</h2>"+
+					"<div style='margin-bottom:10px;'>By default all jobs created by an user account are private and the others publics.<br><br><b>Note: </b> keep in mind when sharing a job with other people that filtering and visual options are stored in the server side, so you might wanna restrict that option to avoid inconsistencies.</div>" +
+					"<div>The link to this job is: <a href='" + window.location.href + "' target='_blank'>" + window.location.href +"</a></div><br><br>"
+				},
+				(isOwner ?
+				 {
+					xtype: 'fieldcontainer',
+            		defaultType: 'checkboxfield',
+            		items: [
+						{
+							boxLabel  : 'Allow link sharing',
+							name      : 'linksharing',
+							checked   : model.getAllowSharing(),
+							id        : 'linksharing'
+                		},
+						{
+							boxLabel  : 'Read-only (for others)',
+							name      : 'readonly',
+							checked   : model.getReadOnly(),
+							id        : 'readonly'
+                		},
+						
+					]
+				 }
+				 :
+				 {xtype: "box", html: "<br><div style='text-align: center;'><b>You are not the owner or the job does not have an owner account so sharing options cannot be modified.</b></div>"}
+				)
+			],
+			buttons: [
+				(isOwner ?
+				{
+					text: 'Save options',
+					handler : function() {
+						var allowSharing = messageDialog.queryById('linksharing').getValue();
+						var readOnly = messageDialog.queryById('readonly').getValue();
+						
+						messageDialog.close();
+						me.getController().updateSharingOptions(model, allowSharing, readOnly);
+					}
+				} : {}),
+				{text: 'Close', handler : function() {messageDialog.close();}}
+			]
+		});
+
+		messageDialog.center();
+		messageDialog.show();
+	};
 
 	/**
 	* This function generates the component (EXTJS) using the content of the
@@ -494,7 +606,10 @@ function PA_Step3JobView() {
 				{ //THE TOOLBAR
 					xtype: "box",cls: "toolbar secondTopToolbar", html:
 					'<a href="javascript:void(0)" class="button btn-danger btn-right" id="resetButton"><i class="fa fa-refresh"></i> Reset view</a>' +
-					'<a href="javascript:void(0)" class="button btn-default btn-right backButton"><i class="fa fa-arrow-left"></i> Go back</a>'
+					//'<a href="javascript:void(0)" class="button btn-default btn-right backButton"><i class="fa fa-arrow-left"></i> Go back</a>'
+					'<a href="javascript:void(0)" class="button btn-default btn-right mappingButton"><i class="fa fa-database"></i> Hide mapping info</a>' +
+					'<a href="javascript:void(0)" class="button btn-default btn-right" id="sharingButton"><i class="fa fa-share-alt"></i> Sharing options</a>' +
+					'<div id="warningMessage" style="display: none;"></div>'
 				},{ //THE SUMMARY PANEL
 					xtype: 'container', itemId: "pathwaysSummaryPanel",
 					layout: 'column', style: "max-width:1900px; margin: 5px 10px; margin-top:50px;", items: [
@@ -507,13 +622,13 @@ function PA_Step3JobView() {
 							'     those values are calculated based on the total number of features (compounds and genes) for each Pathway as well as the number of features from the input involved on that Pathway.<br>' +
 							'     Additionally, when the input includes 2 or more different omic types, we provide a Combined Significance Value, which allow us to identify those Pathways that are potentially more relevant.' +
 							'  </p>' +
-							'  <a id="download_mapping_file"><i class="fa fa-paint-brush-o"></i> Choose the pathways below and  Paint!</a> ' +
+							'  <a id="paint_link"><i class="fa fa-paint-brush-o"></i> Choose the pathways below and  Paint!</a> ' +
 							'</div>'
 						}, {
 							xtype: 'box',
 							cls: "contentbox omicSummaryBox",
 							html: '<h2>Pathways summary</h2>' +
-							'<h3 style="text-align:center;">Your Job ID is <b id="jobIdField">[JOB ID]</b><span class="infoTip" style=" font-size: 12px; ">You can access this job using the URL: <a id="jobURL" target="_blank" href="#">[JOBURL]</a></h3>' +
+							'<h3 style="text-align:center;">Your Job ID is <b id="jobIdField">[JOB ID]</b><span id="jobName" style="display: none">[JOB NAME]</span><span class="infoTip" style=" font-size: 12px; ">You can access this job using the URL: <a id="jobURL" target="_blank" href="#">[JOBURL]</a></h3>' +
 							'<div style="text-align:center;font-size: 25px;line-height: 120px;">' +
 							'  <span class="myDataSummaryCount" style=" margin: 0; padding-right: 0; "><i class="fa fa-sitemap"></i> </span>' +
 							'  <div id="foundPathwaysTag" class="odometer odometer-theme-default">000</div>  Found Pathways' +
@@ -538,11 +653,12 @@ function PA_Step3JobView() {
 					'  </p>' +
 					'</div>'
 				}),
+				me.statsView.getComponent(),
 				{
 						xtype: 'tabpanel', id: 'tabcontainer_network', plain: true,
 						deferredRender: false, items: tabContent, border: false,
 						cls: ((me.getModel().getDatabases().length < 2) ? 'onedatabase' : ''),
-						style: "max-width:1900px; margin: 5px 10px; margin-top:20px;",
+						style: "max-width:1900px; margin: 5px 10px; margin-top:20px; height: auto;",
 						tabBar: {
 							/* Hide tab bar when there is only one database */
 							hidden: (me.getModel().getDatabases().length < 2),
@@ -563,12 +679,31 @@ function PA_Step3JobView() {
 			listeners: {
 				boxready: function() {
 					//SOME EVENT HANDLERS
-					$(".backButton").click(function() {
-						me.backButtonHandler();
-					});
+//					$(".backButton").click(function() {
+//						me.backButtonHandler();
+//					});
+					$(".mappingButton").click(function() {
+						var cmp = Ext.getCmp('statsViewContainer');
+						cmp.getEl().toggle();
+						
+						var buttonHTML = $(this).html();
+						
+						$(this).html(buttonHTML.includes('Hide') ? buttonHTML.replace(/Hide/g, 'Show') : buttonHTML.replace(/Show/g, 'Hide'));
+						
+						$('#mainViewCenterPanel').scrollTop(cmp.getEl().dom.offsetTop - 60);
+					}).trigger('click');
+					
 					$("#resetButton").click(function() {
 						me.resetViewHandler();
 					});
+					$("#sharingButton").click(function() {
+						me.shareHandler();
+					});
+					
+					// Show a warning if it is read only
+					if (! me.canEdit()) {
+						$('#warningMessage').text("The current job is read-only, changes will not be saved in the server.").show();		
+					}
 					//INITIALIZE THE COUNTERS IN SUMMARY PANEL
 					new Odometer({el: $("#foundPathwaysTag")[0],value: 0});
 					new Odometer({el: $("#significantPathwaysTag")[0],value: 0});
@@ -622,6 +757,8 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 	this.name = "PA_Step3PathwayClassificationView";
 	this.database = db;
 	this.dbid = this.database.replace(' ', '__');
+	this.highcharts = null;
+	this.OTHER_COLORS = ["#FF9500", "#E0F8D8", "#55EFCB", "#FFD3E0"];
 
 	/*********************************************************************
 	* OTHER FUNCTIONS
@@ -639,7 +776,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 		/* STEP 1. INITIALIZE VARIABLES                         */
 		/********************************************************/
 		var me = this;
-		var OTHER_COLORS = ["#FF9500", "#E0F8D8", "#55EFCB", "#FFD3E0"];
+		var OTHER_COLORS = $.extend(true, [], me.OTHER_COLORS);
 		var classificationData = this.getParent().getClassificationData(this.database);
 		var indexedPathways = this.getParent().getIndexedPathways(this.database);
 		var pathways = this.getModel().getPathwaysByDB(this.database);
@@ -678,7 +815,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 			secondClassifications.push(drilldownAux);
 		}
 
-		$('#pathwayDistributionsContainer_' + me.dbid).highcharts({
+		me.highcharts = Highcharts.chart('pathwayDistributionsContainer_' + me.dbid, {
 			chart: {type: 'pie'},
 			title: null, credits: {enabled: false},
 			plotOptions: {
@@ -688,9 +825,9 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 						enabled: true,  useHTML:true,
 						formatter: function(){
 							if(this.point.drilldown !== undefined){
-								return '<i class="classificationNameBox" style="line-height: 20px;border-color:' + this.point.color + '; color:' + this.point.color + ';">' + this.point.name.charAt(0).toUpperCase() + '</i>' + this.percentage.toFixed(2) + "%";
+								return '<i class="classificationNameBox" style="line-height: 20px;border-color:' + this.point.color + '; color:' + this.point.color + ';">' + this.point.name.charAt(0).toUpperCase() + '</i>' + this.y.toFixed(2) + "%";
 							}else{
-								return "<b>" + this.point.name + "</b><br>" + this.percentage.toFixed(2) + "%";
+								return "<b>" + this.point.name + "</b><br>" + this.y.toFixed(2) + "%";
 							}
 						}
 					}
@@ -862,6 +999,8 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 			$("#pathwayClassificationContainer_" + me.dbid + " .step3ClassificationsPathway > input").change(function(){
 				updateStatus(this);
 			});
+		
+			this.applyVisualSettings(false);
 
 			return this;
 		};
@@ -874,7 +1013,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 		* @chainable
 		* @returns {PA_Step3PathwayClassificationView}
 		*/
-		this.applyVisualSettings =  function() {
+		this.applyVisualSettings =  function(updateSettings=true) {
 			var me = this;
 
 			/********************************************************/
@@ -890,36 +1029,63 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 				}
 			});
 
-			// TODO: UPDATE CLASSIFICATION DISTRIBUTION AND HIDE SECTOS AT THE PIE CHART
-			//
-			// var classificationData = me.getParent().getClassificationData();
-			// var indexedPathways = me.getParent().getIndexedPathways();
-			// var pathways = me.getModel().getPathways();
-			// var mainClassificationID, secClassificationID;
-			//
-			// //RESET CLASSIFICATION COUNTERS
-			// for(var i in classificationData){
-			// 	classificationData[i].count=0;
-			// 	for(var j in classificationData[i].children){
-			// 		classificationData[i].children[j].count=0
-			// 	}
-			// }
-			//
-			// for(var i in pathways){
-			// 	mainClassificationID = pathways[i].getClassification().split(";")[0].toLowerCase().replace(/ /g,"_")
-			// 	secClassificationID = pathways[i].getClassification().split(";")[1].toLowerCase().replace(/ /g,"_")
-			// 	if(!pathways[i].visible){
-			// 		classificationData[mainClassificationID].count++;
-			// 		classificationData[mainClassificationID].children[secClassificationID].count++;
-			// 	}
-			// }
+			var classificationData = me.getParent().getClassificationData(me.database);
+			var mainClassificationID, secClassificationID;
+			var mainClassifications = [], secondClassifications = [];
+			
+			// Avoid this when no pathways are visible.
+			if (pathwaysVisibility.length) {
+				Object.keys(classificationData).forEach(function(classificationID) {
+					var mainClassificationInstance = classificationData[classificationID];
+					var mainVisiblePathways = 0;
 
-			me.getParent().setVisualOptions("pathwaysVisibility", pathwaysVisibility, me.database);
+					drilldownAux = {
+						name: mainClassificationInstance.name,
+						id: classificationID,
+						data: []
+					};
 
-			/********************************************************/
-			/* STEP 2. NOTIFY THE CHANGES TO PARENT                 */
-			/********************************************************/
-			me.getParent().applyVisualSettings(me.getName(), me.database);
+					for (secondClassificationID in mainClassificationInstance.children){
+						var secClassificationInstance = mainClassificationInstance.children[secondClassificationID];
+						var secVisiblePathways = secClassificationInstance.children.filter(x => pathwaysVisibility.includes(x));
+
+						// Check if there are visible pathways in this classification
+						if (secVisiblePathways.length) {
+							mainVisiblePathways += secVisiblePathways.length;
+							drilldownAux.data.push([secClassificationInstance.name, (secVisiblePathways.length/pathwaysVisibility.length) * 100]);
+						}
+					}
+
+					if (mainVisiblePathways) {
+						secondClassifications.push(drilldownAux);
+
+						mainClassifications.push({
+							name: mainClassificationInstance.name,
+							y: (mainVisiblePathways/pathwaysVisibility.length) * 100,
+							color: me.getParent().getClassificationColor(classificationID, me.OTHER_COLORS),
+							drilldown: classificationID
+						});					
+					}
+				});
+				
+				me.highcharts.series[0].setData(mainClassifications);
+				me.highcharts.options.drilldown.series[0] = secondClassifications;
+			} else {
+				me.highcharts.series[0].setData([{
+						name: 'No pathways',
+						y: 100,
+						color: "#FF0000"
+				}]);					
+			}
+
+			if (updateSettings) {
+				me.getParent().setVisualOptions("pathwaysVisibility", pathwaysVisibility, me.database);
+
+				/********************************************************/
+				/* STEP 2. NOTIFY THE CHANGES TO PARENT                 */
+				/********************************************************/
+				me.getParent().applyVisualSettings(me.getName(), me.database);
+			}
 
 			return this;
 		};
@@ -980,6 +1146,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 		this.pathwayDetailsView = null;
 		this.database = db;
 		this.dbid = this.database.replace(' ', '__');
+		this.showTooltips = true;
 
 		/*********************************************************************
 		* OTHER FUNCTIONS
@@ -1001,11 +1168,12 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 		* @param {Object} data, an object containing the Network stucture
 		* @returns {PA_Step3PathwayNetworkView}
 		*/
-		this.generateNetwork = function(data) {
+		this.generateNetwork = function(data, forceStop=false) {
 			var me = this;
 			var visualOptions = this.getParent().getVisualOptions(this.database);
 			var indexedPathways = this.getParent().getIndexedPathways(this.database);
 			var CLUSTERS = {};
+			var TOTAL_CLUSTERS = this.getModel().getClusterNumber()[this.database];
 
 			/* The old format data does not have keys */
 			if (me.database in data) {
@@ -1055,10 +1223,39 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 				/********************************************************/
 				/* STEP 1.A.2 EXCLUDE NODE IF:                           */
 				/*  - If number of total features * n% is bigger than   */
-				/*    the sum of matched features in the pathway,       */
+				/*    the sum of matched features in the pathway.		*/
+				/*  - If the pValue of the pathways is greater than 	*/
+				/*	  the maximum allowed.								*/
 				/********************************************************/
+				var pValue = 1;
+				try{
+					var selectedCombinedPvalueMethod = me.getParent().visualOptions.selectedCombinedMethod;
+					var selectedAdjustingMethod = visualOptions.networkPvalMethod;
+					var useCombinedPvalue = visualOptions.useCombinedPvalCheckbox;
+					var methodSelected =  (visualOptions.colorBy === "classification" || useCombinedPvalue) ? selectedCombinedPvalueMethod : visualOptions.colorBy;
+
+					/*
+						The adjusted p-values are different in the job has been category filtered (number of tests decreases).
+						These new "filtered adjusted p-values" are kept on a layer inside visualOptions.
+					*/
+					if (selectedAdjustingMethod != 'none') {
+						var useLayer = visualOptions.adjustedPvalues && visualOptions.adjustedPvalues[methodSelected];
+						
+						if (useLayer) {
+							pValue = visualOptions.adjustedPvalues[methodSelected][selectedAdjustingMethod];
+						} else {
+							pValue = matchedPathway.getAllAdjustedSignificanceValues()[methodSelected][selectedAdjustingMethod];
+						}
+					} else {
+						pValue = matchedPathway.getAllSignificanceValues()[methodSelected];
+					}
+				} catch(error) {
+					//pass
+					pValue = 1;
+				}
+				
 				matchedPathway.setTotalFeatures(matchedPathway.getMatchedGenes().length + matchedPathway.getMatchedCompounds().length);
-				if (elem.data.total_features * visualOptions.minFeatures > matchedPathway.getTotalFeatures()){
+				if (elem.data.total_features * visualOptions.minFeatures > matchedPathway.getTotalFeatures() || pValue > visualOptions.minPValue){
 					ignoredPathways[elem.data.id] = true;
 					continue;
 				}
@@ -1086,16 +1283,8 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					/********************************************************/
 					/* STEP 1.B.2 SET NODE SIZE BASED ON PATHWAY RELEVANCE  */
 					/********************************************************/
-					var pValue = 1;
-					try{
-						var selectedCombinedPvalueMethod = me.getParent().visualOptions.selectedCombinedMethod;
-						
-						pValue = (visualOptions.colorBy === "classification")? matchedPathway.getCombinedSignificanceValueByMethod(selectedCombinedPvalueMethod) : matchedPathway.getSignificanceValues()[visualOptions.colorBy][2];
-					}catch(error){
-						//pass
-						pValue = 1;
-					}
-					elem.data.size = (pValue <= visualOptions.minPValue)? 20 + 2 * (visualOptions.minPValue - pValue):12;
+					//elem.data.size = (pValue <= visualOptions.minPValue)? 20 + 2 * (visualOptions.minPValue - pValue):12;
+					elem.data.size = 20 + 2 * (visualOptions.minPValue - pValue);
 
 					/********************************************************/
 					/* STEP 1.B.3 COLOR THE NODE BASED ON VISUAL OPTIONS    */
@@ -1118,7 +1307,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					}
 
 					// Assign "color" attribute for svg renderer
-					elem.data.color = this.getParent().getClassificationColor(elem.data.parent[0])
+					elem.data.color = elem.data.colors;
 
 					/*********************************************************/
 					/* STEP 1.B.4 ADD GLYP INDICATING THE MAIN CLASSIFICATION*/
@@ -1184,7 +1373,6 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 				else {
 					// elem.data.label = '' + similarity;
 					elem.data.type = 'dotted';
-					elem.data.color = "#e2e2e2";
 					elem.data.size = similarity;
 					edgesAux.push(elem.data);
 				}
@@ -1213,6 +1401,8 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					batchEdgesDrawing: false,
 					hideEdgesOnMove: true,
 					defaultEdgeType: 'line',
+					defaultEdgeColor: '#A9A9A9',
+					edgeColor: 'default',
 					//glyph --------------------------------------------------------
 					drawGlyphs: false, //show after layout
 					glyphScale : 0.4,
@@ -1233,7 +1423,8 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					edgeHaloSize: 3,
 					// min/maxNodeSize:
 					minNodeSize: visualOptions.minNodeSize,
-					maxNodeSize: visualOptions.maxNodeSize
+					maxNodeSize: visualOptions.maxNodeSize,
+					defaultLabelSize: visualOptions.fontSize
 				}
 			});
 
@@ -1355,7 +1546,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 			/********************************************************/
 			this.tooltips = new PA_Step3PathwayNetworkTooltipView().setParent(this);
 			this.network.bind('hovers', function(e) {
-				if(e.data.current.nodes.length > 0){
+				if(e.data.current.nodes.length > 0 && me.showTooltips){
 					PA_Step3PathwayNetworkTooltipView().timeoutID = setTimeout(function(){
 						PA_Step3PathwayNetworkTooltipView().show(e.data.captor.clientX, e.data.captor.clientY, me.getModel().getPathway(e.data.current.nodes[0].id), [visualOptions.colorBy], me.getModel().getDataDistributionSummaries(), visualOptions);
 					}, 600);
@@ -1384,15 +1575,29 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					htmlCode += '<div style="text-align:left;"><i class="classificationNameBox" style="border-color:' + color + '; color:' + color + ';">' + classification.name.charAt(0).toUpperCase() + '</i>' +  classification.name + "</div>";
 				}
 				$("#networkClustersContainer_" + me.dbid + " div").html(htmlCode);
+				$("#sliderClusterNumberContainer_" + me.dbid).hide();
 			}else{
-				$("#networkClustersContainer_" + me.dbid + " h5").text(Object.keys(CLUSTERS).length + " Clusters found.");
+				var clusterNumber = Object.keys(CLUSTERS).length;
+				var totalClusters = TOTAL_CLUSTERS[visualOptions.colorBy].size;
+				
+				$("#sliderClusterNumberShow_" + me.dbid).html(totalClusters);
+				$("#sliderClusterNumber_" + me.dbid).slider("option", "value", totalClusters);
+
+				$("#networkClustersContainer_" + me.dbid + " h5").text(clusterNumber + " Clusters found from " + totalClusters + " in total.");
 				//Generate the images and the containers
 				var img_path;
 				for(var cluster in CLUSTERS){
 					img_path = SERVER_URL_GET_CLUSTER_IMAGE + "/" + this.getModel().getJobID() + "/output/" + visualOptions.colorBy + "_cluster_" + cluster + ".png";
 					htmlCode+= '<span class="networkClusterImage" name="'+ cluster + '"><i class="fa fa-eye-slash fa-2x"></i><img src="' + img_path +'"><p><i class="fa fa-square" style="color:' + CLUSTERS[cluster] +'"></i> Cluster ' + cluster + '</p></span>';
 				}
-				$("#networkClustersContainer_" + me.dbid + " div").html(htmlCode);
+				$("#networkClustersContainer_" + me.dbid + " div").html(htmlCode);			
+				
+				// Update the cluster number slider value
+				if (me.getParent().canEdit()) {
+					$("#sliderClusterNumberContainer_" + me.dbid).show();
+				} else {
+					$("#sliderClusterNumberContainer_" + me.dbid).hide();
+				}
 
 				//Initialize the events when clicking a cluster images (filter)
 				$("#networkClustersContainer_" + me.dbid + " .networkClusterImage").click(function(){
@@ -1438,7 +1643,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 				$("#pathwayNetworkWaitBox_" + me.dbid).fadeOut();
 			};
 
-			sigma.layouts.configForceLink(me.network, {
+			var sigmaForceLink = sigma.layouts.configForceLink(me.network, {
 				linLogMode: true,       //provides the most readable placement
 				//edgeWeightInfluence: 1, //If the edges are weighted, this weight will be taken into consideration in the computation of the attraction force
 				// scalingRatio: 3,        //the larger the graph will be
@@ -1460,15 +1665,44 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 				easing: 'cubicInOut',
 				background:  (visualOptions.backgroundLayout === true), //Calculate in background
 				randomize: 'globally'
-			}).bind('stop', afterStopEvent);
+			});
+			
+			sigmaForceLink.bind('stop', afterStopEvent);
 
 			/********************************************************/
 			/* STEP 9. WAIT 2 SECONDS AND START THE LAYOUT          */
 			/********************************************************/
 			if(visualOptions.pathwaysPositions !== undefined){
-				setTimeout(function() {
-					afterStopEvent();
-				}, 2000);
+				// If the number of saved pathways is different from the new filtered, we first perform
+				// the layout with forceAtlas, then save the positions saving the old ones and redraw.
+				var savedPathways = visualOptions.pathwaysPositions.map(x => x.split('#')[0].trim());
+				var allSaved = nodesAux.map(x => savedPathways.includes(x.id)).every(x => x);
+				
+				if (allSaved) {
+					setTimeout(function() {
+						afterStopEvent();
+					}, 2000);
+				} else {
+					var addNewNodes = function() {
+						// Save new node positions keeping the old saved ones
+						me.updateNodePositions(false, true);
+						
+						// Make sure we don t enter in an infinite loop in
+						// case some error occur.
+						if (! forceStop) {
+							me.generateNetwork(data, true);
+						} else {
+							console.log("WARNING: called generateNetwork with forceStop.")
+						}
+					};
+					
+					sigmaForceLink.bind('stop', addNewNodes);
+					
+					setTimeout(function() {
+						me.startNetworkLayout();
+					}, 2000);
+				}
+
 			}else{
 				setTimeout(function() {
 					me.startNetworkLayout();
@@ -1606,7 +1840,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 			return "#333";
 		};
 
-		this.updateNodePositions = function(updateCache){
+		this.updateNodePositions = function(updateCache, preserveExisting=false){
 			var visualOptions = this.getParent().getVisualOptions(this.database);
 			var indexedPathways = this.getParent().getIndexedPathways(this.database);
 			//Invalidate previous position
@@ -1617,12 +1851,23 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 
 			//Get new coordinates
 			var nodes = this.network.graph.nodes();
+			// Save the current positions using keys
+			var savedPositions = {};
+			if (visualOptions.pathwaysPositions) {
+				visualOptions.pathwaysPositions.map(x => savedPositions[x.split('#')[0].trim()] = x);
+			}
+			
 			delete visualOptions.pathwaysPositions;
 			visualOptions.pathwaysPositions=[];
+			
 			for(var i in nodes){
-				visualOptions.pathwaysPositions.push(nodes[i].id + "# " + nodes[i].x + "#" + nodes[i].y);
-				indexedPathways[nodes[i].id].networkCoordX = nodes[i].x;
-				indexedPathways[nodes[i].id].networkCoordY = nodes[i].y;
+				var nodeID = nodes[i].id;
+				var existingPosition = preserveExisting && savedPositions[nodeID] ? savedPositions[nodeID].split('#') : null;
+				
+				visualOptions.pathwaysPositions.push(existingPosition ? savedPositions[nodeID] : nodes[i].id + "# " + nodes[i].x + "#" + nodes[i].y);
+				
+				indexedPathways[nodeID].networkCoordX = existingPosition ? parseFloat(existingPosition[1]) : nodes[i].x;
+				indexedPathways[nodeID].networkCoordY = existingPosition ? parseFloat(existingPosition[2]) : nodes[i].y;
 			}
 
 			if(updateCache){
@@ -1645,6 +1890,18 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 
 			return this;
 		};
+		
+				
+		this.getNewClusters = function() {
+			var me = this;
+			var numberClusters = $("#sliderClusterNumberShow_" + me.dbid).html();
+			var omicName = me.getParent().visualOptions[me.dbid].colorBy;
+			
+			if (numberClusters && omicName !== "classification") {
+				me.getParent().controller.updateMetagenesSubmitHandler(me, numberClusters, omicName);
+			}
+		};
+
 
 		/**
 		* This function selects nodes from the network following different approaches
@@ -1850,13 +2107,13 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 			/* STEP 1. UPDATE THE VALUES FOR THE SLIDERS            */
 			/********************************************************/
 			var updateNeeded = false;
-			var newValue, id;
+			var newValue, id, autosave;
 
 			$("#pathwayNetworkToolsBox_" + me.dbid + "  div.slider-ui").each(function() {
 				/* Remove database name from id */
 				id = $(this).attr("id").replace("_" + me.database, "");
 				newValue = ($.inArray(id,
-				 ["minPValueSlider", "maxNodeSizeSlider", "minNodeSizeSlider"]) === -1 ?
+				 ["minPValueSlider", "maxNodeSizeSlider", "minNodeSizeSlider", "fontSizeSlider"]) === -1 ?
 				 $(this).slider("value") / 100 : $(this).slider("value"));
 
 				id = id.replace("Slider", "");
@@ -1864,15 +2121,20 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 				visualOptions[id] = newValue;
 			});
 
-			/********************************************************/
-			/* STEP 2. UPDATE THE VALUE FOR COLOR BY OPTION         */
-			/********************************************************/
+			/*******************************************************************/
+			/* STEP 2. UPDATE THE VALUE FOR COLOR BY OPTION AND OTHER SETTINGS */
+			/*******************************************************************/
 			newValue = $("#colorByContainer_" + me.dbid + " div.radio input:checked").val();
 			updateNeeded = updateNeeded || (visualOptions.colorBy !== newValue);
 			visualOptions.colorBy = newValue;
-
+			
+			pvalNewValue = $("#pvaluemethod_" + me.dbid + " div.radio input:checked").val();
+			updateNeeded = updateNeeded || (visualOptions.networkPvalMethod !== pvalNewValue);
+			visualOptions.networkPvalMethod = pvalNewValue;
+			
 			visualOptions.backgroundLayout =  $("#background-layout-check_" + me.dbid).is(":checked");
 			visualOptions.showNodeLabels =  $("#show-node-labels-check_" + me.dbid).is(":checked");
+			visualOptions.useCombinedPvalCheckbox =  $("#use-combined-pval-check_" + me.dbid).is(":checked");
 			//visualOptions.showEdgeLabels =  $("#show-edge-labels-check").is(":checked");
 
 
@@ -1887,10 +2149,12 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 			/* STEP 4. SAVE THE POSITION FOR NODES (IF SELECTED)    */
 			/********************************************************/
 			newValue = $("#save-node-positions-check_" + me.dbid).is(":checked");
+			autosave = $("#auto-save-node-positions-check_" + me.dbid).is(":checked");
 
-			if(newValue && visualOptions.pathwaysPositions === undefined){
+			if(newValue && (autosave || visualOptions.pathwaysPositions === undefined)){
 				/***************************************************************/
 				/* STEP 4.1 IF SAVE=true AND NO PREVIOUS POSITION DATA -> SAVE */
+				/* SAVE ALSO IF AUTO-SAVE DATA IS SET						   */
 				/***************************************************************/
 				this.updateNodePositions(false);
 			}else if(!newValue && visualOptions.pathwaysPositions !== undefined){
@@ -1944,6 +2208,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 		* @returns {PA_Step3PathwayNetworkView}
 		*/
 		this.updateObserver = function() {
+			var me = this;
 			var visualOptions = this.getParent().getVisualOptions(this.database);
 
 			/********************************************************/
@@ -1977,11 +2242,37 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 
 			$("#maxNodeSizeSlider_" + this.dbid).slider({value: visualOptions.maxNodeSize});
 			$("#maxNodeSizeValue_" + this.dbid).html(visualOptions.maxNodeSize);
+			
+			$("#fontSizeSlider_" + this.dbid).slider({value: visualOptions.fontSize});
+			$("#fontSizeValue_" + this.dbid).html(visualOptions.fontSize);
 
 			$("#background-layout-check_" + this.dbid).attr("checked", visualOptions.backgroundLayout===true);
 			$("#show-node-labels-check_" + this.dbid).attr("checked", visualOptions.showNodeLabels===true);
 			//$("#show-edge-labels-check").attr("checked", visualOptions.showEdgeLabels===true);
 			$("#save-node-positions-check_" + this.dbid).attr("checked", visualOptions.pathwaysPositions!==undefined);
+			$("#auto-save-node-positions-check_" + this.dbid).attr("checked", visualOptions.autoSaveNodePositions === true);
+			$("#pre-auto-save-node-positions-check_" + me.dbid).toggle(visualOptions.pathwaysPositions!==undefined);
+			$("#use-combined-pval-check_" + this.dbid).attr("checked", visualOptions.useCombinedPvalCheckbox === true);
+			
+			var pvalHtmlContent = '<div class="radio"><input type="radio" ' + ((visualOptions.networkPvalMethod === "none")? "checked": "") + ' id="none-pvalcheck_' + this.dbid + '" name="pvaluemethodCheckbox_' + this.dbid + '" value="none">' +
+				'  <label for="none-pvalcheck_' + this.dbid + '">None</label>' + 
+				'</div>';
+			var adjustMethods = this.getModel().getMultiplePvaluesMethods();
+			
+			adjustMethods.forEach(function(i){
+				pvalHtmlContent +=
+				'<div class="radio">' +
+				'  <input type="radio" ' + ((visualOptions.networkPvalMethod === i)? "checked": "")+ ' id="' + i.replace(/ /g, "_").toLowerCase() + '-pvalcheck_' + me.dbid + '" name="pvaluemethodCheckbox_' + me.dbid + '" value="' + i + '">' +
+				'  <label for="' + i.replace(/ /g, "_").toLowerCase() + '-pvalcheck_' + me.dbid + '">' + i + '</label>' +
+				'</div>';
+			});
+			$("#pvaluemethod_" + this.dbid).html(pvalHtmlContent);
+			
+			// Adjust the height of the other panels
+			var currentHeight = this.getComponent().getHeight();
+			
+			//this.getComponent().items.getAt(0).setHeight(currentHeight);
+			this.getComponent().doLayout();
 
 			/********************************************************/
 			/* STEP 3. GENERATE THE NETWORK                         */
@@ -2008,9 +2299,17 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 
 			this.component = Ext.widget({
 				xtype: 'container', id: 'networkview_' + me.dbid,
+				/*autoHeight: true,
+				layout:
+				{
+				   type: "hbox",
+				   align: "stretch"
+				},*/
 				//style: "max-width:1800px; margin: 5px 10px; ",
 				items: [ {
-					xtype: 'box', id: 'networkDetailsPanel_' + me.dbid, cls: "contentbox lateralOptionsPanel", html:
+					xtype: 'box', id: 'networkDetailsPanel_' + me.dbid, 
+					//autoHeight: true, flex: 1,
+					cls: "contentbox lateralOptionsPanel", html:
 					//THE PANEL WITH THE CLUSTERS SUMMARY
 					'<div class="lateralOptionsPanel-toolbar"><a href="javascript:void(0)" class="toolbarOption helpTip hideOption" id="hideNetworkDetailsPanelButton_' + me.dbid + '" title="Hide this panel"><i class="fa fa-times"></i></a></div>'+
 					'<h2>Details</h2>' +
@@ -2018,6 +2317,14 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					'  <h4>TheName For AnOmic</h4><span class="infoTip">Click on each cluster to hide/show the nodes in the network</span>' +
 					'  <h5>N Clusters founds</h5>' +
 					'  <div style="text-align: center;"> </div>' +
+					'  <hr/>' +
+					'</div>' +
+					'<div style="padding: 10px;" id="sliderClusterNumberContainer_' + me.dbid + '" style="display: none;">' +
+					'  <h5>Modify number of clusters</h5>' +
+					'  <span class="infoTip">Change the number of the desired clusters and apply the results. Be aware that this is an <b>intensive</b> process that will use the queue system so the results may take some time to be retrieved.</span>' + 
+					'  <p style="margin:10px;">Generate <span id="sliderClusterNumberShow_' + me.dbid + '"></span> clusters.</p>' +
+					'  <div class="slider-ui" style="margin:10px;" id="sliderClusterNumber_' + me.dbid + '"></div>' +
+					'  <a href="javascript:void(0)" class="button btn-success btn-right helpTip" id="applyClusterNumber_' + me.dbid + '" style="margin: 20px auto;"><i class="fa fa-check"></i> Apply</a>' + 
 					'</div>' +
 					//THE PANEL WITH THE PATHWAY DETAILS
 					'<div id="patwaysDetailsWrapper_' + me.dbid + '" style="display:none;">'+
@@ -2025,7 +2332,9 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					'  <div id="patwaysDetailsContainer_' + me.dbid + '"></div>'+
 					'</div>'
 				},{
-					xtype: 'box',  id : 'networkSettingsPanel_' + me.dbid, cls: "contentbox lateralOptionsPanel", html:
+					xtype: 'box',  id : 'networkSettingsPanel_' + me.dbid, 
+					//autoHeight: true, flex: 1,
+					cls: "contentbox lateralOptionsPanel", html:
 					//THE PANEL WITH THE VISUAL OPTIONS
 					'<div class="lateralOptionsPanel-toolbar"><a href="javascript:void(0)" class="toolbarOption helpTip hideOption" id="hideNetworkSettingsPanelButton_' + me.dbid + '" title="Hide this panel"><i class="fa fa-times"></i></a></div>'+
 					'<h2>Tools<span class="helpTip" title="Some options may affect to the table below."></h2>' +
@@ -2048,16 +2357,23 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					'  <div class="checkbox"><input type="checkbox" id="show-node-labels-check_' + me.dbid + '" name="showNodeLabelsCheckbox">' +
 					'    <label for="show-node-labels-check_' + me.dbid + '">Show all node labels <span class="helpTip" style="float:right;" title="Shows labels for nodes (reduces performance). By default labels are visible when zooming the network."</span></label>' +
 					'  </div>'+
+					'  <h5>Label font size (<span id="fontSizeValue_' + me.dbid + '">14</span>)<span class="helpTip" style="float:right;" title="Font size of the labels."></span></h5>' +
+					'  <div class="slider-ui" style="margin:10px;" id="fontSizeSlider_' + me.dbid + '"></div>' +
+					'  <div style="display: none;">' +
 					'  <h5>Max node size (<span id="maxNodeSizeValue_' + me.dbid + '">8</span>)<span class="helpTip" style="float:right;" title="Determines the maximum size that a node can have, scaling the others to maintain the correct ratio."</span></h5>' +
 					'  <div class="slider-ui" style="margin:10px;" id="maxNodeSizeSlider_' + me.dbid + '"></div>' +
 					'  <h5>Min node size (<span id="minNodeSizeValue_' + me.dbid + '">1</span>)<span class="helpTip" style="float:right;" title="Determines the minimum size that a node can have, scaling the others to maintain the correct ratio."</span></h5>' +
 					'  <div class="slider-ui" style="margin:10px;" id="minNodeSizeSlider_' + me.dbid + '"></div>' +
+					' </div>' +
 					// '  <div class="checkbox"><input type="checkbox" id="show-edge-labels-check" name="showEdgeLabelsCheckbox">' +
 					// '    <label for="show-edge-labels-check">Show all edge labels <span class="helpTip" style="float:right;" title="Shows labels for edges (reduces performance). Edge labels indicate the percentage of shared features (genes + metabolites) shared between 2 pathways."</span></label>' +
 					// '  </div>'+
 					'  <h4>Network layout settings</h4>' +
 					'  <div class="checkbox"><input type="checkbox" id="save-node-positions-check_' + me.dbid + '" name="saveNodePositionsCheckbox">' +
 					'    <label for="save-node-positions-check_' + me.dbid + '">Save the nodes positions<span class="helpTip" style="float:right;" title="Use this option if you want to save the position for nodes in the network (increases performance)."></span><span class="commentTip" style="padding-left:21px;">Disable the auto-layout for network.</span></label>' +
+					'  </div>'+
+					'  <div class="checkbox" id="pre-auto-save-node-positions-check_' + me.dbid + '"><input type="checkbox" id="auto-save-node-positions-check_' + me.dbid + '" name="autoSaveNodePositionsCheckbox">' +
+					'    <label for="auto-save-node-positions-check_' + me.dbid + '">Auto-save positions<span class="helpTip" style="float:right;" title="Use this option if you want to save the position for nodes in the network when clicking the \'Apply\' button, instead of having to click \'Save node positions\' before."></span><span class="commentTip" style="padding-left:21px;">Save positions after clicking "Apply".</span></label>' +
 					'  </div>'+
 					'  <div class="checkbox"><input type="checkbox" id="background-layout-check_' + me.dbid + '" name="backgroundLayoutCheckbox">' +
 					'    <label for="background-layout-check_' + me.dbid + '">Calculate layout on background <span class="helpTip" style="float:right;" title="Run the layout on background, apply the new nodes position on stop (increases performance)."></span><span class="commentTip" style="padding-left:21px;">Increases performance.</span></label>' +
@@ -2069,10 +2385,17 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					'  <div class="slider-ui" style="margin:10px;" id="minSharedFeaturesSlider_' + me.dbid + '"></div>' +
 					'  <h5>Min p-value for the pathway (<span id="minPValue_' + me.dbid + '">0.05</span>)<span class="helpTip" style="float:right;" title="Pathways with lower p-value (more significant) will be represented with bigger nodes. Pathways with higher p-value (less significant), will be shown as small nodes."</span></h5>' +
 					'  <div class="slider-ui" style="margin:10px;" id="minPValueSlider_' + me.dbid + '"></div>' +
+					'  <div class="checkbox"><input type="checkbox" id="use-combined-pval-check_' + me.dbid + '" name="useCombinedPvalCheckbox">' +
+					'    <label for="use-combined-pval-check_' + me.dbid + '">Always use combined p-value <span class="helpTip" style="float:right;" title="When coloring for one omic, use always the combined p-value for filtering if enabled, otherwise rely on the omic p-value."</span></label>' +
+					'  </div>'+
+					'  <h5>P-value selection criteria: <span class="helpTip" style="float:right;" title="Select which adjust method to choose the p-values from."></span></h5>' +
+					'  <div id="pvaluemethod_' + me.dbid + '"></div>' +
 					'  <a href="javascript:void(0)" class="button btn-success btn-right helpTip" id="applyNetworkSettingsButton_' + me.dbid + '" style="margin-top: 20px;" title="Apply changes"><i class="fa fa-check"></i> Apply</a>' +
 					'</div>'
 				},{
-					xtype: 'box', cls: "contentbox", style: 'overflow: hidden; margin:0;', html:
+					xtype: 'box', cls: "contentbox", 
+					//autoHeight: true, flex: 4,
+					style: 'overflow: hidden; margin:0;', html:
 					//THE PANEL WITH THE NETWORK
 					'<div class="lateralOptionsPanel-toolbar">'+
 					'  <a href="javascript:void(0)" class="toolbarOption downloadTool helpTip" id="downloadNetworkToolSVG_' + me.dbid + '" title="Download the network (SVG)" style="margin-top: 10px;"><i class="fa fa-download"></i> Download (SVG)</a>' +
@@ -2094,7 +2417,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					' </div>' +
 					'  <a href="javascript:void(0)" class="toolbarOption helpTip" id="showNetworkSettingsPanelButton_' + me.dbid + '" ><i class="fa fa-cog"></i> Configure</a>' +
 					'  <div class="menu">'+
-					'    <a href="javascript:void(0)" class="toolbarOption menuOption helpTip"><i class="fa fa-mouse-pointer"></i> Node selection</a>' +
+					'    <a href="javascript:void(0)" class="toolbarOption menuOption helpTip" style="display: none"><i class="fa fa-mouse-pointer"></i> Node selection</a>' +
 					'    <div class="menuBody">' +
 					'      <a href="javascript:void(0)" class="toolbarOption helpTip submenuOption selectNodesOption" name="category" title="Select all nodes based on the categories/clusters for current selection"><i class="fa fa-object-ungroup"></i> Category-based selection</a>' +
 					'      <a href="javascript:void(0)" class="toolbarOption helpTip submenuOption selectNodesOption" name="free" title="Select nodes at a hand-drawn region"><i class="fa fa-cut"></i> Free select tool</a>' +
@@ -2103,7 +2426,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					'    </div>'+
 					'  </div>' +
 					'  <div class="menu">'+
-					'    <a href="javascript:void(0)" class="toolbarOption menuOption helpTip"><i class="fa fa-mouse-pointer"></i> Reorder selected nodes</a>' +
+					'    <a href="javascript:void(0)" class="toolbarOption menuOption helpTip"  style="display: none"><i class="fa fa-mouse-pointer"></i> Reorder selected nodes</a>' +
 					'    <div class="menuBody">' +
 					'      <a href="javascript:void(0)" class="toolbarOption helpTip submenuOption reorderNodesOption" name="block" title="Organize selected nodes in to a block"><i class="fa fa-th"></i> Display as block</a>' +
 					'      <a href="javascript:void(0)" class="toolbarOption helpTip submenuOption reorderNodesOption" name="ring" title="Organize selected nodes into a ring"><i class="fa fa-spinner"></i> Display as ring</a>' +
@@ -2111,7 +2434,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					'    </div>'+
 					'  </div>' +
 					'  <div class="menu">'+
-					'    <a href="javascript:void(0)" class="toolbarOption menuOption helpTip"><i class="fa fa-cog"></i> Node attributes</a>' +
+					'    <a href="javascript:void(0)" class="toolbarOption menuOption helpTip"  style="display: none"><i class="fa fa-cog"></i> Node attributes</a>' +
 					'    <div class="menuBody">' +
 					'      <a href="javascript:void(0)" class="toolbarOption helpTip submenuOption configureNodesOption" name="size-conf" title="Increase or decrease point size"><i class="fa fa-th"></i> Change point size</a>' +
 					'    </div>'+
@@ -2119,9 +2442,10 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					'  <a href="javascript:void(0)" class="toolbarOption helpTip" id="fullscreenSettingsPanelButton_' + me.dbid + '" ><i class="fa fa-arrows-alt"></i> Full screen</a>' +
 					'  <a href="javascript:void(0)" class="toolbarOption helpTip resumeLayout" id="resumeLayoutButton_' + me.dbid + '" style="float:right"><i class="fa fa-play"></i> Resume layout</a>' +
 					'  <a href="javascript:void(0)" class="toolbarOption resumeLayout helpTip" id="saveNodePositionsButton_' + me.dbid + '"  style="float:right"><i class="fa fa-floppy-o"></i> Save Node Positions</a>' +
-					'  <p id="step3-network-toolbar-message"></p>'+
+					'  <a href="javascript:void(0)" class="toolbarOption resumeLayout helpTip" id="toggleTooltipsButton_' + me.dbid + '"  style="float:right"><i class="fa fa-comment"></i> Toggle tooltips</a>' +
+					'  <p id="step3-network-toolbar-message_' + me.dbid + '"></p>'+
 					'</div>' +
-					'<div id="pathwayNetworkBox_' + me.dbid + '" style="position: relative;overflow:hidden; height:700px; width: 100%;"><div id="pathwayNetworkWaitBox_' + me.dbid + '"><i class="fa fa-cog fa-spin"></i> Building network...</div></div>' +
+					'<div id="pathwayNetworkBox_' + me.dbid + '" style="position: relative;overflow:hidden; height:775px; width: 100%;"><div id="pathwayNetworkWaitBox_' + me.dbid + '"><i class="fa fa-cog fa-spin"></i> Building network...</div></div>' +
 					'<div id="pathwayNetworkBoxSVG_' + me.dbid + '" style="display: none;">'
 				}],
 				listeners: {
@@ -2146,7 +2470,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 							}
 						});
 						$("#minPValueSlider_" + me.dbid).slider({
-							value: 0,min: 0.005,max: 0.05,step: 0.005,
+							value: 0,min: 0.005,max: 1,step: 0.005,
 							slide: function(event, ui) {
 								$("#minPValue_" + me.dbid).html(ui.value);
 							}
@@ -2163,8 +2487,23 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 								$("#minNodeSizeValue_" + me.dbid).html(ui.value);
 							}
 						});
+						$("#fontSizeSlider_" + me.dbid).slider({
+							value: 0,min: 1,max: 50,step: 1,
+							slide: function(event, ui) {
+								$("#fontSizeValue_" + me.dbid).html(ui.value);
+							}
+						});
+						$("#sliderClusterNumber_" + me.dbid).slider({
+							value: 0,min: 1,max: 20,step: 1,
+							slide: function(event, ui) {
+								$("#sliderClusterNumberShow_" + me.dbid).html(ui.value);
+							}
+						});
 						$("#applyNetworkSettingsButton_" + me.dbid).click(function() {
 							me.applyVisualSettings();
+						});
+						$("#applyClusterNumber_" + me.dbid).click(function() {
+							me.getNewClusters();
 						});
 
 						//HANDLERS FOR BUTTONS IN THE NETWORK TOOLBAR
@@ -2196,6 +2535,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 										if(option==="yes"){
 											$("#save-node-positions-check_" + me.dbid).attr("checked", false);
 											$("#save-node-positions-check_" + me.dbid).prop("checked", false);
+											$("#pre-auto-save-node-positions-check_" + me.dbid).fadeOut();
 
 											$("#applyNetworkSettingsButton_" + me.dbid).click();
 										}
@@ -2209,9 +2549,24 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 						});
 						$("#saveNodePositionsButton_" + me.dbid).click(function() {
 							$("#save-node-positions-check_" + me.dbid).prop("checked", true);
+							$("#pre-auto-save-node-positions-check_" + me.dbid).fadeIn();
 							me.stopNetworkLayout();
 							me.updateNodePositions(true);
 							$("#step3-network-toolbar-message_" + me.dbid).addClass("successMessage").html("<i class='fa fa-check'></i> Saved").fadeIn(100, function(){
+								setTimeout(function(){
+									$("#step3-network-toolbar-message_" + me.dbid).fadeOut(100);
+								}, 1500);
+							});
+						});
+						$("#save-node-positions-check_" + me.dbid).click(function() {
+							$("#pre-auto-save-node-positions-check_" + me.dbid).toggle($(this).is(":checked"));
+						});
+						$("#toggleTooltipsButton_" + me.dbid).click(function() {
+							me.showTooltips = ! me.showTooltips;
+							
+							var message = 'Tooltips ' + (me.showTooltips ? ' enabled' : 'disabled');
+							
+							$("#step3-network-toolbar-message_" + me.dbid).addClass("successMessage").html("<i class='fa fa-check'></i> " + message).fadeIn(100, function(){
 								setTimeout(function(){
 									$("#step3-network-toolbar-message_" + me.dbid).fadeOut(100);
 								}, 1500);
@@ -2456,13 +2811,47 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 				if(this.getParent().getName() !== "PA_Step3PathwayNetworkTooltipView"){
 					var htmlCode = '<tbody><tr><th></th><th>Matched<br>features</th><th>p-value</th></tr>';
 					var significanceValues = this.getModel().getSignificanceValues();
+					var foundFeatures = this.getParent("PA_Step4PathwayView").getMatchedFeatures();
 					var renderedValue;
 					for (var i in significanceValues) {
 						renderedValue = (significanceValues[i][2] > 0.001 || significanceValues[i][2] === 0) ? parseFloat(significanceValues[i][2]).toFixed(6) : parseFloat(significanceValues[i][2]).toExponential(4);
-						htmlCode += '<tr><td>' + i + '</td><td>' + significanceValues[i][0] + ' (' + significanceValues[i][1] + ')</td><td>' + renderedValue + '</td></tr>';
+						htmlCode += '<tr><td>' + i + '</td><td>' + significanceValues[i][0] + ' (' + significanceValues[i][1] + ')</td><td>' + renderedValue + '</td><td class="whiteBackground">' + (! Ext.Object.isEmpty(foundFeatures[i]) ? '<i class="fa fa-plus-square-o expandMatched" data-id="' + i.replace(/ /g, "_") + '"></i>' : '') + '</td></tr>';
 					}
 					htmlCode+='</tbody>';
 					$(componentID + " .pathwaySummaryTable").html('<table style="padding: 10px;text-align: center;">'+ htmlCode + '</table>');
+										
+					var detailedHTMLcode = '';
+					Object.keys(foundFeatures).forEach(function(omicName) {
+						detailedHTMLcode += '<div id="matchedlist_' + omicName.replace(/ /g, "_") + '" style="display: none;"><h5>Matched features: ' + omicName + '</h5>';
+						
+						if (! Ext.Object.isEmpty(foundFeatures[omicName])) {					
+							// Sort alphabetically
+							var omicFeatures = foundFeatures[omicName];
+							var sortKeys = Object.keys(omicFeatures);
+							sortKeys.sort();
+							
+							detailedHTMLcode += '<ul>';
+							
+							sortKeys.forEach(function(feature) {
+								detailedHTMLcode += '<li>' + feature + ' (' + Array.from(new Set(omicFeatures[feature].inputNames)).join(', ') + ')' +
+									(omicFeatures[feature].isRelevant ? '<i class="featureNameLabelRelevant relevantFeature" title="Relevant feature"></i>' : '') +
+									'</li>';
+							});
+							
+							detailedHTMLcode += '</ul></div>';
+						}
+					});
+					
+					$(componentID + " .pathwaySummaryTable").append(detailedHTMLcode);
+					
+					
+					$('i.expandMatched').click(function() {
+						var el = $(this);
+						var dataID = el.attr('data-id');
+						
+						el.toggleClass('fa-plus-square-o fa-minus-square-o');
+						$('#matchedlist_' + dataID).toggle();
+					});
 				}
 
 				/****************************************************************/
@@ -2776,6 +3165,33 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 				var defaultCombinedPvaluesMethod = me.getParent().visualOptions.selectedCombinedMethod;
 
 				var significativePathways = 0;
+				/*
+					Currently browsers have a limit on the amount of space available for
+					sessionStorage. In jobs with multiple omics the "omicsValue" property can
+					be large enough to produce a JSON string too big to be saved.
+					
+					As an alternative be keep a list of identifiers already parsed.
+								*/
+				var getIdentifiersFromMatched = function(matchedIds) {
+					var parsedIDs = me.model.getOmicsValuesID();
+					var allIdentifiers = new Set([]);
+					
+					matchedIds.map(function(matchID) {
+						if (parsedIDs[matchID]) {
+							allIdentifiers.add(parsedIDs[matchID]);
+						}
+						else if (me.model.omicsValues[matchID]) {
+							allIdentifiers.add(me.model.omicsValues[matchID].name);
+
+							me.model.omicsValues[matchID].omicsValues.map(function(omicValue) {
+								allIdentifiers.add(omicValue.inputName);
+								allIdentifiers.add(omicValue.originalName);
+							});
+						}
+					});
+					
+					return(Array.from(allIdentifiers).join('|'));
+				};
 
 				for (var i in pathways) {
 					pathwayModel = pathways[i];
@@ -2784,6 +3200,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					if (pathwayModel.getID() === this.getModel().getOrganism() + "01100") {
 						continue;
 					}
+					
 					pathwayData = {
 						// selected: pathwayModel.isSelected(),
 						pathwayID: pathwayModel.getID(),
@@ -2794,7 +3211,8 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 						mainCategory: pathwayModel.getClassification().split(";")[0],
 						secCategory: pathwayModel.getClassification().split(";")[1],
 						visible: pathwayModel.isVisible(),
-						source: pathwayModel.getSource()
+						source: pathwayModel.getSource(),
+						identifiers: getIdentifiersFromMatched(pathwayModel.getMatchedGenes().concat(pathwayModel.getMatchedCompounds()))
 					};
 
 					significanceValues = pathwayModel.getSignificanceValues();
@@ -2929,7 +3347,8 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					mainCategory: {name: "mainCategory",defaultValue: ''},
 					secCategory: {name: "secCategory",defaultValue: ''},
 					visible: {name: "visible", defaultValue: true},
-					source: {name: "source", defaultValue: "KEGG"}
+					source: {name: "source", defaultValue: "KEGG"},
+					identifiers: {name: "identifiers", defaultValue: ''}
 				};
 
 				//CALL THE PREVIOUS FUNCTION ADDING THE INFORMATION FOR GENE BASED OMIC AND COMPOUND BASED OMICS
@@ -3044,6 +3463,11 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
                 
                 gridPanel.initialConfig.columns = columns;
 				gridPanel.reconfigure(tableStore, columns);
+				
+				// Make sure that the updated adjusted p-values layer exists 
+				// when at least one database is filtered.
+				
+				
 				this.updateVisiblePathways();
 			};
 			
@@ -3088,7 +3512,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 				// First load: update the grid contained p-values
 				this.updatePvaluesFromStore();
 				
-				if (adjustedPvalueMethods !== null && loadRemote) {
+				if (adjustedPvalueMethods !== null) {
 					/*
 						Check if any database is filtered. It that is the case we retrieve the new
 						p-values from server. 
@@ -3096,31 +3520,51 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 						If not filtered (or no longer filtered) remove the layer of "false" adjusted
 						p-values to restore the original, unless there are custom Stouffer weights
 						in which case we retrieve the new ones.
-
 					*/
-					if (Object.values(parent.isFiltered).includes(true)) {
-						parent.getController().step3GetUpdatedPvalues(this, this.getPvaluesFromStore());
+					var isFiltered = Object.values(parent.isFiltered).includes(true);
+					var customStouffer = ! Ext.Object.isEmpty(visualOptions.stoufferWeights);
+					var retrieveNewValues = false;
+					
+					if (loadRemote) {
+						if (isFiltered) {
+							retrieveNewValues = true;
+						} else {
+							/*
+								Unfiltered data: remove options and update grid.
+							*/	
+							this.model.getDatabases().forEach(function(db) {
+								delete visualOptions[db].adjustedPvalues;
+							});
+
+							this.updatePvaluesFromStore();
+
+							if (customStouffer) {
+								var visiblePathways = Object.keys(this.getAssociatedPathways(true));
+
+								console.log("Unfiltered pathways and custom Stouffer: removing old visualOptions and retrieving adjusted Stouffer.");
+
+								parent.getController().step3GetUpdatedPvalues(this, this.getPvaluesFromStore(), visualOptions.stoufferWeights, visiblePathways);
+							} else {
+								console.log("Unfiltered pathways: removing old visualOptions and updating the table.");
+
+								parent.getController().updateStoredApplicationData("visualOptions", visualOptions);
+							}
+						}
 					} else {
 						/*
-							Unfiltered data: remove options and update grid.
-						*/	
-						this.model.getDatabases().forEach(function(db) {
-							delete visualOptions[db].adjustedPvalues;
-						});
-						
-						this.updatePvaluesFromStore();
-						
-						if (! Ext.Object.isEmpty(visualOptions.stoufferWeights)) {
-							var visiblePathways = Object.keys(this.getAssociatedPathways(true));
-							
-							console.log("Unfiltered pathways and custom Stouffer: removing old visualOptions and retrieving adjusted Stouffer.");
-													
-							parent.getController().step3GetUpdatedPvalues(this, this.getPvaluesFromStore(), visualOptions.stoufferWeights, visiblePathways);
-						} else {
-							console.log("Unfiltered pathways: removing old visualOptions and updating the table.");
-							
-							parent.getController().updateStoredApplicationData("visualOptions", visualOptions);
+							If we are first loading from session, make sure that if filtered the layer exists
+							in the visual options or retrieve it.
+						*/
+						var layerAdjusted = ! Ext.Object.isEmpty(visualOptions[this.model.getDatabases()[0]].adjustedPvalues);
+						var layerStouffer = ! Ext.Object.isEmpty(visualOptions[this.model.getDatabases()[0]].Stouffer);
+
+						if ((isFiltered && ! layerAdjusted) || (customStouffer && ! layerStouffer)) {
+							retrieveNewValues = true;
 						}
+					}
+				
+					if (retrieveNewValues) {
+						parent.getController().step3GetUpdatedPvalues(this, this.getPvaluesFromStore());
 					}
 				}
 			};
@@ -3161,7 +3605,6 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 							var pathwayID = storeRecord.raw.pathwayID;
 
 							/* Iterate over all adjusted columns (omics and combined p-values methods) */
-							//Object.keys(visualOptions[db].adjustedPvalues)
 							omicNames.concat(combinedPvaluesMethods).forEach(function(adjustedColumn) {
 								var keyField;
 
@@ -3200,7 +3643,6 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 			
 			this.getPvaluesFromStore = function(includeHidden = false){
 				var store = this.getComponent().queryById("pathwaysGridPanel").getStore();
-				//var rawData = store.getProxy().getReader().rawData;
 				var selectedRecords = (includeHidden ? store.snapshot || store.data : store.data);
 				
 				var omicNames = this.getParent().getModel().getOmicNames();
@@ -3250,7 +3692,7 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					metadata.style = "height: 33px; font-size:10px;"
 
 					//IF THERE IS NOT DATA FOR THIS PATHWAY, FOR THIS OMIC, PRINT A '-'
-					if (value === "-" || value == undefined) {
+					if (value === "-" || value == undefined || isNaN(value)) {
 						myToolTipText = myToolTipText + "<i>No data for this pathway</i>";
 						metadata.tdAttr = 'data-qtip="' + myToolTipText + '"';
 						metadata.style += "background-color:#D4D4D4;";
@@ -3322,7 +3764,8 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 					};
 					rowModel['pValue' + omicName] = {
 						name: 'pValue' + omicName,
-						defaultValue: "-"
+						defaultValue: "-",
+						type: 'floatOrString'
 					};
 
 					//Apply only when there are adjusted p-values
@@ -3338,7 +3781,8 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 
 						rowModel['adjpval' + m + omicName] = {
 							name: 'adjpval' + m + omicName,
-							defaultValue: "-"
+							defaultValue: "-",
+							type: 'floatOrString'
 						};
 					});
 				}
@@ -3497,6 +3941,64 @@ function PA_Step3PathwayClassificationView(db = "KEGG") {
 			return this;
 		}
 		PA_Step3PathwayTableView.prototype = new View();
+
+	function PA_Step3StatsView() {
+		/*********************************************************************
+		* ATTRIBUTES
+		***********************************************************************/
+		this.name = "PA_Step3StatsView";
+
+		/***********************************************************************
+		* GETTER AND SETTERS
+		***********************************************************************/
+		//TODO: DOCUMENTAR
+		this.loadModel= function(model){
+			var me = this;
+
+			me.model = model;
+		};
+		
+		/**
+		* This function generates the component (EXTJS) using the content of the model
+		* @param {String}  renderTo  the ID for the DOM element where this component should be rendered
+		* @returns {Ext.ComponentView} The visual component
+		*/
+		this.initComponent = function() {
+			var me = this;
+			
+			var omicSummaryPanelComponents = [];
+			var dataDistribution = me.getModel().getDataDistributionSummaries();
+			
+			for (var omicName in dataDistribution) {
+				omicSummaryPanelComponents.push(new PA_OmicSummaryPanel(omicName, dataDistribution[omicName], false).getComponent());
+			}
+			
+			this.component = Ext.widget({					
+				xtype: 'container', cls: "contentbox", id: 'statsViewContainer', hidden: false, items: [
+					{xtype: 'box', flex: 1, 
+					 html: '<h2>Mapping and data statistics</h2>' + (omicSummaryPanelComponents.length ? '<a href="javascript:void(0)" id="download_mapping_file"><i class="fa fa-download"></i> Download ID/Name mapping results.</a>' : "")},
+					{
+							xtype: 'container', itemId: "omicSummaryPanelStep3",
+							cls: "omicSummaryContainer",
+							layout: 'column',  style: "margin-top:20px;width: 100%;",
+							items: omicSummaryPanelComponents
+					}
+				],
+				listeners: {
+						boxready: function() {
+							$('#download_mapping_file').click(function() {
+								application.getController("DataManagementController").downloadFilesHandler(me, "mapping_results_" + me.getModel().getJobID() + ".zip", "job_result", me.getModel().getJobID());
+							});
+						}
+					}
+			});
+			
+			return this.component;
+		};
+		
+		return this;
+	}
+	PA_Step3StatsView.prototype = new View();
 
 		/**
 		* This function returns the MIN/MAX values that will be used as references

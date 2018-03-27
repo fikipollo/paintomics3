@@ -42,6 +42,7 @@ class Job(Model):
         self.userID = userID
         self.lastStep = 1
         self.description=""
+        self.name = ""
 
         self.organism = ""
 
@@ -68,6 +69,10 @@ class Job(Model):
         #Indexes by gene ID
         self.inputGenesData = {}
 
+        # Sharing options
+        self.allowSharing = False
+        self.readOnly = False
+
     #******************************************************************************************************************
     # GETTERS AND SETTER
     #******************************************************************************************************************
@@ -80,6 +85,11 @@ class Job(Model):
         self.userID = userID
     def getUserID(self):
         return self.userID
+
+    def setName(self, name):
+        self.name = name
+    def getName(self):
+        return self.name
 
     def setLastStep(self, lastStep):
         self.lastStep = lastStep
@@ -133,6 +143,22 @@ class Job(Model):
         self.geneBasedInputOmics.append(geneBasedInputOmic)
 
 
+    def getValueIdTable(self):
+        # {ID: values.toBSON() }
+        valueTable = {}
+
+        for ID, feature in dict(self.getInputGenesData(), **self.getInputCompoundsData()).iteritems():
+            valueTable[ID] = set([feature.getName()])
+
+            for omicValue in feature.getOmicsValues():
+                valueTable[ID].add(omicValue.getOriginalName())
+                valueTable[ID].add(omicValue.getInputName())
+
+            valueTable[ID] = '|'.join(valueTable[ID])
+
+        return valueTable
+
+
     def setInputCompoundsData(self, inputCompoundsData):
         self.inputCompoundsData = inputCompoundsData
     def getInputCompoundsData(self):
@@ -154,6 +180,16 @@ class Job(Model):
             self.inputGenesData[inputGeneData.getID()] = inputGeneData
         else:
             currentData.addOmicValues(inputGeneData.getOmicsValues())
+
+    def setAllowSharing(self, allowSharing):
+        self.allowSharing = allowSharing
+    def getAllowSharing(self):
+        return self.allowSharing
+
+    def setReadOnly(self, readOnly):
+        self.readOnly = readOnly
+    def getReadOnly(self):
+        return self.readOnly
 
     #******************************************************************************************************************
     # OTHER FUNCTIONS
@@ -230,7 +266,9 @@ class Job(Model):
             valuesFileName = self.getInputDir() + valuesFileName
             relevantFileName = self.getInputDir() + relevantFileName
 
-        totalInputFeatures= totalMappedFeatures = foundFeatures = 0
+        totalInputFeatures  = set()
+        totalMappedFeatures = foundFeatures = 0
+        featureEnrichment   = inputOmic.get("featureEnrichment", False)
 
         #*************************************************************************
         # STEP 1. PARSE THE RELEVANT FEATURES FILE FOR THE CURRENT OMIC (IF UPLOADED)
@@ -292,13 +330,15 @@ class Job(Model):
 
                         allValues += omicValueAux.getValues()
 
-                totalInputFeatures = len(parsedFeatures)
+                        totalInputFeatures.add(omicValueAux.getOriginalName() if featureEnrichment else omicValueAux.getInputName())
+
+                totalInputFeatures = len(totalInputFeatures)
                 logging.info("PARSING USER USER GENE BASED FILE (" + omicName + ")... FINISHED. " + str(totalInputFeatures) + " FEATURES PROCESSED.")
 
                 #*************************************************************************
                 # STEP 3. MAP TH FEATURE NAMES TO KEGG IDs
                 #*************************************************************************
-                foundFeatures, parsedFeatures, notMatchedFeatures = mapFeatureNamesToKeggIDs(self.getJobID(), self.getOrganism(), self.getDatabases(), parsedFeatures)
+                foundFeatures, parsedFeatures, notMatchedFeatures = mapFeatureNamesToKeggIDs(self.getJobID(), self.getOrganism(), self.getDatabases(), parsedFeatures, featureEnrichment)
                 totalMappedFeatures = len(parsedFeatures)
                 matchedFeaturesFileContent =""
                 notMatchedFeaturesFileContent =""

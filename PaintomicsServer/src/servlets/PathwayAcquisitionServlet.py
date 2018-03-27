@@ -22,7 +22,7 @@ import logging.config
 
 import cairo
 import rsvg
-import re
+from time import time
 
 from collections import defaultdict
 
@@ -97,6 +97,7 @@ def pathwayAcquisitionStep1_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, EXA
             uploadedFiles  = REQUEST.files
             formFields   = REQUEST.form
             jobInstance.description=""
+            jobInstance.setName(formFields.get("jobDescription", "")[:100])
             specie = formFields.get("specie") #GET THE SPECIE NAME
             databases = REQUEST.form.getlist('databases[]')
             jobInstance.setOrganism(specie)
@@ -118,8 +119,8 @@ def pathwayAcquisitionStep1_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, EXA
             logging.info("STEP1 - EXAMPLE MODE SELECTED")
             logging.info("STEP1 - COPYING FILES....")
 
-            exampleOmics = ["Gene expression", "Metabolomics", "Proteomics", "miRNA-seq", "DNase-seq"]
-            for omicName in exampleOmics:
+            exampleOmics = {"Gene expression": False, "Metabolomics": True, "Proteomics": True, "miRNA-seq": False, "DNase-seq": False}
+            for omicName, featureEnrichment in exampleOmics.iteritems():
                 dataFileName = omicName.replace(" ", "_").replace("-seq", "").lower() + "_values.tab"
                 logging.info("STEP1 - USING ALREADY SUBMITTED FILE (data file) " + EXAMPLE_FILES_DIR + dataFileName + " FOR  " + omicName)
 
@@ -127,9 +128,9 @@ def pathwayAcquisitionStep1_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, EXA
                 logging.info("STEP1 - USING ALREADY SUBMITTED FILE (relevant features file) " + EXAMPLE_FILES_DIR + relevantFileName + " FOR  " + omicName)
 
                 if(["Metabolomics"].count(omicName)):
-                    jobInstance.addCompoundBasedInputOmic({"omicName": omicName, "inputDataFile": EXAMPLE_FILES_DIR + dataFileName, "relevantFeaturesFile": EXAMPLE_FILES_DIR + relevantFileName, "isExample" : True})
+                    jobInstance.addCompoundBasedInputOmic({"omicName": omicName, "inputDataFile": EXAMPLE_FILES_DIR + dataFileName, "relevantFeaturesFile": EXAMPLE_FILES_DIR + relevantFileName, "isExample" : True, "featureEnrichment": featureEnrichment})
                 else:
-                    jobInstance.addGeneBasedInputOmic({"omicName": omicName, "inputDataFile": EXAMPLE_FILES_DIR + dataFileName, "relevantFeaturesFile": EXAMPLE_FILES_DIR + relevantFileName,  "isExample" : True})
+                    jobInstance.addGeneBasedInputOmic({"omicName": omicName, "inputDataFile": EXAMPLE_FILES_DIR + dataFileName, "relevantFeaturesFile": EXAMPLE_FILES_DIR + relevantFileName,  "isExample" : True, "featureEnrichment": featureEnrichment})
 
             specie = "mmu"
             jobInstance.setOrganism(specie)
@@ -215,16 +216,21 @@ def pathwayAcquisitionStep1_PART2(jobInstance, userID, exampleMode, RESPONSE):
         RESPONSE.setContent({
             "success": True,
             "organism" : jobInstance.getOrganism(),
-            "jobID":jobInstance.getJobID() ,
+            "jobID": jobInstance.getJobID(),
+            "userID": jobInstance.getUserID(),
             "matchedMetabolites": map(lambda foundFeature: foundFeature.toBSON(), matchedMetabolites),
-            "geneBasedInputOmics":jobInstance.getGeneBasedInputOmics(),
+            "geneBasedInputOmics": jobInstance.getGeneBasedInputOmics(),
             "compoundBasedInputOmics": jobInstance.getCompoundBasedInputOmics(),
-            "databases": jobInstance.getDatabases()
+            "databases": jobInstance.getDatabases(),
+            "name": jobInstance.getName(),
+            "timestamp": int(time())
         })
 
     except Exception as ex:
         jobInstance.cleanDirectories(remove_output=True)
 
+        # TODO: at this point we should notify the queue system about the error, or else
+        # will keep returning success to the job.
         handleException(RESPONSE, ex, __file__ , "pathwayAcquisitionStep1_PART2", userID=userID)
     finally:
         return RESPONSE
@@ -277,13 +283,16 @@ def pathwayAcquisitionStep2_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE, ROOT_DIRECT
         formFields = REQUEST.form
         jobID  = formFields.get("jobID")
         selectedCompounds= REQUEST.form.getlist("selectedCompounds[]")
+        # Retrieve the number of cluster on a per omic basis
+        # Note: this will contain the omic name transformed to remove spaces and special chars
+        clusterNumber = {key.replace("clusterNumber:", ""): value for key, value in formFields.iteritems() if key.startswith("clusterNumber:")}
 
         #************************************************************************
         # Step 3. Queue job
         #************************************************************************
         QUEUE_INSTANCE.enqueue(
             fn=pathwayAcquisitionStep2_PART2,
-            args=(jobID, userID, selectedCompounds, RESPONSE, ROOT_DIRECTORY,),
+            args=(jobID, userID, selectedCompounds, clusterNumber, RESPONSE, ROOT_DIRECTORY,),
             timeout=600,
             job_id= jobID
         )
@@ -301,7 +310,7 @@ def pathwayAcquisitionStep2_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE, ROOT_DIRECT
     finally:
         return RESPONSE
 
-def pathwayAcquisitionStep2_PART2(jobID, userID, selectedCompounds, RESPONSE, ROOT_DIRECTORY):
+def pathwayAcquisitionStep2_PART2(jobID, userID, selectedCompounds, clusterNumber, RESPONSE, ROOT_DIRECTORY):
     """
     This function corresponds to SECOND PART of the SECOND step in the Pathways acquisition process.
     Given a JOB INSTANCE, first processes the uploaded files (identifiers matching and compound list generation)
@@ -357,7 +366,7 @@ def pathwayAcquisitionStep2_PART2(jobID, userID, selectedCompounds, RESPONSE, RO
         # Step 3. GENERATING METAGENES INFORMATION
         #****************************************************************
         logging.info("STEP2 - GENERATING METAGENES INFORMATION...")
-        jobInstance.generateMetagenesList(ROOT_DIRECTORY)
+        jobInstance.generateMetagenesList(ROOT_DIRECTORY, clusterNumber)
         logging.info("STEP2 - GENERATING METAGENES INFORMATION...DONE")
 
         jobInstance.setLastStep(3)
@@ -384,7 +393,9 @@ def pathwayAcquisitionStep2_PART2(jobID, userID, selectedCompounds, RESPONSE, RO
             "pathwaysInfo" : matchedPathwaysJSONList,
             "geneBasedInputOmics":jobInstance.getGeneBasedInputOmics(),
             "compoundBasedInputOmics": jobInstance.getCompoundBasedInputOmics(),
-            "databases": jobInstance.getDatabases()
+            "databases": jobInstance.getDatabases(),
+            "omicsValuesID": jobInstance.getValueIdTable(),
+            "timestamp": int(time())
         })
 
     except Exception as ex:
@@ -441,6 +452,7 @@ def pathwayAcquisitionStep3(request, response):
         selectedPathways= formFields.getlist("selectedPathways")
         #TODO: SOLO GENERAR INFO PARA LAS QUE NO LA TENGAN YA GUARDADA EN LA BBDD
         [selectedPathwayInstances, graphicalOptionsInstancesBSON, omicsValuesSubset] = jobInstance.generateSelectedPathwaysInformation(selectedPathways, visibleOmics, True)
+
         logging.info("STEP3 - GENERATING PATHWAYS INFORMATION...DONE")
 
         #************************************************************************
@@ -452,9 +464,9 @@ def pathwayAcquisitionStep3(request, response):
 
         response.setContent({
             "success": True,
-            "jobID":jobInstance.getJobID(),
+            "jobID": jobInstance.getJobID(),
             "graphicalOptionsInstances" : graphicalOptionsInstancesBSON,
-            "omicsValues" : omicsValuesSubset,
+            "omicsValues": omicsValuesSubset,
             "organism" : jobInstance.getOrganism()
         })
 
@@ -500,8 +512,8 @@ def pathwayAcquisitionRecoverJob(request, response, QUEUE_INSTANCE):
             return response
 
         # Allow "no user" jobs to be viewed by anyone, logged or not
-        if(str(jobInstance.getUserID()) != 'None' and jobInstance.getUserID() != userID):
-            logging.info("RECOVER_JOB - JOB " + jobID + " DOES NOT BELONG TO USER " + str(userID))
+        if(str(jobInstance.getUserID()) != 'None' and jobInstance.getUserID() != userID and not jobInstance.getAllowSharing()):
+            logging.info("RECOVER_JOB - JOB " + jobID + " DOES NOT BELONG TO USER " + str(userID) + " JOB HAS USER " + str(jobInstance.getUserID()))
             response.setContent({"success": False, "errorMessage": "Invalid Job ID (" + jobID + ") for current user.<br>Please, check the Job ID and try again."})
             return response
 
@@ -514,25 +526,32 @@ def pathwayAcquisitionRecoverJob(request, response, QUEUE_INSTANCE):
             matchedPathwaysJSONList.append(matchedPathway.toBSON())
         logging.info("RECOVER_JOB - GENERATING PATHWAYS INFORMATION...DONE")
 
-        if (len(matchedCompoundsJSONList) == 0 and jobInstance.getLastStep() == 2):
+        if (len(matchedCompoundsJSONList) == 0 and jobInstance.getLastStep() == 2 and len(jobInstance.getCompoundBasedInputOmics()) > 0):
             logging.info("RECOVER_JOB - JOB " + jobID + " DOES NOT CONTAINS FOUND COMPOUNDS (STEP 2: OLD FORMAT?).")
             response.setContent({"success": False, "errorMessage": "Job " + jobID + " does not contains saved information about the found compounds, please run it again."})
         elif(len(matchedPathwaysJSONList) == 0 and jobInstance.getLastStep() > 2):
             logging.info("RECOVER_JOB - JOB " + jobID + " DOES NOT CONTAINS PATHWAYS.")
             response.setContent( {"success": False, "errorMessage":"Job " + jobID + " does not contains information about pathways. Please, run it again."})
         else:
+
             response.setContent({
                 "success": True,
-                "jobID":jobInstance.getJobID(),
+                "jobID": jobInstance.getJobID(),
+                "userID": jobInstance.getUserID(),
                 "pathwaysInfo" : matchedPathwaysJSONList,
-                "geneBasedInputOmics":jobInstance.getGeneBasedInputOmics(),
+                "geneBasedInputOmics": jobInstance.getGeneBasedInputOmics(),
                 "compoundBasedInputOmics": jobInstance.getCompoundBasedInputOmics(),
                 "organism" : jobInstance.getOrganism(),
                 "summary" : jobInstance.summary,
                 "visualOptions" : JobInformationManager().getVisualOptions(jobID),
                 "databases": jobInstance.getDatabases(),
                 "matchedMetabolites": matchedCompoundsJSONList,
-                "stepNumber": jobInstance.getLastStep()
+                "stepNumber": jobInstance.getLastStep(),
+                "name": jobInstance.getName(),
+                "timestamp": int(time()),
+                "allowSharing": jobInstance.getAllowSharing(),
+                "readOnly": jobInstance.getReadOnly(),
+                "omicsValuesID": jobInstance.getValueIdTable()
             })
 
     except Exception as ex:
@@ -557,10 +576,10 @@ def pathwayAcquisitionSaveImage(request, response):
         #****************************************************************
         # Step 0.CHECK IF VALID USER SESSION
         #****************************************************************
-        logging.info("STEP0 - CHECK IF VALID USER....")
-        userID  = request.cookies.get('userID')
-        sessionToken  = request.cookies.get('sessionToken')
-        UserSessionManager().isValidUser(userID, sessionToken)
+        # logging.info("STEP0 - CHECK IF VALID USER....")
+        # userID  = request.cookies.get('userID')
+        # sessionToken  = request.cookies.get('sessionToken')
+        # UserSessionManager().isValidUser(userID, sessionToken)
 
         jobID = request.form.get("jobID")
         jobInstance = JobInformationManager().loadJobInstance(jobID)
@@ -569,6 +588,7 @@ def pathwayAcquisitionSaveImage(request, response):
         fileName = "paintomics_" + request.form.get("fileName").replace(" ", "_") + "_" + jobID
         fileFormat = request.form.get("format")
 
+        userID = jobInstance.getUserID()
         userDirID = userID if userID is not None else "nologin"
         path = CLIENT_TMP_DIR + userDirID + jobInstance.getOutputDir().replace(CLIENT_TMP_DIR + userDirID, "")
 
@@ -620,60 +640,156 @@ def pathwayAcquisitionSaveVisualOptions(request, response):
         #****************************************************************
         # Step 1.GET THE INSTANCE OF visual Options
         #****************************************************************
-        formFields = request.form
+        visualOptions = request.get_json()
+        jobID  = visualOptions.get("jobID")
 
-        visualOptions = defaultdict(dict)
-        jobID  = formFields.get("jobID")
+        jobInstance = JobInformationManager().loadJobInstance(jobID)
 
-        # Visual options are stored on a DB basis, with form info in the structure
-        # DB[option] or DB[option][] for lists
-        db_matcher = re.compile(r"^(\w+)\[(.+?)\](\Z|\[\])$")
+        if jobInstance.getReadOnly() and str(jobInstance.getUserID()) != str(userID):
+            raise Exception("Invalid user for the job saving visual options")
 
-        for key in formFields.keys():
-            value = formFields.get(key)
-
-            # If the regex matches, the option is specific for a DB
-            db_match = db_matcher.search(key)
-
-            # if key == "pathwaysVisibility[]":
-            #     visualOptions["pathwaysVisibility"] = formFields.getlist(key)
-            #     continue
-            # elif key == "pathwaysPositions[]":
-            #     visualOptions["pathwaysPositions"] = formFields.getlist(key)
-            #     continue
-            if "[]" in key:
-                value = formFields.getlist(key)
-                key = key.replace("[]", "")
-            elif value == "true" or value == "false":
-                value = (value == "true")
-            else:
-                try:
-                    value = float(value)
-                except:
-                    pass
-
-            if db_match:
-                db_name = db_match.group(1)
-                option = db_match.group(2)
-                is_list = (db_match.group(3) == "[]")
-
-                visualOptions[db_name][option] = value #formFields.getlist(key) if is_list else value
-            else:
-                visualOptions[key] = value
+        newTimestamp = int(time())
+        visualOptions["timestamp"] = newTimestamp
 
         #************************************************************************
         # Step 3. Save the visual Options in the MongoDB
         #************************************************************************
         logging.info("STEP 3 - SAVING VISUAL OPTIONS FOR JOB " + jobID + "..." )
-        JobInformationManager().storeVisualOptions(jobID, dict(visualOptions))
+        JobInformationManager().storeVisualOptions(jobID, visualOptions)
         logging.info("STEP 3 - SAVING VISUAL OPTIONS FOR JOB " + jobID + "...DONE" )
 
-        response.setContent({"success": True})
+        response.setContent({"success": True, "timestamp": newTimestamp})
 
     except Exception as ex:
-        handleException(response, ex, __file__ , "pathwayAcquisitionStep3", userID=userID)
+        handleException(response, ex, __file__ , "pathwayAcquisitionSaveVisualOptions", userID=userID)
     finally:
         return response
+
+def pathwayAcquisitionSaveSharingOptions(request, response):
+    #VARIABLE DECLARATION
+    jobID  = ""
+    userID = ""
+
+    try :
+        #****************************************************************
+        # Step 0.CHECK IF VALID USER SESSION
+        #****************************************************************
+        logging.info("STEP0 - CHECK IF VALID USER....")
+        userID  = request.cookies.get('userID')
+        sessionToken  = request.cookies.get('sessionToken')
+        UserSessionManager().isValidUser(userID, sessionToken)
+
+        #****************************************************************
+        # Step 1.GET THE INSTANCE OF sharing options
+        #****************************************************************
+        jobID = request.form.get("jobID")
+        jobInstance = JobInformationManager().loadJobInstance(jobID)
+
+        if str(jobInstance.getUserID()) != str(userID):
+            raise Exception("Invalid user for this jobID")
+
+        #************************************************************************
+        # Step 3. Save the visual Options in the MongoDB
+        #************************************************************************
+        jobInstance.setAllowSharing(request.form.get("allowSharing", 'false') == 'true')
+        jobInstance.setReadOnly(request.form.get("readOnly", 'false') == 'true')
+
+        logging.info("STEP 3 - SAVING SHARING OPTIONS FOR JOB " + jobID + "..." )
+        JobInformationManager().storeSharingOptions(jobInstance)
+        logging.info("STEP 3 - SAVING SHARING OPTIONS FOR JOB " + jobID + "...DONE" )
+
+        response.setContent({"success": True})
+    except Exception as ex:
+        handleException(response, ex, __file__ , "pathwayAcquisitionSaveSharingOptions", userID=userID)
+    finally:
+        return response
+
+def pathwayAcquisitionMetagenes_PART1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, ROOT_DIRECTORY):
+        # ****************************************************************
+        # Step 0. VARIABLE DECLARATION
+        # The following variables are defined:
+        #  - jobInstance: instance of the PathwayAcquisitionJob class.
+        #                 Contains all the information for the current job.
+        #  - userID: the ID for the user
+        # ****************************************************************
+        jobInstance = None
+        userID = None
+
+        try:
+            # ****************************************************************
+            # Step 1. CHECK IF VALID USER SESSION
+            # ****************************************************************
+            logging.info("STEP0 - CHECK IF VALID USER....")
+            userID = REQUEST.cookies.get('userID')
+            sessionToken = REQUEST.cookies.get('sessionToken')
+            UserSessionManager().isValidUser(userID, sessionToken)
+
+            # ****************************************************************
+            # Step 2. LOAD THE JOB INSTANCE AND RETRIEVE FORM INFO
+            # ****************************************************************
+            savedJobID = REQUEST.form.get("jobID")
+            savedJobInstance = JobInformationManager().loadJobInstance(savedJobID)
+
+            if savedJobInstance.getReadOnly() and str(savedJobInstance.getUserID()) != str(userID):
+                raise Exception("Invalid user for the job generating metagenes.")
+
+            omicName = REQUEST.form.get("omic")
+            clusterNumber = int(REQUEST.form.get("number"))
+
+            # Make sure the number of clusters is inside [1, 20]
+            clusterNumber = 1 if clusterNumber < 1 else 20 if clusterNumber > 20 else clusterNumber
+
+            # ************************************************************************
+            # Step 4. Queue job
+            # ************************************************************************
+            QUEUE_INSTANCE.enqueue(
+                fn=pathwayAcquisitionMetagenes_PART2,
+                args=(ROOT_DIRECTORY, userID, savedJobInstance, omicName, clusterNumber, RESPONSE),
+                timeout=600,
+                job_id=JOB_ID
+            )
+
+            # ************************************************************************
+            # Step 5. Return the Job ID
+            # ************************************************************************
+            RESPONSE.setContent({
+                "success": True,
+                "jobID": JOB_ID
+            })
+        except Exception as ex:
+            handleException(RESPONSE, ex, __file__, "pathwayAcquisitionMetagenes_PART1", userID=userID)
+        finally:
+            return RESPONSE
+
+def pathwayAcquisitionMetagenes_PART2(ROOT_DIRECTORY, userID, savedJobInstance, omicName, clusterNumber, RESPONSE):
+    #VARIABLE DECLARATION
+    jobID  = ""
+    userID = ""
+
+    try :
+        #************************************************************************
+        # Step 3. Save the visual Options in the MongoDB
+        #************************************************************************
+        logging.info("UPDATE METAGENES - STEP 2 FOR JOB " + jobID + "..." )
+        savedJobInstance.generateMetagenesList(ROOT_DIRECTORY, {omicName: clusterNumber}, [omicName])
+        logging.info("UPDATE METAGENES - STEP 2 FOR JOB " + jobID + "...DONE")
+        JobInformationManager().storePathways(savedJobInstance)
+
+        matchedPathwaysJSONList = []
+        for matchedPathway in savedJobInstance.getMatchedPathways().itervalues():
+            matchedPathwaysJSONList.append(matchedPathway.toBSON())
+
+        RESPONSE.setContent({
+            "success": True,
+            "jobID": jobID,
+            # "timestamp": newTimestamp,
+            "pathwaysInfo": matchedPathwaysJSONList
+        })
+
+    except Exception as ex:
+        handleException(RESPONSE, ex, __file__ , "pathwayAcquisitionMetagenes_PART2", userID=userID)
+    finally:
+        return RESPONSE
 
 def pathwayAcquisitionAdjustPvalues(request, response):
     try:

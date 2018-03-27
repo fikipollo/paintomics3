@@ -94,6 +94,8 @@ class Pathway(Model):
         if not self.metagenes.has_key(omicName):
             self.metagenes[omicName] = []
         self.metagenes[omicName].append(metagene)
+    def resetMetagenes(self, omicName):
+        self.metagenes[omicName] = []
 
     #OmicName -> [totalFeatures, totalRelevantFeatures, pValue]
     def setSignificanceValues(self, significanceValues):

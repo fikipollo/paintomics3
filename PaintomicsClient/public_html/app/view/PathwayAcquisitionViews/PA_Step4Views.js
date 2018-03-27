@@ -55,6 +55,7 @@ function PA_Step4JobView() {
 	this.items = [];
 	this.pathwayViews = []; //QUEUE MAX 5 LAST PATHWAYS [MAX_PATHWAYS_OPENED]
 	this.currentView = null;
+	this.speciesInfo = null;
 
 	/*********************************************************************
 	* GETTERS AND SETTERS
@@ -75,6 +76,24 @@ function PA_Step4JobView() {
 	// 	}
 	// 	return this;
 	// };
+	
+	/**
+	* This function retrieves species data from the server and saves the info in the controller to avoid
+	* asking the same more than once per session.
+	*/
+	this.downloadSpeciesInfo = function(callback) {
+		var me = this;
+		
+		if (this.speciesInfo == null) {
+			$.getJSON(SERVER_URL_GET_AVAILABLE_SPECIES, function(data) {
+				me.speciesInfo = data;
+				callback(data);
+			});
+			
+		} else {
+			callback(this.speciesInfo);
+		}
+	}
 
 	/**
 	* This function handles the event fired when the user clicks on the "view" button
@@ -87,6 +106,7 @@ function PA_Step4JobView() {
 		var pathwaysPanelsContainer = this.getComponent().queryById("pathwaysPanelsContainer");
 		if (this.currentView !== null) {
 			pathwaysPanelsContainer.remove(this.currentView.getComponent(), false);  //remove from panel but do not destroy the component.
+			this.currentView.hideTooltips();
 		}
 		this.currentView = (this.getPathwayView(pathwayID) || this.addPathwayView(pathwayID));
 		pathwaysPanelsContainer.add(this.currentView.getComponent());
@@ -191,7 +211,12 @@ function PA_Step4JobView() {
 	this.backButtonHandler = function() {
 		//HIDE THE HISTORY PANEL
 		this.toogleHistoryPanel(true);
-		this.controller.showJobInstance(this.getModel(), {doUpdate: false});
+		
+		if (this.currentView) {
+			this.currentView.hideTooltips();
+		}
+		
+		this.controller.showJobInstance(this.getModel(), {doUpdate: false, callback: function() {initializeTooltips(".helpTip");}});
 		return this;
 	};
 
@@ -343,7 +368,7 @@ function PA_Step4PathwayView() {
 
 		var update=false;
 		var me = this;
-		if(!this.visualOptions.colorReferences){
+		if(!this.visualOptions.colorReferences || typeof(this.visualOptions.colorReferences) === "string"){
 			/* Initialize new set of color references using the default colour */
 			this.visualOptions.colorReferences = {};
 			var defaultColorReference = this.model.getGraphicalOptions().getColorReferences();
@@ -395,6 +420,30 @@ function PA_Step4PathwayView() {
 		}
 
 		return this.dataDistributionSummaries;
+	};
+	
+	this.getMatchedFeatures = function() {
+		var foundFeatures = this.getModel().getMatchedGenes().concat(this.getModel().getMatchedCompounds());
+		var omicsValues = this.getOmicsValues();
+		
+		var matchedFeatures = {};
+		this.getGeneBasedInputOmics().concat(this.getCompoundBasedInputOmics()).map(x => matchedFeatures[x.omicName] = []);
+		
+		foundFeatures.forEach(function(featureName) {
+			var keggName = omicsValues[featureName].getName();
+			
+			omicsValues[featureName].getOmicsValues().forEach(function(omicValue) {
+				
+				matchedFeatures[omicValue.omicName][keggName] = matchedFeatures[omicValue.omicName][keggName] || {isRelevant: false, inputNames: []};
+				
+				matchedFeatures[omicValue.omicName][keggName] = {
+					isRelevant: matchedFeatures[omicValue.omicName][keggName].isRelevant || omicValue.relevant,
+					inputNames: matchedFeatures[omicValue.omicName][keggName].inputNames.concat(omicValue.originalName || omicValue.getInputName())
+				};
+			})
+		});
+		
+		return matchedFeatures;
 	};
 
 	this.setDataDistributionSummaries = (function(dataDistributionSummaries, omicName) {
@@ -591,6 +640,10 @@ function PA_Step4PathwayView() {
 		}
 
 	};
+	
+	this.hideTooltips = function() {
+		this.diagramPanel.hideTooltips();
+	};
 
 	//TODO: DOCUMENTAR
 	this.updateObserver = function() {
@@ -750,7 +803,18 @@ function PA_Step4KeggDiagramView() {
 	this.toggle = function(visible) {
 		visible = ((visible===undefined)? ! this.getComponent().isVisible():visible);
 		this.getComponent().setVisible(visible);
+		
+		if (! visible) {
+			this.hideTooltips();
+		}
+		
 		return this;
+	};
+	
+	this.hideTooltips = function() {
+		for (var i in this.items) {
+			this.items[i].hideTooltip(true);
+		}
 	};
 
 	//TODO: DOCUMENTAR
@@ -814,6 +878,7 @@ function PA_Step4KeggDiagramView() {
 				//ADD THE ENTRY TO THE SEARCH TABLE (INPUT NAME -> featureSetElem)
 				for (var j in omicsValues[featuresIDs[i]].omicsValues) {
 					searchFeatureIndex[omicsValues[featuresIDs[i]].omicsValues[j].inputName] = featureSetElem;
+					searchFeatureIndex[omicsValues[featuresIDs[i]].omicsValues[j].originalName] = featureSetElem;
 				}
 
 				pos = data[k].getX() + "#" + data[k].getY();
@@ -988,6 +1053,9 @@ function PA_Step4KeggDiagramView() {
 					}
 
 					me.getModel().deleteObserver(me);
+				},
+				afterHide: function() {
+					console.log("AFTER HIDE DE KEGG DIAGRAM");
 				}
 			}
 		});
@@ -1009,6 +1077,7 @@ function PA_Step4KeggDiagramFeatureSetView() {
 	this.name = "PA_Step4KeggDiagramFeatureSetView";
 	this.featureView = null;
 	this.adjustFactor = 1;
+	this.tooltipComponent = null;
 
 	/***********************************************************************
 	* GETTERS AND SETTERS
@@ -1035,11 +1104,26 @@ function PA_Step4KeggDiagramFeatureSetView() {
 	* OTHER FUNCTIONS
 	***********************************************************************/
 	//TODO: DOCUMENTAR
-	this.showTooltip = function(dataDistributionSummaries, visualOptions) {
-		var tooltip = new PA_Step4KeggDiagramFeatureSetTooltip();
-		tooltip.loadModel(this.getModel());
-		tooltip.setParent(this.getParent());
-		tooltip.show(this.component.id, dataDistributionSummaries, visualOptions);
+	this.showTooltip = function(dataDistributionSummaries, visualOptions, pinned) {
+		/* Create only when there is no instance */
+		if (this.tooltipComponent == null) {
+			this.tooltipComponent = new PA_Step4KeggDiagramFeatureSetTooltip();
+			this.tooltipComponent.loadModel(this.getModel());
+			this.tooltipComponent.setParent(this);
+		}
+		
+		this.tooltipComponent.show(this.component.id, dataDistributionSummaries, visualOptions, pinned);
+	};
+	
+	this.hideTooltip = function(force=false) {
+		// TODO: destroy this component when switching tooltips?
+		if (this.tooltipComponent != null) {
+			this.tooltipComponent.hide(force);
+		}
+	};
+	
+	this.resetTooltip = function() {
+		this.tooltipComponent = null;
 	};
 
 	//TODO: DOCUMENTAR
@@ -1050,16 +1134,33 @@ function PA_Step4KeggDiagramFeatureSetView() {
 
 		var featureShape = canvas.image(featureAux.src, featureAux.width, featureAux.height).move(featureAux.x, featureAux.y).attr("id", featureAux.id);
 
-		var displayTooltip = function() {
+		var displayTooltip = function(event, pinned=false) {
+			/* If in the process of closing the tooltip, remove the timer */
+			if (me.hideTimer) {
+				clearTimeout(me.hideTimer);
+			}
+			
+			// Remove the timer if we are trying to pin (click instead of mouseenter)
+			if (me.timer && pinned) {
+				clearTimeout(me.timer);
+			} 
+	
 			me.timer = setTimeout(function() {
 				me.timer = null;
-				me.showTooltip(dataDistributionSummaries, visualOptions);
-			}, 500)
+				me.showTooltip(dataDistributionSummaries, visualOptions, pinned);
+			}, pinned ? 0 : 500)			
+		};
+		
+		var removeTooltip = function() {
+			clearTimeout(me.timer);
+			
+			me.hideTimer = setTimeout(function() {
+				me.hideTimer = null;
+				me.hideTooltip(false);
+			}, 500);	
 		};
 
-		featureShape.on("mouseover", displayTooltip).on("click", displayTooltip).on("mouseleave", function() {
-			clearTimeout(me.timer);
-		});
+		featureShape.on("mouseover", displayTooltip).on("click", function(event) { console.log("click");displayTooltip(event, true); }).on("mouseleave", removeTooltip);
 
 		return featureShape;
 	};
@@ -1068,6 +1169,10 @@ function PA_Step4KeggDiagramFeatureSetView() {
 	this.updateObserver = function() {
 		//Update ONLY the visible item (mainItem)
 		this.featureView.loadModel(this.getModel().getMainFeature()).updateObserver();
+		
+		if (this.tooltipComponent) {
+			this.tooltipComponent.updateObserver();
+		}
 	};
 
 	/**
@@ -1079,6 +1184,12 @@ function PA_Step4KeggDiagramFeatureSetView() {
 		visualOptions.adjustFactor = this.adjustFactor;
 		this.component = this.featureView.initComponent(dataDistributionSummaries, visualOptions);
 		return this.component;
+	};
+	
+	this.beforeDestroy = function() {	
+		if (this.tooltipComponent) {
+			this.tooltipComponent.getComponent().destroy();
+		}
 	};
 
 	return this;
@@ -1095,17 +1206,14 @@ function PA_Step4KeggDiagramFeatureSetTooltip() {
 	* @implements Singleton
 	*/
 
-	//SINGLETON IMPLEMENTATION
-	if (arguments.callee._singletonInstance) {
-		return arguments.callee._singletonInstance;
-	}
-	arguments.callee._singletonInstance = this;
 	/*********************************************************************
 	* ATTRIBUTES
 	***********************************************************************/
 	this.name = "PA_Step4KeggDiagramFeatureSetTooltip";
 	this.targetID = null;
 	this.featureView = null;
+	this.isPinned = false;
+	this.hideTimer = null;
 
 	/***********************************************************************
 	* GETTER AND SETTERS
@@ -1115,27 +1223,48 @@ function PA_Step4KeggDiagramFeatureSetTooltip() {
 	* OTHER FUNCTIONS
 	***********************************************************************/
 	//TODO: DOCUMENTAR
-	this.show = function(targetID) {
-		this.getComponent().showBy(targetID);
-		if (this.targetID !== targetID) {
-			this.getComponent().setTarget(targetID);
+	this.show = function(targetID, dataDistributionSummaries=null, visualOptions=null, pinned=false) {
+		if ( ! this.isPinned) {
+			this.getComponent().showBy(targetID);
 			this.targetID = targetID;
-			this.updateObserver();
+			this.updateObserver();	
+			
+			if (pinned) {
+				this.pin();
+			}
 		}
 	};
 
 	this.hide = function(force) {
-		this.forceHide = force;
-		this.getComponent().hide();
+		if (! this.isPinned || force) {
+			this.forceHide = force;
+			this.getComponent().close();		
+		}
 	};
 	
-	this.stick = function() {
-		//this.getCompoment().stick();
+	this.pin = function() {
+		this.getComponent().tools[0].setType('unpin');
+		this.isPinned = true;
 	};
-
+	
+	this.unpin = function() {
+		this.getComponent().tools[0].setType('pin');
+		this.isPinned = false;
+	};
+	
+	this.plus = function() {
+		this.getComponent().tools[1].setType('minus');
+		this.featureView.showExpandedInfo();
+	};
+	
+	this.minus = function() {
+		this.getComponent().tools[1].setType('plus');
+		this.featureView.hideExpandedInfo();
+	};
+	
 	//TODO: DOCUMENTAR
 	this.showFeatureSetDetails = function(targetID, feature) {
-		this.getParent().showFeatureSetDetails(targetID, this.getModel(), feature);
+		this.getParent().getParent().showFeatureSetDetails(targetID, this.getModel(), feature);
 	};
 
 	/**
@@ -1175,11 +1304,21 @@ function PA_Step4KeggDiagramFeatureSetTooltip() {
 		/*         SAME POSITION                                */
 		/********************************************************/
 		var nOtherItems = this.model.getFeatures().length-1;
-		if (nOtherItems > 0) {
-			$("#otherFeaturesMessage").html(nOtherItems + " more " + featureType + (nOtherItems > 1 ? "s" : "") + " at this position.");
-			$("#otherFeaturesLabel").show();
-		} else {
-			$("#otherFeaturesLabel").hide();
+		var domEl = this.getComponent();
+		
+		if (! domEl.rendered) {
+			domEl.doLayout();
+		}
+		
+		if (domEl.el) {
+			domEl = domEl.el.dom;
+
+			if (nOtherItems > 0) {
+				$(domEl).find(".otherFeaturesMessage").html(nOtherItems + " more " + featureType + (nOtherItems > 1 ? "s" : "") + " at this position.");
+				$(domEl).find(".otherFeaturesLabel").show();
+			} else {
+				$(domEl).find(".otherFeaturesLabel").hide();
+			}
 		}
 		/********************************************************/
 		/* STEP 3. UPDATE SUBCOMPONENTS                         */
@@ -1187,6 +1326,15 @@ function PA_Step4KeggDiagramFeatureSetTooltip() {
 		this.featureView.loadModel(mainFeatureSetItem);
 		this.featureView.updateObserver(true);//HIDE LINKS
 		this.getComponent().updateLayout();
+		
+		// Set title
+		var htmlTitle = "<span class='featureNameLabel'>" + mainFeatureSetItem.getFeature().getName().split(",")[0] + "</span>";
+		
+		if (mainFeatureSetItem.getFeature().isRelevant()) {
+			htmlTitle += "<i class='featureNameLabelRelevant relevantFeature'></i>";
+		}
+		
+		this.getComponent().setTitle(htmlTitle);
 
 		return this;
 	};
@@ -1202,25 +1350,55 @@ function PA_Step4KeggDiagramFeatureSetTooltip() {
 		this.featureView.setCollapsible(false);
 		this.featureView.setClosable(true);
 
-		this.component = Ext.create('Ext.tip.ToolTip', {
-			target: "", id: "theTooltip",
+		this.component = Ext.create('Ext.window.Window', {
+			target: "", 
+			layout: "auto",
 			style: "background: #fff; border: solid 2px #B7C7CF; border-radius : 2px; margin:0; padding:0;",
-			dismissDelay: 0, trackMouse: false, bodyPadding:0,
+			resizable: false, bodyPadding:0,
 			autoHeight: true, width: 260, minHeight:240,
+			closable: false,
+			tools: [
+				{
+					type: 'pin',
+					tooltip: 'Keep or not this window open',
+					callback: function(panel, tool, event) {
+						me[tool.type]();
+					}
+				},
+				{
+					type: 'plus',
+					tooltip: 'Show or hide more information',
+					callback: function(panel, tool, event) {
+						me[tool.type]();
+					}
+				},
+				{
+					type: 'close',
+					tooltip: 'Close this window',
+					callback: function(panel, tool, event) {
+						me.forceHide = true;
+						me.getComponent().close();
+					}
+				}
+			],
 			items: [
-				this.featureView.getComponent(),{
+				{
 					xtype: "box", html:
-					'<div style="text-align: center;margin: 10px 0px;">'+
-					'  <a href="javascript:void(0)" id="step4TooltipMoreButton" style="color: #fff;" class="button btn-primary btn-no-float"><i class="fa fa-search-plus"></i> Show details</a>'+
-					'</div>'+
-					'<div id="otherFeaturesLabel" style="text-align: center; display: block;">' +
-					'  <span id="step4TooltipPrevButton" class="tooltipDetailsSpan" style="display: inline;">' +
+					'<div class="otherFeaturesLabel" style="text-align: center; display: block;">' +
+					'  <span class="step4TooltipPrevButton tooltipDetailsSpan" style="display: inline;">' +
 					'    <i class="fa fa-caret-left" style="padding-right: 3px;"></i><a href="javascript:void(0)" style="display:inline-block"> Prev.</a>' +
 					'  </span>' +
-					'  <span id="otherFeaturesMessage" class="tooltipDetailsSpan" > N more Genes at this position.</span>' +
-					'  <span id="step4TooltipNextButton" class="tooltipDetailsSpan" style="display: inline;">' +
+					'  <span class="otherFeaturesMessage tooltipDetailsSpan" > N more Genes at this position.</span>' +
+					'  <span class="step4TooltipNextButton tooltipDetailsSpan" style="display: inline;">' +
 					'    <a href="javascript:void(0)" style="display:inline-block">Next</a><i class="fa fa-caret-right" style="padding-left: 3px;"></i>' +
 					'  </span>' +
+					'</div>'
+				},
+				this.featureView.getComponent(),
+				{
+					xtype: "box", html:
+					'<div style="text-align: center;margin: 10px 0px;">'+
+					'  <a href="javascript:void(0)" class="step4TooltipMoreButton" class="button btn-primary btn-no-float"><i class="fa fa-search-plus"></i> Show details</a>'+
 					'</div>'
 				}
 			],
@@ -1233,22 +1411,59 @@ function PA_Step4KeggDiagramFeatureSetTooltip() {
 			listeners: {
 				boxready: function() {
 					//SOME EVENT HANDLERS
-					$("#step4TooltipMoreButton").click(function() {
+					var domEl = me.getComponent().el.dom;
+					
+					$(domEl).find(".step4TooltipMoreButton").click(function() {
 						me.getComponent().hide();
 						me.showFeatureSetDetails(me.targetID, me.getModel());
 					});
-					$("#step4TooltipPrevButton").click(function() {
+					$(domEl).find(".step4TooltipPrevButton").click(function() {
 						me.changeVisibleFeature(-1);
 					});
-					$("#step4TooltipNextButton").click(function() {
+					$(domEl).find(".step4TooltipNextButton").click(function() {
 						me.changeVisibleFeature(1);
 					});
 				},
 				beforehide: function() {
-					if ($("#theTooltip").is(":hover") && me.forceHide !== true) {
+					if ($(me.getComponent().el.dom).is(":hover") && me.forceHide !== true) {
 						return false;
 					}
 					delete me.forceHide;
+				},
+				beforedestroy: function() {
+					me.featureView.getComponent().destroy();
+					me.getParent().resetTooltip();
+				},
+				dragstart: function() {					
+					if (me.hideTimer) {
+						clearTimeout(me.hideTimer)
+					}
+					
+					me.pin();
+				},
+				afterrender : function(win) {
+					var windowEl  = win.el;
+					
+					var hideTimeout = function() {
+						if (me.hideTimer) {
+							clearTimeout(me.hideTimer)
+						}
+						
+						if (! me.isPinned) {
+							me.hideTimer = setTimeout(function() {
+								me.hideTimer = null;
+								me.hide(true);
+							}, 500);
+						}
+					};
+					
+					var clearHiderTimeout = function() {
+						if (me.hideTimer) {
+							clearTimeout(me.hideTimer)
+						}
+					};
+					
+					$(windowEl.dom).hover(clearHiderTimeout, hideTimeout);
 				}
 			}
 		});
@@ -1272,7 +1487,6 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 	this.name = "PA_Step4KeggDiagramFeatureView";
 	this.collapsible = true;
 	this.closable = false;
-	this.sticky = false;
 	this.showButtons = (showButtons === true);
 
 	/***********************************************************************
@@ -1284,9 +1498,7 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 	this.setClosable = function(closable){
 		this.closable = closable;
 	};
-	this.setSticky = function(sticky){
-		this.sticky = sticky;	
-	};
+
 	/***********************************************************************
 	* OTHER FUNCTIONS
 	***********************************************************************/
@@ -1298,7 +1510,7 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 	* @param {type} hideLinks
 	* @returns {undefined}
 	*/
-	this.updateObserver = function(hideLinks) {
+	this.updateObserver = function(hideLinks=false, callback=null) {
 		var me = this;
 
 		var dataDistributionSummaries = this.getParent("PA_Step4PathwayView").getDataDistributionSummaries();
@@ -1312,7 +1524,8 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 
 		//Do not render if the component was never expanded (lazy rendering)
 		if($(componentID).hasClass("neverExpanded")){
-			if(me.collapsible){
+			// If callback was provided a rendering is required.
+			if(me.collapsible && ! callback){
 				return;
 			}
 			$(componentID).find(".geneInfoContainer").show(); //if it is not collapsible but is first call, expand
@@ -1348,7 +1561,7 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 			'      <a href="javascript:void(0)" class="button twoOptionsButton" name="line-chart">Line chart</a>'+
 			"  </div>" +
 			"  <div class='step4-tooltip-plot-container selected' name='heatmap-chart'>" +
-			"    <div id='" + this.getComponent().getId() + "_heatmapcontainer' name='heatmap-chart' style='height:"+ divHeight+ "px;width: 230px;'></div>" +
+			"    <div id='" + this.getComponent().getId() + "_heatmapcontainer' name='heatmap-chart' style='height:"+ divHeight+ "px;width: 230px;overflow:hidden;overflow-y:auto;'></div>" +
 			"  </div>" +
 			"  <div class='step4-tooltip-plot-container' name='line-chart' style='display:none;'>" +
 			"    <div id='" + this.getComponent().getId() + "_plotcontainer' style='height:"+ divHeight+ "px;width: 230px;'></div>" +
@@ -1370,15 +1583,24 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 		if (hideLinks === true) {
 			$(componentID + " .extraInfoPanel").hide();
 		}else{
-			this.generateExtraInfoPanelContent(componentID + " .extraInfoPanel", specie, componentNames, this.getModel().getFeature().getID(), featureType);
+			this.generateExtraInfoPanelContent(componentID + " .extraInfoPanel", specie, componentNames, this.getModel().getFeature().getID(), featureType, callback);
 		}
+	};
+	
+	this.showExpandedInfo = function() {
+		// doLayout moved at the getJSON callback.
+		this.updateObserver(false);
+	};
+	
+	this.hideExpandedInfo = function() {
+		this.updateObserver(true);
+		this.parent.getComponent().doLayout();
 	};
 
 	//TODO: DOCUMENTAR
-	this.generateExtraInfoPanelContent = function(target, specie, componentNames, featureID, featureType) {
+	this.generateExtraInfoPanelContent = function(target, specie, componentNames, featureID, featureType, callback=null) {
 		var me = this;
-
-		$.getJSON(SERVER_URL_GET_AVAILABLE_SPECIES, function(data){
+		var renderFunction = function(data){
 			var htmlCode = "";
 
 			var featureName = componentNames.shift();
@@ -1408,8 +1630,8 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 			if(featureType.toLowerCase() === "gene"){
 				htmlCode +=
 				"    <li><a href='http://www.kegg.jp/dbget-bin/www_bget?" + specie + ":" + featureID + "' target='_blank'><i class='fa fa-external-link'></i> Search at KEGG Database</a></li>" +
-				"    <li><a id='ensemblGenomesSearch' href='http://ensemblgenomes.org/search/eg/" + featureName + "' target='_blank'><i class='fa fa-external-link'></i> Search at Ensembl Genomes</a></li>" +
-				"    <li><a id='ensemblSearch' href='http://www.ensembl.org/Multi/Search/Results?q=" + encodeURIComponent(featureName) + ";facet_species="+ encodeURIComponent(alternativeName) + "' target='_blank'><i class='fa fa-external-link'></i> Search at Ensembl (vertebrates)</a></li>" +
+				"    <li><a class='ensemblGenomesSearch' href='http://ensemblgenomes.org/search/eg/" + featureName + "' target='_blank'><i class='fa fa-external-link'></i> Search at Ensembl Genomes</a></li>" +
+				"    <li><a class='ensemblSearch' href='http://www.ensembl.org/Multi/Search/Results?q=" + encodeURIComponent(featureName) + ";facet_species="+ encodeURIComponent(alternativeName) + "' target='_blank'><i class='fa fa-external-link'></i> Search at Ensembl (vertebrates)</a></li>" +
 				((specie === "hsa") ? "<li><a href='http://www.genecards.org/cgi-bin/carddisp.pl?gene=" + featureName + "' target='_blank'><i class='fa fa-external-link'></i> Search at GeneCards Database</a></li>" : "") +
 				"    <li><a href='http://www.ncbi.nlm.nih.gov/pubmed/?term=" + specieName + "' target='_blank'><i class='fa fa-external-link'></i> Find related publications (PubMed)</a></li>" +
 				"    <li><a href='http://www.ncbi.nlm.nih.gov/gene/?term=" + encodeURIComponent("(" + featureName + "[Gene Name]) AND ()"+ alternativeName + "[Organism])") + "' target='_blank'><i class='fa fa-external-link'></i> Search at NCBI Gene</a></li>" +
@@ -1450,30 +1672,36 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 						}
 					}
 				}
-				//For each found feature, show a popup indicating the location of the feature
-				$(matches).data('powertip', me.model.feature.name.split(",")[0]);
-				$(matches).powerTip({
-					smartPlacement: true,
-					placement: 's',
-				});
-				//For the tooltips sequencially
-				var showAllPositions = function(){
-					if(matches.length > 0){
-						var elem = $(matches.shift());
-						$.powerTip.show(elem);
-						$.powerTip.destroy(elem);
-						setTimeout(showAllPositions, 1700);
-					}else{
-						$.powerTip.hide();
+				//For each found feature, show a popup indicating the location of the feature				
+				$(matches).data('tooltipstercontent', me.model.feature.name.split(",")[0]);
+				$(matches).tooltipster({
+					side: 'bottom',
+					trigger: 'custom',
+					functionInit: function(instance, helper){
+						var dataContent = $(helper.origin).data('tooltipstercontent');
+						instance.content(dataContent);
 					}
-				};
-				showAllPositions();
+				});
+				
+				matches.map(x => $(x).tooltipster('open'));
+				setTimeout(function() {
+					matches.map(x => $(x).tooltipster('close'));
+				}, 1700);
 			});
 
 			$(target).find(".moreDetailsButton").click( function(){
 				me.parent.showFeatureSetDetails("", me.model.parent);
 			});
-		});
+			
+			me.parent.getComponent().doLayout();
+			
+			// Call callback when completing all rendering.
+			if (callback) {
+				callback();
+			}
+		};
+		
+		this.getParent("PA_Step4JobView").downloadSpeciesInfo(renderFunction);
 
 		return this;
 	};
@@ -1495,31 +1723,38 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 			x = 0;
 			omicName = visibleOmics[i].split("#")[0];
 
-			omicValues = feature.getOmicValues(omicName);
-			if (omicValues !== null) {
-				shownameValue = omicValues.inputName != omicValues.originalName && omicValues.originalName !== undefined ?
-					omicValues.originalName + ": " + omicValues.inputName :
-					omicValues.inputName
+			// Retrieve all omic values
+			allOmicValues = feature.getOmicValues(omicName, true);
+			
+			if (allOmicValues !== null) {
+				allOmicValues.forEach(function(omicValues) {
+					x = 0;
+					
+					shownameValue = omicValues.inputName != omicValues.originalName && omicValues.originalName !== undefined ?
+						omicValues.originalName + ": " + omicValues.inputName :
+						omicValues.inputName
 
-				serie = {name: (omicValues.isRelevant() === true ? "* " : "") + omicName + "#" + shownameValue};
-				yAxisCat.push((omicValues.isRelevant() === true ? "* " : "") + omicName + "#" + shownameValue);
+					serie = {name: (omicValues.isRelevant() === true ? "* " : "") + omicName + "#" + shownameValue};
+					yAxisCat.push((omicValues.isRelevant() === true ? "* " : "") + omicName + "#" + shownameValue);
 
-				values = omicValues.getValues();
-				serie.data = [];
-				scaledValues = [];
+					values = omicValues.getValues();
+					serie.data = [];
+					scaledValues = [];
 
-				var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences[omicName]);
+					var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences[omicName]);
 
-				for (var j in values) {
-					serie.data.push({
-						x: x, y: y,
-						value: values[j],
-						color: getColor(limits, values[j], visualOptions.colorScale)
-					});
-					x++;
-					maxX = Math.max(maxX, x);
-				}
-				series.push(serie);
+					for (var j in values) {
+						serie.data.push({
+							x: x, y: y,
+							value: values[j],
+							color: getColor(limits, values[j], visualOptions.colorScale)
+						});
+						x++;
+						maxX = Math.max(maxX, x);
+					}
+					series.push(serie);	
+					y++;
+				});
 			} else {
 				/* IF THERE IS NOT DATA FOR THIS OMIC FOR THIS FEATURE, WE WILL ADD
 				* A GRAY ROW, BUT FIRST WE NEED SOME INFORMATION (MAX X), SO WE WILL ADD
@@ -1530,8 +1765,8 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 				});
 				yAxisCat.push(omicName);
 				series.push(null);
+				y++;
 			}
-			y++;
 		}
 
 		for (var i in later) {
@@ -1554,9 +1789,12 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 		for (var i = 0; i < maxX; i++) {
 			xAxisCat.push("Timepoint " + (i + 1));
 		}
+			
+		// Calculate the height based on number of Y elements
+		var chartHeight = Math.max(y * 40, 80);
 
 		var heatmap = new Highcharts.Chart({
-			chart: {type: 'heatmap',renderTo: divID},
+			chart: {type: 'heatmap',renderTo: divID, height: chartHeight},
 			title: null,
 			credits: {enabled: false},
 			legend: {enabled: false},
@@ -1578,10 +1816,14 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 				title: null,
 				labels: {
 					formatter: function() {
-						var title = this.value.split("#");
-						title[1] = (title.length > 1) ? title[1] : "No data";
-						return ((title[0].length > 10) ? title[0].substring(0, 10) + "..." : title[0]).replace("*", '<i class="relevantFeature"></i>') +
-						'</br><i class="tooltipInputName yAxisLabel">' + ((title[1].length > 10) ? title[1].substring(0, 10) + "..." : title[1]) + '</i>';
+						if (this.value.split) {
+							var title = this.value.split("#");
+							title[1] = (title.length > 1) ? title[1] : "No data";
+							return ((title[0].length > 10) ? title[0].substring(0, 10) + "..." : title[0]).replace("*", '<i class="relevantFeature"></i>') +
+						'</br><i class="tooltipInputName yAxisLabel">' + ((title[1].length > 10) ? title[1].substring(0, 10) + "..." : title[1]) + '</i>';					
+						}
+						
+						return null;
 					},
 					style: {fontSize: "9px"},
 					useHTML: true
@@ -1621,36 +1863,41 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 		//1.FILL THE STORE DATA [{name:"timepoint 1", "Gene Expression": -0.8, "Proteomics":-1.2,... },{name:"timepoint2", ...}]
 		for (var i in visibleOmics) {
 			omicName = visibleOmics[i].split("#")[0];
-			omicValues = feature.getOmicValues(omicName);
-			if (omicValues !== null) {
-				scaledValues = [];
+			allOmicValues = feature.getOmicValues(omicName, true);
+			
+			if (allOmicValues !== null) {
+				for (var t = 0; t < allOmicValues.length; t++) {
+					omicValues = allOmicValues[t];
+					scaledValues = [];
 
-				var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences[omicName]);
+					var limits = getMinMax(dataDistributionSummaries[omicName], visualOptions.colorReferences[omicName]);
+					var showName =  omicValues.originalName !== undefined && omicValues.originalName !== omicValues.inputName ? omicValues.originalName : null;
 
-				values = omicValues.getValues();
-				for (var j in values) {
-					//SCALE THE VALUE
-					tmpValue = scaleValue(values[j], limits.min, limits.max);
-					//UPDATE MIN MAX (TO ADJUST THE AXIS)
-					maxVal = Math.max(tmpValue, maxVal);
-					minVal = Math.min(tmpValue, minVal);
-					//ADD THE VALUE (CUSTOM MARKER IF OUTLIER)
-					scaledValues.push({
-						y: tmpValue,
-						marker: ((tmpValue > 1 || tmpValue < -1) ? {
-							fillColor: '#ff6e00'
-						} : null)
-					});
-				}
+					values = omicValues.getValues();
+					for (var j in values) {
+						//SCALE THE VALUE
+						tmpValue = scaleValue(values[j], limits.min, limits.max);
+						//UPDATE MIN MAX (TO ADJUST THE AXIS)
+						maxVal = Math.max(tmpValue, maxVal);
+						minVal = Math.min(tmpValue, minVal);
+						//ADD THE VALUE (CUSTOM MARKER IF OUTLIER)
+						scaledValues.push({
+							y: tmpValue,
+							marker: ((tmpValue > 1 || tmpValue < -1) ? {
+								fillColor: '#ff6e00'
+							} : null)
+						});
+					}
 
-				series.push({
-					name: omicName,
-					type: 'spline',
-					startOnTick: false,
-					endOnTick: false,
-					data: scaledValues,
-					yAxis: 0
-				});
+					series.push({
+						name: allOmicValues.length > 1 ? omicName + " [" + (showName ? showName : omicValues.inputName + ' - ' + (t + 1)) + "]" : omicName,
+						type: 'spline',
+						startOnTick: false,
+						endOnTick: false,
+						data: scaledValues,
+						yAxis: 0
+					});				
+				};
 			}
 		}
 
@@ -1698,13 +1945,10 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 			xtype: "box",
 			cls: "contentbox mainInfoPanel neverExpanded",
 			style:"margin:0;",
-			html:
-			((this.sticky)?'<a class="toolbarOption stickyOption" style="margin: 2px; "><i class="fa fa-fa-thumb-tack"></i></a>':'') +
-			((this.closable)?'<a class="toolbarOption hideOption" style="margin: 2px; "><i class="fa fa-times"></i></a>':'') +
-			"<h3 class='geneInfoTitle'>"+
-			((this.collapsible)?"<i class='fa fa-chevron-circle-right'></i>":"") +
+			html:	
+			((this.collapsible)?"<h3 class='geneInfoTitle'><i class='fa fa-chevron-circle-right'></i>" +
 			"  <span class='featureNameLabel'></span><i class='featureNameLabelRelevant relevantFeature'></i>"+
-			"</h3>" +
+			"</h3>": "") +
 			"<div class='geneInfoContainer' style='display:none;'>" +
 			"  <div class='otherOmicsLabel' style='padding:2px 0px'></div>" +
 			"  <div class='step4_plotwrappers'></div>" +
@@ -1732,11 +1976,6 @@ function PA_Step4KeggDiagramFeatureView(showButtons) {
 					$(this.el.dom).find(".hideOption").click(function () {
 						if(me.parent.hide !== undefined){
 							me.parent.hide(true);
-						}
-					});
-					$(this.el.dom).find(".stickyOption").click(function () {
-						if(me.parent.stick !== undefined){
-							me.parent.stick(true);
 						}
 					});
 				},
@@ -1935,7 +2174,8 @@ function PA_Step4KeggDiagramFeatureSetSVGBox() {
 			context.stroke();
 			context.font = "normal " + (fontSize * scaleFactor) + "px serif";
 			context.fillStyle = 'black';
-			context.fillText(feature.getName(), 0, fontSize * scaleFactor);
+			// TODO: remove added space?
+			context.fillText(' ' + feature.getName(), 0, fontSize * scaleFactor);
 		}
 
 		//Add start glyph if relevant
@@ -2012,14 +2252,14 @@ function PA_Step4KeggDiagramFeatureSetSVGBox() {
 		//TODO: DELETE OBSERVER
 		//me.getModel().deleteObserver(me);
 		//TODO: SOME FEATURES HAS NaN FOR WIDTH AND POS
-		var width = (this.getModel().getFeatureGraphicalData().getBoxWidth() * visualOptions.adjustFactor || 50);
-		var height = (this.getModel().getFeatureGraphicalData().getBoxHeight() * visualOptions.adjustFactor || 15);
+		var width = (this.getModel().getFeatureGraphicalData().getBoxWidth() * visualOptions.adjustFactor || 20);
+		var height = (this.getModel().getFeatureGraphicalData().getBoxHeight() * visualOptions.adjustFactor || 20);
 		// DEPRECATED: MapMan pathways do not have width or height set. For that, and those rare KEGG cases in which it isn't set,
 		// draw a circle instead
 		// var width = (this.getModel().getFeatureGraphicalData().getBoxWidth() * visualOptions.adjustFactor);
 		// var height = (this.getModel().getFeatureGraphicalData().getBoxHeight() * visualOptions.adjustFactor);
-		this.getModel().getFeatureGraphicalData().setBoxWidth(width);
-		this.getModel().getFeatureGraphicalData().setBoxHeight(height);
+		//this.getModel().getFeatureGraphicalData().setBoxWidth(width);
+		//this.getModel().getFeatureGraphicalData().setBoxHeight(height);
 
 		/* LEGACY CODE IN CASE WE WANT TO RESTORE POINT "BOXES" FOR OTHER DBS */
 		if (width == 0 || height == 0) {
@@ -2357,9 +2597,14 @@ function PA_Step4FindFeaturesView() {
 		this.searchResultsView.setVisible(true);
 
 		for(i in this.items){
-			this.items[i].updateObserver();
+			this.items[i].updateObserver(false, function() {
+				$('#resultsContainer .findInMapButton').click();
+			});
 		}
-
+		
+		// Raise click event in each result
+		//$("#resultsContainer .geneInfoTitle").click();
+		
 	};
 
 	/**
@@ -2614,11 +2859,13 @@ function PA_Step4GlobalHeatmapView() {
 
 		//GENERATE THE MATRIX OF DATA GROUPED BY OMIC NAME
 		var matchedGenes = this.getModel().getMatchedGenes();
+		var matchedCompounds = this.getModel().getMatchedCompounds();
 		var omicsValues = this.getParent().getOmicsValues();
+		var matchedFeatures = matchedGenes.concat(matchedCompounds);
 
-		for (var i = matchedGenes.length; i--;) {
+		for (var i = matchedFeatures.length; i--;) {
 			//GET THE VALUES FOR CURRENT GENE
-			featureOmicValues = omicsValues[matchedGenes[i]].getOmicsValues();
+			featureOmicValues = omicsValues[matchedFeatures[i]].getOmicsValues();
 
 			for (var j = featureOmicValues.length; j--;) {
 				omicValue = featureOmicValues[j];
@@ -2627,6 +2874,8 @@ function PA_Step4GlobalHeatmapView() {
 				if (selectedOmics[omicValue.omicName] === undefined) {
 					continue;
 				}
+				
+				var featureName = omicsValues[matchedFeatures[i]].getName();
 
 				//PUSH IF USER CHOOSE all OR IF FEATURE IS RELEVANT
 				if (selectedOmics[omicValue.omicName] === "all" || omicValue.isRelevant()) {
@@ -2634,12 +2883,14 @@ function PA_Step4GlobalHeatmapView() {
 				} else {
 					referenceOmics = otherDataMatrix;
 				}
-				referenceOmics[omicValue.omicName][omicsValues[matchedGenes[i]].getName()] = {
-					keggName: omicsValues[matchedGenes[i]].getName(),
-					inputName: omicValue.getInputName(),
+				referenceOmics[omicValue.omicName][featureName] = referenceOmics[omicValue.omicName][featureName] || [];
+				
+				referenceOmics[omicValue.omicName][featureName].push({
+					keggName: omicsValues[matchedFeatures[i]].getName(),
+					inputName: omicValue.originalName || omicValue.getInputName(),
 					isRelevant: omicValue.isRelevant(),
 					values: omicValue.getValues()
-				};
+				});
 			}
 		}
 
@@ -2682,7 +2933,7 @@ function PA_Step4GlobalHeatmapView() {
 		}
 		//*********************************************************************************
 		//STEP 1. GENERATE THE HEATMAP FOR REFERENCE OMIC
-		var omicValues = Object.values(dataMatrix[referenceOmic]);
+		var omicValues = Array.prototype.concat.apply([], Object.values(dataMatrix[referenceOmic]));
 		var showLabels = true;
 		var divName = "globalHeatmapContainer-" + referenceOmic.toLowerCase().replace(/ /g, "-");
 		var divWidth = 200;
@@ -2713,11 +2964,10 @@ function PA_Step4GlobalHeatmapView() {
 				featureName = orderedGenes[i].split("#")[0].replace("* ", "");
 
 				if (dataMatrix[omicName][featureName] !== undefined) {
-					omicValues.push(dataMatrix[omicName][featureName]);
-					delete dataMatrix[omicName][featureName]
-					;
+					dataMatrix[omicName][featureName].map(x => omicValues.push(x));
+					delete dataMatrix[omicName][featureName];
 				} else if (otherDataMatrix && otherDataMatrix[omicName][featureName] !== undefined) {
-					omicValues.push(otherDataMatrix[omicName][featureName]);
+					otherDataMatrix[omicName][featureName].map(x => omicValues.push(x));
 				} else {
 					omicValues.push({
 						keggName: featureName,
@@ -2934,8 +3184,7 @@ function PA_Step4GlobalHeatmapView() {
 		//1. GENERATE THE OMIC SELECTORS (WHICH OMIC SHOULD BE PAINTED)
 		for (var i in omicNames) {
 			//CHECK IF WE HAVE VALUES FOR THIS OMIC IN CURRENT PATHWAY
-			//TODO: allow metabolomics in the heatmap
-			if (omicNames[i].toLowerCase() !== "metabolomics" && this.getModel().getSignificanceValues()[omicNames[i]][0] !== 0) {
+			if (this.getModel().getSignificanceValues()[omicNames[i]][0] !== 0) {
 				divName = "lateralOptionsSelector-" + omicNames[i].toLowerCase().replace(/ /g, "-");
 				htmlCode +=
 				'<div class="lateralOptionsSelector omicSelection">' +

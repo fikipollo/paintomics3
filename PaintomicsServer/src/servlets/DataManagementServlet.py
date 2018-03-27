@@ -367,6 +367,9 @@ def saveFile(userID, uploadedFileName, options, uploadedFile, DESTINATION_DIR):
     if(not os.path.isdir(DESTINATION_DIR)):
         os.makedirs(DESTINATION_DIR)
 
+    # Make sure to replace invalid chars to avoid problems
+    uploadedFileName = ''.join('_' if ch in [':', '!', '[', ']', ';'] else ch for ch in uploadedFileName)
+
     #TODO: CHECK IF ENOUGH SPACE
     #SAVE THE FILE TO USER's DIRECTORY
     file_path = "{path}/{file}".format(path=DESTINATION_DIR, file=uploadedFileName)

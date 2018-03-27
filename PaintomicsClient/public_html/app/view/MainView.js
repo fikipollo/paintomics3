@@ -166,7 +166,7 @@ function MainView() {
 				cls: "lateralMenu",
 				region: 'west',
 				html: "<ul class='lateralMenu-body'>" +
-				" <li class='menuOption' id='homeButton'><i class='fa fa-paint-brush'></i> Home</li>" + 
+				" <li class='menuOption' id='homeButton'><i class='fa fa-paint-brush'></i> Job view</li>" + 
 				" <li class='menuOption loggedOption' ><i class='fa fa-cloud'></i>  Personal storage" +
 				"  <ul class='submenu loggedOption'>" +
 				(noLogin != true ?
@@ -194,6 +194,7 @@ function MainView() {
 				" <ul class='submenu'>" +
 				// "     <li class='menuOption'><a href='http://www.paintomics.org/'' target='_blank'><i class='fa fa-book'></i>  Paintomics Documentation</a></li>"+
 				"     <li class='menuOption externalOption' style='font-size: 9px;'><a href='http://bioinformatics.oxfordjournals.org/content/early/2010/11/23/bioinformatics.btq594' target='_blank'>García-Alcalde F, García-López F, Dopazo J, Conesa A. <b>Paintomics: a web based tool for the joint visualization of transcriptomics and metabolomics data</b>. <i>Bioinformatics</i> 2011 27(1): 137–139.</a><br><a href='resources/images/paintomics2-garcia-alcalde.bib' target='_blank'>BibTeX</a></li>" +
+				"     <li class='menuOption externalOption' style='font-size: 9px;'><a href='https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-016-1293-1' target='_blank'>Furio-Tari P, Tarazona S, Conesa A. <b>RGmatch: matching genomic regions to proximal genes in omics data integration</b>. <i>BMC Bioinformatics</i> 2016 17(15).</a><br><a href='resources/images/rgmatch.bib' target='_blank'>BibTeX</a></li>" +
 				" </ul></li>" +
 				" <li class='menuOption'><i class='fa fa-envelope-o'></i>  Contact" +
 				" <ul class='submenu'>" +

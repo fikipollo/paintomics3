@@ -371,8 +371,17 @@ function showErrorMessage(title, data) {
 }
 
 function initializeTooltips(query, options) {
-	options = (options || {placement: 's', mouseOnToPopup: true});
-	$(query).powerTip(options);
+	options = (options || {side: 'bottom', interactive: true, maxWidth: 350});
+	$(query).tooltipster(options);
+}
+
+function deleteCredentials() {
+	ignoreOtherErrors = false;
+	Ext.util.Cookies.clear("sessionToken", location.pathname);
+	Ext.util.Cookies.clear("userID", location.pathname);
+	Ext.util.Cookies.clear("userName", location.pathname);
+	Ext.util.Cookies.clear("nologin", location.pathname);
+	setTimeout(function(){location.reload(); }, 2000);
 }
 
 ignoreOtherErrors = false;
@@ -398,14 +407,7 @@ function ajaxErrorHandler(responseObj) {
 	if(err.message && err.message.indexOf("User not valid") !== -1){
 		showErrorMessage("Invalid session", {
 			message: "<b>Your session is not valid.</b> Please sign-in again to continue.",
-			callback: function () {
-				ignoreOtherErrors = false;
-					Ext.util.Cookies.clear("sessionToken", location.pathname);
-					Ext.util.Cookies.clear("userID", location.pathname);
-					Ext.util.Cookies.clear("userName", location.pathname);
-					Ext.util.Cookies.clear("nologin", location.pathname);
-					setTimeout(function(){location.reload(); }, 2000);
-			},
+			callback: deleteCredentials,
 			showButton: false,
 			showReportButton: false
 		});
@@ -429,6 +431,16 @@ function extJSErrorHandler(form, responseObj) {
 	} catch (error) {
 		err = {message: "Unable to parse the error message."};
 	}
+	
+	if(err.message && err.message.indexOf("User not valid") !== -1){
+		showErrorMessage("Invalid session", {
+			message: "<b>Your session is not valid.</b> Please sign-in again to continue.",
+			callback: deleteCredentials,
+			showButton: false,
+			showReportButton: false
+		});
+		return;
+	}
 
 	showErrorMessage("Oops..Internal error!", {message: err.message + "</br>Please try again later.</br>If the error persists, please contact your web <a href='mailto:paintomics@cipf.es' target='_blank'> administrator</a>.", showButton: true});
 }
@@ -439,7 +451,7 @@ function sendReportMessage(type, message, fromEmail, fromName){
 	$.ajax({
 		type: "POST", headers: {"Content-Encoding": "gzip"},
 		url: SERVER_URL_DM_SEND_REPORT,
-		data: {type: type, message: message, fromEmail: fromEmail, fromEmail: fromName},
+		data: {type: type, message: message, fromEmail: fromEmail, fromName: fromName},
 		success: function (response) {
 			if (response.success === false) {
 				showErrorMessage(response.errorMessage);

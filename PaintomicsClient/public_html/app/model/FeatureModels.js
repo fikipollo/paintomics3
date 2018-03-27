@@ -83,13 +83,10 @@ function Feature(name) {
 	this.getOmicsValues = function() {
 		return this.omicsValues;
 	};
-	this.getOmicValues = function(omicName) {
-		for (var i in this.omicsValues) {
-			if (this.omicsValues[i].getOmicName() === omicName) {
-				return this.omicsValues[i];
-			}
-		}
-		return null;
+	this.getOmicValues = function(omicName, all=false) {
+		var detectedValues = this.omicsValues.filter(x => x.getOmicName() === omicName);
+
+		return detectedValues.length ? (all ? detectedValues : detectedValues[0]) : null;
 	};
 	this.setSelected = function(selected) {
 		this.selected = selected;

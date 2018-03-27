@@ -107,7 +107,11 @@ class Queue:
                 while self.jobs.has_key(job_id):
                     job_id = self.get_random_id()
             elif self.jobs.has_key(job_id):
-                raise RuntimeError("Job already at the queue (Job id : " + job_id + ")")
+                # Check if it has finished, then remove
+                if self.jobs.get(job_id).status == JobStatus.FINISHED:
+                    self.get_result(job_id)
+                else:
+                    raise RuntimeError("Job already at the queue (Job id : " + job_id + ")")
 
             job.set_id(job_id)
             job.set_timeout(timeout)

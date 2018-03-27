@@ -148,6 +148,14 @@ function Pathway(ID) {
     this.getAdjustedCombinedSignificanceValueByMethod = function (method) {
         return this.adjustedCombinedSignificanceValues[method];
     };
+	this.getAllSignificanceValues = function() {
+		var arrayPvalues = this.getSignificanceValues();
+		
+		return jQuery.extend({}, Object.assign({}, ...Object.keys(arrayPvalues).map(k => ({[k]: arrayPvalues[k][2]}))), this.getCombinedSignificanceValues());
+	};
+	this.getAllAdjustedSignificanceValues = function() {
+		return jQuery.extend({}, this.getAdjustedSignificanceValues(), this.getAdjustedCombinedSignificanceValues());
+	};
     this.setTotalFeatures = function (totalFeatures) {
         this.totalFeatures = totalFeatures;
     };

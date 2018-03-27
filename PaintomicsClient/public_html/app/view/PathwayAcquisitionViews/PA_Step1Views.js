@@ -66,13 +66,15 @@ function PA_Step1JobView() {
 			newElem = new OmicSubmittingPanel(this.nFiles, {
 				type: "Proteomics",
 				fileType: "Proteomic quatification",
-				relevantFileType: "Relevant proteins list"
+				relevantFileType: "Relevant proteins list",
+				featureEnrichment: true
 			});
 		} else if (type === "metabolomics") {
 			newElem = new OmicSubmittingPanel(this.nFiles, {
 				type: "Metabolomics",
 				fileType: "Metabolomic quatification",
-				relevantFileType: "Relevant Compound list"
+				relevantFileType: "Relevant Compound list",
+				featureEnrichment: true
 			});
 		} else if (type === "mirnaseq") {
 			newElem = new OmicSubmittingPanel(this.nFiles, {
@@ -273,7 +275,7 @@ function PA_Step1JobView() {
 				layout: {type: 'vbox', align: 'stretch'},
 				defaults: {labelAlign: "right", border: false},
 				items: [
-					{xtype: "box", flex: 1, html:'<h2>Data uploading</h2><h3>1. Organism and database selection </h3>'},
+					{xtype: "box", flex: 1, html:'<h2>Data uploading</h2><h3>1. Organism selection </h3>'},
 					{xtype: "container", flex: 1, layout: {type: "hbox"}, items: [
 						{
 							xtype: "container", layout: { type: "vbox", align: "stretch" }, flex: 0.4, items: [
@@ -289,6 +291,7 @@ function PA_Step1JobView() {
 								displayField: 'name',
 								valueField: 'value',
 								queryMode: 'local',
+								labelWidth: 150,
 								store: Ext.create('Ext.data.ArrayStore', {
 									fields: ['name', 'value'],
 									autoLoad: true,
@@ -311,12 +314,23 @@ function PA_Step1JobView() {
 							},
 							{
 								xtype: "box", flex: 1, html:
-								'<span class="infoTip" style=" font-size: 12px; margin-left: 140px; margin-bottom: 10px;">'+
+								'<span class="infoTip" style=" font-size: 12px; margin-left: 190px; margin-bottom: 10px;">'+
 								' Not your organism? Request new organisms <a href="javascript:void(0)" id="newOrganismRequest" style="color: rgb(211, 21, 108);">clicking here</a>.' +
 								'</span>'
 							}]
 						},
-						{xtype: "container", layout: { type: "vbox", align: "stretch" }, flex: 0.6, hidden: true, items: [
+						{
+							xtype: "textfield", 
+							fieldLabel: "Enter a job description", 
+							allowBlank: true,
+							name: 'jobDescription',
+							style: "margin: 10px 20px;",
+							labelWidth: 150,
+							width: 650,
+							flex: 0,
+							maxLength: 100
+						}
+						/*{xtype: "container", layout: { type: "vbox", align: "stretch" }, flex: 0.6, hidden: true, items: [
 								{
 									xtype: 'checkboxgroup', fieldLabel: 'Databases',
 									style: "margin: 10px 10px 10px 20px;",
@@ -324,9 +338,9 @@ function PA_Step1JobView() {
 									allowBlank: false,
 									columns: 2,
 									disabled: true,
-									/* Hardcoded DBs (they can be considered static) */
+									// Hardcoded DBs (they can be considered static) 
 									items: [
-											/* Only for information, KEGG database is added always on server side */
+											// Only for information, KEGG database is added always on server side 
 											{ boxLabel: 'KEGG (required)', name: 'databases[]', inputValue: 'KEGG', checked: true, disabled: true },
 											{ boxLabel: 'MapMan', name: 'databases[]', inputValue: 'MapMan', checked: false },
 									]
@@ -338,12 +352,28 @@ function PA_Step1JobView() {
 									'</span>'
 								}
 							]
-						}]
+						}*/]
 					},
+					/*{
+							xtype: "container",
+							layout: "hbox",
+							flex: 1,
+							items: [{
+								xtype: "textfield", 
+								fieldLabel: "Enter a job description", 
+								allowBlank: true,
+								name: 'jobDescription',
+								style: "margin: 20px 20px;",
+								labelWidth: 150,
+								width: 450,
+								flex: 0
+							}]
+					}*/,
 					{
 						xtype: "box",
 						html: '<h3>2. Choose the files to upload <a class="button btn-right btn-small" href="http://bioinfo.cipf.es/paintomics/resources/paintomics_example_data.zip"><i class="fa fa-download"></i> Download example data</a></h3>'
-					}, {
+					},
+					{
 						xtype: "container",
 						layout: 'hbox',
 						items: [{
@@ -373,8 +403,7 @@ function PA_Step1JobView() {
 								{xtype: 'box',html: '<p class="dragHerePanel">Drag and drop here your selected <i>omics</i></p>'}
 							]
 						}]
-					}
-
+					}					
 				]
 			}],
 			listeners: {
@@ -399,7 +428,6 @@ function PA_Step1JobView() {
 						var type = $(this).parents(".availableOmicsBox").first().attr("title");
 						me.addNewOmicSubmittingPanel(type);
 					});
-
 
 					var containers = [$("#availableOmicsContainer")[0], $("#submittingPanelsContainer-targetEl")[0]];
 
@@ -477,6 +505,7 @@ function OmicSubmittingPanel(nElem, options) {
 	this.mapTo = "Gene";
 	this.fileType = null;
 	this.relevantFileType = null;
+	this.featureEnrichment = false;
 
 	this.class = "otherFileBox";
 
@@ -494,6 +523,7 @@ function OmicSubmittingPanel(nElem, options) {
 		this.relevantFileType = options.relevantFileType;
 		this.type = this.title.replace(" ", "").toLowerCase();
 		this.class = this.type + "FileBox";
+		this.featureEnrichment = options.featureEnrichment || false;
 	}
 	/*********************************************************************
 	* GETTERS AND SETTERS
@@ -622,7 +652,7 @@ function OmicSubmittingPanel(nElem, options) {
 							name: this.namePrefix + '_match_type',
 							hidden: this.omicName !== "",
 							itemId: "mapToSelector",
-							displayField: 'name', valueField: ' value',
+							displayField: 'name', valueField: 'value',
 							emptyText: 'Choose the file type',
 							value: this.mapTo,
 							editable: false,
@@ -635,6 +665,24 @@ function OmicSubmittingPanel(nElem, options) {
 								]
 							}),
 							helpTip: "Defines whether the data can be assigned to Genes or to Metabolites, for example  the values of concentration for proteins that can be mapped to the corresponding codifying gene."
+						},
+						{
+							xtype: 'combo',
+							fieldLabel: 'Enrichment type',
+							name: this.namePrefix + '_feature_enrichment',
+							hidden: this.omicName !== "",
+							value: this.featureEnrichment.toString(),
+							displayField: 'name', valueField: 'value',
+							editable: false,
+							allowBlank: false,
+							store: Ext.create('Ext.data.ArrayStore', {
+								fields: ['name', 'value'],
+								data: [
+									['Genes', 'false'],
+									['Features', 'true']
+								]
+							}),
+							helpTip: "Define how the Fisher contingency table must be done: counting genes or features (i.e: microRNA, proteins...)."
 						}
 					]
 				}
@@ -701,6 +749,7 @@ function RegionBasedOmicSubmittingPanel(nElem, options) {
 	this.mapTo = "Gene";
 	this.fileType = null;
 	this.relevantFileType = null;
+	this.featureEnrichment = false;
 
 	this.allowToogle = options.allowToogle !== false;
 	this.removable = options.removable !== false;
@@ -776,6 +825,12 @@ function RegionBasedOmicSubmittingPanel(nElem, options) {
 		}
 		if (values.toogleMapRegions) {
 			component.queryById("toogleMapRegions").setVisible(values.toogleMapRegions === true);
+		}
+		if (values.configVars) {
+			component.queryById("configVars").setValue(values.configVars);
+		}
+		if (values.ignoreMissing) {
+			component.queryById("ignoreMissing").setValue(values.ignoreMissing);
 		}
 
 		if (!component.isVisible()) {
@@ -887,6 +942,30 @@ function RegionBasedOmicSubmittingPanel(nElem, options) {
 					itemId: "mapToSelector",
 					value: this.mapTo,
 					hidden: true
+				},{
+					xtype: 'textfield',
+					name: this.namePrefix + '_config_args',
+					hidden: true,
+					itemId: 'configVars',
+					maxLength: 1000
+				}, {
+					xtype: 'combo',
+					itemId: 'enrichmentType',
+					fieldLabel: 'Enrichment type',
+					name: this.namePrefix + '_feature_enrichment',
+					hidden: this.omicName !== "",
+					value: this.featureEnrichment.toString(),
+					displayField: 'name', valueField: 'value',
+					editable: false,
+					allowBlank: false,
+					store: Ext.create('Ext.data.ArrayStore', {
+						fields: ['name', 'value'],
+						data: [
+							['Genes', 'false'],
+							['Features', 'true']
+						]
+					}),
+					helpTip: "Define how the Fisher contingency table must be done: counting genes or features (i.e: microRNA, proteins...)."
 				}]
 			}, {
 				xtype: "container",
@@ -1011,6 +1090,16 @@ function RegionBasedOmicSubmittingPanel(nElem, options) {
 					fieldLabel: 'Report',
 					value: "gene"
 				},
+				// allow missing
+				{
+					xtype: 'checkbox',
+					itemId: "ignoreMissing",
+					name: this.namePrefix + '_ignoremissing',
+					fieldLabel: 'Ignore missing entries',
+					checked: true,
+					allowBlank: false,
+					helpTip: "Allow those BED regions with chromosome names not present in the GTF file to be ignored instead of throwing an error."					
+				},
 				//distance
 				{
 					xtype: 'numberfield',
@@ -1105,7 +1194,24 @@ function RegionBasedOmicSubmittingPanel(nElem, options) {
 						]
 					}),
 					helpTip: "Choose the strategy used to resolve regions mapping to the same gen region. Default: 'Mean'"
-				}, {
+				},{
+					xtype: 'combo',
+					fieldLabel: 'Enrichment type',
+					name: this.namePrefix + '_feature_enrichment_pre',
+					hidden: this.omicName !== "",
+					value: this.featureEnrichment.toString(),
+					displayField: 'name', valueField: 'value',
+					editable: false,
+					allowBlank: false,
+					store: Ext.create('Ext.data.ArrayStore', {
+						fields: ['name', 'value'],
+						data: [
+							['Genes', 'false'],
+							['Features', 'true']
+						]
+					}),
+					helpTip: "Define how the Fisher contingency table must be done: counting genes or features (i.e: microRNA, proteins...)."
+				},{
 					xtype: 'fieldcontainer',
 					fieldLabel: 'Report',
 					defaultType: 'radiofield',
@@ -1285,12 +1391,13 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 	***********************************************************************/
 	options = (options || {});
 
-	this.title = "miRNA based omic";
+	this.title = "Regulatory omic";
 	this.namePrefix = "omic" + nElem;
 	this.omicName = "";
 	this.mapTo = "Gene";
 	this.fileType = null;
 	this.relevantFileType = null;
+	this.featureEnrichment = false;
 
 	this.allowToogle = options.allowToogle !== false;
 	this.removable = options.removable !== false;
@@ -1406,7 +1513,7 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 				xtype: "box",
 				itemId: "toogleMapRegions",
 				hidden: !this.allowToogle,
-				html: '<div class="checkbox" style=" margin: 10px 50px; font-size: 16px; "><input type="checkbox" id="' + this.namePrefix + '_mapRegions"><label for="' + this.namePrefix + '_mapRegions">My miRNAs are already mapped to Gene IDs, skip this step.</label></div>'
+				html: '<div class="checkbox" style=" margin: 10px 50px; font-size: 16px; "><input type="checkbox" id="' + this.namePrefix + '_mapRegions"><label for="' + this.namePrefix + '_mapRegions">My features are already mapped to Gene IDs, skip this step.</label></div>'
 			},
 			{
 				xtype: "container",
@@ -1460,7 +1567,7 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 					fieldLabel: 'File Type',
 					name: this.namePrefix + '_file_type',
 					itemId: "fileTypeSelector",
-					value: "Map file (miRNA mapped to Genes)",
+					value: "Map file (features mapped to Genes)",
 					hidden: true,
 					helpTip: "Specify the type of data for uploaded file (Gene Expression file, Proteomic quatification,...)."
 				}, {
@@ -1474,7 +1581,7 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 					fieldLabel: 'File Type',
 					name: this.namePrefix + '_relevant_file_type',
 					itemId: "relevantFileTypeSelector",
-					value: "Relevant miRNA list (mapped to Genes)",
+					value: "Relevant regulators list (mapped to Genes)",
 					hidden: true,
 					helpTip: "Specify the type of data for uploaded file (Relevant Genes list, Relevant proteins list,...)."
 				}, {
@@ -1484,7 +1591,32 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 					itemId: "mapToSelector",
 					value: this.mapTo,
 					hidden: true
-				}],
+				},{
+					xtype: 'textfield',
+					name: this.namePrefix + '_config_args',
+					hidden: true,
+					itemId: 'configVars',
+					maxLength: 1000
+				},
+				{
+					xtype: 'combo',
+					itemId: 'enrichmentType',
+					fieldLabel: 'Enrichment type',
+					name: this.namePrefix + '_feature_enrichment',
+					hidden: this.omicName !== "",
+					value: this.featureEnrichment.toString(),
+					displayField: 'name', valueField: 'value',
+					editable: false,
+					allowBlank: false,
+					store: Ext.create('Ext.data.ArrayStore', {
+						fields: ['name', 'value'],
+						data: [
+							['Genes', 'false'],
+							['Features', 'true']
+						]
+					}),
+					helpTip: "Define how the Fisher contingency table must be done: counting genes or features (i.e: microRNA, proteins...)."
+				}]
 			},
 			{
 				xtype: "container",
@@ -1543,10 +1675,10 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 				/*miRNA FILE*/
 				{
 					xtype: "myFilesSelectorButton",
-					fieldLabel: 'miRNA seq file <br>(miRNA expression)',
+					fieldLabel: 'Regulators expression file <br>(ie: miRNA expression)',
 					namePrefix: this.namePrefix,
 					itemId: "mainFileSelector",
-					helpTip: "Upload the quantification file (miRNA Quantification) or choose it from your data folder. See above the accepted format for the file."
+					helpTip: "Upload the quantification file (i.e. miRNA Quantification) or choose it from your data folder. See above the accepted format for the file."
 				}, {
 					xtype: 'textfield',
 					fieldLabel: 'File Type',
@@ -1558,10 +1690,10 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 				/*RELEVANT miRNA FILE*/
 				{
 					xtype: "myFilesSelectorButton",
-					fieldLabel: "Relevant miRNA file<br> (optional)",
+					fieldLabel: "Relevant regulators file<br> (optional)",
 					namePrefix: this.namePrefix + '_relevant',
 					itemId: "secondaryFileSelector",
-					helpTip: "Upload the list of relevant (differentially expressed) miRNAs (TAB format) or choose it from your data folder. See above the accepted format for the file."
+					helpTip: "Upload the list of relevant (differentially expressed) features (TAB format) or choose it from your data folder. See above the accepted format for the file."
 				}, {
 					xtype: 'textfield',
 					fieldLabel: 'File Type',
@@ -1573,17 +1705,17 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 				/*TARGETS FILE*/
 				{
 					xtype: "myFilesSelectorButton",
-					fieldLabel: "miRNA targets<br>reference file",
+					fieldLabel: "Features targets<br>reference file",
 					namePrefix: this.namePrefix + '__annotations',
 					itemId: "mirnaTargetsFileSelector",
-					helpTip: "Upload the reference file that relates each miRNA with its potential targets. This information is usually extracted from popular databases such as miRbase. See above the accepted format for the file."
+					helpTip: "Upload the reference file that relates each feature (i.e. miRNA) with its potential targets. This information is usually extracted from popular databases such as miRbase for miRNAs. See above the accepted format for the file."
 				}, {
 					xtype: 'textfield',
 					fieldLabel: 'File Type',
 					name: this.namePrefix + '_annotations_file_type',
 					hidden: true,
 					itemId: "mirnaTargetsFileTypeSelector",
-					value: "miRNA targets reference"
+					value: "Features targets reference"
 				},
 				/*RNA-SEQ FILE*/
 				{
@@ -1599,7 +1731,7 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 					fieldLabel: "Gene expression"/*<br> (optional)"*/,
 					namePrefix: this.namePrefix + '_rnaseqaux',
 					itemId: "rnaseqauxFileSelector",
-					helpTip: "Upload the quantification file for the gene expression. This file is used to calculate the correlation of the expression of the genes and their associated miRNAs. Using this correlation we can filter and order the miRNAs that will be assigned to each gene. See above the accepted format for the file."
+					helpTip: "Upload the quantification file for the gene expression. This file is used to calculate the correlation of the expression of the genes and their associated features. Using this correlation we can filter and order the features that will be assigned to each gene. See above the accepted format for the file."
 				}, {
 					xtype: 'textfield',
 					fieldLabel: 'File Type',
@@ -1633,11 +1765,11 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 					store: Ext.create('Ext.data.ArrayStore', {
 						fields: ['label', 'value'],
 						data: [
-							["All miRNAs", "all"],
-							["Only relevant miRNAs (e.g. DE)", "DE"]
+							["All features", "all"],
+							["Only relevant features (e.g. DE)", "DE"]
 						]
 					}),
-					helpTip: "Choose between consider all miRNAs in the quantification file or just those miRNAs that are differentially expressed. Default: 'All miRNAs'"
+					helpTip: "Choose between consider all features in the quantification file or just those features that are differentially expressed. Default: 'All features'"
 				},
 				{
 					xtype: 'combo',
@@ -1659,7 +1791,7 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 						]
 					}),
 					helpTip:
-					"Usually a single miRNA has multiple potential target genes, but not all targets are being " +
+					"As en example in miRNA, usually a single miRNA has multiple potential target genes, but not all targets are being " +
 					"regulated by a certain miRNA at certain moment. Consequently, we need to discriminate the real targets for a miRNA."+
 					"If Gene expression (GE) data is available, then we calculate the correlation between each miRNA " +
 					"and each target gene and filter out all those miRNAs that has a lower correlation value than a given threadhold." +
@@ -1679,7 +1811,7 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 					store: Ext.create('Ext.data.ArrayStore', {
 						fields: ['label', 'value'],
 						data: [
-							["by max. fold-change of miRNA expression", "fc"],
+							["by max. fold-change of feature expression", "fc"],
 							["by absolute correlation with gene expression", "abs_correlation"],
 							["by positive correlation with gene expression", "positive_correlation"],
 							["by negative correlation with gene expression", "negative_correlation"]
@@ -1687,8 +1819,8 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 					}),
 					//TODO: THIS HELP TOOL IS NOT DISPLAYED, WHY??
 					helpTip:
-					"Determines how we select the potential miRNAs that are regulating a certain gene. " +
-					"Usually miRNA act as inhibitors of gene expression so we should expect an opposite behavior " +
+					"Determines how we select the potential features that are regulating a certain gene. " +
+					"For instance, usually miRNA act as inhibitors of gene expression so we should expect an opposite behavior " +
 					"to the regulated gene. A negative correlation will fit better to this expected profile. " +
 					"Default: If gene expression (GE) if avilable, select and order by 'negative correlation'. 'Max fold-change' in other case.",
 					listeners:{
@@ -1713,7 +1845,25 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 					step: 0.1,
 					allowDecimals: true,
 					allowBlank: false,
-					helpTip: "The value for the threadhold. All miRNAs with a lower value of correlation or FC will be filterd out from the results. Default: 0.5"
+					helpTip: "The value for the threadhold. All features with a lower value of correlation or FC will be filterd out from the results. Default: 0.5"
+				},
+				{
+					xtype: 'combo',
+					fieldLabel: 'Enrichment type',
+					name: this.namePrefix + '_feature_enrichment_pre',
+					hidden: this.omicName !== "",
+					value: this.featureEnrichment.toString(),
+					displayField: 'name', valueField: 'value',
+					editable: false,
+					allowBlank: false,
+					store: Ext.create('Ext.data.ArrayStore', {
+						fields: ['name', 'value'],
+						data: [
+							['Genes', 'false'],
+							['Features', 'true']
+						]
+					}),
+					helpTip: "Define how the Fisher contingency table must be done: counting genes or features (i.e: microRNA, proteins...)."
 				}
 			]
 		}],
@@ -1738,7 +1888,7 @@ function MiRNAOmicSubmittingPanel(nElem, options) {
 			}
 			if (component.queryById("mirnaTargetsFileSelector") && component.queryById("mirnaTargetsFileSelector").getValue() === "") {
 				valid = false;
-				component.queryById("mirnaTargetsFileSelector").markInvalid("Please, provide a miRNA targets reference file.");
+				component.queryById("mirnaTargetsFileSelector").markInvalid("Please, provide a features targets reference file.");
 			}
 			//TODO: REMOVE
 			if (component.queryById("rnaseqauxFileSelector") && component.queryById("rnaseqauxFileSelector").getValue() === "") {

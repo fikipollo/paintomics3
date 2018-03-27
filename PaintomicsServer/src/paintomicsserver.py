@@ -115,14 +115,13 @@ class Application(object):
 
         @self.app.route(SERVER_SUBDOMAIN + '/get_cluster_image/<path:filename>')
         def get_cluster_image(filename):
-            UserSessionManager().isValidUser(request.cookies.get('userID'), request.cookies.get('sessionToken'))
+            jobID = filename.split('/')[0]
+            jobInstance = JobInformationManager().loadJobInstance(jobID)
 
             # Check if the file really exist, if not, then we are probably accessing a public job from a logged
             # account.
-            image_path = CLIENT_TMP_DIR + request.cookies.get('userID', 'nologin') + "/jobsData/"
-
-            if not os.path.isfile(os.path.join(image_path, filename)):
-                image_path = CLIENT_TMP_DIR + "nologin/jobsData/"
+            userDir = "nologin" if jobInstance.getUserID() is None else jobInstance.getUserID()
+            image_path = CLIENT_TMP_DIR + userDir + "/jobsData/"
 
             return send_from_directory(image_path, filename)
         ##*******************************************************************************************
@@ -261,12 +260,12 @@ class Application(object):
             jobInstance = self.queue.fetch_job(jobID)
 
             if jobInstance is None:
-                return Response().setContent({"success": False, "status" : "failed", "message": "Your job is not on the queue anymore. Check your job list, if is not there the process stopped and you must resend the data again."})
+                return Response().setContent({"success": False, "status" : "failed", "message": "Your job is not on the queue anymore. Check your job list, if it's not there the process stopped and you must resend the data again."}).getResponse()
             elif jobInstance.is_finished():
                 return self.queue.get_result(jobID).getResponse()
             elif jobInstance.is_failed():
                 self.queue.get_result(jobID) #remove job
-                return Response().setContent({"success": False, "status" : str(jobInstance.get_status()), "message": jobInstance.error_message})
+                return Response().setContent({"success": False, "status" : str(jobInstance.get_status()), "message": jobInstance.error_message}).getResponse()
             else:
                 return Response().setContent({"success": False, "status" : str(jobInstance.get_status())}).getResponse()
         #*******************************************************************************************
@@ -319,13 +318,25 @@ class Application(object):
         @self.app.route(SERVER_SUBDOMAIN + '/pa_save_visual_options', methods=['OPTIONS', 'POST'])
         def saveVisualOptionsHandler():
             return pathwayAcquisitionSaveVisualOptions(request, Response()).getResponse()
-
+        #*******************************************************************************************
+        # SAVE SHARING OPTIONS HANDLER
+        #*******************************************************************************************
+        @self.app.route(SERVER_SUBDOMAIN + '/pa_save_sharing_options', methods=['OPTIONS', 'POST'])
+        def saveSharingOptionsHandler():
+            return pathwayAcquisitionSaveSharingOptions(request, Response()).getResponse()
         # *******************************************************************************************
         # RETRIEVE NEW P-VALUES HANDLER
         # *******************************************************************************************
         @self.app.route(SERVER_SUBDOMAIN + '/pa_adjust_pvalues', methods=['OPTIONS', 'POST'])
         def adjustPvaluesHandler():
             return pathwayAcquisitionAdjustPvalues(request, Response()).getResponse()
+
+        # *******************************************************************************************
+        # REGENERATE METAGENES HANDLER
+        # *******************************************************************************************
+        @self.app.route(SERVER_SUBDOMAIN + '/pa_get_clusters', methods=['OPTIONS', 'POST'])
+        def metagenesHandler():
+            return pathwayAcquisitionMetagenes_PART1(request, Response(), self.queue, self.generateRandomID(), self.ROOT_DIRECTORY).getResponse()
         #*******************************************************************************************
         # PATHWAY SERVLETS HANDLERS - END
         #############################################################################################

@@ -90,16 +90,23 @@ function PA_Step2JobView() {
 		var databases = me.getModel().getDatabases();
 		var compoundOmics = me.getModel().getCompoundBasedInputOmics().map(x => x.omicName);
 		var matchingPerDB = {};
+		var numberOfClusters = [];
 
 		for (var omicName in dataDistribution) {
 			// Get total features
 			var totalFeatures = dataDistribution[omicName][1];
+			var isCompoundBased = (compoundOmics.indexOf(omicName) > -1);
 
 			// Add the largest matched set of features or just KEGG if there is only 1 DB
+			
+			/*
+			
+			TODO: when re-enabling this code, make sure that the server returns 'KEGG' instead of 'Entrez Gene ID' as total
+			
 			if (dataDistribution[omicName][0].hasOwnProperty("Total")) {
 				totalFeatures += dataDistribution[omicName][0]["Total"];
 			} else {
-				totalFeatures += dataDistribution[omicName][0][0];
+				totalFeatures += dataDistribution[omicName][0][0] || dataDistribution[omicName][0][Object.keys(dataDistribution[omicName][0])[0]];
 			}
 
 			databases.forEach(function(dbname) {
@@ -111,9 +118,63 @@ function PA_Step2JobView() {
 						"matched": dataDistribution[omicName][0][featureTable],
 						"percentage": Math.ceil(dataDistribution[omicName][0][featureTable]/totalFeatures * 100)
 					}});
-			});
+			});*/
+			
+			if ( ! isCompoundBased) {
+				numberOfClusters.push({
+					xtype: 'combo',
+					fieldLabel: omicName,
+					name: 'clusterNumber:' + omicName,
+					value: 'dynamic',
+					displayField: 'name', valueField: 'value',
+					editable: false,
+					allowBlank: false,
+					labelWidth: 300,
+					width: 300,
+					store: Ext.create('Ext.data.ArrayStore', {
+						fields: ['name', 'value'],
+						data: [
+							['Generate automatically', 'dynamic'],
+							['One cluster', 1],
+							['Two clusters', 2],
+							['Three clusters', 3],
+							['Four clusters', 4],
+							['Five clusters', 5],
+							['Six clusters', 6],
+							['Seven clusters', 7],
+							['Eight clusters', 8],
+							['Nine clusters', 9],
+							['Ten clusters', 10],
+						]
+					}),
+					helpTip: "Define the number of clusters per omic or let the program calculate them dynamically using silhouette."
+				});
+			}
 
-			omicSummaryPanelComponents.push(new PA_OmicSummaryPanel(omicName, dataDistribution[omicName], (compoundOmics.indexOf(omicName) > -1)).getComponent());
+			omicSummaryPanelComponents.push(new PA_OmicSummaryPanel(omicName, dataDistribution[omicName], isCompoundBased).getComponent());
+		}
+		
+		
+		if (numberOfClusters.length) {
+			/* Add an empty container to restore "odd" position of next sibling elements */
+			omicSummaryPanelComponents.splice(2, 0, {
+				xtype: 'container',
+				layout: {type: 'vbox', align: 'stretch'},
+				cls: "contentbox", minHeight: 240, id: "clusternumber_box",
+				items: [{
+					html: '<h2 style="width: 100%;">Configure the number of clusters</h2>'
+				}, {
+					html: '<p>In the next step Paintomics will calculate the clusters present in the data provided for each omic. It will use the method k-means using a automatically calculated number of cluster or the ones you define here. In the next step you will also be able to modify them by selecting individual omics in the network.<br><br></p>'
+				},{
+					xtype: 'form',
+					maxWidth: 600,
+					bodyCls: "divForm",
+					style: "margin: 0 auto 20px auto;",
+					layout: {type: 'vbox', align: 'stretch'},
+					defaults: {labelAlign: "right", border: false},
+					items: numberOfClusters
+				}]
+			}, {xtype: 'container', html:'<div style="display: none;"></div>'});
 		}
 
 		if (databases.length > 1) {
@@ -478,7 +539,7 @@ function PA_OmicSummaryPanel(omicName, dataDistribution, isCompoundOmic) {
 	this.initComponent = function() {
 		var me = this;
 
-		var divName = this.omicName.replace(" ", "_").toLowerCase() + "_";
+		var divName = this.omicName.replace(/[^A-Z0-9]/ig, "_").toLowerCase() + "_";
 
 		this.component = Ext.widget({
 			xtype: "box",
@@ -496,15 +557,19 @@ function PA_OmicSummaryPanel(omicName, dataDistribution, isCompoundOmic) {
 						// Mapped features can differ between used databases
 						mappedInfo = me.dataDistribution[0];
 
-						if ("Total" in mappedInfo) {
-							mappedFeatures = mappedInfo["Total"];
-
-							added_info = Object.keys(mappedInfo).map(function(db) {
-								return("• " + db + ": " + mappedInfo[db]);
-							}).join('<br />');
+						if (! Object.keys(mappedInfo).length) {
+							mappedFeatures = mappedInfo;
 						} else {
-							mappedFeatures = mappedInfo[Object.keys(mappedInfo)[0]];
-							added_info = "(KEGG database)";
+							if ("Total" in mappedInfo) {
+								mappedFeatures = mappedInfo["Total"];
+
+								added_info = Object.keys(mappedInfo).map(function(db) {
+									return("• " + db + ": " + mappedInfo[db]);
+								}).join('<br />');
+							} else {
+								mappedFeatures = mappedInfo[Object.keys(mappedInfo)[0]];
+								added_info = "(KEGG database)";
+							}
 						}
 
 						//WHEN THE BOX IS READY, CALL HIGHCHARTS AND CREATE THE PIE WITH MAPPING SUMMARY AND THE BOXPLOT FOR DATA DISTRIBUTION

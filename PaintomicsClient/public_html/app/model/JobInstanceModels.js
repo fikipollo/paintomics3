@@ -26,11 +26,14 @@
 
 function JobInstance(jobID) {
 	this.jobID = jobID;
+	this.userID;
 	this.stepNumber = 1;
 	this.organism = null;
+	this.name = null;
 
 	this.pathways = [];
 	this.databases = null;
+	this.clusters = null;
 	this.summary = null;
 	this.mappingSummary = null;
 
@@ -38,9 +41,14 @@ function JobInstance(jobID) {
 	this.compoundBasedInputOmics = null;
 
 	this.omicsValues = null;
+	this.omicsValuesID = null;
 	this.foundCompounds = [];
 
 	this.selectedPathway = null;
+	this.timestamp = null;
+	
+	this.readOnly = false;
+	this.allowSharing = false;
 
 	/*****************************
 	** GETTERS AND SETTERS
@@ -50,6 +58,36 @@ function JobInstance(jobID) {
 	};
 	this.getJobID = function () {
 		return this.jobID;
+	};
+	this.setUserID = function (userID) {
+		this.userID = userID;
+	};
+	this.getUserID = function () {
+		return this.userID;
+	};
+	this.setTimestamp = function(timestamp) {
+		this.timestamp = timestamp;
+	};
+	this.getTimestamp = function() {
+		return this.timestamp;	
+	};
+	this.setName = function (name) {
+		this.name = name;
+	};
+	this.getName = function () {
+		return this.name;
+	};
+	this.setReadOnly = function(readOnly) {
+		this.readOnly = readOnly;
+	};
+	this.getReadOnly = function() {
+		return this.readOnly;	
+	};
+	this.setAllowSharing = function(allowSharing) {
+		this.allowSharing = allowSharing;
+	};
+	this.getAllowSharing = function() {
+		return this.allowSharing;	
 	};
 	this.setStepNumber = function (stepNumber) {
 		this.stepNumber = stepNumber;
@@ -92,7 +130,7 @@ function JobInstance(jobID) {
         return omicNames;
     };
 	this.getDatabases = function() {
-		if (this.databases === null || this.databases.length < 1) {
+		if (! this.databases || ! this.databases.length) {
 			// Check databases present in pathways
 			var pathways = this.getPathways();
 
@@ -103,6 +141,40 @@ function JobInstance(jobID) {
 	}
 	this.setDatabases = function (databases) {
 		this.databases = databases;
+	};
+	this.getClusterNumber = function() {
+		// Double check in case they are empty.
+		var me = this;
+		
+		if (this.clusters === null || me.getDatabases().every(function(db) {
+			return Object.keys(me.clusters[db]).every(function(x) { return !me.clusters[db][x].size; })})) {
+			this.clusters = {};
+			
+			// For each database initialize a new set containing all omic names
+			this.getDatabases().forEach(function(db) {
+				this.clusters[db] = {};
+				
+				this.getOmicNames().map(x => this.clusters[db][x] = new Set());
+				
+				// For each pathway and each omic present in its metagene info,
+				// add to the set the different clusters found.
+				this.getPathwaysByDB(db).forEach(function(pathway) {
+					var metagenes = pathway.getMetagenes();
+					
+					Object.keys(metagenes).forEach(function(omicName) {
+						metagenes[omicName].map(x => this.clusters[db][omicName].add(x.cluster));
+					}, this);
+				}, this);
+			}, this);
+		}
+		
+		return this.clusters;
+	};
+	this.getClusterNumberByDbAndOmic = function(database, omic) {
+		return this.getClusterNumber()[database][omic];
+	};
+	this.setClusterNumber = function(clusters) {
+		this.clusters = clusters;
 	};
 	this.setSummary = function (summary) {
 		this.summary = summary;
@@ -177,6 +249,12 @@ function JobInstance(jobID) {
 		}
 		return this.omicsValues;
 	};
+	this.setOmicsValuesID = function (omicsValuesID) {
+		this.omicsValuesID = omicsValuesID;
+	};
+	this.getOmicsValuesID = function () {
+		return this.omicsValuesID;
+	};
 	this.addOmicValue = function (omicsValue) {
 		this.getOmicsValues()[omicsValue.getID()] = omicsValue;
 	};
@@ -186,7 +264,7 @@ function JobInstance(jobID) {
 		if (this.pathways.length && this.pathways[0].getAdjustedSignificanceValues) {
 			var omicPvalues = this.pathways[0].getAdjustedSignificanceValues();
 
-			multipleMethods = omicPvalues ? Object.keys(omicPvalues[Object.keys(omicPvalues)[0]]) : [];
+			multipleMethods = omicPvalues && Object.keys(omicPvalues).length ? Object.keys(omicPvalues[Object.keys(omicPvalues)[0]]) : [];
 		}
 
 		return multipleMethods;

@@ -26,7 +26,7 @@ from zipfile import ZipFile as zipFile
 from subprocess import check_call, STDOUT, CalledProcessError
 from src.common.Util import unifyAndSort
 
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 from src.common.Statistics import calculateSignificance, calculateCombinedSignificancePvalues, adjustPvalues
 from src.common.Util import chunks, getImageSize
@@ -87,8 +87,21 @@ class PathwayAcquisitionJob(Job):
 
             self.description+= "Input data:;"
 
+            # The client requires to have the config options inside double square brackets and separated by '!!'.
+            # The different omics must use ';' as separator, and the mainFile/relevantFiles should be inside the same
+            # simple square brackets, separated by '!!'.
             for omicAux in self.geneBasedInputOmics:
-                self.description+=omicAux.get("omicName") + " [" + basename(omicAux.get("inputDataFile")) + "]; "
+                omic_files = [basename(omicAux.get("inputDataFile"))]
+
+                self.description+=omicAux.get("omicName")
+
+                if omicAux.get("relevantFeaturesFile"):
+                    omic_files.append(basename(omicAux.get("relevantFeaturesFile")))
+
+                if omicAux.get("configOptions"):
+                    self.description+= " [[" + omicAux.get("configOptions").replace(";", "!!") + "]] "
+
+                self.description+= " [" + '!!'.join(omic_files) + "]; "
             for omicAux in self.compoundBasedInputOmics:
                 self.description+=omicAux.get("omicName") + " [" + basename(omicAux.get("inputDataFile")) + "]; "
 
@@ -411,7 +424,9 @@ class PathwayAcquisitionJob(Job):
         pathwayIDsList = KeggInformationManager().getAllPathwaysByOrganism(self.getOrganism())
 
         #GET THE IDS FOR ALL PATHWAYS FOR CURRENT SPECIE
-        totalFeaturesByOmic, totalRelevantFeaturesByOmic = self.calculateTotalFeaturesByOmic()
+        enrichmentByOmic = {x.get("omicName"): x.get("featureEnrichment", False) for x in self.getGeneBasedInputOmics() + self.getCompoundBasedInputOmics()}
+
+        totalFeaturesByOmic, totalRelevantFeaturesByOmic = self.calculateTotalFeaturesByOmic(enrichmentByOmic)
         totalInputMatchedCompounds = len(self.getInputCompoundsData())
         totalInputMatchedGenes = len(self.getInputGenesData())
         totalKeggPathways = len(pathwayIDsList)
@@ -430,7 +445,7 @@ class PathwayAcquisitionJob(Job):
         nThreads = MAX_THREADS
         logging.info("USING " + str(nThreads) + " THREADS")
 
-        def matchPathways(jobInstance, pathwaysList, inputGenes, inputCompounds, totalFeaturesByOmic, totalRelevantFeaturesByOmic, matchedPathways, mappedRatiosByOmic):
+        def matchPathways(jobInstance, pathwaysList, inputGenes, inputCompounds, totalFeaturesByOmic, totalRelevantFeaturesByOmic, matchedPathways, mappedRatiosByOmic, enrichmentByOmic):
             #****************************************************************
             # Step 2.1. FOR EACH PATHWAY IN THE LIST, GET ALL FEATURE IDS
             #           AND CALCULATE THE SIGNIFICANCE FOR THE PATHWAY
@@ -440,7 +455,7 @@ class PathwayAcquisitionJob(Job):
             genesInPathway = compoundsInPathway = pathway = None
             for pathwayID in pathwaysList:
                 genesInPathway, compoundsInPathway = keggInformationManager.getAllFeatureIDsByPathwayID(jobInstance.getOrganism(), pathwayID)
-                isValidPathway, pathway = self.testPathwaySignificance(genesInPathway, compoundsInPathway, inputGenes, inputCompounds, totalFeaturesByOmic, totalRelevantFeaturesByOmic, mappedRatiosByOmic)
+                isValidPathway, pathway = self.testPathwaySignificance(genesInPathway, compoundsInPathway, inputGenes, inputCompounds, totalFeaturesByOmic, totalRelevantFeaturesByOmic, mappedRatiosByOmic, enrichmentByOmic)
                 if(isValidPathway):
                     pathway.setID(pathwayID)
                     pathway.setName(keggInformationManager.getPathwayNameByID(jobInstance.getOrganism(), pathwayID))
@@ -456,7 +471,7 @@ class PathwayAcquisitionJob(Job):
         threadsList = []
         #LAUNCH THE THREADS
         for pathwayIDsList in pathwaysListParts:
-            thread = Process(target=matchPathways, args=(self, pathwayIDsList, inputGenes, inputCompounds, totalFeaturesByOmic, totalRelevantFeaturesByOmic, matchedPathways, mappedRatiosByOmic))
+            thread = Process(target=matchPathways, args=(self, pathwayIDsList, inputGenes, inputCompounds, totalFeaturesByOmic, totalRelevantFeaturesByOmic, matchedPathways, mappedRatiosByOmic, enrichmentByOmic))
             threadsList.append(thread)
             thread.start()
 
@@ -464,9 +479,16 @@ class PathwayAcquisitionJob(Job):
         for thread in threadsList:
             thread.join(MAX_WAIT_THREADS)
 
+        isFinished = True
         for thread in threadsList:
             if(thread.is_alive()):
+                isFinished = False
                 thread.terminate()
+                logging.info("THREAD TERMINATED IN generatePathwaysList")
+
+
+        if not isFinished:
+            raise Exception('Your data took too long to process and it was killed. Try it again later or upload smaller files if it persists.')
 
         self.setMatchedPathways(dict(matchedPathways))
         totalMatchedKeggPathways=len(self.getMatchedPathways())
@@ -503,41 +525,33 @@ class PathwayAcquisitionJob(Job):
         #TODO: REVIEW THE SUMMARY GENERATION
         return self.summary
 
-    def calculateTotalFeaturesByOmic(self):
+    def calculateTotalFeaturesByOmic(self, enrichmentByOmic):
         """
         This function...
 
         @param {type}
         @returns
         """
-        totalFeaturesByOmic = {}
-        totalRelevantFeaturesByOmic = {}
+        totalFeaturesByOmic = Counter()
+        totalRelevantFeaturesByOmic = Counter()
 
-        originalNames = {}
-        for compound in self.getInputCompoundsData().values():
-            for omicValue in compound.getOmicsValues():
-                if omicValue.getOmicName() not in originalNames:
-                    originalNames[omicValue.getOmicName()] = {} #If the omics type is not in the table yet add it
-                originalNames[omicValue.getOmicName()][omicValue.getOriginalName()] = (originalNames.get(omicValue.getOmicName()).get(omicValue.getOriginalName(), False) or omicValue.isRelevant())
+        counterNames = defaultdict(lambda : defaultdict(bool))
+        for features in self.getInputCompoundsData().values() + self.getInputGenesData().values():
+            for omicValue in features.getOmicsValues():
+                # Two enrichment methods avaible: gene and feature enrichment.
+                # By default use gene enrichment unless specified otherwise.
+                if enrichmentByOmic[omicValue.getOmicName()] is True:
+                    counterNames[omicValue.getOmicName()][omicValue.getOriginalName()] = (counterNames[omicValue.getOmicName()][omicValue.getOriginalName()] or omicValue.isRelevant())
+                else:
+                    counterNames[omicValue.getOmicName()][omicValue.getInputName()] = (counterNames[omicValue.getOmicName()][omicValue.getInputName()] or omicValue.isRelevant())
 
-        for omicName, compoundNames in originalNames.iteritems():
-            totalFeaturesByOmic[omicName] = len(compoundNames.keys())
-            totalRelevantFeaturesByOmic[omicName] = 0
-            for isRelevant in compoundNames.values():
-                if(isRelevant):
-                    totalRelevantFeaturesByOmic[omicName] = totalRelevantFeaturesByOmic.get(omicName) + 1
+        for omicName, featuresNames in counterNames.iteritems():
+            totalFeaturesByOmic[omicName] = len(featuresNames.keys())
+            totalRelevantFeaturesByOmic[omicName] = featuresNames.values().count(True)
 
-        for gene in self.getInputGenesData().values():
-            for omicValue in gene.getOmicsValues():
-                totalFeaturesByOmic[omicValue.getOmicName()] = totalFeaturesByOmic.get(omicValue.getOmicName(),0) + 1
-                sum = 0
-                if(omicValue.isRelevant()):
-                    sum = 1
-                if(omicValue.isRelevant()):
-                    totalRelevantFeaturesByOmic[omicValue.getOmicName()] = totalRelevantFeaturesByOmic.get(omicValue.getOmicName(),0) + sum
         return totalFeaturesByOmic, totalRelevantFeaturesByOmic
 
-    def testPathwaySignificance(self, genesInPathway, compoundsInPathway, inputGenes, inputCompounds, totalFeaturesByOmic, totalRelevantFeaturesByOmic, mappedRatiosByOmic):
+    def testPathwaySignificance(self, genesInPathway, compoundsInPathway, inputGenes, inputCompounds, totalFeaturesByOmic, totalRelevantFeaturesByOmic, mappedRatiosByOmic, enrichmentByOmic):
         """
         This function takes a list of genes and compounds from the input and check if those features are at the
         list of feautures involved into a specific pathway.
@@ -554,6 +568,8 @@ class PathwayAcquisitionJob(Job):
         """
         isValidPathway = False
         pathwayInstance= Pathway("")
+        # Keep track of the original names so as to only count them once, for both genes and compounds.
+        counterNames = defaultdict(lambda : defaultdict(bool))
         #TODO: RETURN AS A SET IN KEGG INFORMATION MANAGER
         genesInPathway=set([x.lower() for x in genesInPathway])
         for gene in inputGenes:
@@ -564,13 +580,15 @@ class PathwayAcquisitionJob(Job):
                     #SIGNIFICANCE-VALUES LIST STORES FOR EACH OMIC 3 VALUES: [TOTAL MATCHED, TOTAL RELEVANT, PVALUE]
                     #IN THIS LINE WE JUST ADD A NEW MATCH AND, IF RELEVANT, A NEW RELEVANT FEATURE, BUT KEEP PVALUE TO -1
                     #AS WE WILL CALCULATE IT LATER.
-                    pathwayInstance.addSignificanceValues(omicValue.getOmicName(), omicValue.isRelevant())
+                    if enrichmentByOmic[omicValue.getOmicName()] is True:
+                        counterNames[omicValue.getOmicName()][omicValue.getOriginalName()] = (counterNames[omicValue.getOmicName()][omicValue.getOriginalName()] or omicValue.isRelevant())
+                    else:
+                        counterNames[omicValue.getOmicName()][omicValue.getInputName()] = (counterNames[omicValue.getOmicName()][omicValue.getInputName()] or omicValue.isRelevant())
 
         #First we get the list of IDs for the compounds that participate in the pathway
         compoundsInPathway=set([x.lower() for x in compoundsInPathway])
         #Keeps a track of which compounds participates in the pathway, without counting twice compounds that come from the
         #same measurement (it occurs due to disambiguation step).
-        originalNames = {}
         #Now, for each compound in the input
         for compound in inputCompounds:
             #Check if the compound participates in the pathway
@@ -582,15 +600,13 @@ class PathwayAcquisitionJob(Job):
                 #Register the original name for the compound (to avoid duplicate counts for significance test)
 
                 for omicValue in compound.getOmicsValues():
-                    if omicValue.getOmicName() not in originalNames:
-                        originalNames[omicValue.getOmicName()] = {} #If the omics type is not in the table yet add it
                     #Add the original name to the table for the corresponding omics type, specifying if the feature is relevant or not.
                     # Metabolomics --> Glutamine --> [prev value for isRelevant] or [current feature isRelevant]
                     #TODO: what if L-Glutamine coming from "Glutamine" is in the list of relevants but Glutamine not? Now we consider Glutamine as relevant
-                    originalNames[omicValue.getOmicName()][omicValue.getOriginalName()] = (originalNames.get(omicValue.getOmicName()).get(omicValue.getOriginalName(), False) or omicValue.isRelevant())
+                    counterNames[omicValue.getOmicName()][omicValue.getOriginalName()] = (counterNames[omicValue.getOmicName()][omicValue.getOriginalName()] or omicValue.isRelevant())
 
-        for omicName, compoundNames in originalNames.iteritems():
-            for isRelevant in compoundNames.values():
+        for omicName, featureNames in counterNames.iteritems():
+            for isRelevant in featureNames.values():
                 #SIGNIFICANCE-VALUES LIST STORES FOR EACH OMIC 3 VALUES: [TOTAL MATCHED, TOTAL RELEVANT, PVALUE]
                 #IN THIS LINE WE JUST ADD A NEW MATCH AND, IF RELEVANT, A NEW RELEVANT FEATURE, BUT KEEP PVALUE TO -1
                 #AS WE WILL CALCULATE IT LATER.
@@ -599,7 +615,7 @@ class PathwayAcquisitionJob(Job):
         if(isValidPathway):
             for omicName in pathwayInstance.getSignificanceValues().keys():
                 values = pathwayInstance.getSignificanceValues().get(omicName)
-                #FOR EACH OMIC TYPE, SIGNIFICANCE IS CALCULATED TAKING IN ACCOUNT:
+                #FOR EACH OMIC TYPE, SIGNIFICANCE IS CALCULATED TAKING IN ACCOUNT, AND CONSIDERING ONLY THE ORIGINAL NAME:
                 #  - THE TOTAL NUMBER OF MATCHED FEATURES FOR CURRENT OMIC (i.e. IF WE INPUT PROTEINS, THE TOTAL NUMBER WILL BE
                 #    THE TOTAL OF PROTEINS THAT WE MANAGED TO MAP TO GENES.
                 #  - THE TOTAL NUMBER OF RELEVANT FEATURES FOR THE CURRENT OMIC
@@ -682,17 +698,19 @@ class PathwayAcquisitionJob(Job):
             #          pathway and add them to the list of features that will be send
             #          to the client side with the expression values
             #************************************************************************
-            #TODO: MEJORABLE, MULTHREADING U OTRAS OPCIONES
+            # TODO: MEJORABLE, MULTHREADING U OTRAS OPCIONES
             auxDict = self.getInputGenesData()
+
             for geneID in pathwayInstance.getMatchedGenes():
-                if(toBSON == True):
+                if (toBSON == True):
                     omicsValuesSubset[geneID] = auxDict.get(geneID).toBSON()
                 else:
                     omicsValuesSubset[geneID] = auxDict.get(geneID)
+
             auxDict = self.getInputCompoundsData()
 
             for compoundID in pathwayInstance.getMatchedCompounds():
-                if(toBSON == True):
+                if (toBSON == True):
                     omicsValuesSubset[compoundID] = auxDict.get(compoundID).toBSON()
                 else:
                     omicsValuesSubset[compoundID] = auxDict.get(compoundID)
@@ -708,7 +726,7 @@ class PathwayAcquisitionJob(Job):
 
 
     #GENERATE METAGENES LIST FUNCTIONS -----------------------------------------------------------------------------------------
-    def generateMetagenesList(self, ROOT_DIRECTORY):
+    def generateMetagenesList(self, ROOT_DIRECTORY, clusterNumber, omicList=None):
         """
         This function obtains the metagenes for each pathway in KEGG based on the input values.
 
@@ -719,12 +737,18 @@ class PathwayAcquisitionJob(Job):
         zipFile(self.getOutputDir() + "/mapping_results_" + self.getJobID() + ".zip").extractall(path=self.getTemporalDir())
 
         # STEP 2. GENERATE THE DATA FOR EACH OMIC DATA TYPE
+        filtered_omics = self.geneBasedInputOmics
 
-        for inputOmic in self.geneBasedInputOmics:
+        if omicList:
+            filtered_omics = [inputOmic for inputOmic in self.geneBasedInputOmics if inputOmic.get("omicName") in omicList]
+
+        for inputOmic in filtered_omics:
             try:
                 # STEP 2.1 EXECUTE THE R SCRIPT
-                logging.info("GENERATING METAGENES INFORMATION...DONE")
+                logging.info("GENERATING METAGENES INFORMATION...CALLING")
                 inputFile = self.getTemporalDir() +  "/" + inputOmic.get("omicName") + '_matched.txt'
+                # Select number of clusters, default to dynamic
+                kClusters = str(dict(clusterNumber).get(inputOmic.get("omicName"), "dynamic"))
                 check_call([
                     ROOT_DIRECTORY + "common/bioscripts/generateMetaGenes.R",
                     '--specie="' + self.getOrganism() +'"',
@@ -732,8 +756,13 @@ class PathwayAcquisitionJob(Job):
                     '--output_prefix="'+ inputOmic.get("omicName") + '"',
                     '--data_dir="'+ self.getTemporalDir() + '"',
                     '--kegg_dir="'+ KEGG_DATA_DIR + '"',
-                    '--sources_dir="' + ROOT_DIRECTORY + '/common/bioscripts/"'], stderr=STDOUT)
+                    '--sources_dir="' + ROOT_DIRECTORY + '/common/bioscripts/"',
+                    '--kclusters="' + kClusters + '"' if kClusters.isdigit() else ''], stderr=STDOUT)
                 # STEP 2.2 PROCESS THE RESULTING FILE
+
+                # Reset all pathways metagenes for the omic
+                map(lambda pathway: pathway.resetMetagenes(inputOmic.get("omicName")), self.matchedPathways.values())
+
                 with open(self.getTemporalDir() + "/" + inputOmic.get("omicName") + "_metagenes.tab", 'rU') as inputDataFile:
                     for line in csv_reader(inputDataFile, delimiter="\t"):
                         if self.matchedPathways.has_key(line[0]):
@@ -786,6 +815,8 @@ class PathwayAcquisitionJob(Job):
                     geneInstance = Gene(geneID)
                     geneInstance.parseBSON(genData)
                     self.addInputGeneData(geneInstance)
+            elif(attr == "userID"):
+                setattr(self, attr, value if value != 'None' else None)
             elif not isinstance(value, dict) :
                 setattr(self, attr, value)
 

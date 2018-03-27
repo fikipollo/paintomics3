@@ -15,10 +15,12 @@ SERVER_URL_PA_SAVE_IMAGE = SERVER_URL + "pa_save_image";
 SERVER_URL_PA_SAVE_VISUAL_OPTIONS = SERVER_URL + "pa_save_visual_options";
 SERVER_URL_PA_RECOVER_JOB = SERVER_URL + "pa_recover_job";
 SERVER_URL_PA_TOUCH_JOB = SERVER_URL + "pa_touch_job";
+SERVER_URL_PA_SAVE_SHARING_OPTIONS = SERVER_URL + "pa_save_sharing_options";
 SERVER_URL_JOB_STATUS= SERVER_URL + "check_job_status";
 SERVER_URL_GET_CLUSTER_IMAGE= SERVER_URL + "get_cluster_image";
 SERVER_URL_GET_MESSAGE = SERVER_URL + "um_get_message";
 SERVER_URL_ADJUST_PVALUES = SERVER_URL + "pa_adjust_pvalues";
+SERVER_URL_UPDATE_METAGENES = SERVER_URL + "pa_get_clusters";
 
 /*********************************************************************
  * DATA MANIPULATION SERVICES URLS         ***************************

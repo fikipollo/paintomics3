@@ -103,7 +103,7 @@ def fromBEDtoGenes_STEP1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, EXAMPLE_FILE
 
                 jobInstance.addGeneBasedInputOmic({"omicName": omicName, "inputDataFile": EXAMPLE_FILES_DIR + dataFileName, "relevantFeaturesFile": EXAMPLE_FILES_DIR + relevantFileName,  "isExample" : True})
 
-                jobInstance.addReferenceInput({"omicName": omicName, "fileType":  "Reference file", "inputDataFile": EXAMPLE_FILES_DIR + "sorted_mmu.gtf"})
+                jobInstance.addReferenceInput({"omicName": omicName, "fileType":  "Reference file", "inputDataFile": EXAMPLE_FILES_DIR + "GTF/sorted_mmu.gtf"})
 
             specie = "mmu"
             jobInstance.setOrganism(specie)
@@ -131,6 +131,11 @@ def fromBEDtoGenes_STEP1(REQUEST, RESPONSE, QUEUE_INSTANCE, JOB_ID, EXAMPLE_FILE
         logging.info("  - geneAreaPercentage   :" + str(jobInstance.geneAreaPercentage))
         jobInstance.regionAreaPercentage= formFields.get(namePrefix + "_regionAreaPercentage", 50)
         logging.info("  - regionAreaPercentage :" + str(jobInstance.regionAreaPercentage))
+        jobInstance.ignoreMissing = True if namePrefix + "_ignoremissing" in formFields.keys() else False
+        logging.info("  - ignore missing       :" + str(jobInstance.ignoreMissing))
+        jobInstance.featureEnrichment = formFields.get(namePrefix + "_feature_enrichment_pre", False)
+        logging.info("  - Feature Enrichment   :" + str(jobInstance.featureEnrichment))
+
         #rules
         jobInstance.geneIDtag= formFields.get(namePrefix + "_geneIDtag", "gene_id")
         logging.info("  - geneIDtag            :" + str(jobInstance.geneIDtag))
@@ -216,7 +221,9 @@ def fromBEDtoGenes_STEP2(jobInstance, userID, exampleMode, RESPONSE):
             "jobID":jobInstance.getJobID(),
             "compressedFileName": fileNames[0],
             "mainOutputFileName":  fileNames[1],
-            "secondOutputFileName":  fileNames[2]
+            "secondOutputFileName":  fileNames[2],
+            "description": jobInstance.description,
+            "featureEnrichment": jobInstance.featureEnrichment
         })
 
     except Exception as ex:

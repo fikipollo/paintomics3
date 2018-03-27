@@ -42,6 +42,22 @@ function DM_Bed2GenesJobView() {
 		this.getComponent().queryById("omicSubmittingForm").getForm().reset();
 	};
 
+	this.setExampleModeHandler = function() {
+		var panel, fileField, omicSubmittingPanels;
+		var omicForm = this.getComponent().queryById("omicSubmittingForm");
+		var mirnaPanel = new RegionBasedOmicSubmittingPanel(0, {removable: false, allowToogle: false});
+
+		this.exampleMode = true;
+		mirnaPanel.setExampleMode();
+		
+		// Delete old element
+		omicForm.remove(omicForm.items.get(1));
+		omicForm.add(mirnaPanel.getComponent());
+		omicForm.doLayout();
+		
+		$('#mainViewCenterPanel').scrollTop(omicForm.getEl().dom.offsetTop - 60);
+	};
+	
 	this.submitFormHandler = function () {
 		this.controller.fromBed2GenesOnFormSubmitHandler(this);
 	};
@@ -69,7 +85,8 @@ function DM_Bed2GenesJobView() {
 			items: [{
 				xtype: "box", cls: "toolbar secondTopToolbar", html:
 				'<a class="button btn-danger btn-right" id="resetButton"><i class="fa fa-refresh"></i> Reset</a>' +
-				'<a class="button btn-success btn-right" id="runButton"><i class="fa fa-play"></i> Run Regions2Genes</a>'
+				'<a class="button btn-success btn-right" id="runButton"><i class="fa fa-play"></i> Run Regions2Genes</a>' + 
+				'<a class="button btn-secondary btn-right" id="exampleButton"><i class="fa fa-file-text-o"></i> Load example</a>'
 			},{
 				xtype: 'box', style: "margin-top:50px;", html:
 				'<div id="about" class="contentbox">' +
@@ -123,6 +140,9 @@ function DM_Bed2GenesJobView() {
 					});
 					$("#resetButton").click(function () {
 						me.resetViewHandler();
+					});
+					$("#exampleButton").click(function() {
+						me.setExampleModeHandler();
 					});
 				},
 				beforedestroy: function () {
