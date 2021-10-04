@@ -2,7 +2,10 @@
     <img src="docs/img/paintomics_150x690.png" height="50" title="STATegra EMS LOGO."/>
 </div>
 
-# Paintomics, integrative visualization of multiple *omic* data                                    
+# Paintomics, integrative visualization of multiple *omic* data                                   
+## THIS PROJECT IS NOT SUPPORTED ANYMORE.
+You can find the latest sources in brach *main*
+
 For any question on PaintOmics 3, users can send a mail to [paintomics@cipf.es](mailto:paintomics@cipf.es).
 
 PaintOmics 3 official instance: [http://bioinfo.cipf.es/paintomics/](http://bioinfo.cipf.es/paintomics/)

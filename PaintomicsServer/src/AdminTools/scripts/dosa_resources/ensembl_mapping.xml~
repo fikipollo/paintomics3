@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE Query>
-<Query  virtualSchemaName = "plants_mart_27" formatter = "CSV" header = "0" uniqueRows = "0" count = "" datasetConfigVersion = "0.7" >
-			
-	<Dataset name = "osativa_eg_gene" interface = "default" >
-		<Attribute name = "ensembl_gene_id" />
-		<Attribute name = "ensembl_transcript_id" />
-	</Dataset>
-</Query>
